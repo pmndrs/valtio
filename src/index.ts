@@ -11,14 +11,17 @@ const SNAPSHOT = Symbol()
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
-export const create = <T extends object>(initialObject?: T): T => {
+export const create = <T extends object>(initialObject: T = {} as T): T => {
   let version = 0
   let snapshotVersion = -1
   let savedSnapshot: any
   let mutableSource: any
-  const incrementVersion = () => ++version
   const listners = new Set<() => void>()
-  const proxy = new Proxy({} as any, {
+  const incrementVersion = () => {
+    ++version
+    listners.forEach((listener) => listener())
+  }
+  const proxy = new Proxy(Object.create(initialObject.constructor.prototype), {
     get(target, prop) {
       if (prop === MUTABLE_SOURCE) {
         if (!mutableSource) {
@@ -33,7 +36,7 @@ export const create = <T extends object>(initialObject?: T): T => {
         if (version === snapshotVersion) {
           return savedSnapshot
         }
-        const snapshot = {} as any
+        const snapshot = Object.create(target.constructor.prototype)
         Reflect.ownKeys(target).forEach((key) => {
           const value = target[key]
           if (isObject(value)) {
@@ -55,7 +58,6 @@ export const create = <T extends object>(initialObject?: T): T => {
       }
       delete target[prop]
       incrementVersion()
-      listners.forEach((listener) => listener())
       return true
     },
     set(target, prop, value) {
@@ -63,24 +65,18 @@ export const create = <T extends object>(initialObject?: T): T => {
         target[prop][LISTNERS].delete(incrementVersion)
       }
       if (isObject(value)) {
-        target[prop] = create()
-        Reflect.ownKeys(value).forEach((key) => {
-          target[prop][key] = (value as any)[key]
-        })
+        target[prop] = create(value)
         target[prop][LISTNERS].add(incrementVersion)
       } else {
         target[prop] = value
       }
       incrementVersion()
-      listners.forEach((listener) => listener())
       return true
     },
   })
-  if (initialObject) {
-    Reflect.ownKeys(initialObject).forEach((key) => {
-      proxy[key] = (initialObject as any)[key]
-    })
-  }
+  Reflect.ownKeys(initialObject).forEach((key) => {
+    proxy[key] = (initialObject as any)[key]
+  })
   return proxy
 }
 
@@ -91,7 +87,7 @@ const subscribe = (proxy: any, callback: () => void) => {
   }
 }
 
-export const useProxy = (proxy: any) => {
+export const useProxy = <T extends object>(proxy: T): T => {
   const affected = new WeakMap()
   const lastAffected = useRef<WeakMap<object, unknown>>()
   useEffect(() => {
@@ -120,7 +116,7 @@ export const useProxy = (proxy: any) => {
     }
   }, [])
   const snapshot = useMutableSource(
-    proxy[MUTABLE_SOURCE],
+    (proxy as any)[MUTABLE_SOURCE],
     getSnapshot,
     subscribe
   )
