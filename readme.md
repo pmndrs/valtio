@@ -25,13 +25,13 @@ setInterval(() => {
 ## Components can react to state change via useProxy, that's it!
 
 ```jsx
-const Counter = () => {
+function Counter () {
   const localState = useProxy(globalState)
   return (
     <div>
       {localState.count}
       <button onClick={() => ++globalState.count}>+1</button>
     </div>
-  );
-};
+  )
+}
 ```
