@@ -1,6 +1,10 @@
 import { useMemo, useRef, useEffect } from 'react'
 
-import { createDeepProxy, isDeepChanged } from 'proxy-compare'
+import {
+  createDeepProxy,
+  isDeepChanged,
+  getUntrackedObject,
+} from 'proxy-compare'
 
 import { createMutableSource, useMutableSource } from './useMutableSource'
 
@@ -65,7 +69,12 @@ export const create = <T extends object>(initialObject: T = {} as T): T => {
         target[prop][LISTNERS].delete(incrementVersion)
       }
       if (isObject(value)) {
-        target[prop] = create(value)
+        value = getUntrackedObject(value) ?? value
+        if (value[LISTNERS]) {
+          target[prop] = value
+        } else {
+          target[prop] = create(value)
+        }
         target[prop][LISTNERS].add(incrementVersion)
       } else {
         target[prop] = value
