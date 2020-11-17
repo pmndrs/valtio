@@ -1,11 +1,129 @@
 {
   "name": "valtio",
-  "version": "0.0.0",
+  "private": true,
+  "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "index.cjs.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "**"
+  ],
+  "sideEffects": false,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prebuild": "shx rm -rf dist",
+    "build": "rollup -c",
+    "postbuild": "yarn copy",
+    "eslint": "eslint --fix 'src/**/*.{js,ts,jsx,tsx}'",
+    "eslint:ci": "eslint 'src/**/*.{js,ts,jsx,tsx}'",
+    "prepare": "yarn build",
+    "pretest": "tsc --noEmit",
+    "test": "jest",
+    "test:dev": "jest --watch --no-coverage",
+    "test:coverage:watch": "jest --watch",
+    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "prettier": {
+    "semi": false,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "jsxBracketSameLine": true,
+    "tabWidth": 2,
+    "printWidth": 80
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "prettier --write"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pmndrs/valtio.git"
+  },
+  "keywords": [
+    "react",
+    "state",
+    "manager",
+    "management",
+    "mobx",
+    "proxy",
+    "store"
+  ],
   "author": "Daishi Kato",
-  "license": "MIT"
+  "contributors": [],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/pmndrs/valtio/issues"
+  },
+  "homepage": "https://github.com/pmndrs/valtio",
+  "jest": {
+    "rootDir": ".",
+    "moduleNameMapper": {
+      "^valtio$": "<rootDir>/src/index.ts"
+    },
+    "modulePathIgnorePatterns": [
+      "dist"
+    ],
+    "testRegex": "test.(js|ts|tsx)$",
+    "coverageDirectory": "./coverage/",
+    "collectCoverage": true,
+    "coverageReporters": [
+      "json",
+      "html",
+      "text",
+      "text-summary"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.{js,ts,tsx}",
+      "tests/**/*.{js,ts,tsx}"
+    ]
+  },
+  "dependencies": {
+    "proxy-compare": "1.0.3",
+    "use-subscription": "1.5.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.3",
+    "@babel/plugin-transform-react-jsx": "^7.12.5",
+    "@babel/plugin-transform-typescript": "^7.12.1",
+    "@babel/preset-env": "^7.12.1",
+    "@rollup/plugin-babel": "^5.2.1",
+    "@rollup/plugin-node-resolve": "^10.0.0",
+    "@rollup/plugin-typescript": "^6.1.0",
+    "@testing-library/react": "^11.1.2",
+    "@types/jest": "^26.0.15",
+    "@types/react": "^16.9.56",
+    "@types/react-dom": "^16.9.9",
+    "@types/use-subscription": "^1.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.7.0",
+    "@typescript-eslint/parser": "^4.7.0",
+    "copyfiles": "^2.4.0",
+    "eslint": "^7.13.0",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jest": "^24.1.3",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-react": "^7.21.5",
+    "eslint-plugin-react-hooks": "^4.2.0",
+    "husky": "^4.3.0",
+    "jest": "^26.6.3",
+    "json": "^10.0.0",
+    "lint-staged": "^10.5.1",
+    "prettier": "^2.1.2",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "rollup": "^2.33.2",
+    "rollup-plugin-size-snapshot": "^0.12.0",
+    "shx": "^0.3.3",
+    "typescript": "^4.0.5"
+  },
+  "peerDependencies": {
+    "react": ">=16.8"
+  }
 }
