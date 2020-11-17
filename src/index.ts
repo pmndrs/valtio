@@ -15,18 +15,30 @@ const SNAPSHOT = Symbol()
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
+let globalVersion = 0
+const snapshotCache = new WeakMap<
+  object,
+  {
+    version: number
+    snapshot: unknown
+  }
+>()
+
 export const create = <T extends object>(initialObject: T = {} as T): T => {
-  let version = 0
-  let snapshotVersion = -1
-  let savedSnapshot: any
+  let version = globalVersion
   let mutableSource: any
-  const listners = new Set<() => void>()
-  const incrementVersion = () => {
-    ++version
-    listners.forEach((listener) => listener())
+  const listners = new Set<(nextVersion?: number) => void>()
+  const notifyUpdate = (nextVersion?: number) => {
+    if (!nextVersion) {
+      nextVersion = ++globalVersion
+    }
+    if (version !== nextVersion) {
+      version = nextVersion
+      listners.forEach((listener) => listener(nextVersion))
+    }
   }
   const proxy = new Proxy(Object.create(initialObject.constructor.prototype), {
-    get(target, prop) {
+    get(target, prop, receiver) {
       if (prop === MUTABLE_SOURCE) {
         if (!mutableSource) {
           mutableSource = createMutableSource(proxy, () => version)
@@ -37,10 +49,12 @@ export const create = <T extends object>(initialObject: T = {} as T): T => {
         return listners
       }
       if (prop === SNAPSHOT) {
-        if (version === snapshotVersion) {
-          return savedSnapshot
+        const cache = snapshotCache.get(receiver)
+        if (cache && cache.version === version) {
+          return cache.snapshot
         }
         const snapshot = Object.create(target.constructor.prototype)
+        snapshotCache.set(receiver, { version, snapshot })
         Reflect.ownKeys(target).forEach((key) => {
           const value = target[key]
           if (isObject(value)) {
@@ -49,8 +63,6 @@ export const create = <T extends object>(initialObject: T = {} as T): T => {
             snapshot[key] = value
           }
         })
-        savedSnapshot = snapshot
-        snapshotVersion = version
         return snapshot
       }
       return target[prop]
@@ -58,15 +70,15 @@ export const create = <T extends object>(initialObject: T = {} as T): T => {
     deleteProperty(target, prop) {
       const value = target[prop]
       if (isObject(value)) {
-        ;(value as any)[LISTNERS].delete(incrementVersion)
+        ;(value as any)[LISTNERS].delete(notifyUpdate)
       }
       delete target[prop]
-      incrementVersion()
+      notifyUpdate()
       return true
     },
     set(target, prop, value) {
       if (isObject(target[prop])) {
-        target[prop][LISTNERS].delete(incrementVersion)
+        target[prop][LISTNERS].delete(notifyUpdate)
       }
       if (isObject(value)) {
         value = getUntrackedObject(value) ?? value
@@ -75,11 +87,11 @@ export const create = <T extends object>(initialObject: T = {} as T): T => {
         } else {
           target[prop] = create(value)
         }
-        target[prop][LISTNERS].add(incrementVersion)
+        target[prop][LISTNERS].add(notifyUpdate)
       } else {
         target[prop] = value
       }
-      incrementVersion()
+      notifyUpdate()
       return true
     },
   })

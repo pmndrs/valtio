@@ -139,7 +139,7 @@ it('array in object', async () => {
   await findByText('counts: 0,1,2,3')
 })
 
-it.skip('circular object', async () => {
+it('circular object', async () => {
   const obj = create<any>({ object: {} })
   obj.object = obj
   obj.object.count = 0
