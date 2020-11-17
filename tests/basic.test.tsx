@@ -1,9 +1,9 @@
 import React, { StrictMode, useRef, useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { create, useProxy } from '../src/index'
+import { proxy, useProxy } from '../src/index'
 
 it('simple counter', async () => {
-  const obj = create({ count: 0 })
+  const obj = proxy({ count: 0 })
 
   const Counter: React.FC = () => {
     const snapshot = useProxy(obj)
@@ -28,7 +28,7 @@ it('simple counter', async () => {
 })
 
 it('no extra re-renders', async () => {
-  const obj = create({ count: 0, count2: 0 })
+  const obj = proxy({ count: 0, count2: 0 })
 
   const Counter: React.FC = () => {
     const snapshot = useProxy(obj)
@@ -88,7 +88,7 @@ it('no extra re-renders', async () => {
 })
 
 it('object in object', async () => {
-  const obj = create({ object: { count: 0 } })
+  const obj = proxy({ object: { count: 0 } })
 
   const Counter: React.FC = () => {
     const snapshot = useProxy(obj)
@@ -113,7 +113,7 @@ it('object in object', async () => {
 })
 
 it('array in object', async () => {
-  const obj = create({ counts: [0, 1, 2] })
+  const obj = proxy({ counts: [0, 1, 2] })
 
   const Counter: React.FC = () => {
     const snapshot = useProxy(obj)
@@ -140,7 +140,7 @@ it('array in object', async () => {
 })
 
 it('circular object', async () => {
-  const obj = create<any>({ object: {} })
+  const obj = proxy<any>({ object: {} })
   obj.object = obj
   obj.object.count = 0
 

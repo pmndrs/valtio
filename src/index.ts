@@ -24,7 +24,7 @@ const snapshotCache = new WeakMap<
   }
 >()
 
-export const create = <T extends object>(initialObject: T = {} as T): T => {
+const createProxy = <T extends object>(initialObject: T = {} as T): T => {
   let version = globalVersion
   let mutableSource: any
   const listners = new Set<(nextVersion?: number) => void>()
@@ -41,7 +41,7 @@ export const create = <T extends object>(initialObject: T = {} as T): T => {
     get(target, prop, receiver) {
       if (prop === MUTABLE_SOURCE) {
         if (!mutableSource) {
-          mutableSource = createMutableSource(proxy, () => version)
+          mutableSource = createMutableSource(receiver, () => version)
         }
         return mutableSource
       }
@@ -85,7 +85,7 @@ export const create = <T extends object>(initialObject: T = {} as T): T => {
         if (value[LISTNERS]) {
           target[prop] = value
         } else {
-          target[prop] = create(value)
+          target[prop] = createProxy(value)
         }
         target[prop][LISTNERS].add(notifyUpdate)
       } else {
@@ -108,7 +108,7 @@ const subscribe = (proxy: any, callback: () => void) => {
   }
 }
 
-export const useProxy = <T extends object>(proxy: T): T => {
+const useProxy = <T extends object>(proxy: T): T => {
   const affected = new WeakMap()
   const lastAffected = useRef<WeakMap<object, unknown>>()
   useEffect(() => {
@@ -144,3 +144,5 @@ export const useProxy = <T extends object>(proxy: T): T => {
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
   return createDeepProxy(snapshot, affected, proxyCache)
 }
+
+export { createProxy as proxy, useProxy }
