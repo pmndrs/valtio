@@ -23,7 +23,6 @@ const Counter = () => {
     <div>
       {snapshot.count}
       <button onClick={() => ++globalState.count}>+1</button>
-      {Math.random()}
     </div>
   );
 };
