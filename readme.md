@@ -31,6 +31,8 @@ setInterval(() => {
 ```js
 function Counter() {
   const snapshot = useProxy(state)
+  // Rule of thumb: read from snapshots, mutate the source
+  // The component renders when the snapshot-reads change
   return (
     <div>
       {snapshot.count}
@@ -43,12 +45,14 @@ function Counter() {
 ### Subscribe from anywhere
 
 ```js
-import { subscribeProxy } from 'valtio'
-import globalState from './globalState';
+import { subscribe } from 'valtio'
 
-subscribeProxy(globalState, () => {
-  console.log(`globalState.count changed to ${state.count}`);
-})
+// Suscribe to all state changes
+const unsubscribe = subscribe(state, () => console.log(`state has changed to ${state}`))
+// Unsubscribe by calling the result
+unsubscribe()
+// Subscribe to a portion of state
+subscribe(state.foo, () => console.log(`state.foo has changed to ${state.foo}`))
 ```
 
 **And that's it!**
