@@ -38,3 +38,34 @@ it('delayed increment', async () => {
   await findByText('loading')
   await findByText('count: 1')
 })
+
+it('delayed object', async () => {
+  const state = proxy<any>({ object: { text: 'none' } })
+  const delayedObject = () => {
+    state.object = sleep(10).then(() => ({ text: 'hello' }))
+  }
+
+  const Counter: React.FC = () => {
+    const snapshot = useProxy(state)
+    return (
+      <>
+        <div>text: {snapshot.object.text}</div>
+        <button onClick={delayedObject}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </StrictMode>
+  )
+
+  await findByText('text: none')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('text: hello')
+})

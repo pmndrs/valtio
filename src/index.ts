@@ -60,14 +60,11 @@ const createProxy = <T extends object>(initialObject: T = {} as T): T => {
           if (!isObject(value)) {
             snapshot[key] = value
           } else if (value instanceof Promise) {
-            snapshot[key] = new Proxy(
-              {},
-              {
-                get() {
-                  throw value
-                },
-              }
-            )
+            Object.defineProperty(snapshot, key, {
+              get() {
+                throw value
+              },
+            })
           } else {
             snapshot[key] = (value as any)[SNAPSHOT]
           }
@@ -134,18 +131,22 @@ const useProxy = <T extends object>(proxy: T): T => {
     const deepChangedCache = new WeakMap()
     return (proxy: any) => {
       const snapshot = proxy[SNAPSHOT]
-      if (
-        prevSnapshot !== null &&
-        lastAffected.current &&
-        !isDeepChanged(
-          prevSnapshot,
-          snapshot,
-          lastAffected.current,
-          deepChangedCache
-        )
-      ) {
-        // not changed
-        return prevSnapshot
+      try {
+        if (
+          prevSnapshot !== null &&
+          lastAffected.current &&
+          !isDeepChanged(
+            prevSnapshot,
+            snapshot,
+            lastAffected.current,
+            deepChangedCache
+          )
+        ) {
+          // not changed
+          return prevSnapshot
+        }
+      } catch (e) {
+        // ignore and return new snapshot
       }
       return (prevSnapshot = snapshot)
     }
