@@ -159,4 +159,4 @@ const useProxy = <T extends object>(proxy: T): T => {
   return createDeepProxy(snapshot, affected, proxyCache)
 }
 
-export { createProxy as proxy, useProxy }
+export { createProxy as proxy, useProxy, subscribe as subscribeProxy }
