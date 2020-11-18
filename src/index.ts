@@ -147,8 +147,7 @@ const useProxy = <T extends object>(proxy: T): T => {
         // not changed
         return prevSnapshot
       }
-      prevSnapshot = snapshot
-      return snapshot
+      return (prevSnapshot = snapshot)
     }
   }, [])
   const snapshot = useMutableSource(
