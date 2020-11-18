@@ -9,7 +9,7 @@ import {
 import { createMutableSource, useMutableSource } from './useMutableSource'
 
 const MUTABLE_SOURCE = Symbol()
-const LISTNERS = Symbol()
+const LISTENERS = Symbol()
 const SNAPSHOT = Symbol()
 
 const isObject = (x: unknown): x is object =>
@@ -27,14 +27,14 @@ const snapshotCache = new WeakMap<
 const createProxy = <T extends object>(initialObject: T = {} as T): T => {
   let version = globalVersion
   let mutableSource: any
-  const listners = new Set<(nextVersion?: number) => void>()
+  const listeners = new Set<(nextVersion?: number) => void>()
   const notifyUpdate = (nextVersion?: number) => {
     if (!nextVersion) {
       nextVersion = ++globalVersion
     }
     if (version !== nextVersion) {
       version = nextVersion
-      listners.forEach((listener) => listener(nextVersion))
+      listeners.forEach((listener) => listener(nextVersion))
     }
   }
   const proxy = new Proxy(Object.create(initialObject.constructor.prototype), {
@@ -45,8 +45,8 @@ const createProxy = <T extends object>(initialObject: T = {} as T): T => {
         }
         return mutableSource
       }
-      if (prop === LISTNERS) {
-        return listners
+      if (prop === LISTENERS) {
+        return listeners
       }
       if (prop === SNAPSHOT) {
         const cache = snapshotCache.get(receiver)
@@ -70,7 +70,7 @@ const createProxy = <T extends object>(initialObject: T = {} as T): T => {
     deleteProperty(target, prop) {
       const value = target[prop]
       if (isObject(value)) {
-        ;(value as any)[LISTNERS].delete(notifyUpdate)
+        ;(value as any)[LISTENERS].delete(notifyUpdate)
       }
       delete target[prop]
       notifyUpdate()
@@ -78,16 +78,16 @@ const createProxy = <T extends object>(initialObject: T = {} as T): T => {
     },
     set(target, prop, value) {
       if (isObject(target[prop])) {
-        target[prop][LISTNERS].delete(notifyUpdate)
+        target[prop][LISTENERS].delete(notifyUpdate)
       }
       if (isObject(value)) {
         value = getUntrackedObject(value) ?? value
-        if (value[LISTNERS]) {
+        if (value[LISTENERS]) {
           target[prop] = value
         } else {
           target[prop] = createProxy(value)
         }
-        target[prop][LISTNERS].add(notifyUpdate)
+        target[prop][LISTENERS].add(notifyUpdate)
       } else {
         target[prop] = value
       }
@@ -102,9 +102,9 @@ const createProxy = <T extends object>(initialObject: T = {} as T): T => {
 }
 
 const subscribe = (proxy: any, callback: () => void) => {
-  proxy[LISTNERS].add(callback)
+  proxy[LISTENERS].add(callback)
   return () => {
-    proxy[LISTNERS].delete(callback)
+    proxy[LISTENERS].delete(callback)
   }
 }
 
