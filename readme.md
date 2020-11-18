@@ -40,6 +40,17 @@ function Counter() {
 }
 ```
 
+### Subscribe from anywhere
+
+```js
+import { subscribeProxy } from 'valtio'
+import globalState from './globalState';
+
+subscribeProxy(globalState, () => {
+  console.log(`globalState.count changed to ${state.count}`);
+})
+```
+
 **And that's it!**
 
 </details>
