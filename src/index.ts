@@ -57,10 +57,19 @@ const createProxy = <T extends object>(initialObject: T = {} as T): T => {
         snapshotCache.set(receiver, { version, snapshot })
         Reflect.ownKeys(target).forEach((key) => {
           const value = target[key]
-          if (isObject(value)) {
-            snapshot[key] = (value as any)[SNAPSHOT]
-          } else {
+          if (!isObject(value)) {
             snapshot[key] = value
+          } else if (value instanceof Promise) {
+            snapshot[key] = new Proxy(
+              {},
+              {
+                get() {
+                  throw value
+                },
+              }
+            )
+          } else {
+            snapshot[key] = (value as any)[SNAPSHOT]
           }
         })
         return snapshot
@@ -69,18 +78,26 @@ const createProxy = <T extends object>(initialObject: T = {} as T): T => {
     },
     deleteProperty(target, prop) {
       const value = target[prop]
-      if (isObject(value)) {
-        ;(value as any)[LISTENERS].delete(notifyUpdate)
+      const childListeners = isObject(value) && (value as any)[LISTENERS]
+      if (childListeners) {
+        childListeners.delete(notifyUpdate)
       }
       delete target[prop]
       notifyUpdate()
       return true
     },
-    set(target, prop, value) {
-      if (isObject(target[prop])) {
-        target[prop][LISTENERS].delete(notifyUpdate)
+    set(target, prop, value, receiver) {
+      const childListeners = isObject(target[prop]) && target[prop][LISTENERS]
+      if (childListeners) {
+        childListeners.delete(notifyUpdate)
       }
-      if (isObject(value)) {
+      if (!isObject(value)) {
+        target[prop] = value
+      } else if (value instanceof Promise) {
+        target[prop] = value.then((v) => {
+          receiver[prop] = v
+        })
+      } else {
         value = getUntrackedObject(value) ?? value
         if (value[LISTENERS]) {
           target[prop] = value
@@ -88,8 +105,6 @@ const createProxy = <T extends object>(initialObject: T = {} as T): T => {
           target[prop] = createProxy(value)
         }
         target[prop][LISTENERS].add(notifyUpdate)
-      } else {
-        target[prop] = value
       }
       notifyUpdate()
       return true
