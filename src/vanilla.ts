@@ -1,10 +1,6 @@
 import { getUntrackedObject } from 'proxy-compare'
 
-type MutableSource = any
-type CreateMutableSource = (p: any, getVersion: any) => MutableSource
-let createMutableSource: CreateMutableSource | undefined
-
-const MUTABLE_SOURCE = Symbol()
+const VERSION = Symbol()
 const LISTENERS = Symbol()
 const SNAPSHOT = Symbol()
 
@@ -22,7 +18,6 @@ const snapshotCache = new WeakMap<
 
 export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   let version = globalVersion
-  let mutableSource: MutableSource | undefined
   const listeners = new Set<(nextVersion?: number) => void>()
   const notifyUpdate = (nextVersion?: number) => {
     if (!nextVersion) {
@@ -38,11 +33,8 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
     : Object.create(initialObject.constructor.prototype)
   const p = new Proxy(emptyCopy, {
     get(target, prop, receiver) {
-      if (prop === MUTABLE_SOURCE) {
-        if (!mutableSource && createMutableSource) {
-          mutableSource = createMutableSource(receiver, () => version)
-        }
-        return mutableSource
+      if (prop === VERSION) {
+        return version
       }
       if (prop === LISTENERS) {
         return listeners
@@ -112,15 +104,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   return p
 }
 
-export const getMutableSource = (
-  p: any,
-  fn: CreateMutableSource
-): MutableSource => {
-  if (!createMutableSource) {
-    createMutableSource = fn
-  }
-  return p[MUTABLE_SOURCE]
-}
+export const getVersion = (p: any): number => p[VERSION]
 
 export const subscribe = (p: any, callback: () => void) => {
   p[LISTENERS].add(callback)

@@ -1,10 +1,17 @@
 import { useMemo, useRef, useEffect } from 'react'
-
 import { createDeepProxy, isDeepChanged } from 'proxy-compare'
 
 import { createMutableSource, useMutableSource } from './useMutableSource'
+import { proxy, getVersion, subscribe, snapshot } from './vanilla'
 
-import { proxy, getMutableSource, subscribe, snapshot } from './vanilla'
+type MutableSource = any
+const mutableSourceCache = new WeakMap<object, MutableSource>()
+const getMutableSource = (p: any): MutableSource => {
+  if (!mutableSourceCache.has(p)) {
+    mutableSourceCache.set(p, createMutableSource(p, getVersion))
+  }
+  return mutableSourceCache.get(p) as MutableSource
+}
 
 const useProxy = <T extends object>(p: T): T => {
   const affected = new WeakMap()
@@ -38,7 +45,7 @@ const useProxy = <T extends object>(p: T): T => {
     }
   }, [])
   const currSnapshot = useMutableSource(
-    getMutableSource(p, createMutableSource),
+    getMutableSource(p),
     getChangedSnapshot,
     subscribe
   )
