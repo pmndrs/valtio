@@ -80,4 +80,6 @@ export default [
   createESMConfig('src/index.ts', 'dist/index.js'),
   createCommonJSConfig('src/index.ts', 'dist/index.cjs.js'),
   createIIFEConfig('src/index.ts', 'dist/index.iife.js', 'valtio'),
+  createESMConfig('src/vanilla.ts', 'dist/vanilla.js'),
+  createCommonJSConfig('src/vanilla.ts', 'dist/vanilla.cjs.js'),
 ]
