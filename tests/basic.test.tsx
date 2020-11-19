@@ -139,7 +139,7 @@ it('array in object', async () => {
   await findByText('counts: 0,1,2,3')
 })
 
-it.only('array length after direct assignment', async () => {
+it('array length after direct assignment', async () => {
   const obj = proxy({ counts: [0, 1, 2] })
 
   const Counter: React.FC = () => {
