@@ -37,7 +37,10 @@ const createProxy = <T extends object>(initialObject: T = {} as T): T => {
       listeners.forEach((listener) => listener(nextVersion))
     }
   }
-  const proxy = new Proxy(Object.create(initialObject.constructor.prototype), {
+  const emptyCopy = Array.isArray(initialObject)
+    ? []
+    : Object.create(initialObject.constructor.prototype)
+  const proxy = new Proxy(emptyCopy, {
     get(target, prop, receiver) {
       if (prop === MUTABLE_SOURCE) {
         if (!mutableSource) {

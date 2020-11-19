@@ -139,6 +139,44 @@ it('array in object', async () => {
   await findByText('counts: 0,1,2,3')
 })
 
+it('array length after direct assignment', async () => {
+  const obj = proxy({ counts: [0, 1, 2] })
+
+  const Counter: React.FC = () => {
+    const snapshot = useProxy(obj)
+    return (
+      <>
+        <div>counts: {snapshot.counts.join(',')}</div>
+        <div>length: {snapshot.counts.length}</div>
+        <button
+          onClick={() => (obj.counts[obj.counts.length] = obj.counts.length)}>
+          increment
+        </button>
+        <button
+          onClick={() =>
+            (obj.counts[obj.counts.length + 5] = obj.counts.length + 5)
+          }>
+          jump
+        </button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>
+  )
+
+  await findByText('counts: 0,1,2')
+
+  fireEvent.click(getByText('increment'))
+  await findByText('counts: 0,1,2,3')
+
+  fireEvent.click(getByText('jump'))
+  await findByText('counts: 0,1,2,3,,,,,,9')
+})
+
 it('circular object', async () => {
   const obj = proxy<any>({ object: {} })
   obj.object = obj
