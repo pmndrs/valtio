@@ -129,4 +129,4 @@ export const subscribe = (p: any, callback: () => void) => {
   }
 }
 
-export const getSnapshot = <T extends object>(p: T): T => (p as any)[SNAPSHOT]
+export const snapshot = <T extends object>(p: T): T => (p as any)[SNAPSHOT]
