@@ -1,7 +1,7 @@
 {
   "name": "valtio",
   "private": true,
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "💊 Valtio makes proxy-state simple for React and Vanilla",
   "main": "index.cjs.js",
   "module": "index.js",
