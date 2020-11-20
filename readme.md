@@ -48,11 +48,34 @@ function Counter() {
 import { subscribe } from 'valtio'
 
 // Suscribe to all state changes
-const unsubscribe = subscribe(state, () => console.log(`state has changed to ${state}`))
+const unsubscribe = subscribe(state, () =>
+  console.log(`state has changed to ${state}`)
+)
 // Unsubscribe by calling the result
 unsubscribe()
 // Subscribe to a portion of state
 subscribe(state.foo, () => console.log(`state.foo has changed to ${state.foo}`))
+```
+
+### Suspense out of the box
+
+```js
+const state = create({ post: fetch(url).then((res) => res.json()) })
+
+function Post() {
+  const snapshot = useProxy(state)
+
+  // Valtio suspends promises, access async data directly
+  return <div>{snapshot.post.title}</div>
+}
+
+function App() {
+  return (
+    <Suspense fallback={<span>waiting...</span>}>
+      <Post />
+    </Suspense>
+  )
+}
 ```
 
 **And that's it!**
