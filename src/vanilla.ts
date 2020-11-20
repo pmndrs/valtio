@@ -7,6 +7,7 @@ const SNAPSHOT = Symbol()
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
+const proxyCache = new WeakMap<object, object>()
 let globalVersion = 0
 const snapshotCache = new WeakMap<
   object,
@@ -30,7 +31,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   }
   const emptyCopy = Array.isArray(initialObject)
     ? []
-    : Object.create(initialObject.constructor.prototype)
+    : Object.create(initialObject.constructor?.prototype || null)
   const p = new Proxy(emptyCopy, {
     get(target, prop, receiver) {
       if (prop === VERSION) {
@@ -86,9 +87,11 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
           receiver[prop] = v
         })
       } else {
-        value = getUntrackedObject(value) ?? value
+        value = getUntrackedObject(value) || value
         if (value[LISTENERS]) {
           target[prop] = value
+        } else if (proxyCache.has(value)) {
+          target[prop] = proxyCache.get(value) as object
         } else {
           target[prop] = proxy(value)
         }
@@ -98,6 +101,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       return true
     },
   })
+  proxyCache.set(initialObject, p)
   Reflect.ownKeys(initialObject).forEach((key) => {
     p[key] = (initialObject as any)[key]
   })
