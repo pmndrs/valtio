@@ -30,7 +30,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   }
   const emptyCopy = Array.isArray(initialObject)
     ? []
-    : Object.create(initialObject.constructor.prototype)
+    : Object.create(initialObject.constructor?.prototype || null)
   const p = new Proxy(emptyCopy, {
     get(target, prop, receiver) {
       if (prop === VERSION) {
@@ -86,7 +86,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
           receiver[prop] = v
         })
       } else {
-        value = getUntrackedObject(value) ?? value
+        value = getUntrackedObject(value) || value
         if (value[LISTENERS]) {
           target[prop] = value
         } else {
