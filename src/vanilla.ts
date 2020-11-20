@@ -101,10 +101,10 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       return true
     },
   })
+  proxyCache.set(initialObject, p)
   Reflect.ownKeys(initialObject).forEach((key) => {
     p[key] = (initialObject as any)[key]
   })
-  proxyCache.set(initialObject, p)
   return p
 }
 
