@@ -67,6 +67,12 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
             snapshot[key] = (value as any)[SNAPSHOT]
           }
         })
+        if (
+          typeof process === 'object' &&
+          process.env.NODE_ENV !== 'production'
+        ) {
+          Object.freeze(snapshot)
+        }
         return snapshot
       }
       return target[prop]
