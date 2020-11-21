@@ -76,17 +76,6 @@ describe('subscribe', () => {
     obj.count = 10
   })
 
-  it.skip('should not cause infinite loop with increment', async () => {
-    const obj = proxy({ count: 0 })
-    const handler = () => {
-      obj.count += 1
-    }
-
-    subscribe(obj, handler)
-
-    obj.count += 1
-  })
-
   it('should batch updates', async () => {
     const obj = proxy({ count1: 0, count2: 0 })
     const handler = jest.fn()
