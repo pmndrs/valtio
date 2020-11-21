@@ -70,4 +70,15 @@ describe('subscribe', () => {
 
     obj.count = 10
   })
+
+  it.skip('should not cause infinite loop with increment', () => {
+    const obj = proxy({ count: 0 })
+    const handler = () => {
+      obj.count += 1
+    }
+
+    subscribe(obj, handler)
+
+    obj.count += 1
+  })
 })
