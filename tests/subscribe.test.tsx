@@ -1,7 +1,7 @@
 import { proxy, subscribe } from '../src/index'
 
 describe('subscribe', () => {
-  it('should call subscription', () => {
+  it('should call subscription', async () => {
     const obj = proxy({ count: 0 })
     const handler = jest.fn()
 
@@ -9,10 +9,11 @@ describe('subscribe', () => {
 
     obj.count += 1
 
+    await Promise.resolve()
     expect(handler).toBeCalledTimes(1)
   })
 
-  it('should be able to unsubscribe', () => {
+  it('should be able to unsubscribe', async () => {
     const obj = proxy({ count: 0 })
     const handler = jest.fn()
 
@@ -21,10 +22,11 @@ describe('subscribe', () => {
 
     obj.count += 1
 
+    await Promise.resolve()
     expect(handler).toBeCalledTimes(0)
   })
 
-  it.skip('should call subscription of property', () => {
+  it.skip('should call subscription of property', async () => {
     const obj = proxy({ count: 0 })
     const handler = jest.fn()
 
@@ -32,10 +34,11 @@ describe('subscribe', () => {
 
     obj.count += 1
 
+    await Promise.resolve()
     expect(handler).toBeCalledTimes(1)
   })
 
-  it('should call subscription of nested property', () => {
+  it('should call subscription of nested property', async () => {
     const obj = proxy({ nested: { count: 0 } })
     const handler = jest.fn()
 
@@ -43,10 +46,11 @@ describe('subscribe', () => {
 
     obj.nested.count += 1
 
+    await Promise.resolve()
     expect(handler).toBeCalledTimes(1)
   })
 
-  it.skip('should not re-run subscription if no change', () => {
+  it.skip('should not re-run subscription if no change', async () => {
     const obj = proxy({ count: 0 })
     const handler = jest.fn()
 
@@ -54,10 +58,11 @@ describe('subscribe', () => {
 
     obj.count = 0
 
+    await Promise.resolve()
     expect(handler).toBeCalledTimes(0)
   })
 
-  it('should not cause infinite loop', () => {
+  it('should not cause infinite loop', async () => {
     const obj = proxy({ count: 0 })
     const handler = () => {
       // Reset count if above 5
@@ -71,7 +76,7 @@ describe('subscribe', () => {
     obj.count = 10
   })
 
-  it.skip('should not cause infinite loop with increment', () => {
+  it.skip('should not cause infinite loop with increment', async () => {
     const obj = proxy({ count: 0 })
     const handler = () => {
       obj.count += 1
@@ -80,5 +85,18 @@ describe('subscribe', () => {
     subscribe(obj, handler)
 
     obj.count += 1
+  })
+
+  it('should batch updates', async () => {
+    const obj = proxy({ count1: 0, count2: 0 })
+    const handler = jest.fn()
+
+    subscribe(obj, handler)
+
+    obj.count1 += 1
+    obj.count2 += 1
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(1)
   })
 })
