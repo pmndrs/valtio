@@ -1,9 +1,4 @@
-![](/readme.svg)
-
-<details id="alt">
-  <summary>
-    Alt. Description
-  </summary>
+<a href="#valtio"><img src="valtio.svg" alt="" /></a>
 
 <div align="center">
   <h2 align="center">Valtio</h2>
@@ -54,13 +49,13 @@ const unsubscribe = subscribe(state, () =>
 // Unsubscribe by calling the result
 unsubscribe()
 // Subscribe to a portion of state
-subscribe(state.foo, () => console.log(`state.foo has changed to ${state.foo}`))
+subscribe(state.obj, () => console.log(`state.obj has changed to ${state.obj}`))
 ```
 
 ### Suspense out of the box
 
 ```js
-const state = create({ post: fetch(url).then((res) => res.json()) })
+const state = proxy({ post: fetch(url).then((res) => res.json()) })
 
 function Post() {
   const snapshot = useProxy(state)
@@ -77,7 +72,3 @@ function App() {
   )
 }
 ```
-
-**And that's it!**
-
-</details>
