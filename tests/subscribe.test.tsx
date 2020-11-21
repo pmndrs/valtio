@@ -1,6 +1,4 @@
-import React, { StrictMode, useRef, useEffect } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, subscribe, useProxy } from '../src/index'
+import { proxy, subscribe } from '../src/index'
 
 describe('subscribe', () => {
   it('should call subscription', () => {
@@ -26,7 +24,7 @@ describe('subscribe', () => {
     expect(handler).toBeCalledTimes(0)
   })
 
-  it('should call subscription of property', () => {
+  it.skip('should call subscription of property', () => {
     const obj = proxy({ count: 0 })
     const handler = jest.fn()
 
@@ -48,7 +46,7 @@ describe('subscribe', () => {
     expect(handler).toBeCalledTimes(1)
   })
 
-  it('should not re-run subscription if no change', () => {
+  it.skip('should not re-run subscription if no change', () => {
     const obj = proxy({ count: 0 })
     const handler = jest.fn()
 
