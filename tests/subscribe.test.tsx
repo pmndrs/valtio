@@ -26,19 +26,7 @@ describe('subscribe', () => {
     expect(handler).toBeCalledTimes(0)
   })
 
-  it.skip('should call subscription of property', async () => {
-    const obj = proxy({ count: 0 })
-    const handler = jest.fn()
-
-    subscribe(obj.count, handler)
-
-    obj.count += 1
-
-    await Promise.resolve()
-    expect(handler).toBeCalledTimes(1)
-  })
-
-  it('should call subscription of nested property', async () => {
+  it('should call subscription of object property', async () => {
     const obj = proxy({ nested: { count: 0 } })
     const handler = jest.fn()
 
@@ -48,6 +36,13 @@ describe('subscribe', () => {
 
     await Promise.resolve()
     expect(handler).toBeCalledTimes(1)
+  })
+
+  it('should thow if subscribing to primitive property', async () => {
+    const obj = proxy({ count: 0 })
+    const handler = jest.fn()
+
+    expect(() => subscribe(obj.count, handler)).toThrow()
   })
 
   it.skip('should not re-run subscription if no change', async () => {
