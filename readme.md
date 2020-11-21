@@ -1,13 +1,7 @@
-![](/readme.svg)
-
-<details id="alt">
-  <summary>
-    Alt. Description
-  </summary>
-
 <div align="center">
   <h2 align="center">Valtio</h2>
-  <p align="center"><code>npm i valtio</code> makes proxy-state simple</p>
+  <p align="center">makes proxy-state simple</p>
+  <p><code>npm i valtio</code></p>
 </div>
 
 ### Wrap your state object
