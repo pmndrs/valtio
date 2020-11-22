@@ -1,9 +1,4 @@
-<a href="#valtio"><img src="valtio.svg" alt="" /></a>
-
-<div align="center">
-  <h2 align="center">Valtio</h2>
-  <p align="center"><code>npm i valtio</code> makes proxy-state simple</p>
-</div>
+<code>npm i valtio</code> makes proxy-state simple
 
 ### Wrap your state object
 
@@ -13,7 +8,7 @@ import { proxy, useProxy } from 'valtio'
 const state = proxy({ count: 0, text: 'hello' })
 ```
 
-### Mutate from anywhere
+#### Mutate from anywhere
 
 ```js
 setInterval(() => {
@@ -21,7 +16,7 @@ setInterval(() => {
 }, 1000)
 ```
 
-### React via `useProxy`
+#### React via useProxy
 
 ```js
 function Counter() {
@@ -37,7 +32,7 @@ function Counter() {
 }
 ```
 
-### Subscribe from anywhere
+#### Subscribe from anywhere
 
 ```js
 import { subscribe } from 'valtio'
@@ -52,7 +47,7 @@ unsubscribe()
 subscribe(state.obj, () => console.log(`state.obj has changed to ${state.obj}`))
 ```
 
-### Suspense out of the box
+#### Suspense out of the box
 
 ```js
 const state = proxy({ post: fetch(url).then((res) => res.json()) })
