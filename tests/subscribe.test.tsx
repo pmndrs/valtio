@@ -47,7 +47,6 @@ describe('subscribe', () => {
 
   it('should not re-run subscription if no change', async () => {
     const obj = proxy({ count: 0 })
-
     const handler = jest.fn()
 
     subscribe(obj, handler)
