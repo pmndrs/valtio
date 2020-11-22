@@ -1,4 +1,4 @@
-![](/readme.svg)
+![](/valtio.svg)
 
 <code>npm i valtio</code> makes proxy-state simple
 
