@@ -56,7 +56,6 @@ const state = proxy({ post: fetch(url).then((res) => res.json()) })
 
 function Post() {
   const snapshot = useProxy(state)
-
   // Valtio suspends promises, access async data directly
   return <div>{snapshot.post.title}</div>
 }
