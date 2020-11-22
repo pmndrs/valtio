@@ -2,7 +2,7 @@
 
 <code>npm i valtio</code> makes proxy-state simple
 
-### Wrap your state object
+#### Wrap your state object
 
 ```js
 import { proxy, useProxy } from 'valtio'
@@ -67,4 +67,17 @@ function App() {
     </Suspense>
   )
 }
+```
+
+#### Vanilla JS
+
+```js
+import { proxy, subscribe, snapshot } from 'valtio/vanilla'
+
+const state = proxy({ count: 0, text: 'hello' })
+
+subscribe(state, () => {
+  console.log('state is mutated')
+  const obj = snapshot(state) // A snapshot is an immutable object
+})
 ```
