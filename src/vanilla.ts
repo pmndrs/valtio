@@ -19,20 +19,14 @@ const snapshotCache = new WeakMap<
 
 export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   let version = globalVersion
-  let pendingVersion = version
   const listeners = new Set<(nextVersion?: number) => void>()
   const notifyUpdate = (nextVersion?: number) => {
     if (!nextVersion) {
       nextVersion = ++globalVersion
     }
-    if (nextVersion > pendingVersion) {
-      pendingVersion = nextVersion
-      Promise.resolve().then(() => {
-        if (pendingVersion > version) {
-          version = pendingVersion
-          listeners.forEach((listener) => listener(version))
-        }
-      })
+    if (version !== nextVersion) {
+      version = nextVersion
+      listeners.forEach((listener) => listener(nextVersion))
     }
   }
   const emptyCopy = Array.isArray(initialObject)
@@ -126,9 +120,18 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
 export const getVersion = (p: any): number => p[VERSION]
 
 export const subscribe = (p: any, callback: () => void) => {
-  p[LISTENERS].add(callback)
+  let pendingVersion = 0
+  const listener = (nextVersion: number) => {
+    pendingVersion = nextVersion
+    Promise.resolve().then(() => {
+      if (nextVersion === pendingVersion) {
+        callback()
+      }
+    })
+  }
+  p[LISTENERS].add(listener)
   return () => {
-    p[LISTENERS].delete(callback)
+    p[LISTENERS].delete(listener)
   }
 }
 
