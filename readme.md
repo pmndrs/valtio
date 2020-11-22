@@ -1,3 +1,5 @@
+![](/readme.svg)
+
 <code>npm i valtio</code> makes proxy-state simple
 
 ### Wrap your state object
