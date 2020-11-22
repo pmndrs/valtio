@@ -88,6 +88,9 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       return true
     },
     set(target, prop, value, receiver) {
+      if (Object.is(target[prop], value)) {
+        return true
+      }
       const childListeners = isObject(target[prop]) && target[prop][LISTENERS]
       if (childListeners) {
         childListeners.delete(notifyUpdate)
