@@ -19,14 +19,14 @@ const snapshotCache = new WeakMap<
 
 export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   let version = globalVersion
-  const listeners = new Set<(nextVersion?: number) => void>()
+  const listeners = new Set<(nextVersion: number) => void>()
   const notifyUpdate = (nextVersion?: number) => {
     if (!nextVersion) {
       nextVersion = ++globalVersion
     }
     if (version !== nextVersion) {
       version = nextVersion
-      listeners.forEach((listener) => listener(nextVersion))
+      listeners.forEach((listener) => listener(nextVersion as number))
     }
   }
   const emptyCopy = Array.isArray(initialObject)
