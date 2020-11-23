@@ -7,7 +7,10 @@ const SNAPSHOT = Symbol()
 const isSupportedObject = (x: unknown): x is object =>
   typeof x === 'object' &&
   x !== null &&
-  (Array.isArray(x) || !(x as any)[Symbol.iterator])
+  (Array.isArray(x) || !(x as any)[Symbol.iterator]) &&
+  !(x instanceof WeakMap) &&
+  !(x instanceof WeakSet)
+// XXX all unsupported objects are not listed here. is there a better way?
 
 const proxyCache = new WeakMap<object, object>()
 let globalVersion = 0
@@ -36,7 +39,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   }
   const emptyCopy = Array.isArray(initialObject)
     ? []
-    : Object.create(initialObject.constructor?.prototype || null)
+    : Object.create(Object.getPrototypeOf(initialObject))
   const p = new Proxy(emptyCopy, {
     get(target, prop, receiver) {
       if (prop === VERSION) {
@@ -50,10 +53,21 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         if (cache && cache.version === version) {
           return cache.snapshot
         }
-        const snapshot = Array.isArray(target)
-          ? []
-          : Object.create(target.constructor?.prototype || null)
+        const snapshot: any = Array.isArray(target) ? [] : {}
         snapshotCache.set(receiver, { version, snapshot })
+        Reflect.ownKeys(Object.getPrototypeOf(target) || {}).forEach((key) => {
+          if (key === Symbol.unscopables) return
+          try {
+            const value = target[key]
+            // if (typeof value === 'function') {
+            //   snapshot[key] = value.bind(target)
+            // } else {
+            snapshot[key] = value
+            // }
+          } catch (e) {
+            console.error(e)
+          }
+        })
         Reflect.ownKeys(target).forEach((key) => {
           const value = target[key]
           if (!isSupportedObject(value)) {
