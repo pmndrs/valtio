@@ -5,7 +5,9 @@ const LISTENERS = Symbol()
 const SNAPSHOT = Symbol()
 
 const isSupportedObject = (x: unknown): x is object =>
-  typeof x === 'object' && x !== null && !(x as any)[Symbol.iterator]
+  typeof x === 'object' &&
+  x !== null &&
+  (Array.isArray(x) || !(x as any)[Symbol.iterator])
 
 const proxyCache = new WeakMap<object, object>()
 let globalVersion = 0
@@ -48,7 +50,9 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         if (cache && cache.version === version) {
           return cache.snapshot
         }
-        const snapshot = Object.create(target.constructor?.prototype || null)
+        const snapshot = Array.isArray(target)
+          ? []
+          : Object.create(target.constructor?.prototype || null)
         snapshotCache.set(receiver, { version, snapshot })
         Reflect.ownKeys(target).forEach((key) => {
           const value = target[key]
