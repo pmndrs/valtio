@@ -129,9 +129,22 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   return p
 }
 
-export const getVersion = (p: any): number => p[VERSION]
+function assertProxy(p: any) {
+  if (typeof process === 'object' && process.env.NODE_ENV === 'production')
+    return
+
+  if (typeof p !== 'object' || !p[VERSION]) {
+    throw new Error('Please use proxy object')
+  }
+}
+
+export const getVersion = (p: any): number => {
+  assertProxy(p)
+  return p[VERSION]
+}
 
 export const subscribe = (p: any, callback: () => void) => {
+  assertProxy(p)
   let pendingVersion = 0
   const listener = (nextVersion: number) => {
     pendingVersion = nextVersion
@@ -147,4 +160,7 @@ export const subscribe = (p: any, callback: () => void) => {
   }
 }
 
-export const snapshot = <T extends object>(p: T): T => (p as any)[SNAPSHOT]
+export const snapshot = <T extends object>(p: T): T => {
+  assertProxy(p)
+  return (p as any)[SNAPSHOT]
+}
