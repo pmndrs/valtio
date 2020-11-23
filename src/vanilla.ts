@@ -55,19 +55,6 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         }
         const snapshot: any = Array.isArray(target) ? [] : {}
         snapshotCache.set(receiver, { version, snapshot })
-        Reflect.ownKeys(Object.getPrototypeOf(target) || {}).forEach((key) => {
-          if (key === Symbol.unscopables) return
-          try {
-            const value = target[key]
-            // if (typeof value === 'function') {
-            //   snapshot[key] = value.bind(target)
-            // } else {
-            snapshot[key] = value
-            // }
-          } catch (e) {
-            console.error(e)
-          }
-        })
         Reflect.ownKeys(target).forEach((key) => {
           const value = target[key]
           if (!isSupportedObject(value)) {
