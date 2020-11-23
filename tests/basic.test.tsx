@@ -27,7 +27,7 @@ it('simple counter', async () => {
   await findByText('count: 1')
 })
 
-it.only('no extra re-renders', async () => {
+it('no extra re-renders', async () => {
   const obj = proxy({ count: 0, count2: 0 })
 
   const Counter: React.FC = () => {
