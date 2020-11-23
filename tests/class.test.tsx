@@ -142,7 +142,7 @@ it('inherited class without methods', async () => {
   await findByText('count: 1')
 })
 
-it('class with a class', async () => {
+it('class with a method', async () => {
   class CountClass {
     public count: number
     constructor() {
