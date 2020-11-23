@@ -4,8 +4,10 @@ const VERSION = Symbol()
 const LISTENERS = Symbol()
 const SNAPSHOT = Symbol()
 
-const isObject = (x: unknown): x is object =>
-  typeof x === 'object' && x !== null
+const isSupportedObject = (x: unknown): x is object =>
+  typeof x === 'object' &&
+  x !== null &&
+  (Array.isArray(x) || !(x as any)[Symbol.iterator])
 
 const proxyCache = new WeakMap<object, object>()
 let globalVersion = 0
@@ -18,6 +20,9 @@ const snapshotCache = new WeakMap<
 >()
 
 export const proxy = <T extends object>(initialObject: T = {} as T): T => {
+  if (!isSupportedObject(initialObject)) {
+    throw new Error('unsupported object type')
+  }
   let version = globalVersion
   const listeners = new Set<(nextVersion: number) => void>()
   const notifyUpdate = (nextVersion?: number) => {
@@ -45,11 +50,13 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         if (cache && cache.version === version) {
           return cache.snapshot
         }
-        const snapshot = Object.create(target.constructor.prototype)
+        const snapshot = Array.isArray(target)
+          ? []
+          : Object.create(target.constructor?.prototype || null)
         snapshotCache.set(receiver, { version, snapshot })
         Reflect.ownKeys(target).forEach((key) => {
           const value = target[key]
-          if (!isObject(value)) {
+          if (!isSupportedObject(value)) {
             snapshot[key] = value
           } else if (value instanceof Promise) {
             Object.defineProperty(snapshot, key, {
@@ -72,24 +79,29 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       return target[prop]
     },
     deleteProperty(target, prop) {
-      const value = target[prop]
-      const childListeners = isObject(value) && (value as any)[LISTENERS]
+      const prevValue = target[prop]
+      const childListeners =
+        isSupportedObject(prevValue) && (prevValue as any)[LISTENERS]
       if (childListeners) {
         childListeners.delete(notifyUpdate)
       }
-      delete target[prop]
-      notifyUpdate()
-      return true
+      const deleted = Reflect.deleteProperty(target, prop)
+      if (deleted) {
+        notifyUpdate()
+      }
+      return deleted
     },
     set(target, prop, value, receiver) {
-      if (Object.is(target[prop], value)) {
+      const prevValue = target[prop]
+      if (Object.is(prevValue, value)) {
         return true
       }
-      const childListeners = isObject(target[prop]) && target[prop][LISTENERS]
+      const childListeners =
+        isSupportedObject(prevValue) && (prevValue as any)[LISTENERS]
       if (childListeners) {
         childListeners.delete(notifyUpdate)
       }
-      if (!isObject(value)) {
+      if (!isSupportedObject(value)) {
         target[prop] = value
       } else if (value instanceof Promise) {
         target[prop] = value.then((v) => {

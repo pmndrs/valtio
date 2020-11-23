@@ -27,7 +27,7 @@ it('simple counter', async () => {
   await findByText('count: 1')
 })
 
-it('no extra re-renders', async () => {
+it.only('no extra re-renders', async () => {
   const obj = proxy({ count: 0, count2: 0 })
 
   const Counter: React.FC = () => {
@@ -175,6 +175,31 @@ it('array length after direct assignment', async () => {
 
   fireEvent.click(getByText('jump'))
   await findByText('counts: 0,1,2,3,,,,,,9')
+})
+
+it('deleting property', async () => {
+  const obj = proxy<{ count?: number }>({ count: 1 })
+
+  const Counter: React.FC = () => {
+    const snapshot = useProxy(obj)
+    return (
+      <>
+        <div>count: {snapshot.count ?? 'none'}</div>
+        <button onClick={() => delete obj.count}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>
+  )
+
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: none')
 })
 
 it('circular object', async () => {
