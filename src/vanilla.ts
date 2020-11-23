@@ -159,7 +159,7 @@ export const subscribe = (p: any, callback: () => void) => {
 }
 
 export const snapshot = <T extends object>(p: T): T => {
-  if (!isProduction && (typeof p !== 'object' || !(p as any)[VERSION])) {
+  if (!isProduction && (!p || !(p as any)[VERSION])) {
     throw new Error('Please use proxy object')
   }
   return (p as any)[SNAPSHOT]
