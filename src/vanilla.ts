@@ -133,14 +133,14 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
 }
 
 export const getVersion = (p: any): number => {
-  if (!isProduction && (typeof p !== 'object' || !p[VERSION])) {
+  if (!isProduction && (!p || !p[VERSION])) {
     throw new Error('Please use proxy object')
   }
   return p[VERSION]
 }
 
 export const subscribe = (p: any, callback: () => void) => {
-  if (!isProduction && (typeof p !== 'object' || !p[VERSION])) {
+  if (!isProduction && (!p || !p[VERSION])) {
     throw new Error('Please use proxy object')
   }
   let pendingVersion = 0
