@@ -49,7 +49,16 @@ unsubscribe()
 subscribe(state.obj, () => console.log(`state.obj has changed to ${state.obj}`))
 ```
 
-#### Suspense out of the box
+#### Update transiently
+
+```jsx
+function Foo() {
+  const ref = useRef(state.obj)
+  // Subscribes to a state portion without causing explicit render, unsubscribes on unmount
+  useEffect(() => subscribe(state.obj, () => ref.current = state.obj), [state.obj])
+```
+
+#### Suspend components
 
 ```js
 const state = proxy({ post: fetch(url).then((res) => res.json()) })
