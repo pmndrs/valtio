@@ -2,7 +2,9 @@
 
 <code>npm i valtio</code> makes proxy-state simple
 
-#### Wrap your state object
+##### Wrap your state object
+
+Valtio turns the object you pass it into a self-aware proxy.
 
 ```js
 import { proxy, useProxy } from 'valtio'
@@ -10,7 +12,9 @@ import { proxy, useProxy } from 'valtio'
 const state = proxy({ count: 0, text: 'hello' })
 ```
 
-#### Mutate from anywhere
+##### Mutate from anywhere
+
+You can make changes to it in the same way you would to a normal js-object.
 
 ```js
 setInterval(() => {
@@ -18,13 +22,13 @@ setInterval(() => {
 }, 1000)
 ```
 
-#### React via useProxy
+##### React via useProxy
+
+Create a local snapshot that catches changes. Rule of thumb: read from snapshots, mutate the source. The component will only re-render when the parts of the state you access have changed, it is render-optimized.
 
 ```js
 function Counter() {
   const snapshot = useProxy(state)
-  // Rule of thumb: read from snapshots, mutate the source
-  // The component renders when the snapshot-reads change
   return (
     <div>
       {snapshot.count}
@@ -34,38 +38,40 @@ function Counter() {
 }
 ```
 
-#### Subscribe from anywhere
+##### Subscribe from anywhere
+
+You can access state outside of your components and subscribe to changes.
 
 ```js
 import { subscribe } from 'valtio'
 
 // Suscribe to all state changes
-const unsubscribe = subscribe(state, () =>
-  console.log(`state has changed to ${state}`)
-)
+const unsubscribe = subscribe(state, () => console.log(`state has changed to ${state}`))
 // Unsubscribe by calling the result
 unsubscribe()
 // Subscribe to a portion of state
 subscribe(state.obj, () => console.log(`state.obj has changed to ${state.obj}`))
 ```
 
-#### Update transiently
+##### Update transiently
+
+In cases you can to subscribe a component to state without causing render, stick the subscribe function into useEffect.
 
 ```jsx
 function Foo() {
   const ref = useRef(state.obj)
-  // Subscribes to a state portion without causing explicit render, unsubscribes on unmount
   useEffect(() => subscribe(state.obj, () => ref.current = state.obj), [state.obj])
 ```
 
-#### Suspend components
+##### Suspend your components
+
+Valtio supports React-suspense and will throw promises that you access within a components render function. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
 
 ```js
 const state = proxy({ post: fetch(url).then((res) => res.json()) })
 
 function Post() {
   const snapshot = useProxy(state)
-  // Valtio suspends promises, access async data directly
   return <div>{snapshot.post.title}</div>
 }
 
@@ -78,7 +84,9 @@ function App() {
 }
 ```
 
-#### Vanilla JS
+##### Use it vanilla
+
+Valtio is not tied to React, you can use it in vanilla-js.
 
 ```js
 import { proxy, subscribe, snapshot } from 'valtio/vanilla'
