@@ -157,30 +157,49 @@ it('class with a method', async () => {
 
   const Counter: React.FC = () => {
     const snapshot = useProxy(obj)
+    const commitsRef = useRef(0)
+    useEffect(() => {
+      commitsRef.current += 1
+    })
     return (
       <>
-        <div>count: {snapshot.count}</div>
-        <div>doubled: {snapshot.doubled()}</div>
+        <div>
+          doubled: {snapshot.doubled()} ({commitsRef.current})
+        </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
+    )
+  }
+
+  const Counter2: React.FC = () => {
+    const snapshot = useProxy(obj)
+    const commitsRef = useRef(0)
+    useEffect(() => {
+      commitsRef.current += 1
+    })
+    return (
+      <div>
+        count: {snapshot.count} ({commitsRef.current})
+      </div>
     )
   }
 
   const { getByText } = render(
     <StrictMode>
       <Counter />
+      <Counter2 />
     </StrictMode>
   )
 
   await waitFor(() => {
-    getByText('count: 0')
-    getByText('doubled: 0')
+    getByText('doubled: 0 (0)')
+    getByText('count: 0 (0)')
   })
 
   fireEvent.click(getByText('button'))
   await waitFor(() => {
-    getByText('count: 1')
-    getByText('doubled: 2')
+    getByText('doubled: 2 (1)')
+    getByText('count: 1 (1)')
   })
 })
 
@@ -206,11 +225,32 @@ it('inherited class with a method', async () => {
 
   const Counter: React.FC = () => {
     const snapshot = useProxy(obj)
+    const commitsRef = useRef(0)
+    useEffect(() => {
+      commitsRef.current += 1
+    })
     return (
       <>
-        <div>count: {snapshot.count}</div>
-        <div>doubled: {snapshot.doubled()}</div>
+        <div>
+          doubled: {snapshot.doubled()} ({commitsRef.current})
+        </div>
         <button onClick={() => ++obj.count}>button</button>
+      </>
+    )
+  }
+
+  const Counter2: React.FC = () => {
+    const snapshot = useProxy(obj)
+    const commitsRef = useRef(0)
+    useEffect(() => {
+      commitsRef.current += 1
+    })
+    return (
+      <>
+        <div>
+          count2: {snapshot.count2} ({commitsRef.current})
+        </div>
+        <button onClick={() => ++obj.count2}>button2</button>
       </>
     )
   }
@@ -218,17 +258,99 @@ it('inherited class with a method', async () => {
   const { getByText } = render(
     <StrictMode>
       <Counter />
+      <Counter2 />
     </StrictMode>
   )
 
   await waitFor(() => {
-    getByText('count: 0')
-    getByText('doubled: 0')
+    getByText('doubled: 0 (0)')
+    getByText('count2: 0 (0)')
   })
 
   fireEvent.click(getByText('button'))
   await waitFor(() => {
-    getByText('count: 1')
-    getByText('doubled: 2')
+    getByText('doubled: 2 (1)')
+    getByText('count2: 0 (0)')
+  })
+
+  fireEvent.click(getByText('button2'))
+  await waitFor(() => {
+    getByText('doubled: 2 (1)')
+    getByText('count2: 1 (1)')
+  })
+})
+
+it('no extra re-renders with getters', async () => {
+  class CountClass {
+    public count: number
+    public count2: number
+    constructor() {
+      this.count = 0
+      this.count2 = 0
+    }
+    get count1() {
+      return this.count
+    }
+    get sum() {
+      return this.count + this.count2
+    }
+  }
+
+  const obj = proxy(new CountClass())
+
+  const Counter: React.FC = () => {
+    const snapshot = useProxy(obj)
+    const commitsRef = useRef(0)
+    useEffect(() => {
+      commitsRef.current += 1
+    })
+    return (
+      <>
+        <div>
+          count: {snapshot.count1} ({commitsRef.current})
+        </div>
+        <button onClick={() => ++obj.count}>button</button>
+      </>
+    )
+  }
+
+  const Counter2: React.FC = () => {
+    const snapshot = useProxy(obj)
+    const commitsRef = useRef(0)
+    useEffect(() => {
+      commitsRef.current += 1
+    })
+    return (
+      <>
+        <div>
+          sum: {snapshot.sum} ({commitsRef.current})
+        </div>
+        <button onClick={() => ++obj.count2}>button2</button>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <StrictMode>
+      <Counter />
+      <Counter2 />
+    </StrictMode>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0 (0)')
+    getByText('sum: 0 (0)')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 1 (1)')
+    getByText('sum: 1 (1)')
+  })
+
+  fireEvent.click(getByText('button2'))
+  await waitFor(() => {
+    getByText('count: 1 (1)')
+    getByText('sum: 2 (2)')
   })
 })
