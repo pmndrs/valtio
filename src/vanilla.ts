@@ -4,9 +4,6 @@ const VERSION = Symbol()
 const LISTENERS = Symbol()
 const SNAPSHOT = Symbol()
 
-const isProduction =
-  typeof process !== 'object' || process.env.NODE_ENV === 'production'
-
 const isSupportedObject = (x: unknown): x is object =>
   typeof x === 'object' &&
   x !== null &&
@@ -133,14 +130,20 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
 }
 
 export const getVersion = (p: any): number => {
-  if (!isProduction && (!p || !p[VERSION])) {
+  if (
+    !(typeof process !== 'object' || process.env.NODE_ENV === 'production') &&
+    (!p || !p[VERSION])
+  ) {
     throw new Error('Please use proxy object')
   }
   return p[VERSION]
 }
 
 export const subscribe = (p: any, callback: () => void) => {
-  if (!isProduction && (!p || !p[VERSION])) {
+  if (
+    !(typeof process !== 'object' || process.env.NODE_ENV === 'production') &&
+    (!p || !p[VERSION])
+  ) {
     throw new Error('Please use proxy object')
   }
   let pendingVersion = 0
@@ -159,7 +162,10 @@ export const subscribe = (p: any, callback: () => void) => {
 }
 
 export const snapshot = <T extends object>(p: T): T => {
-  if (!isProduction && (!p || !(p as any)[VERSION])) {
+  if (
+    !(typeof process !== 'object' || process.env.NODE_ENV === 'production') &&
+    (!p || !(p as any)[VERSION])
+  ) {
     throw new Error('Please use proxy object')
   }
   return (p as any)[SNAPSHOT]
