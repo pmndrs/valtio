@@ -131,7 +131,8 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
 
 export const getVersion = (p: any): number => {
   if (
-    !(typeof process !== 'object' || process.env.NODE_ENV === 'production') &&
+    typeof process === 'object' &&
+    process.env.NODE_ENV !== 'production' &&
     (!p || !p[VERSION])
   ) {
     throw new Error('Please use proxy object')
@@ -141,8 +142,9 @@ export const getVersion = (p: any): number => {
 
 export const subscribe = (p: any, callback: () => void) => {
   if (
-    !(typeof process !== 'object' || process.env.NODE_ENV === 'production') &&
-    (!p || !p[VERSION])
+    typeof process === 'object' &&
+    process.env.NODE_ENV !== 'production' &&
+    (!p || !p[LISTENERS])
   ) {
     throw new Error('Please use proxy object')
   }
@@ -163,8 +165,9 @@ export const subscribe = (p: any, callback: () => void) => {
 
 export const snapshot = <T extends object>(p: T): T => {
   if (
-    !(typeof process !== 'object' || process.env.NODE_ENV === 'production') &&
-    (!p || !(p as any)[VERSION])
+    typeof process === 'object' &&
+    process.env.NODE_ENV !== 'production' &&
+    (!p || !(p as any)[SNAPSHOT])
   ) {
     throw new Error('Please use proxy object')
   }
