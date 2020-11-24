@@ -5,7 +5,7 @@ const LISTENERS = Symbol()
 const SNAPSHOT = Symbol()
 
 const isProduction =
-  typeof process === 'object' && process.env.NODE_ENV === 'production'
+  typeof process !== 'object' || process.env.NODE_ENV === 'production'
 
 const isSupportedObject = (x: unknown): x is object =>
   typeof x === 'object' &&
