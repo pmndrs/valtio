@@ -6,7 +6,7 @@
 
 Valtio turns the object you pass it into a self-aware proxy.
 
-```js
+```jsx
 import { proxy, useProxy } from 'valtio'
 
 const state = proxy({ count: 0, text: 'hello' })
@@ -16,7 +16,7 @@ const state = proxy({ count: 0, text: 'hello' })
 
 You can make changes to it in the same way you would to a normal js-object.
 
-```js
+```jsx
 setInterval(() => {
   ++state.count
 }, 1000)
@@ -26,7 +26,7 @@ setInterval(() => {
 
 Create a local snapshot that catches changes. Rule of thumb: read from snapshots, mutate the source. The component will only re-render when the parts of the state you access have changed, it is render-optimized.
 
-```js
+```jsx
 function Counter() {
   const snapshot = useProxy(state)
   return (
@@ -42,7 +42,7 @@ function Counter() {
 
 You can access state outside of your components and subscribe to changes.
 
-```js
+```jsx
 import { subscribe } from 'valtio'
 
 // Suscribe to all state changes
@@ -67,7 +67,7 @@ function Foo() {
 
 Valtio supports React-suspense and will throw promises that you access within a components render function. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
 
-```js
+```jsx
 const state = proxy({ post: fetch(url).then((res) => res.json()) })
 
 function Post() {
@@ -88,7 +88,7 @@ function App() {
 
 Valtio is not tied to React, you can use it in vanilla-js.
 
-```js
+```jsx
 import { proxy, subscribe, snapshot } from 'valtio/vanilla'
 
 const state = proxy({ count: 0, text: 'hello' })
