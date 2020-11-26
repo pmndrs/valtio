@@ -18,7 +18,7 @@
     "eslint:ci": "eslint '{src,tests}/**/*.{js,ts,jsx,tsx}'",
     "prepare": "yarn build",
     "pretest": "tsc --noEmit",
-    "test": "jest",
+    "test": "jest && jest --setupFiles ./tests/setNodeEnvProduction.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
     "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
@@ -84,7 +84,7 @@
     ]
   },
   "dependencies": {
-    "proxy-compare": "1.1.2",
+    "proxy-compare": "1.1.3",
     "use-subscription": "1.5.1"
   },
   "devDependencies": {

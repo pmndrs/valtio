@@ -1,4 +1,4 @@
-import { getUntrackedObject } from 'proxy-compare'
+import { getUntrackedObject, markToTrack } from 'proxy-compare'
 
 const VERSION = Symbol()
 const LISTENERS = Symbol()
@@ -9,8 +9,14 @@ const isSupportedObject = (x: unknown): x is object =>
   x !== null &&
   (Array.isArray(x) || !(x as any)[Symbol.iterator]) &&
   !(x instanceof WeakMap) &&
-  !(x instanceof WeakSet)
-// XXX all unsupported objects are not listed here. is there a better way?
+  !(x instanceof WeakSet) &&
+  !(x instanceof Error) &&
+  !(x instanceof Number) &&
+  !(x instanceof BigInt) &&
+  !(x instanceof Date) &&
+  !(x instanceof String) &&
+  !(x instanceof RegExp) &&
+  !(x instanceof ArrayBuffer)
 
 const proxyCache = new WeakMap<object, object>()
 let globalVersion = 0
@@ -56,21 +62,11 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         if (cache && cache.version === version) {
           return cache.snapshot
         }
-        const snapshot: any = Array.isArray(target) ? [] : {}
+        const snapshot: any = Array.isArray(target)
+          ? []
+          : Object.create(Object.getPrototypeOf(target))
+        markToTrack(snapshot)
         snapshotCache.set(receiver, { version, snapshot })
-        Reflect.ownKeys(Object.getPrototypeOf(target) || {}).forEach((key) => {
-          if (key === Symbol.unscopables) return
-          try {
-            const value = target[key]
-            // if (typeof value === 'function') {
-            //   snapshot[key] = value.bind(target)
-            // } else {
-            snapshot[key] = value
-            // }
-          } catch (e) {
-            console.error(e)
-          }
-        })
         Reflect.ownKeys(target).forEach((key) => {
           const value = target[key]
           if (!isSupportedObject(value)) {
