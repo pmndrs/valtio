@@ -26,6 +26,9 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   if (!isSupportedObject(initialObject)) {
     throw new Error('unsupported object type')
   }
+  if (proxyCache.has(initialObject)) {
+    return proxyCache.get(initialObject) as T
+  }
   let version = globalVersion
   const listeners = new Set<(nextVersion: number) => void>()
   const notifyUpdate = (nextVersion?: number) => {
@@ -125,8 +128,6 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         value = getUntrackedObject(value) || value
         if (value[LISTENERS]) {
           target[prop] = value
-        } else if (proxyCache.has(value)) {
-          target[prop] = proxyCache.get(value) as object
         } else {
           target[prop] = proxy(value)
         }
