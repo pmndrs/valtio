@@ -53,16 +53,6 @@ unsubscribe()
 subscribe(state.obj, () => console.log(`state.obj has changed to ${state.obj}`))
 ```
 
-##### Update transiently
-
-In cases you can to subscribe a component to state without causing render, stick the subscribe function into useEffect.
-
-```jsx
-function Foo() {
-  const ref = useRef(state.obj)
-  useEffect(() => subscribe(state.obj, () => ref.current = state.obj), [state.obj])
-```
-
 ##### Suspend your components
 
 Valtio supports React-suspense and will throw promises that you access within a components render function. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
@@ -82,6 +72,16 @@ function App() {
     </Suspense>
   )
 }
+```
+
+##### Update transiently
+
+In cases you can to subscribe a component to state without causing render, stick the subscribe function into useEffect.
+
+```jsx
+function Foo() {
+  const ref = useRef(state.obj)
+  useEffect(() => subscribe(state.obj, () => ref.current = state.obj), [state.obj])
 ```
 
 ##### Use it vanilla
