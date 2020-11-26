@@ -76,7 +76,7 @@ function App() {
 
 ##### Update transiently
 
-In cases you can to subscribe a component to state without causing render, stick the subscribe function into useEffect.
+You can subscribe a component to state without causing render, just stick the subscribe function into useEffect.
 
 ```jsx
 function Foo() {
