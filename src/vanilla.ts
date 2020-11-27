@@ -46,10 +46,10 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       listeners.forEach((listener) => listener(nextVersion as number))
     }
   }
-  const emptyCopy = Array.isArray(initialObject)
+  const baseObject = Array.isArray(initialObject)
     ? []
     : Object.create(Object.getPrototypeOf(initialObject))
-  const p = new Proxy(emptyCopy, {
+  const p = new Proxy(baseObject, {
     get(target, prop, receiver) {
       if (prop === VERSION) {
         return version
@@ -135,7 +135,15 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   })
   proxyCache.set(initialObject, p)
   Reflect.ownKeys(initialObject).forEach((key) => {
-    p[key] = (initialObject as any)[key]
+    const desc = Object.getOwnPropertyDescriptor(
+      initialObject,
+      key
+    ) as PropertyDescriptor
+    if (desc.get) {
+      Object.defineProperty(baseObject, key, desc)
+    } else {
+      p[key] = (initialObject as any)[key]
+    }
   })
   return p
 }
