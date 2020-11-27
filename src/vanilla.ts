@@ -135,8 +135,11 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   })
   proxyCache.set(initialObject, p)
   Reflect.ownKeys(initialObject).forEach((key) => {
-    const desc = Object.getOwnPropertyDescriptor(initialObject, key)
-    if (desc && desc.get) {
+    const desc = Object.getOwnPropertyDescriptor(
+      initialObject,
+      key
+    ) as PropertyDescriptor
+    if (desc.get) {
       Object.defineProperty(baseObject, key, desc)
     } else {
       p[key] = (initialObject as any)[key]
