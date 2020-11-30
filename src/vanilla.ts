@@ -18,8 +18,10 @@ const isSupportedObject = (x: unknown): x is object =>
   !(x instanceof RegExp) &&
   !(x instanceof ArrayBuffer)
 
-const proxyCache = new WeakMap<object, object>()
-let globalVersion = 0
+type ProxyObject = object
+const proxyCache = new WeakMap<object, ProxyObject>()
+
+let globalVersion = 1
 const snapshotCache = new WeakMap<
   object,
   {
@@ -77,8 +79,10 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
                 throw value
               },
             })
-          } else {
+          } else if ((value as any)[VERSION]) {
             snapshot[key] = (value as any)[SNAPSHOT]
+          } else {
+            snapshot[key] = value
           }
         })
         if (
