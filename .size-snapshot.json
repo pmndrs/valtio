@@ -41,5 +41,24 @@
     "bundled": 5472,
     "minified": 2835,
     "gzipped": 1061
+  },
+  "utils.js": {
+    "bundled": 787,
+    "minified": 232,
+    "gzipped": 166,
+    "treeshaked": {
+      "rollup": {
+        "code": 29,
+        "import_statements": 29
+      },
+      "webpack": {
+        "code": 1046
+      }
+    }
+  },
+  "utils.cjs.js": {
+    "bundled": 902,
+    "minified": 323,
+    "gzipped": 217
   }
 }

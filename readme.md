@@ -98,3 +98,14 @@ subscribe(state, () => {
   const obj = snapshot(state) // A snapshot is an immutable object
 })
 ```
+
+##### Use it locally in components
+
+You can use it locally in components. [Notes](./src/utils.ts#L5-L15)
+
+```jsx
+import { useLocalProxy } from 'valtio/utils'
+
+function Foo() {
+  const [snapshot, state] = useLocalProxy({ count: 0, text: 'hello' })
+```
