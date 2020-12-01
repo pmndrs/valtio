@@ -56,7 +56,8 @@ const useProxy = <T extends object>(p: T): T => {
 const useLocalProxy = <T extends object>(init: T | (() => T)) => {
   const ref = useRef<T>()
   if (!ref.current) {
-    const initialObject = typeof init === 'function' ? (init as any)() : init
+    const initialObject =
+      typeof init === 'function' ? (init as () => T)() : init
     ref.current = proxy(initialObject)
   }
   return [useProxy(ref.current!), ref.current]
