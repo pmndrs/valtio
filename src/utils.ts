@@ -8,7 +8,7 @@ import { proxy, useProxy } from 'valtio'
  * and discard it when the component unmounts.
  * It returns a tuple of snapshot and state.
  *
- * [Note]
+ * [Notes]
  * Valtio is designed for module state and this use case for component states
  * is not a primary target. It might not be ideal for such use cases.
  * For component state, alternatively consider using
