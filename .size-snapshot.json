@@ -43,7 +43,7 @@
     "gzipped": 1061
   },
   "utils.js": {
-    "bundled": 787,
+    "bundled": 788,
     "minified": 232,
     "gzipped": 166,
     "treeshaked": {
@@ -57,7 +57,7 @@
     }
   },
   "utils.cjs.js": {
-    "bundled": 902,
+    "bundled": 903,
     "minified": 323,
     "gzipped": 217
   }
