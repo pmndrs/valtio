@@ -101,7 +101,7 @@ subscribe(state, () => {
 
 ##### Use it locally in components
 
-You can use it locally in components.
+You can use it locally in components. [Note](./src/utils.ts#L5-L15)
 
 ```jsx
 import { useLocalProxy } from 'valtio/utils'
