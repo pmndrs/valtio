@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { proxy, useProxy } from 'valtio'
+import { proxy, useProxy, subscribe } from 'valtio'
 
 /**
  * useLocalProxy
@@ -22,4 +22,19 @@ export const useLocalProxy = <T extends object>(init: T | (() => T)) => {
     ref.current = proxy(initialObject)
   }
   return [useProxy(ref.current), ref.current] as const
+}
+
+export const subscribeKey = <TProxy extends unknown, TProperty>(
+  proxy: TProxy,
+  key: string,
+  callback: (val: TProperty) => void
+) => {
+  let prevValue = (proxy as any)[key]
+  return subscribe(proxy, () => {
+    const nextValue = (proxy as any)[key]
+    if (!Object.is(prevValue, nextValue)) {
+      prevValue = nextValue
+      callback(nextValue)
+    }
+  })
 }
