@@ -46,11 +46,11 @@ You can access state outside of your components and subscribe to changes.
 import { subscribe } from 'valtio'
 
 // Suscribe to all state changes
-const unsubscribe = subscribe(state, () => console.log(`state has changed to ${state}`))
+const unsubscribe = subscribe(state, () => console.log('state has changed to', state))
 // Unsubscribe by calling the result
 unsubscribe()
-// Subscribe to a portion of state
-subscribe(state.obj, () => console.log(`state.obj has changed to ${state.obj}`))
+// Subscribe to a portion (object) of state
+subscribe(state.obj, () => console.log('state.obj has changed to', state.obj))
 ```
 
 ##### Suspend your components
