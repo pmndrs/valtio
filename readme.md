@@ -49,9 +49,11 @@ import { subscribe } from 'valtio'
 const unsubscribe = subscribe(state, () => console.log('state has changed to', state))
 // Unsubscribe by calling the result
 unsubscribe()
-// Subscribe to a portion (object) of state
+// Subscribe to a portion of state
 subscribe(state.obj, () => console.log('state.obj has changed to', state.obj))
 ```
+
+To subscribe to a primitive value of state, consider [subscribeKey](./src/utils.ts#L28-L35) in utils.
 
 ##### Suspend your components
 

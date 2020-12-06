@@ -24,17 +24,26 @@ export const useLocalProxy = <T extends object>(init: T | (() => T)) => {
   return [useProxy(ref.current), ref.current] as const
 }
 
-export const subscribeKey = <TProxy extends unknown, TProperty>(
-  proxy: TProxy,
-  key: string,
-  callback: (val: TProperty) => void
+/**
+ * subscribeKey
+ *
+ * The subscribeKey utility enables subscription to a primitive subproperty of a given state proxy.
+ * Subscriptions created with subscribeKey will only fire when the specified property changes.
+ *
+ * @example
+ * import { subscribeKey } from 'valtio/utils'
+ * subscribeKey(state, 'count', (v) => console.log('state.count has changed to', v))
+ */
+export const subscribeKey = <T extends object>(
+  proxyObject: T,
+  key: keyof T,
+  callback: (val: T[typeof key]) => void
 ) => {
-  let prevValue = (proxy as any)[key]
-  return subscribe(proxy, () => {
-    const nextValue = (proxy as any)[key]
+  let prevValue = proxyObject[key]
+  return subscribe(proxyObject, () => {
+    const nextValue = proxyObject[key]
     if (!Object.is(prevValue, nextValue)) {
-      prevValue = nextValue
-      callback(nextValue)
+      callback((prevValue = nextValue))
     }
   })
 }
