@@ -37,7 +37,7 @@ export const useLocalProxy = <T extends object>(init: T | (() => T)) => {
 export const subscribeKey = <T extends object>(
   proxyObject: T,
   key: keyof T,
-  callback: (val: T[typeof key]) => void
+  callback: (value: T[typeof key]) => void
 ) => {
   let prevValue = proxyObject[key]
   return subscribe(proxyObject, () => {
