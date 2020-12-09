@@ -12,7 +12,6 @@ const isSupportedObject = (x: unknown): x is object =>
   !(x instanceof WeakSet) &&
   !(x instanceof Error) &&
   !(x instanceof Number) &&
-  !(x instanceof BigInt) &&
   !(x instanceof Date) &&
   !(x instanceof String) &&
   !(x instanceof RegExp) &&
