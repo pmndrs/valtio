@@ -1,5 +1,4 @@
-import React from 'react'
-import './App.css'
+import * as React from 'react'
 import { actions, filters, Todo, useFilter, useTodos } from './store'
 
 function App() {
@@ -23,7 +22,11 @@ function AddTodoInput() {
 
   return (
     <div>
-      <input type="text" value={value} onChange={({ target }) => setValue(target.value)} />
+      <input
+        type="text"
+        value={value}
+        onChange={({ target }) => setValue(target.value)}
+      />
       <button onClick={handleSubmit}>Add Todo</button>
     </div>
   )
@@ -53,7 +56,6 @@ function TodoRow({ todo }: { todo: Todo }) {
     <div
       style={{
         display: 'flex',
-        justifyContent: 'center',
         alignItems: 'center',
         textDecoration: todo.completed ? 'line-through' : 'initial',
       }}>
