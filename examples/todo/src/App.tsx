@@ -76,8 +76,7 @@ function FilterRow() {
       {filters.map((filter) => (
         <button
           style={{
-            textDecoration:
-              activeFilter === filter ? 'line-through' : 'initial',
+            fontWeight: activeFilter === filter ? 'bold' : 'normal',
           }}
           onClick={() => {
             actions.toggleFilter(filter)
