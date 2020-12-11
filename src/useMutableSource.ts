@@ -7,7 +7,7 @@ export {
 
 // emulation with use-subscription
 
-import { useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useSubscription } from 'use-subscription'
 
 const TARGET = Symbol()
@@ -39,5 +39,8 @@ export const useMutableSource = (
       }),
     [source, subscribe]
   )
+  useEffect(() => {
+    lastVersion.current = source[GET_VERSION](source[TARGET])
+  })
   return useSubscription({ getCurrentValue, subscribe: sub })
 }
