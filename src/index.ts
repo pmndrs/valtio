@@ -2,8 +2,7 @@ import { useMemo, useRef, useEffect } from 'react'
 import { createDeepProxy, isDeepChanged } from 'proxy-compare'
 
 import { createMutableSource, useMutableSource } from './useMutableSource'
-import { proxy, getVersion, subscribe, snapshot } from './vanilla'
-import type { NonPromise } from './vanilla'
+import { proxy, getVersion, subscribe, snapshot, NonPromise } from './vanilla'
 
 type MutableSource = any
 const mutableSourceCache = new WeakMap<object, MutableSource>()
