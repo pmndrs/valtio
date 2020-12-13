@@ -198,12 +198,15 @@ export const subscribe = (p: any, callback: () => void) => {
   }
 }
 
-// XXX this doesn't work for Promise<number> | string
-export type NonPromise<T extends object> = T extends Promise<infer V>
+export type NonPromise<T> = T extends Function
+  ? T
+  : T extends Promise<infer V>
   ? V
-  : {
-      [K in keyof T]: T[K] extends object ? NonPromise<T[K]> : T[K]
+  : T extends object
+  ? {
+      [K in keyof T]: NonPromise<T[K]>
     }
+  : T
 
 export const snapshot = <T extends object>(p: T): NonPromise<T> => {
   if (
