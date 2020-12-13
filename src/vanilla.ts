@@ -77,16 +77,11 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
           } else if (value instanceof Promise) {
             if ((value as any)[PROMISE_RESULT]) {
               snapshot[key] = (value as any)[PROMISE_RESULT]
-            } else if ((value as any)[PROMISE_ERROR]) {
-              Object.defineProperty(snapshot, key, {
-                get() {
-                  throw (value as any)[PROMISE_ERROR]
-                },
-              })
             } else {
+              const errorOrPromise = (value as any)[PROMISE_ERROR] || value
               Object.defineProperty(snapshot, key, {
                 get() {
-                  throw value
+                  throw errorOrPromise
                 },
               })
             }
