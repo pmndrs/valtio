@@ -162,7 +162,11 @@ export const getVersion = (p: any): number => {
   return p[VERSION]
 }
 
-export const subscribe = (p: any, callback: () => void) => {
+export const subscribe = (
+  p: any,
+  callback: () => void,
+  notifyInSync?: boolean
+) => {
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&
@@ -172,6 +176,10 @@ export const subscribe = (p: any, callback: () => void) => {
   }
   let pendingVersion = 0
   const listener = (nextVersion: number) => {
+    if (notifyInSync) {
+      callback()
+      return
+    }
     pendingVersion = nextVersion
     Promise.resolve().then(() => {
       if (nextVersion === pendingVersion) {
