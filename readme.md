@@ -86,6 +86,17 @@ function App() {
 }
 ```
 
+##### Update synchronously
+
+By default, state mutations are batched before triggering re-render. Sometimes, we want to disable the batching.
+
+```jsx
+function TextBox() {
+  const snapshot = useProxy(state, { sync: true })
+  return <input value={snapshot.text} onChange={(e) => (state.text = e.target.value)} />
+}
+```
+
 ##### Update transiently
 
 You can subscribe a component to state without causing render, just stick the subscribe function into useEffect.
