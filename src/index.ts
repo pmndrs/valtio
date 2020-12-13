@@ -19,7 +19,7 @@ const useProxy = <T extends object>(p: T): T => {
   useEffect(() => {
     lastAffected.current = affected
   })
-  const getChangedSnapshot = useMemo(() => {
+  const getSnapshot = useMemo(() => {
     let prevSnapshot: any = null
     const deepChangedCache = new WeakMap()
     return (p: any) => {
@@ -46,7 +46,7 @@ const useProxy = <T extends object>(p: T): T => {
   }, [])
   const currSnapshot = useMutableSource(
     getMutableSource(p),
-    getChangedSnapshot,
+    getSnapshot,
     subscribe
   )
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
