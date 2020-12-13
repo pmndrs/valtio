@@ -208,7 +208,7 @@ it('circular object', async () => {
   obj.object.count = 0
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useProxy(obj) as any
     return (
       <>
         <div>count: {snapshot.count}</div>

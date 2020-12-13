@@ -3,6 +3,8 @@ import { getUntrackedObject, markToTrack } from 'proxy-compare'
 const VERSION = Symbol()
 const LISTENERS = Symbol()
 const SNAPSHOT = Symbol()
+const PROMISE_RESULT = Symbol()
+const PROMISE_ERROR = Symbol()
 
 const isSupportedObject = (x: unknown): x is object =>
   typeof x === 'object' &&
@@ -73,11 +75,16 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
           if (!isSupportedObject(value)) {
             snapshot[key] = value
           } else if (value instanceof Promise) {
-            Object.defineProperty(snapshot, key, {
-              get() {
-                throw value
-              },
-            })
+            if ((value as any)[PROMISE_RESULT]) {
+              snapshot[key] = (value as any)[PROMISE_RESULT]
+            } else {
+              const errorOrPromise = (value as any)[PROMISE_ERROR] || value
+              Object.defineProperty(snapshot, key, {
+                get() {
+                  throw errorOrPromise
+                },
+              })
+            }
           } else if ((value as any)[VERSION]) {
             snapshot[key] = (value as any)[SNAPSHOT]
           } else {
@@ -107,7 +114,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       }
       return deleted
     },
-    set(target, prop, value, receiver) {
+    set(target, prop, value) {
       const prevValue = target[prop]
       if (Object.is(prevValue, value)) {
         return true
@@ -120,9 +127,15 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       if (!isSupportedObject(value)) {
         target[prop] = value
       } else if (value instanceof Promise) {
-        target[prop] = value.then((v) => {
-          receiver[prop] = v
-        })
+        target[prop] = value
+          .then((v) => {
+            target[prop][PROMISE_RESULT] = v
+            notifyUpdate()
+          })
+          .catch((e) => {
+            target[prop][PROMISE_ERROR] = e
+            notifyUpdate()
+          })
       } else {
         value = getUntrackedObject(value) || value
         if (value[LISTENERS]) {
@@ -193,7 +206,17 @@ export const subscribe = (
   }
 }
 
-export const snapshot = <T extends object>(p: T): T => {
+export type NonPromise<T> = T extends Function
+  ? T
+  : T extends Promise<infer V>
+  ? V
+  : T extends object
+  ? {
+      [K in keyof T]: NonPromise<T[K]>
+    }
+  : T
+
+export const snapshot = <T extends object>(p: T): NonPromise<T> => {
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&

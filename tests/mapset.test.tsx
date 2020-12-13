@@ -6,7 +6,7 @@ it('unsupported map', async () => {
   const obj = proxy({ map: new Map([['count', 0]]) })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useProxy(obj) as any
     return (
       <>
         <div>count: {snapshot.map.get('count')}</div>
@@ -32,7 +32,7 @@ it('unsupported set', async () => {
   const obj = proxy({ set: new Set([1, 2, 3]) })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useProxy(obj) as any
     return (
       <>
         <div>count: {[...snapshot.set].join(',')}</div>

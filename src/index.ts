@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useEffect } from 'react'
 import { createDeepProxy, isDeepChanged } from 'proxy-compare'
 
 import { createMutableSource, useMutableSource } from './useMutableSource'
-import { proxy, getVersion, subscribe, snapshot } from './vanilla'
+import { proxy, getVersion, subscribe, snapshot, NonPromise } from './vanilla'
 
 type MutableSource = any
 const mutableSourceCache = new WeakMap<object, MutableSource>()
@@ -17,7 +17,7 @@ type Options = {
   sync?: boolean
 }
 
-const useProxy = <T extends object>(p: T, options?: Options): T => {
+const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
   const affected = new WeakMap()
   const lastAffected = useRef<WeakMap<object, unknown>>()
   useEffect(() => {
