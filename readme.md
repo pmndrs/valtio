@@ -107,6 +107,17 @@ function Foo() {
   useEffect(() => subscribe(state.obj, () => ref.current = state.obj), [state.obj])
 ```
 
+##### Dev tools
+
+You can use [Redux DevTools Extension](https://github.com/zalmoxisus/redux-devtools-extension) for plain objects and arrays.
+
+```jsx
+import { devtools } from 'valtio/utils'
+
+const state = proxy({ count: 0, text: 'hello' })
+const unsub = devtools(state, 'state name')
+```
+
 ##### Use it vanilla
 
 Valtio is not tied to React, you can use it in vanilla-js.
