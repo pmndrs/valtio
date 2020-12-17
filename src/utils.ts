@@ -70,7 +70,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
       process.env.NODE_ENV === 'development' &&
       typeof window !== 'undefined'
     ) {
-      console.warn('Please install/enable Redux devtools extension')
+      console.warn('[Warning] Please install/enable Redux devtools extension')
     }
     return
   }
