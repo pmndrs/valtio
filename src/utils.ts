@@ -108,6 +108,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
       }
     }
   )
+  devtools.init(snapshot(proxyObject))
   return () => {
     unsub1()
     unsub2()
