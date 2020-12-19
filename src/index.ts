@@ -34,8 +34,8 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
   const [, forceUpdate] = useReducer((c) => c + 1, 0)
   const affected = new WeakMap()
   const lastAffected = useRef<typeof affected>()
-  const prevSnapshot = useRef<NonPromise<T> | null>(null)
-  const lastSnapshot = useRef<NonPromise<T> | null>(null)
+  const prevSnapshot = useRef<NonPromise<T>>()
+  const lastSnapshot = useRef<NonPromise<T>>()
   useIsomorphicLayoutEffect(() => {
     lastAffected.current = affected
     if (
@@ -58,7 +58,7 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
       lastSnapshot.current = nextSnapshot
       try {
         if (
-          prevSnapshot !== null &&
+          prevSnapshot &&
           lastAffected.current &&
           !isDeepChanged(
             prevSnapshot.current,
