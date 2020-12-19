@@ -1,4 +1,4 @@
-import React, { StrictMode, useRef, useEffect } from 'react'
+import React, { StrictMode, useRef, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { proxy, useProxy } from '../src/index'
 
@@ -226,5 +226,37 @@ it('circular object', async () => {
   await findByText('count: 0')
 
   fireEvent.click(getByText('button'))
+  await findByText('count: 1')
+})
+
+it('render from outside', async () => {
+  const obj = proxy({ count: 0, anotherCount: 0 })
+
+  const Counter: React.FC = () => {
+    const [show, setShow] = useState(false)
+    const snapshot = useProxy(obj)
+    return (
+      <>
+        {show ? (
+          <div>count: {snapshot.count}</div>
+        ) : (
+          <div>anotherCount: {snapshot.anotherCount}</div>
+        )}
+        <button onClick={() => ++obj.count}>button</button>
+        <button onClick={() => setShow((x) => !x)}>toggle</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>
+  )
+
+  await findByText('anotherCount: 0')
+
+  fireEvent.click(getByText('button'))
+  fireEvent.click(getByText('toggle'))
   await findByText('count: 1')
 })
