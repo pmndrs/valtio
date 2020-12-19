@@ -71,7 +71,7 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
           return prevSnapshot.current
         }
       } catch (e) {
-        // ignore and return new nextSnapshot
+        // ignore and return nextSnapshot
       }
       return (prevSnapshot.current = nextSnapshot)
     }
