@@ -87,7 +87,7 @@ it('no extra re-renders (commits)', async () => {
   })
 })
 
-it.only('no extra re-renders (render func calls)', async () => {
+it('no extra re-renders (render func calls)', async () => {
   const obj = proxy({ count: 0, count2: 0 })
 
   const Counter: React.FC = () => {
@@ -140,6 +140,18 @@ it.only('no extra re-renders (render func calls)', async () => {
   await waitFor(() => {
     getByText('count: 1 (2)')
     getByText('count2: 1 (2)')
+  })
+
+  fireEvent.click(getByText('button2'))
+  await waitFor(() => {
+    getByText('count: 1 (2)')
+    getByText('count2: 2 (3)')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 2 (3)')
+    getByText('count2: 2 (3)')
   })
 })
 
