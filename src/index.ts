@@ -1,12 +1,17 @@
 import {
   useCallback,
+  useDebugValue,
   useEffect,
   useLayoutEffect,
   useMemo,
   useReducer,
   useRef,
 } from 'react'
-import { createDeepProxy, isDeepChanged } from 'proxy-compare'
+import {
+  createDeepProxy,
+  isDeepChanged,
+  affectedToPathList,
+} from 'proxy-compare'
 
 import { createMutableSource, useMutableSource } from './useMutableSource'
 import { proxy, getVersion, subscribe, snapshot, NonPromise } from './vanilla'
@@ -16,6 +21,17 @@ const isSSR =
   /ServerSideRendering/.test(window.navigator && window.navigator.userAgent)
 
 const useIsomorphicLayoutEffect = isSSR ? useEffect : useLayoutEffect
+
+const useAffectedDebugValue = <State>(
+  state: State,
+  affected: WeakMap<object, unknown>
+) => {
+  const pathList = useRef<(string | number | symbol)[][]>()
+  useEffect(() => {
+    pathList.current = affectedToPathList(state, affected)
+  })
+  useDebugValue(pathList.current)
+}
 
 type MutableSource = any
 const mutableSourceCache = new WeakMap<object, MutableSource>()
@@ -82,6 +98,10 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
     [notifyInSync]
   )
   const currSnapshot = useMutableSource(getMutableSource(p), getSnapshot, sub)
+  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useAffectedDebugValue(currSnapshot, affected)
+  }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
   return createDeepProxy(currSnapshot, affected, proxyCache)
 }
