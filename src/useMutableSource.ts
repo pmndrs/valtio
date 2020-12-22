@@ -7,7 +7,7 @@ export {
 
 // emulation with use-subscription
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSubscription } from 'use-subscription'
 
 const TARGET = Symbol()
@@ -24,13 +24,25 @@ export const useMutableSource = (
   subscribe: any
 ) => {
   const lastVersion = useRef(0)
-  const versionDiff = source[GET_VERSION](source[TARGET]) - lastVersion.current
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const getCurrentValue = useCallback(() => getSnapshot(source[TARGET]), [
+  const currentVersion = source[GET_VERSION](source[TARGET])
+  const [state, setState] = useState(() => ({
+    version: currentVersion,
     source,
     getSnapshot,
-    versionDiff, // XXX this is a hack
-  ])
+    getCurrentValue: () => getSnapshot(source[TARGET]),
+  }))
+  if (
+    state.source !== source ||
+    state.getSnapshot !== getSnapshot ||
+    (currentVersion !== state.version && currentVersion !== lastVersion.current)
+  ) {
+    setState({
+      version: currentVersion,
+      source,
+      getSnapshot,
+      getCurrentValue: () => getSnapshot(source[TARGET]),
+    })
+  }
   const sub = useCallback(
     (callback: () => void) =>
       subscribe(source[TARGET], () => {
@@ -42,5 +54,8 @@ export const useMutableSource = (
   useEffect(() => {
     lastVersion.current = source[GET_VERSION](source[TARGET])
   })
-  return useSubscription({ getCurrentValue, subscribe: sub })
+  return useSubscription({
+    getCurrentValue: state.getCurrentValue,
+    subscribe: sub,
+  })
 }
