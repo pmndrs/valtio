@@ -27,7 +27,7 @@ it('simple counter', async () => {
   await findByText('count: 1')
 })
 
-it('no extra re-renders', async () => {
+it('no extra re-renders (commits)', async () => {
   const obj = proxy({ count: 0, count2: 0 })
 
   const Counter: React.FC = () => {
@@ -84,6 +84,62 @@ it('no extra re-renders', async () => {
   await waitFor(() => {
     getByText('count: 1 (1)')
     getByText('count2: 1 (1)')
+  })
+})
+
+it.only('no extra re-renders (render func calls)', async () => {
+  const obj = proxy({ count: 0, count2: 0 })
+
+  const Counter: React.FC = () => {
+    const snapshot = useProxy(obj)
+    const rendersRef = useRef(0)
+    rendersRef.current += 1
+    return (
+      <>
+        <div>
+          count: {snapshot.count} ({rendersRef.current})
+        </div>
+        <button onClick={() => ++obj.count}>button</button>
+      </>
+    )
+  }
+
+  const Counter2: React.FC = () => {
+    const snapshot = useProxy(obj)
+    const rendersRef = useRef(0)
+    rendersRef.current += 1
+    return (
+      <>
+        <div>
+          count2: {snapshot.count2} ({rendersRef.current})
+        </div>
+        <button onClick={() => ++obj.count2}>button2</button>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <>
+      <Counter />
+      <Counter2 />
+    </>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0 (1)')
+    getByText('count2: 0 (1)')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 1 (2)')
+    getByText('count2: 0 (1)')
+  })
+
+  fireEvent.click(getByText('button2'))
+  await waitFor(() => {
+    getByText('count: 1 (2)')
+    getByText('count2: 1 (2)')
   })
 })
 
