@@ -42,7 +42,13 @@ export const useMutableSource = (
     (currentVersion !== state[3] && currentVersion !== lastVersion.current)
   ) {
     currentSnapshot = getSnapshot(source[TARGET])
-    setState([source, subscribe, getSnapshot, currentVersion, currentSnapshot])
+    setState([
+      /* [0] */ source,
+      /* [1] */ getSnapshot,
+      /* [2] */ subscribe,
+      /* [3] */ currentVersion,
+      /* [4] */ currentSnapshot,
+    ])
   }
   useEffect(() => {
     let didUnsubscribe = false
@@ -64,7 +70,13 @@ export const useMutableSource = (
         if (prev[4] === nextSnapshot) {
           return prev
         }
-        return [prev[0], prev[1], prev[2], nextVersion, nextSnapshot]
+        return [
+          /* [0] */ prev[0],
+          /* [1] */ prev[1],
+          /* [2] */ prev[2],
+          /* [3] */ nextVersion,
+          /* [4] */ nextSnapshot,
+        ]
       })
     }
     const unsubscribe = subscribe(source[TARGET], checkForUpdates)
