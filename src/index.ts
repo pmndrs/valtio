@@ -1,5 +1,4 @@
 import {
-  useCallback,
   useDebugValue,
   useEffect,
   useLayoutEffect,
@@ -52,6 +51,10 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
   const lastAffected = useRef<typeof affected>()
   const prevSnapshot = useRef<NonPromise<T>>()
   const lastSnapshot = useRef<NonPromise<T>>()
+  if (!lastSnapshot.current) {
+    // lazy initialization
+    lastSnapshot.current = prevSnapshot.current = snapshot(p)
+  }
   useIsomorphicLayoutEffect(() => {
     lastAffected.current = affected
     if (
@@ -67,37 +70,38 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
       forceUpdate()
     }
   })
-  const getSnapshot = useMemo(() => {
-    const deepChangedCache = new WeakMap()
-    return (p: T) => {
-      const nextSnapshot = snapshot(p)
-      lastSnapshot.current = nextSnapshot
-      try {
-        if (
-          prevSnapshot &&
-          lastAffected.current &&
-          !isDeepChanged(
-            prevSnapshot.current,
-            nextSnapshot,
-            lastAffected.current,
-            deepChangedCache
-          )
-        ) {
-          // not changed
-          return prevSnapshot.current
-        }
-      } catch (e) {
-        // ignore and return nextSnapshot
-      }
-      return (prevSnapshot.current = nextSnapshot)
-    }
-  }, [])
   const notifyInSync = options?.sync
-  const sub = useCallback(
-    (p: T, cb: () => void) => subscribe(p, cb, notifyInSync),
-    [notifyInSync]
-  )
-  const currSnapshot = useMutableSource(getMutableSource(p), getSnapshot, sub)
+  const sub = useMemo(() => {
+    const deepChangedCache = new WeakMap()
+    return (p: T, cb: () => void) =>
+      subscribe(
+        p,
+        () => {
+          const nextSnapshot = snapshot(p)
+          lastSnapshot.current = nextSnapshot
+          try {
+            if (
+              lastAffected.current &&
+              !isDeepChanged(
+                prevSnapshot.current,
+                nextSnapshot,
+                lastAffected.current,
+                deepChangedCache
+              )
+            ) {
+              // not changed
+              return
+            }
+          } catch (e) {
+            // ignore if a promise or something is thrown
+          }
+          prevSnapshot.current = nextSnapshot
+          cb()
+        },
+        notifyInSync
+      )
+  }, [notifyInSync])
+  const currSnapshot = useMutableSource(getMutableSource(p), snapshot, sub)
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useAffectedDebugValue(currSnapshot, affected)

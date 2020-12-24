@@ -87,6 +87,90 @@ it('no extra re-renders (commits)', async () => {
   })
 })
 
+it('no extra re-renders (render func calls in non strict mode)', async () => {
+  const obj = proxy({ count: 0, count2: 0 })
+
+  const renderFn = jest.fn()
+  const Counter: React.FC = () => {
+    const snapshot = useProxy(obj)
+    renderFn(snapshot.count)
+    return (
+      <>
+        <div>count: {snapshot.count}</div>
+        <button onClick={() => ++obj.count}>button</button>
+      </>
+    )
+  }
+
+  const renderFn2 = jest.fn()
+  const Counter2: React.FC = () => {
+    const snapshot = useProxy(obj)
+    renderFn2(snapshot.count2)
+    return (
+      <>
+        <div>count2: {snapshot.count2}</div>
+        <button onClick={() => ++obj.count2}>button2</button>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <>
+      <Counter />
+      <Counter2 />
+    </>
+  )
+
+  await waitFor(() => {
+    getByText('count: 0')
+    getByText('count2: 0')
+  })
+  expect(renderFn).toBeCalledTimes(1)
+  expect(renderFn).lastCalledWith(0)
+  expect(renderFn2).toBeCalledTimes(1)
+  expect(renderFn2).lastCalledWith(0)
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('count2: 0')
+  })
+  expect(renderFn).toBeCalledTimes(2)
+  expect(renderFn).lastCalledWith(1)
+  expect(renderFn2).toBeCalledTimes(1)
+  expect(renderFn2).lastCalledWith(0)
+
+  fireEvent.click(getByText('button2'))
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('count2: 1')
+  })
+  expect(renderFn).toBeCalledTimes(2)
+  expect(renderFn).lastCalledWith(1)
+  expect(renderFn2).toBeCalledTimes(2)
+  expect(renderFn2).lastCalledWith(1)
+
+  fireEvent.click(getByText('button2'))
+  await waitFor(() => {
+    getByText('count: 1')
+    getByText('count2: 2')
+  })
+  expect(renderFn).toBeCalledTimes(2)
+  expect(renderFn).lastCalledWith(1)
+  expect(renderFn2).toBeCalledTimes(3)
+  expect(renderFn2).lastCalledWith(2)
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('count: 2')
+    getByText('count2: 2')
+  })
+  expect(renderFn).toBeCalledTimes(3)
+  expect(renderFn).lastCalledWith(2)
+  expect(renderFn2).toBeCalledTimes(3)
+  expect(renderFn2).lastCalledWith(2)
+})
+
 it('object in object', async () => {
   const obj = proxy({ object: { count: 0 } })
 
