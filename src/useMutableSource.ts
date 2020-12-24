@@ -5,7 +5,7 @@ export {
 } from 'react'
 */
 
-// emulation with use-subscription
+// useMutableSource emulation almost equivalent to useSubscription
 
 import { useEffect, useRef, useState } from 'react'
 
