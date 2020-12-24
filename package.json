@@ -6,6 +6,26 @@
   "main": "index.cjs.js",
   "module": "index.js",
   "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs.js",
+      "node": "./index.cjs.js",
+      "types": "./index.d.ts"
+    },
+    "./vanilla": {
+      "import": "./vanilla.js",
+      "require": "./vanilla.cjs.js",
+      "node": "./vanilla.cjs.js",
+      "types": "./vanilla.d.ts"
+    },
+    "./utils": {
+      "import": "./utils.js",
+      "require": "./utils.cjs.js",
+      "node": "./utils.cjs.js",
+      "types": "./utils.d.ts"
+    }
+  },
   "files": [
     "**"
   ],
@@ -21,7 +41,7 @@
     "test": "jest && jest --setupFiles ./tests/setNodeEnvProduction.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/vanilla.d.ts dist/vanilla.cjs.d.ts && shx cp dist/utils.d.ts dist/utils.cjs.d.ts && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "husky": {
     "hooks": {
