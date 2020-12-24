@@ -5,10 +5,9 @@ export {
 } from 'react'
 */
 
-// emulation with use-subscription
+// useMutableSource emulation almost equivalent to useSubscription
 
-import { useCallback, useEffect, useRef } from 'react'
-import { useSubscription } from 'use-subscription'
+import { useEffect, useRef, useState } from 'react'
 
 const TARGET = Symbol()
 const GET_VERSION = Symbol()
@@ -24,23 +23,68 @@ export const useMutableSource = (
   subscribe: any
 ) => {
   const lastVersion = useRef(0)
-  const versionDiff = source[GET_VERSION](source[TARGET]) - lastVersion.current
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const getCurrentValue = useCallback(() => getSnapshot(source[TARGET]), [
-    source,
-    getSnapshot,
-    versionDiff, // XXX this is a hack
-  ])
-  const sub = useCallback(
-    (callback: () => void) =>
-      subscribe(source[TARGET], () => {
-        lastVersion.current = source[GET_VERSION](source[TARGET])
-        callback()
-      }),
-    [source, subscribe]
+  const currentVersion = source[GET_VERSION](source[TARGET])
+  const [state, setState] = useState(
+    () =>
+      [
+        /* [0] */ source,
+        /* [1] */ getSnapshot,
+        /* [2] */ subscribe,
+        /* [3] */ currentVersion,
+        /* [4] */ getSnapshot(source[TARGET]),
+      ] as const
   )
+  let currentSnapshot = state[4]
+  if (
+    state[0] !== source ||
+    state[1] !== getSnapshot ||
+    state[2] !== subscribe ||
+    (currentVersion !== state[3] && currentVersion !== lastVersion.current)
+  ) {
+    currentSnapshot = getSnapshot(source[TARGET])
+    setState([
+      /* [0] */ source,
+      /* [1] */ getSnapshot,
+      /* [2] */ subscribe,
+      /* [3] */ currentVersion,
+      /* [4] */ currentSnapshot,
+    ])
+  }
   useEffect(() => {
-    lastVersion.current = source[GET_VERSION](source[TARGET])
-  })
-  return useSubscription({ getCurrentValue, subscribe: sub })
+    let didUnsubscribe = false
+    const checkForUpdates = () => {
+      if (didUnsubscribe) {
+        return
+      }
+      const nextVersion = source[GET_VERSION](source[TARGET])
+      lastVersion.current = nextVersion
+      const nextSnapshot = getSnapshot(source[TARGET])
+      setState((prev) => {
+        if (
+          prev[0] !== source ||
+          prev[1] !== getSnapshot ||
+          prev[2] !== subscribe
+        ) {
+          return prev
+        }
+        if (prev[4] === nextSnapshot) {
+          return prev
+        }
+        return [
+          /* [0] */ prev[0],
+          /* [1] */ prev[1],
+          /* [2] */ prev[2],
+          /* [3] */ nextVersion,
+          /* [4] */ nextSnapshot,
+        ]
+      })
+    }
+    const unsubscribe = subscribe(source[TARGET], checkForUpdates)
+    checkForUpdates()
+    return () => {
+      didUnsubscribe = true
+      unsubscribe()
+    }
+  }, [source, getSnapshot, subscribe])
+  return currentSnapshot
 }

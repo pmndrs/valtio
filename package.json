@@ -84,8 +84,7 @@
     ]
   },
   "dependencies": {
-    "proxy-compare": "1.1.3",
-    "use-subscription": "1.5.1"
+    "proxy-compare": "1.1.3"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",

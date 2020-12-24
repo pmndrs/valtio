@@ -27,12 +27,12 @@ it('simple counter', async () => {
   await findByText('count: 1')
 })
 
-it('no extra re-renders', async () => {
+it('no extra re-renders (commits)', async () => {
   const obj = proxy({ count: 0, count2: 0 })
 
   const Counter: React.FC = () => {
     const snapshot = useProxy(obj)
-    const commitsRef = useRef(0)
+    const commitsRef = useRef(1)
     useEffect(() => {
       commitsRef.current += 1
     })
@@ -48,7 +48,7 @@ it('no extra re-renders', async () => {
 
   const Counter2: React.FC = () => {
     const snapshot = useProxy(obj)
-    const commitsRef = useRef(0)
+    const commitsRef = useRef(1)
     useEffect(() => {
       commitsRef.current += 1
     })
@@ -70,20 +70,20 @@ it('no extra re-renders', async () => {
   )
 
   await waitFor(() => {
-    getByText('count: 0 (0)')
-    getByText('count2: 0 (0)')
+    getByText('count: 0 (1)')
+    getByText('count2: 0 (1)')
   })
 
   fireEvent.click(getByText('button'))
   await waitFor(() => {
-    getByText('count: 1 (1)')
-    getByText('count2: 0 (0)')
+    getByText('count: 1 (2)')
+    getByText('count2: 0 (1)')
   })
 
   fireEvent.click(getByText('button2'))
   await waitFor(() => {
-    getByText('count: 1 (1)')
-    getByText('count2: 1 (1)')
+    getByText('count: 1 (2)')
+    getByText('count2: 1 (2)')
   })
 })
 
