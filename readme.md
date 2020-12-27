@@ -1,4 +1,4 @@
-<img src="valtio.svg">
+<img src="logo.svg">
 <br />
 <br/>
 
