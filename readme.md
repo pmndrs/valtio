@@ -1,4 +1,6 @@
-![VALTIO](valtio.svg)
+<img src="valtio.svg">
+<br />
+<br/>
 
 <code>npm i valtio</code> makes proxy-state simple
 
