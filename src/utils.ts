@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useState } from 'react'
 import { proxy, useProxy, subscribe, snapshot } from 'valtio'
 
 /**
@@ -15,13 +15,10 @@ import { proxy, useProxy, subscribe, snapshot } from 'valtio'
  * [useImmer](https://github.com/immerjs/use-immer).
  */
 export const useLocalProxy = <T extends object>(init: T | (() => T)) => {
-  const ref = useRef<T>()
-  if (!ref.current) {
-    const initialObject =
-      typeof init === 'function' ? (init as () => T)() : init
-    ref.current = proxy(initialObject)
-  }
-  return [useProxy(ref.current), ref.current] as const
+  const [initialObject] = useState<T>(init)
+  const [initialObjectProxy] = useState<T>(() => proxy(initialObject))
+
+  return [useProxy(initialObjectProxy), initialObjectProxy] as const
 }
 
 /**
