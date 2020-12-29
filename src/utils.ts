@@ -15,8 +15,8 @@ import { proxy, useProxy, subscribe, snapshot } from 'valtio'
  * [useImmer](https://github.com/immerjs/use-immer).
  */
 export const useLocalProxy = <T extends object>(init: T | (() => T)) => {
-  const [initialObject] = useState<T>(init)
-  const [initialObjectProxy] = useState<T>(() => proxy(initialObject))
+  const [initialObject] = useState(init)
+  const [initialObjectProxy] = useState(() => proxy(initialObject))
 
   return [useProxy(initialObjectProxy), initialObjectProxy] as const
 }
