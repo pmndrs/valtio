@@ -75,7 +75,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
           if (!isSupportedObject(value)) {
             snapshot[key] = value
           } else if (value instanceof Promise) {
-            if ((value as any)[PROMISE_RESULT]) {
+            if (PROMISE_RESULT in (value as any)) {
               snapshot[key] = (value as any)[PROMISE_RESULT]
             } else {
               const errorOrPromise = (value as any)[PROMISE_ERROR] || value
