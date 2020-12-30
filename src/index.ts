@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useDebugValue,
   useEffect,
   useLayoutEffect,
@@ -51,10 +52,9 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
   const lastAffected = useRef<typeof affected>()
   const prevSnapshot = useRef<NonPromise<T>>()
   const lastSnapshot = useRef<NonPromise<T>>()
-  if (!lastSnapshot.current) {
-    // lazy initialization
+  useIsomorphicLayoutEffect(() => {
     lastSnapshot.current = prevSnapshot.current = snapshot(p)
-  }
+  }, [p])
   useIsomorphicLayoutEffect(() => {
     lastAffected.current = affected
     if (
@@ -71,9 +71,8 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
     }
   })
   const notifyInSync = options?.sync
-  const sub = useMemo(() => {
-    const deepChangedCache = new WeakMap()
-    return (p: T, cb: () => void) =>
+  const sub = useCallback(
+    (p: T, cb: () => void) =>
       subscribe(
         p,
         () => {
@@ -86,7 +85,7 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
                 prevSnapshot.current,
                 nextSnapshot,
                 lastAffected.current,
-                deepChangedCache
+                new WeakMap()
               )
             ) {
               // not changed
@@ -99,8 +98,9 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
           cb()
         },
         notifyInSync
-      )
-  }, [notifyInSync])
+      ),
+    [notifyInSync]
+  )
   const currSnapshot = useMutableSource(getMutableSource(p), snapshot, sub)
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
