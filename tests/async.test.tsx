@@ -69,3 +69,34 @@ it('delayed object', async () => {
   await findByText('loading')
   await findByText('text: hello')
 })
+
+it('delayed falsy value', async () => {
+  const state = proxy<any>({ value: true })
+  const delayedValue = () => {
+    state.value = sleep(10).then(() => null)
+  }
+
+  const Counter: React.FC = () => {
+    const snapshot = useProxy(state)
+    return (
+      <>
+        <div>value: {String(snapshot.value)}</div>
+        <button onClick={delayedValue}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </StrictMode>
+  )
+
+  await findByText('value: true')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('value: null')
+})
