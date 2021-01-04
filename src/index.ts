@@ -14,7 +14,14 @@ import {
 } from 'proxy-compare'
 
 import { createMutableSource, useMutableSource } from './useMutableSource'
-import { proxy, getVersion, subscribe, snapshot, NonPromise } from './vanilla'
+import {
+  proxy,
+  getVersion,
+  subscribe,
+  snapshot,
+  ref,
+  NonPromise,
+} from './vanilla'
 
 const isSSR =
   typeof window === 'undefined' ||
@@ -110,4 +117,4 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
   return createDeepProxy(currSnapshot, affected, proxyCache)
 }
 
-export { proxy, subscribe, snapshot, useProxy }
+export { proxy, subscribe, snapshot, ref, useProxy }
