@@ -9,6 +9,7 @@ const PROMISE_ERROR = Symbol()
 const refSet = new WeakSet()
 export const ref = (o: object) => {
   refSet.add(o)
+  return o
 }
 
 const isSupportedObject = (x: unknown): x is object =>
