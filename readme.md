@@ -107,6 +107,7 @@ You can subscribe a component to state without causing render, just stick the su
 function Foo() {
   const ref = useRef(state.obj)
   useEffect(() => subscribe(state.obj, () => ref.current = state.obj), [state.obj])
+}
 ```
 
 ##### Dev tools
