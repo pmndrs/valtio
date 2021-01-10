@@ -112,7 +112,7 @@ function Foo() {
 
 ##### Avoid state properties to be wrapped with proxies
 
-See: https://github.com/pmndrs/valtio/pull/62 for more information.
+See https://github.com/pmndrs/valtio/pull/62 for more information.
 
 ```js
 import { proxy, ref } from 'valtio'
