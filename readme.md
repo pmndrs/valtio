@@ -1,6 +1,6 @@
-<img src="logo.svg">
+<img src="logo.svg" alt="valtio">
 <br />
-<br/>
+<br />
 
 <code>npm i valtio</code> makes proxy-state simple
 
@@ -107,6 +107,20 @@ You can subscribe a component to state without causing render, just stick the su
 function Foo() {
   const ref = useRef(state.obj)
   useEffect(() => subscribe(state.obj, () => ref.current = state.obj), [state.obj])
+  // ...
+```
+
+##### Avoid state properties to be wrapped with proxies
+
+See https://github.com/pmndrs/valtio/pull/62 for more information.
+
+```js
+import { proxy, ref } from 'valtio'
+
+const state = proxy({
+  count: 0,
+  dom: ref(document.body),
+})
 ```
 
 ##### Dev tools

@@ -6,6 +6,12 @@ const SNAPSHOT = Symbol()
 const PROMISE_RESULT = Symbol()
 const PROMISE_ERROR = Symbol()
 
+const refSet = new WeakSet()
+export const ref = (o: object) => {
+  refSet.add(o)
+  return o
+}
+
 const isSupportedObject = (x: unknown): x is object =>
   typeof x === 'object' &&
   x !== null &&
@@ -72,7 +78,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         snapshotCache.set(receiver, { version, snapshot })
         Reflect.ownKeys(target).forEach((key) => {
           const value = target[key]
-          if (!isSupportedObject(value)) {
+          if (refSet.has(value) || !isSupportedObject(value)) {
             snapshot[key] = value
           } else if (value instanceof Promise) {
             if (PROMISE_RESULT in (value as any)) {
@@ -103,8 +109,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
     },
     deleteProperty(target, prop) {
       const prevValue = target[prop]
-      const childListeners =
-        isSupportedObject(prevValue) && (prevValue as any)[LISTENERS]
+      const childListeners = prevValue && (prevValue as any)[LISTENERS]
       if (childListeners) {
         childListeners.delete(notifyUpdate)
       }
@@ -119,12 +124,11 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       if (Object.is(prevValue, value)) {
         return true
       }
-      const childListeners =
-        isSupportedObject(prevValue) && (prevValue as any)[LISTENERS]
+      const childListeners = prevValue && (prevValue as any)[LISTENERS]
       if (childListeners) {
         childListeners.delete(notifyUpdate)
       }
-      if (!isSupportedObject(value)) {
+      if (refSet.has(value) || !isSupportedObject(value)) {
         target[prop] = value
       } else if (value instanceof Promise) {
         target[prop] = value
