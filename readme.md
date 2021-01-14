@@ -4,7 +4,7 @@
 
 <code>npm i valtio</code> makes proxy-state simple
 
-##### Wrap your state object
+#### Wrap your state object
 
 Valtio turns the object you pass it into a self-aware proxy.
 
@@ -14,7 +14,7 @@ import { proxy, useProxy } from 'valtio'
 const state = proxy({ count: 0, text: 'hello' })
 ```
 
-##### Mutate from anywhere
+#### Mutate from anywhere
 
 You can make changes to it in the same way you would to a normal js-object.
 
@@ -24,7 +24,7 @@ setInterval(() => {
 }, 1000)
 ```
 
-##### React via useProxy
+#### React via useProxy
 
 Create a local snapshot that catches changes. Rule of thumb: read from snapshots, mutate the source. The component will only re-render when the parts of the state you access have changed, it is render-optimized.
 
@@ -40,7 +40,7 @@ function Counter() {
 }
 ```
 
-##### Subscribe from anywhere
+#### Subscribe from anywhere
 
 You can access state outside of your components and subscribe to changes.
 
@@ -67,7 +67,7 @@ state.arr.push('world')
 
 To subscribe to a primitive value of state, consider [subscribeKey](./src/utils.ts#L28-L35) in utils.
 
-##### Suspend your components
+#### Suspend your components
 
 Valtio supports React-suspense and will throw promises that you access within a components render function. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
 
@@ -88,29 +88,7 @@ function App() {
 }
 ```
 
-##### Update synchronously
-
-By default, state mutations are batched before triggering re-render. Sometimes, we want to disable the batching.
-
-```jsx
-function TextBox() {
-  const snapshot = useProxy(state, { sync: true })
-  return <input value={snapshot.text} onChange={(e) => (state.text = e.target.value)} />
-}
-```
-
-##### Update transiently
-
-You can subscribe a component to state without causing render, just stick the subscribe function into useEffect.
-
-```jsx
-function Foo() {
-  const ref = useRef(state.obj)
-  useEffect(() => subscribe(state.obj, () => ref.current = state.obj), [state.obj])
-  // ...
-```
-
-##### Avoid state properties to be wrapped with proxies
+#### Avoid state properties to be wrapped with proxies
 
 See https://github.com/pmndrs/valtio/pull/62 for more information.
 
@@ -123,7 +101,29 @@ const state = proxy({
 })
 ```
 
-##### Dev tools
+#### Update transiently
+
+You can subscribe a component to state without causing render, just stick the subscribe function into useEffect.
+
+```jsx
+function Foo() {
+  const ref = useRef(state.obj)
+  useEffect(() => subscribe(state.obj, () => ref.current = state.obj), [state.obj])
+  // ...
+```
+
+#### Update synchronously
+
+By default, state mutations are batched before triggering re-render. Sometimes, we want to disable the batching.
+
+```jsx
+function TextBox() {
+  const snapshot = useProxy(state, { sync: true })
+  return <input value={snapshot.text} onChange={(e) => (state.text = e.target.value)} />
+}
+```
+
+#### Dev tools
 
 You can use [Redux DevTools Extension](https://github.com/zalmoxisus/redux-devtools-extension) for plain objects and arrays.
 
@@ -134,7 +134,7 @@ const state = proxy({ count: 0, text: 'hello' })
 const unsub = devtools(state, 'state name')
 ```
 
-##### Use it vanilla
+#### Use it vanilla
 
 Valtio is not tied to React, you can use it in vanilla-js.
 
@@ -149,7 +149,7 @@ subscribe(state, () => {
 })
 ```
 
-##### Use it locally in components
+#### Use it locally in components
 
 You can use it locally in components. [Notes](./src/utils.ts#L5-L15)
 
