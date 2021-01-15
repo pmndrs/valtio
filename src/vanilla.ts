@@ -74,11 +74,14 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         const snapshot: any = Array.isArray(target)
           ? []
           : Object.create(Object.getPrototypeOf(target))
-        markToTrack(snapshot)
+        markToTrack(snapshot, true) // mark to track
         snapshotCache.set(receiver, { version, snapshot })
         Reflect.ownKeys(target).forEach((key) => {
           const value = target[key]
-          if (refSet.has(value) || !isSupportedObject(value)) {
+          if (refSet.has(value)) {
+            markToTrack(value, false) // mark not to track
+            snapshot[key] = value
+          } else if (!isSupportedObject(value)) {
             snapshot[key] = value
           } else if (value instanceof Promise) {
             if (PROMISE_RESULT in (value as any)) {
