@@ -7,7 +7,7 @@ const PROMISE_RESULT = Symbol()
 const PROMISE_ERROR = Symbol()
 
 const refSet = new WeakSet()
-export const ref = (o: object) => {
+export const ref = <T extends object>(o: T): T => {
   refSet.add(o)
   return o
 }
