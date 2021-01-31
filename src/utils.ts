@@ -130,29 +130,19 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  * const getDoubled = computed(state, snap => snap.count * 2)
  * const doubled = getDoubled()
  */
-export function computed<T extends object, U>(
-  state: T,
-  fn: (snap: NonPromise<T>) => U
-) {
-  let prevComputed: U | null = null
+export function computed<T extends object, U>(fn: (snap: NonPromise<T>) => U) {
+  let prevComputed: U
   let prevSnapshot: NonPromise<T> | undefined
   let affected = new WeakMap()
-  const unsubscribe = subscribe(state, () => {
-    if (prevComputed !== null) {
-      const nextSnapshot = snapshot(state)
-      if (isDeepChanged(prevSnapshot, nextSnapshot, affected)) {
-        prevComputed = null
-      }
-    }
-  })
-  const wrappedFn = function () {
-    if (prevComputed === null) {
-      prevSnapshot = snapshot(state)
+  const wrappedFn = function (this: T) {
+    const state = this
+    const snap = snapshot(state)
+    if (!prevSnapshot || isDeepChanged(prevSnapshot, snap, affected)) {
       affected = new WeakMap()
-      prevComputed = fn(createDeepProxy(prevSnapshot, affected))
+      prevComputed = fn(createDeepProxy(snap, affected))
+      prevSnapshot = snap
     }
     return prevComputed
   }
-  wrappedFn.unsubscribe = unsubscribe
   return wrappedFn
 }

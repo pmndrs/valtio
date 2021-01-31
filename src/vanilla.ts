@@ -163,7 +163,10 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       key
     ) as PropertyDescriptor
     if (desc.get) {
-      Object.defineProperty(baseObject, key, desc)
+      Object.defineProperty(baseObject, key, {
+        ...desc,
+        get: desc.get.bind(p),
+      })
     } else {
       p[key] = (initialObject as any)[key]
     }
