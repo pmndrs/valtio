@@ -3,14 +3,16 @@ import { computed } from '../src/utils'
 
 it('simple computed getters', async () => {
   const computeDouble = jest.fn((x) => x * 2)
-  const initialObject = {
+  const doubledGetter = computed((snap: { count: number }) =>
+    computeDouble(snap.count)
+  )
+  const state = proxy({
     text: '',
     count: 0,
-  }
-  Object.defineProperty(initialObject, 'doubled', {
-    get: computed((snap: { count: number }) => computeDouble(snap.count)),
+    get doubled() {
+      return doubledGetter.apply(this)
+    },
   })
-  const state = proxy(initialObject)
 
   expect(snapshot(state)).toEqual({ text: '', count: 0, doubled: 0 })
   expect(computeDouble).toBeCalledTimes(1)

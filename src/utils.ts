@@ -126,9 +126,11 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  * @example
  * import { proxy } from 'valtio'
  * import { computed } from 'valtio/utils'
- * const state = proxy({ count: 1 })
- * const getDoubled = computed(state, snap => snap.count * 2)
- * const doubled = getDoubled()
+ * const doubledGetter = computed(snap => snap.count * 2)
+ * const state = proxy({
+ *   count: 1,
+ *   get doubled() { return doubledGetter.apply(this) },
+ * })
  */
 export function computed<T extends object, U>(fn: (snap: NonPromise<T>) => U) {
   let prevComputed: U
