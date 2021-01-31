@@ -118,58 +118,43 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
 }
 
 /**
- * computed
+ * proxyWithComputed
  *
- * This is to create a function to return a computed value
- * with dependency tracking.
- *
- * @example
- * import { proxy } from 'valtio'
- * import { computed } from 'valtio/utils'
- * const doubledGetter = computed(snap => snap.count * 2)
- * const state = proxy({
- *   count: 1,
- *   get doubled() { return doubledGetter.apply(this) },
- * })
- */
-export const computed = <T extends object, U>(
-  fn: (snap: NonPromise<T>) => U
-) => {
-  let prevComputed: U
-  let prevSnapshot: NonPromise<T> | undefined
-  let affected = new WeakMap()
-  const wrappedFn = function (this: T) {
-    const state = this
-    const snap = snapshot(state)
-    if (!prevSnapshot || isDeepChanged(prevSnapshot, snap, affected)) {
-      affected = new WeakMap()
-      prevComputed = fn(createDeepProxy(snap, affected))
-      prevSnapshot = snap
-    }
-    return prevComputed
-  }
-  return wrappedFn
-}
-
-/**
- * proxyWithGetters
- *
- * This is to create a proxy with initial object and object getters.
+ * This is to create a proxy with initial object and additional object,
+ * which sepcifies functions for computed values with dependency tracking.
  *
  * @example
- * import { computed, proxyWithGetters } from 'valtio/utils'
- * const state = proxyWithGetters({
+ * import { proxyWithComputed } from 'valtio/utils'
+ * const state = proxyWithComputed({
  *   count: 1,
  * }, {
- *   doubled: computed(snap => snap.count * 2),
+ *   doubled: snap => snap.count * 2,
  * })
  */
-export const proxyWithGetters = <T extends object, U extends object>(
+export const proxyWithComputed = <T extends object, U extends object>(
   initialObject: T,
-  getters: { [K in keyof U]: () => U[K] }
+  computedFns: { [K in keyof U]: (snap: NonPromise<T>) => U[K] }
 ): T & U => {
-  Object.keys(getters).forEach((key) => {
-    Object.defineProperty(initialObject, key, { get: getters[key as keyof U] })
+  const getProxy = () => p
+  ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
+    const fn = computedFns[key]
+    let prevComputed: U[typeof key]
+    let prevSnapshot: NonPromise<T> | undefined
+    let affected = new WeakMap()
+    const wrappedFn = function () {
+      const state = getProxy()
+      const snap = snapshot(state)
+      if (!prevSnapshot || isDeepChanged(prevSnapshot, snap, affected)) {
+        affected = new WeakMap()
+        prevComputed = fn(createDeepProxy(snap, affected))
+        prevSnapshot = snap
+      }
+      return prevComputed
+    }
+    Object.defineProperty(initialObject, key, {
+      get: wrappedFn,
+    })
   })
-  return proxy(initialObject) as T & U
+  const p = proxy(initialObject) as T & U
+  return p
 }
