@@ -136,6 +136,9 @@ export const proxyWithComputed = <T extends object, U extends object>(
   computedFns: { [K in keyof U]: (snap: NonPromise<T>) => U[K] }
 ): T & U => {
   const getProxy = () => p
+  const NOTIFIER = Symbol()
+  Object.defineProperty(initialObject, NOTIFIER, { value: 0 })
+  const notifyUpdate = () => ++(getProxy() as any)[NOTIFIER]
   ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
     const fn = computedFns[key]
     let prevComputed: U[typeof key]
@@ -147,6 +150,12 @@ export const proxyWithComputed = <T extends object, U extends object>(
       if (!prevSnapshot || isDeepChanged(prevSnapshot, snap, affected)) {
         affected = new WeakMap()
         prevComputed = fn(createDeepProxy(snap, affected))
+        if (prevComputed instanceof Promise) {
+          prevComputed.then((v) => {
+            prevComputed = v
+            notifyUpdate()
+          })
+        }
         prevSnapshot = snap
       }
       return prevComputed
