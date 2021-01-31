@@ -1,5 +1,7 @@
 import { useRef } from 'react'
 import { proxy, useProxy, subscribe, snapshot } from 'valtio'
+import { createDeepProxy, isDeepChanged } from 'proxy-compare'
+import type { NonPromise } from './vanilla'
 
 /**
  * useLocalProxy
@@ -113,4 +115,44 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
     unsub1()
     unsub2()
   }
+}
+
+/**
+ * computed
+ *
+ * This is to create a function to return a computed value
+ * with dependency tracking.
+ *
+ * @example
+ * import { proxy } from 'valtio'
+ * import { computed } from 'valtio/utils'
+ * const state = proxy({ count: 1 })
+ * const getDoubled = computed(state, snap => snap.count * 2)
+ * const doubled = getDoubled()
+ */
+export function computed<T extends object, U>(
+  state: T,
+  fn: (snap: NonPromise<T>) => U
+) {
+  let prevComputed: U | null = null
+  let prevSnapshot: NonPromise<T> | undefined
+  let affected = new WeakMap()
+  const unsubscribe = subscribe(state, () => {
+    if (prevComputed !== null) {
+      const nextSnapshot = snapshot(state)
+      if (isDeepChanged(prevSnapshot, nextSnapshot, affected)) {
+        prevComputed = null
+      }
+    }
+  })
+  const wrappedFn = function () {
+    if (prevComputed === null) {
+      prevSnapshot = snapshot(state)
+      affected = new WeakMap()
+      prevComputed = fn(createDeepProxy(prevSnapshot, affected))
+    }
+    return prevComputed
+  }
+  wrappedFn.unsubscribe = unsubscribe
+  return wrappedFn
 }
