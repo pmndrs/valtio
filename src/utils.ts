@@ -134,31 +134,32 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
 export const proxyWithComputed = <T extends object, U extends object>(
   initialObject: T,
   computedFns: { [K in keyof U]: (snap: NonPromise<T>) => U[K] }
-): T & U => {
-  const getProxy = () => p
+) => {
   const NOTIFIER = Symbol()
   Object.defineProperty(initialObject, NOTIFIER, { value: 0 })
-  const notifyUpdate = () => ++(getProxy() as any)[NOTIFIER]
   ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
     const fn = computedFns[key]
-    let prevComputed: U[typeof key]
+    let computedValue: U[typeof key]
     let prevSnapshot: NonPromise<T> | undefined
     let affected = new WeakMap()
     const wrappedFn = function () {
-      const state = getProxy()
-      const snap = snapshot(state)
-      if (!prevSnapshot || isDeepChanged(prevSnapshot, snap, affected)) {
+      const nextSnapshot = snapshot(p)
+      if (
+        !prevSnapshot ||
+        isDeepChanged(prevSnapshot, nextSnapshot, affected)
+      ) {
         affected = new WeakMap()
-        prevComputed = fn(createDeepProxy(snap, affected))
-        if (prevComputed instanceof Promise) {
-          prevComputed.then((v) => {
-            prevComputed = v
-            notifyUpdate()
+        computedValue = fn(createDeepProxy(nextSnapshot, affected))
+        if (computedValue instanceof Promise) {
+          computedValue.then((v) => {
+            computedValue = v
+            ++(p as any)[NOTIFIER] // HACK notify update
           })
+          // XXX no error handling
         }
-        prevSnapshot = snap
+        prevSnapshot = nextSnapshot
       }
-      return prevComputed
+      return computedValue
     }
     Object.defineProperty(initialObject, key, {
       get: wrappedFn,
