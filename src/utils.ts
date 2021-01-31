@@ -121,7 +121,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  * proxyWithComputed
  *
  * This is to create a proxy with initial object and additional object,
- * which sepcifies functions for computed values with dependency tracking.
+ * which sepecifies functions for computed values with dependency tracking.
  *
  * @example
  * import { proxyWithComputed } from 'valtio/utils'
