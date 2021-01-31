@@ -132,7 +132,9 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  *   get doubled() { return doubledGetter.apply(this) },
  * })
  */
-export function computed<T extends object, U>(fn: (snap: NonPromise<T>) => U) {
+export const computed = <T extends object, U>(
+  fn: (snap: NonPromise<T>) => U
+) => {
   let prevComputed: U
   let prevSnapshot: NonPromise<T> | undefined
   let affected = new WeakMap()
@@ -147,4 +149,27 @@ export function computed<T extends object, U>(fn: (snap: NonPromise<T>) => U) {
     return prevComputed
   }
   return wrappedFn
+}
+
+/**
+ * proxyWithGetters
+ *
+ * This is to create a proxy with initial object and object getters.
+ *
+ * @example
+ * import { computed, proxyWithGetters } from 'valtio/utils'
+ * const state = proxyWithGetters({
+ *   count: 1,
+ * }, {
+ *   doubled: computed(snap => snap.count * 2),
+ * })
+ */
+export const proxyWithGetters = <T extends object, U extends object>(
+  initialObject: T,
+  getters: { [K in keyof U]: () => U[K] }
+): T & U => {
+  Object.keys(getters).forEach((key) => {
+    Object.defineProperty(initialObject, key, { get: getters[key as keyof U] })
+  })
+  return proxy(initialObject) as T & U
 }

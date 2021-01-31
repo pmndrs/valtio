@@ -1,18 +1,17 @@
-import { proxy, snapshot } from '../src/index'
-import { computed } from '../src/utils'
+import { snapshot } from '../src/index'
+import { computed, proxyWithGetters } from '../src/utils'
 
 it('simple computed getters', async () => {
   const computeDouble = jest.fn((x) => x * 2)
-  const doubledGetter = computed((snap: { count: number }) =>
-    computeDouble(snap.count)
-  )
-  const state = proxy({
-    text: '',
-    count: 0,
-    get doubled() {
-      return doubledGetter.apply(this)
+  const state = proxyWithGetters(
+    {
+      text: '',
+      count: 0,
     },
-  })
+    {
+      doubled: computed((snap: { count: number }) => computeDouble(snap.count)),
+    }
+  )
 
   expect(snapshot(state)).toEqual({ text: '', count: 0, doubled: 0 })
   expect(computeDouble).toBeCalledTimes(1)
