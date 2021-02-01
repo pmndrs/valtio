@@ -128,7 +128,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  * This is for expert users and not recommended for ordinary users.
  * Contradictory to its name, this is costly and overlaps with useProxy.
  * Do not try to optimize too early. It can worsen the performance.
- * Mesarement and comparison will be very important.
+ * Measurement and comparison will be very important.
  *
  * @example
  * import { proxyWithComputed } from 'valtio/utils'
