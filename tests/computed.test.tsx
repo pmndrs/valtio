@@ -16,7 +16,7 @@ it('simple computed getters', async () => {
       count: 0,
     },
     {
-      doubled: (snap) => computeDouble(snap.count),
+      doubled: { get: (snap) => computeDouble(snap.count) },
     }
   )
 
@@ -38,9 +38,11 @@ it('async compute getters', async () => {
   const state = proxyWithComputed(
     { count: 0 },
     {
-      delayedCount: async (snap) => {
-        await sleep(10)
-        return snap.count + 1
+      delayedCount: {
+        get: async (snap) => {
+          await sleep(10)
+          return snap.count + 1
+        },
       },
     }
   )
@@ -71,4 +73,40 @@ it('async compute getters', async () => {
   fireEvent.click(getByText('button'))
   await findByText('loading')
   await findByText('count: 1, delayedCount: 2')
+})
+
+it('computed getters and setters', async () => {
+  const computeDouble = jest.fn((x) => x * 2)
+  const state = proxyWithComputed(
+    {
+      text: '',
+      count: 0,
+    },
+    {
+      doubled: {
+        get: (snap) => computeDouble(snap.count),
+        set: (state, newValue: number) => {
+          state.count = newValue / 2
+        },
+      },
+    }
+  )
+
+  expect(snapshot(state)).toMatchObject({ text: '', count: 0, doubled: 0 })
+  expect(computeDouble).toBeCalledTimes(1)
+
+  state.count += 1
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({ text: '', count: 1, doubled: 2 })
+  expect(computeDouble).toBeCalledTimes(2)
+
+  state.doubled = 1
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({ text: '', count: 0.5, doubled: 1 })
+  expect(computeDouble).toBeCalledTimes(3)
+
+  state.text = 'a'
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({ text: 'a', count: 0.5, doubled: 1 })
+  expect(computeDouble).toBeCalledTimes(3)
 })
