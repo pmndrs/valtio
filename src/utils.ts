@@ -1,5 +1,7 @@
 import { useRef } from 'react'
 import { proxy, useProxy, subscribe, snapshot } from 'valtio'
+import { createDeepProxy, isDeepChanged } from 'proxy-compare'
+import type { NonPromise } from './vanilla'
 
 /**
  * useLocalProxy
@@ -113,4 +115,73 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
     unsub1()
     unsub2()
   }
+}
+
+/**
+ * proxyWithComputed
+ *
+ * This is to create a proxy with initial object and additional object,
+ * which specifies getters for computed values with dependency tracking.
+ * It also accepts optional setters for computed values.
+ *
+ * [Notes]
+ * This is for expert users and not recommended for ordinary users.
+ * Contradictory to its name, this is costly and overlaps with useProxy.
+ * Do not try to optimize too early. It can worsen the performance.
+ * Measurement and comparison will be very important.
+ *
+ * @example
+ * import { proxyWithComputed } from 'valtio/utils'
+ * const state = proxyWithComputed({
+ *   count: 1,
+ * }, {
+ *   doubled: {
+ *     get: snap => snap.count * 2,
+ *     set: (state, newValue) => { state.count = newValue / 2 }
+ *   },
+ * })
+ */
+export const proxyWithComputed = <T extends object, U extends object>(
+  initialObject: T,
+  computedFns: {
+    [K in keyof U]: {
+      get: (snap: NonPromise<T>) => U[K]
+      set?: (state: T, newValue: U[K]) => void
+    }
+  }
+) => {
+  const NOTIFIER = Symbol()
+  Object.defineProperty(initialObject, NOTIFIER, { value: 0 })
+  ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
+    const { get, set } = computedFns[key]
+    let computedValue: U[typeof key]
+    let prevSnapshot: NonPromise<T> | undefined
+    let affected = new WeakMap()
+    const desc: PropertyDescriptor = {}
+    desc.get = () => {
+      const nextSnapshot = snapshot(p)
+      if (
+        !prevSnapshot ||
+        isDeepChanged(prevSnapshot, nextSnapshot, affected)
+      ) {
+        affected = new WeakMap()
+        computedValue = get(createDeepProxy(nextSnapshot, affected))
+        if (computedValue instanceof Promise) {
+          computedValue.then((v) => {
+            computedValue = v
+            ++(p as any)[NOTIFIER] // HACK notify update
+          })
+          // XXX no error handling
+        }
+        prevSnapshot = nextSnapshot
+      }
+      return computedValue
+    }
+    if (set) {
+      desc.set = (newValue) => set(p, newValue)
+    }
+    Object.defineProperty(initialObject, key, desc)
+  })
+  const p = proxy(initialObject) as T & U
+  return p
 }

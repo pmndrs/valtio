@@ -65,7 +65,8 @@ subscribe(state.arr, () => console.log('state.arr has changed to', state.arr))
 state.arr.push('world')
 ```
 
-To subscribe to a primitive value of state, consider [subscribeKey](./src/utils.ts#L28-L35) in utils.
+To subscribe to a primitive value of state,
+consider [subscribeKey](./src/utils.ts#L30-L37) in utils.
 
 #### Suspend your components
 
@@ -151,11 +152,27 @@ subscribe(state, () => {
 
 #### Use it locally in components
 
-You can use it locally in components. [Notes](./src/utils.ts#L5-L15)
+You can use it locally in components.
+[Notes](./src/utils.ts#L7-L17)
 
 ```jsx
 import { useLocalProxy } from 'valtio/utils'
 
 function Foo() {
   const [snapshot, state] = useLocalProxy({ count: 0, text: 'hello' })
+```
+
+#### Proxy with computed
+
+You can have computed values with dependency tracking. This is for experts.
+[Notes](./src/utils.ts#121-L142)
+
+```js
+import { proxyWithComputed } from 'valtio/utils'
+
+const state = proxyWithComputed({
+  count: 1,
+}, {
+  doubled: { get: snap => snap.count * 2 },
+})
 ```
