@@ -135,25 +135,35 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  * const state = proxyWithComputed({
  *   count: 1,
  * }, {
- *   doubled: {
- *     get: snap => snap.count * 2,
- *     set: (state, newValue) => { state.count = newValue / 2 }
- *   },
+ *   doubled: snap => snap.count * 2, // getter only
+ *   tripled: {
+ *     get: snap => snap.count * 3,
+ *     set: (state, newValue) => { state.count = newValue / 3 }
+ *   }, // with optional setter
  * })
  */
+
 export const proxyWithComputed = <T extends object, U extends object>(
   initialObject: T,
   computedFns: {
-    [K in keyof U]: {
-      get: (snap: NonPromise<T>) => U[K]
-      set?: (state: T, newValue: U[K]) => void
-    }
+    [K in keyof U]:
+      | ((snap: NonPromise<T>) => U[K])
+      | {
+          get: (snap: NonPromise<T>) => U[K]
+          set?: (state: T, newValue: U[K]) => void
+        }
   }
 ) => {
   const NOTIFIER = Symbol()
   Object.defineProperty(initialObject, NOTIFIER, { value: 0 })
   ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
-    const { get, set } = computedFns[key]
+    const computedFn = computedFns[key]
+    const { get, set } = (typeof computedFn === 'function'
+      ? { get: computedFn }
+      : computedFn) as {
+      get: (snap: NonPromise<T>) => U[typeof key]
+      set?: (state: T, newValue: U[typeof key]) => void
+    }
     let computedValue: U[typeof key]
     let prevSnapshot: NonPromise<T> | undefined
     let affected = new WeakMap()
