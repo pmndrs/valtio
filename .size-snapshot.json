@@ -1,5 +1,20 @@
 {
   "index.js": {
+    "bundled": 11013,
+    "minified": 5216,
+    "gzipped": 1849
+  },
+  "vanilla.js": {
+    "bundled": 6198,
+    "minified": 3143,
+    "gzipped": 1166
+  },
+  "utils.js": {
+    "bundled": 5735,
+    "minified": 1873,
+    "gzipped": 897
+  },
+  "index.module.js": {
     "bundled": 10132,
     "minified": 4720,
     "gzipped": 1750,
@@ -13,17 +28,7 @@
       }
     }
   },
-  "index.cjs.js": {
-    "bundled": 11013,
-    "minified": 5216,
-    "gzipped": 1849
-  },
-  "index.iife.js": {
-    "bundled": 11702,
-    "minified": 4134,
-    "gzipped": 1641
-  },
-  "vanilla.js": {
+  "vanilla.module.js": {
     "bundled": 5703,
     "minified": 2828,
     "gzipped": 1063,
@@ -37,12 +42,7 @@
       }
     }
   },
-  "vanilla.cjs.js": {
-    "bundled": 6198,
-    "minified": 3143,
-    "gzipped": 1166
-  },
-  "utils.js": {
+  "utils.module.js": {
     "bundled": 5330,
     "minified": 1615,
     "gzipped": 853,
@@ -55,10 +55,5 @@
         "code": 1101
       }
     }
-  },
-  "utils.cjs.js": {
-    "bundled": 5735,
-    "minified": 1873,
-    "gzipped": 897
   }
 }

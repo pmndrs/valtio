@@ -3,27 +3,24 @@
   "private": true,
   "version": "0.6.3",
   "description": "💊 Valtio makes proxy-state simple for React and Vanilla",
-  "main": "index.cjs.js",
-  "module": "index.js",
+  "main": "index.js",
+  "module": "index.module.js",
   "types": "index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./index.js",
-      "require": "./index.cjs.js",
-      "node": "./index.cjs.js",
+      "import": "./index.module.js",
+      "require": "./index.js",
       "types": "./index.d.ts"
     },
     "./vanilla": {
-      "import": "./vanilla.js",
-      "require": "./vanilla.cjs.js",
-      "node": "./vanilla.cjs.js",
+      "import": "./vanilla.module.js",
+      "require": "./vanilla.js",
       "types": "./vanilla.d.ts"
     },
     "./utils": {
-      "import": "./utils.js",
-      "require": "./utils.cjs.js",
-      "node": "./utils.cjs.js",
+      "import": "./utils.module.js",
+      "require": "./utils.js",
       "types": "./utils.d.ts"
     }
   },
@@ -42,7 +39,7 @@
     "test": "jest && jest --setupFiles ./tests/setNodeEnvProduction.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/vanilla.d.ts dist/vanilla.cjs.d.ts && shx cp dist/utils.d.ts dist/utils.cjs.d.ts && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/index.d.ts dist/index.module.d.ts && shx cp dist/vanilla.d.ts dist/vanilla.module.d.ts && shx cp dist/utils.d.ts dist/utils.module.d.ts && copyfiles -f package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "husky": {
     "hooks": {

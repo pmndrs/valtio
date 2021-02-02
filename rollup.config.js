@@ -53,35 +53,12 @@ function createCommonJSConfig(input, output) {
   }
 }
 
-function createIIFEConfig(input, output, globalName) {
-  return {
-    input,
-    output: {
-      file: output,
-      format: 'iife',
-      exports: 'named',
-      name: globalName,
-      globals: {
-        react: 'React',
-      },
-    },
-    external,
-    plugins: [
-      resolve({ extensions }),
-      typescript(),
-      babel(getBabelOptions({ ie: 11 })),
-      sizeSnapshot(),
-    ],
-  }
-}
-
 export default [
   createDeclarationConfig('src/index.ts', 'dist'),
-  createESMConfig('src/index.ts', 'dist/index.js'),
-  createCommonJSConfig('src/index.ts', 'dist/index.cjs.js'),
-  createIIFEConfig('src/index.ts', 'dist/index.iife.js', 'valtio'),
-  createESMConfig('src/vanilla.ts', 'dist/vanilla.js'),
-  createCommonJSConfig('src/vanilla.ts', 'dist/vanilla.cjs.js'),
-  createESMConfig('src/utils.ts', 'dist/utils.js'),
-  createCommonJSConfig('src/utils.ts', 'dist/utils.cjs.js'),
+  createCommonJSConfig('src/index.ts', 'dist/index.js'),
+  createCommonJSConfig('src/vanilla.ts', 'dist/vanilla.js'),
+  createCommonJSConfig('src/utils.ts', 'dist/utils.js'),
+  createESMConfig('src/index.ts', 'dist/index.module.js'),
+  createESMConfig('src/vanilla.ts', 'dist/vanilla.module.js'),
+  createESMConfig('src/utils.ts', 'dist/utils.module.js'),
 ]
