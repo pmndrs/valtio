@@ -182,11 +182,7 @@ const state2 = proxyWithComputed({
   lastName: 'Baldwin'
 }, {
   fullName: {
-    get(snap) { return snap.firstName + ' ' + snap.lastName },
-    set(newValue, state) {
-       const names = newValue.split(' ')
-       state.firstName = names[0]
-       state.lastName = names[names.length - 1]
-    }
+    get: (snap) => snap.firstName + ' ' + snap.lastName,
+    set: (state, newValue) => { [state.firstName, state.lastName] = newValue.split(' ') },
 })
 ```
