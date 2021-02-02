@@ -173,6 +173,25 @@ import { proxyWithComputed } from 'valtio/utils'
 const state = proxyWithComputed({
   count: 1,
 }, {
-  doubled: { get: snap => snap.count * 2 },
+  doubled: snap => snap.count * 2
+})
+```
+
+Computed values accept custom setters too:
+
+```js
+import { proxyWithComputed } from 'valtio/utils'
+
+const state = proxyWithComputed({
+  firstName: 'Alec',
+  lastName: 'Baldwin'
+}, {
+  fullName: {
+    get(snap) { return snap.firstName + ' ' + snap.lastName },
+    set(newValue, state) {
+       const names = newValue.split(' ')
+       state.firstName = names[0]
+       state.lastName = names[names.length - 1]
+    }
 })
 ```
