@@ -171,7 +171,7 @@ function Foo() {
 #### Proxy with computed
 
 You can have computed values with dependency tracking. This is for experts.
-[Notes](./src/utils.ts#121-L143)
+[Notes](./src/utils.ts#L121-L143)
 
 ```js
 import { proxyWithComputed } from 'valtio/utils'
