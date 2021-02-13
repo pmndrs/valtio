@@ -146,9 +146,9 @@ export const proxyWithComputed = <T extends object, U extends object>(
   initialObject: T,
   computedFns: ComputedFns<T, U>
 ) => {
-  const NOTIFIER = Symbol()
-  Object.defineProperty(initialObject, NOTIFIER, { value: 0 })
   const walk = <UU extends object>(obj: object, fns: ComputedFns<T, UU>) => {
+    const NOTIFIER = Symbol()
+    Object.defineProperty(obj, NOTIFIER, { value: 0 })
     ;(Object.keys(fns) as (keyof typeof fns)[]).forEach((key) => {
       const item = fns[key]
       if (!isComputedFn(item)) {
