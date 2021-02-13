@@ -110,3 +110,48 @@ it('computed getters and setters', async () => {
   expect(snapshot(state)).toMatchObject({ text: 'a', count: 0.5, doubled: 1 })
   expect(computeDouble).toBeCalledTimes(3)
 })
+
+it('nested computed getters', async () => {
+  const computeDouble = jest.fn((x) => x * 2)
+  const state = proxyWithComputed<
+    {
+      text: string
+      math: { count: number }
+    },
+    {
+      math: { doubled: number }
+    }
+  >(
+    {
+      text: '',
+      math: { count: 0 },
+    },
+    {
+      math: {
+        doubled: (snap) => computeDouble(snap.math.count),
+      },
+    }
+  )
+
+  expect(snapshot(state)).toMatchObject({
+    text: '',
+    math: { count: 0, doubled: 0 },
+  })
+  expect(computeDouble).toBeCalledTimes(1)
+
+  state.math.count += 1
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({
+    text: '',
+    math: { count: 1, doubled: 2 },
+  })
+  expect(computeDouble).toBeCalledTimes(2)
+
+  state.text = 'a'
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({
+    text: 'a',
+    math: { count: 1, doubled: 2 },
+  })
+  expect(computeDouble).toBeCalledTimes(2)
+})

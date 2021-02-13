@@ -142,56 +142,75 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  *   }, // with optional setter
  * })
  */
-
 export const proxyWithComputed = <T extends object, U extends object>(
   initialObject: T,
-  computedFns: {
-    [K in keyof U]:
-      | ((snap: NonPromise<T>) => U[K])
-      | {
-          get: (snap: NonPromise<T>) => U[K]
-          set?: (state: T, newValue: U[K]) => void
-        }
-  }
+  computedFns: ComputedFns<T, U>
 ) => {
   const NOTIFIER = Symbol()
   Object.defineProperty(initialObject, NOTIFIER, { value: 0 })
-  ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
-    const computedFn = computedFns[key]
-    const { get, set } = (typeof computedFn === 'function'
-      ? { get: computedFn }
-      : computedFn) as {
-      get: (snap: NonPromise<T>) => U[typeof key]
-      set?: (state: T, newValue: U[typeof key]) => void
-    }
-    let computedValue: U[typeof key]
-    let prevSnapshot: NonPromise<T> | undefined
-    let affected = new WeakMap()
-    const desc: PropertyDescriptor = {}
-    desc.get = () => {
-      const nextSnapshot = snapshot(p)
-      if (
-        !prevSnapshot ||
-        isDeepChanged(prevSnapshot, nextSnapshot, affected)
-      ) {
-        affected = new WeakMap()
-        computedValue = get(createDeepProxy(nextSnapshot, affected))
-        if (computedValue instanceof Promise) {
-          computedValue.then((v) => {
-            computedValue = v
-            ++(p as any)[NOTIFIER] // HACK notify update
-          })
-          // XXX no error handling
+  const walk = <UU extends object>(obj: object, fns: ComputedFns<T, UU>) => {
+    ;(Object.keys(fns) as (keyof typeof fns)[]).forEach((key) => {
+      const item = fns[key]
+      if (!isComputedFn(item)) {
+        const subObj = obj[key as keyof typeof obj]
+        if (typeof subObj === 'object' && typeof item === 'object') {
+          walk(subObj, item as ComputedFns<T, object>)
         }
-        prevSnapshot = nextSnapshot
+        return
       }
-      return computedValue
-    }
-    if (set) {
-      desc.set = (newValue) => set(p, newValue)
-    }
-    Object.defineProperty(initialObject, key, desc)
-  })
+      const { get, set } = (typeof item === 'function'
+        ? { get: item }
+        : item) as {
+        get: (snap: NonPromise<T>) => UU[typeof key]
+        set?: (state: T, newValue: UU[typeof key]) => void
+      }
+      let computedValue: UU[typeof key]
+      let prevSnapshot: NonPromise<T> | undefined
+      let affected = new WeakMap()
+      const desc: PropertyDescriptor = {}
+      desc.get = () => {
+        const nextSnapshot = snapshot(p)
+        if (
+          !prevSnapshot ||
+          isDeepChanged(prevSnapshot, nextSnapshot, affected)
+        ) {
+          affected = new WeakMap()
+          computedValue = get(createDeepProxy(nextSnapshot, affected))
+          if (computedValue instanceof Promise) {
+            computedValue.then((v) => {
+              computedValue = v
+              ++(p as any)[NOTIFIER] // HACK notify update
+            })
+            // XXX no error handling
+          }
+          prevSnapshot = nextSnapshot
+        }
+        return computedValue
+      }
+      if (set) {
+        desc.set = (newValue) => set(p, newValue)
+      }
+      Object.defineProperty(obj, key, desc)
+    })
+  }
+  walk(initialObject, computedFns)
   const p = proxy(initialObject) as T & U
   return p
 }
+
+type ComputedFn<T extends object, UU> =
+  | ((snap: NonPromise<T>) => UU)
+  | {
+      get: (snap: NonPromise<T>) => UU
+      set?: (state: T, newValue: UU) => void
+    }
+
+type ComputedFns<T extends object, U extends object> = {
+  [K in keyof U]:
+    | ComputedFn<T, U[K]>
+    | (U[K] extends object ? ComputedFns<T, U[K]> : never)
+}
+
+const isComputedFn = <T extends object, UU>(
+  item: ComputedFn<T, UU> | (UU extends object ? ComputedFns<T, UU> : never)
+): item is ComputedFn<T, UU> => typeof item === 'function' || 'get' in item
