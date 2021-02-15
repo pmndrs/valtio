@@ -168,6 +168,21 @@ function Foo() {
   const [snapshot, state] = useLocalProxy({ count: 0, text: 'hello' })
 ```
 
+### Adding vanilla functions to the state object
+
+For organization' sake, you might want to add functions in your state object. Just be aware that these functions won't have any reactivity, as vanilla Javascript, they work through explicit invocation.
+
+```js
+const state = proxy({
+   params: {},
+   data: null,
+   fetch: async () => {
+       // this will only happen whenever you call snapshot.fetch() or state.fetch()
+       state.data = fetch("http://someapi.com" + new URLSearchParams(state.params))
+   }
+})
+```
+
 #### Proxy with computed
 
 You can have computed values with dependency tracking. This is for experts.
