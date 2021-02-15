@@ -178,7 +178,7 @@ const state = proxy({
    data: null,
    fetch: async () => {
        // this will only happen whenever you call snapshot.fetch() or state.fetch()
-       state.data = fetch("http://someapi.com" + new URLSearchParams(state.params))
+       state.data = await fetch("http://someapi.com" + new URLSearchParams(state.params)).json()
    }
 })
 ```
