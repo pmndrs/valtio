@@ -367,5 +367,6 @@ it('should not trigger re-render when mutating object wrapped in ref', async () 
   await findByText('count: 0')
 
   fireEvent.click(getByText('button'))
+  await Promise.resolve()
   await findByText('count: 0')
 })
