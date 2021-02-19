@@ -1,4 +1,4 @@
-import { proxy, subscribe } from '../src/index'
+import { proxy, ref, subscribe } from '../src/index'
 
 describe('subscribe', () => {
   it('should call subscription', async () => {
@@ -82,5 +82,17 @@ describe('subscribe', () => {
 
     await Promise.resolve()
     expect(handler).toBeCalledTimes(1)
+  })
+
+  it('should not call subscription for objects wrapped in ref', async () => {
+    const obj = proxy({ nested: ref({ count: 0 }) })
+    const handler = jest.fn()
+
+    subscribe(obj, handler)
+
+    obj.nested.count += 1
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(0)
   })
 })
