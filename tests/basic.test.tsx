@@ -1,6 +1,6 @@
 import React, { StrictMode, useRef, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, useProxy } from '../src/index'
+import { proxy, ref, useProxy } from '../src/index'
 
 it('simple counter', async () => {
   const obj = proxy({ count: 0 })
@@ -343,4 +343,30 @@ it('render from outside', async () => {
   fireEvent.click(getByText('button'))
   fireEvent.click(getByText('toggle'))
   await findByText('count: 1')
+})
+
+it('should not trigger re-render when mutating object wrapped in ref', async () => {
+  const obj = proxy({ nested: ref({ count: 0 }) })
+
+  const Counter: React.FC = () => {
+    const snapshot = useProxy(obj)
+    return (
+      <>
+        <div>count: {snapshot.nested.count}</div>
+        <button onClick={() => ++obj.nested.count}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+  await Promise.resolve()
+  await findByText('count: 0')
 })
