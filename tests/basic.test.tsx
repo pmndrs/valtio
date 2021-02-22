@@ -370,3 +370,31 @@ it('should not trigger re-render when mutating object wrapped in ref', async () 
   await Promise.resolve()
   await findByText('count: 0')
 })
+
+it('should not track object wrapped in ref assigned to proxy state', async () => {
+  const obj = proxy<{ ui: JSX.Element | null }>({ ui: null })
+
+  const Counter: React.FC = () => {
+    const snapshot = useProxy(obj)
+    return (
+      <>
+        {snapshot.ui || <span>original</span>}
+        <button onClick={() => (obj.ui = ref(<span>replace</span>))}>
+          button
+        </button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>
+  )
+
+  await findByText('original')
+
+  fireEvent.click(getByText('button'))
+  await Promise.resolve()
+  await findByText('replace')
+})
