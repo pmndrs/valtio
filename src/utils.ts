@@ -146,15 +146,30 @@ export const proxyWithComputed = <T extends object, U extends object>(
   initialObject: T,
   computedFns: ComputedFns<T, U>
 ) => {
-  const walk = <UU extends object>(obj: object, fns: ComputedFns<T, UU>) => {
+  const pending: ((snap: NonPromise<T & U>) => void)[] = []
+  const walk = <UU extends object>(
+    path: string[],
+    obj: object,
+    fns: ComputedFns<T, UU>
+  ) => {
     const NOTIFIER = Symbol()
     Object.defineProperty(obj, NOTIFIER, { value: 0 })
+    const notify = () => {
+      let loopP = proxyObject
+      let loopPath = path
+      while (loopPath.length > 0) {
+        const [first, ...rest] = loopPath
+        loopP = (loopP as any)[first]
+        loopPath = rest
+      }
+      ++(loopP as any)[NOTIFIER]
+    }
     ;(Object.keys(fns) as (keyof typeof fns)[]).forEach((key) => {
       const item = fns[key]
       if (!isComputedFn(item)) {
         const subObj = obj[key as keyof typeof obj]
         if (typeof subObj === 'object' && typeof item === 'object') {
-          walk(subObj, item as ComputedFns<T, object>)
+          walk([...path, key as string], subObj, item as ComputedFns<T, object>)
         }
         return
       }
@@ -169,33 +184,73 @@ export const proxyWithComputed = <T extends object, U extends object>(
       let affected = new WeakMap()
       const desc: PropertyDescriptor = {}
       desc.get = () => {
-        const nextSnapshot = snapshot(p)
-        if (
-          !prevSnapshot ||
-          isDeepChanged(prevSnapshot, nextSnapshot, affected)
-        ) {
-          affected = new WeakMap()
-          computedValue = get(createDeepProxy(nextSnapshot, affected))
-          if (computedValue instanceof Promise) {
-            computedValue.then((v) => {
-              computedValue = v
-              ++(p as any)[NOTIFIER] // HACK notify update
-            })
-            // XXX no error handling
+        pending.push((snap) => {
+          if (!prevSnapshot || isDeepChanged(prevSnapshot, snap, affected)) {
+            affected = new WeakMap()
+            computedValue = get(createDeepProxy(snap, affected))
+            if (computedValue instanceof Promise) {
+              computedValue
+                .then((v) => {
+                  computedValue = v
+                  notify()
+                })
+                .catch((e) => {
+                  ;(computedValue as any) = {
+                    [COMPUTED_ERROR]: e,
+                  }
+                  notify()
+                })
+            }
+            prevSnapshot = snap
+            let loopS = snap
+            let loopPath = path
+            while (loopPath.length > 0) {
+              const [first, ...rest] = loopPath
+              loopS = (loopS as any)[first]
+              loopPath = rest
+            }
+            if (computedValue instanceof Promise) {
+              Object.defineProperty(loopS, key, {
+                get() {
+                  throw computedValue
+                },
+              })
+            } else if (
+              computedValue &&
+              (computedValue as any)[COMPUTED_ERROR]
+            ) {
+              Object.defineProperty(loopS, key, {
+                get() {
+                  throw (computedValue as any)[COMPUTED_ERROR]
+                },
+              })
+            } else {
+              ;(loopS as any)[key] = computedValue
+            }
           }
-          prevSnapshot = nextSnapshot
-        }
+        })
         return computedValue
       }
       if (set) {
-        desc.set = (newValue) => set(p, newValue)
+        desc.set = (newValue) => set(proxyObject, newValue)
+      }
+      if (Object.getOwnPropertyDescriptor(obj, key)) {
+        throw new Error('object property already defined')
       }
       Object.defineProperty(obj, key, desc)
     })
   }
-  walk(initialObject, computedFns)
-  const p = proxy(initialObject) as T & U
-  return p
+  walk([], initialObject, computedFns)
+  Object.defineProperty(initialObject, Symbol(), {
+    get() {
+      const snap = snapshot(proxyObject)
+      while (pending.length) {
+        pending.shift()?.(snap)
+      }
+    },
+  })
+  const proxyObject = proxy(initialObject) as T & U
+  return proxyObject
 }
 
 type ComputedFn<T extends object, UU> =
@@ -214,3 +269,5 @@ type ComputedFns<T extends object, U extends object> = {
 const isComputedFn = <T extends object, UU>(
   item: ComputedFn<T, UU> | (UU extends object ? ComputedFns<T, UU> : never)
 ): item is ComputedFn<T, UU> => typeof item === 'function' || 'get' in item
+
+const COMPUTED_ERROR = Symbol()
