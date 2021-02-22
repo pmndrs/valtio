@@ -1,6 +1,6 @@
 import React, { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { useProxy, snapshot } from '../src/index'
+import { useProxy, snapshot, subscribe } from '../src/index'
 import { proxyWithComputed } from '../src/utils'
 
 const sleep = (ms: number) =>
@@ -20,18 +20,24 @@ it('simple computed getters', async () => {
     }
   )
 
+  const callback = jest.fn()
+  subscribe(state, callback)
+
   expect(snapshot(state)).toMatchObject({ text: '', count: 0, doubled: 0 })
   expect(computeDouble).toBeCalledTimes(1)
+  expect(callback).toBeCalledTimes(0)
 
   state.count += 1
   await Promise.resolve()
   expect(snapshot(state)).toMatchObject({ text: '', count: 1, doubled: 2 })
   expect(computeDouble).toBeCalledTimes(2)
+  expect(callback).toBeCalledTimes(1)
 
   state.text = 'a'
   await Promise.resolve()
   expect(snapshot(state)).toMatchObject({ text: 'a', count: 1, doubled: 2 })
   expect(computeDouble).toBeCalledTimes(2)
+  expect(callback).toBeCalledTimes(2)
 })
 
 it('async compute getters', async () => {
@@ -109,49 +115,4 @@ it('computed getters and setters', async () => {
   await Promise.resolve()
   expect(snapshot(state)).toMatchObject({ text: 'a', count: 0.5, doubled: 1 })
   expect(computeDouble).toBeCalledTimes(3)
-})
-
-it('nested computed getters', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
-  const state = proxyWithComputed<
-    {
-      text: string
-      math: { count: number }
-    },
-    {
-      math: { doubled: number }
-    }
-  >(
-    {
-      text: '',
-      math: { count: 0 },
-    },
-    {
-      math: {
-        doubled: (snap) => computeDouble(snap.math.count),
-      },
-    }
-  )
-
-  expect(snapshot(state)).toMatchObject({
-    text: '',
-    math: { count: 0, doubled: 0 },
-  })
-  expect(computeDouble).toBeCalledTimes(1)
-
-  state.math.count += 1
-  await Promise.resolve()
-  expect(snapshot(state)).toMatchObject({
-    text: '',
-    math: { count: 1, doubled: 2 },
-  })
-  expect(computeDouble).toBeCalledTimes(2)
-
-  state.text = 'a'
-  await Promise.resolve()
-  expect(snapshot(state)).toMatchObject({
-    text: 'a',
-    math: { count: 1, doubled: 2 },
-  })
-  expect(computeDouble).toBeCalledTimes(2)
 })
