@@ -164,7 +164,9 @@ export const proxyWithComputed = <T extends object, U extends object>(
       }
       ++(loopP as any)[NOTIFIER]
     }
-    ;(Object.keys(fns) as (keyof typeof fns)[]).forEach((key) => {
+    const fnsKeys = Object.keys(fns) as (keyof typeof fns)[]
+    fnsKeys.forEach((key, index) => {
+      const isLastItem = index === fnsKeys.length - 1
       const item = fns[key]
       if (!isComputedFn(item)) {
         const subObj = obj[key as keyof typeof obj]
@@ -227,6 +229,9 @@ export const proxyWithComputed = <T extends object, U extends object>(
             } else {
               ;(loopS as any)[key] = computedValue
             }
+            if (isLastItem && loopS !== snap) {
+              Object.freeze(loopS)
+            }
           }
         })
         return computedValue
@@ -250,6 +255,14 @@ export const proxyWithComputed = <T extends object, U extends object>(
     },
   })
   const proxyObject = proxy(initialObject) as T & U
+  subscribe(
+    proxyObject,
+    () => {
+      const snap = snapshot(proxyObject)
+      Object.freeze(snap)
+    },
+    true
+  )
   return proxyObject
 }
 
