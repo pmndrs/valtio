@@ -118,6 +118,114 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
 }
 
 /**
+ * addComputed
+ *
+ * This is hard to type nicely.
+ */
+export const addComputed = <T extends object, U>(
+  proxyObject: T,
+  key: string | string[],
+  get: (snap: NonPromise<T>) => U,
+  set?: (state: T, newValue: U) => void,
+  targetObject = proxyObject
+) => {
+  const [firstKey, ...restKeys] = Array.isArray(key) ? key : [key]
+  if (restKeys.length) {
+    if (
+      firstKey in targetObject &&
+      typeof (targetObject as any)[firstKey] !== 'object'
+    ) {
+      throw new Error('object property is not an object')
+    }
+    ;(targetObject as any)[firstKey] = addComputed(
+      proxyObject,
+      restKeys,
+      get,
+      set,
+      (targetObject as any)[firstKey] || proxy({})
+    )
+    return targetObject
+  }
+  if (firstKey in targetObject) {
+    throw new Error('object property already defined')
+  }
+  let computedValue: U
+  let prevSnapshot: NonPromise<T> | undefined
+  let affected = new WeakMap()
+  Object.defineProperty(targetObject, firstKey, {
+    get() {
+      const nextSnapshot = snapshot(proxyObject)
+      if (
+        !prevSnapshot ||
+        isDeepChanged(prevSnapshot, nextSnapshot, affected)
+      ) {
+        affected = new WeakMap()
+        computedValue = get(createDeepProxy(nextSnapshot, affected))
+        prevSnapshot = nextSnapshot
+      }
+      return computedValue
+    },
+    set(v) {
+      set?.(proxyObject, v)
+    },
+  })
+  const derivedObject = proxy(targetObject)
+  /*
+  subscribe(
+    targetObject,
+    () => {
+      Object.entries(targetObject).forEach(([k, v]) => {
+        ;(derivedObject as any)[k] = v
+      })
+    },
+    true
+  )
+  */
+  subscribe(
+    derivedObject,
+    () => {
+      Object.entries(derivedObject).forEach(([k, v]) => {
+        if (k !== firstKey) {
+          ;(targetObject as any)[k] = v
+        }
+      })
+    },
+    true
+  )
+  return derivedObject
+}
+
+export const proxyWithComputed = <T extends object, U extends object>(
+  initialObject: T,
+  computedFns: ComputedFns<T, U>
+): T & U => {
+  const isComputedFn = <T extends object, UU>(
+    item: ComputedFn<T, UU> | (UU extends object ? ComputedFns<T, UU> : never)
+  ): item is ComputedFn<T, UU> => typeof item === 'function' || 'get' in item
+
+  let proxyObject = proxy(initialObject) as T & U
+  const walk = <UU extends object>(path: string[], fns: ComputedFns<T, UU>) => {
+    ;(Object.keys(fns) as (keyof typeof fns)[]).forEach((key) => {
+      const item = fns[key]
+      const newPath = [...path, key as string]
+      if (!isComputedFn(item)) {
+        walk(newPath, item as ComputedFns<T, object>)
+        return
+      }
+      const { get, set } = (typeof item === 'function'
+        ? { get: item }
+        : item) as {
+        get: (snap: NonPromise<T>) => UU[typeof key]
+        set?: (state: T, newValue: UU[typeof key]) => void
+      }
+      proxyObject = addComputed(proxyObject, newPath, get, set)
+    })
+  }
+  walk([], computedFns)
+
+  return proxyObject
+}
+/**
  * proxyWithComputed
  *
  * This is to create a proxy with initial object and additional object,
@@ -142,7 +250,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  *   }, // with optional setter
  * })
  */
-export const proxyWithComputed = <T extends object, U extends object>(
+export const proxyWithComputedOrig = <T extends object, U extends object>(
   initialObject: T,
   computedFns: ComputedFns<T, U>
 ) => {

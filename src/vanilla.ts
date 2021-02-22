@@ -65,11 +65,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       : Object.create(Object.getPrototypeOf(target))
     markToTrack(snapshot, true) // mark to track
     snapshotCache.set(receiver, { version, snapshot })
-    let hasPropertyDescriptorGet = false
     Reflect.ownKeys(target).forEach((key) => {
-      if (Object.getOwnPropertyDescriptor(target, key)?.get) {
-        hasPropertyDescriptorGet = true
-      }
       const value = target[key]
       if (refSet.has(value)) {
         markToTrack(value, false) // mark not to track
@@ -93,9 +89,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         snapshot[key] = value
       }
     })
-    if (!hasPropertyDescriptorGet) {
-      Object.freeze(snapshot)
-    }
+    Object.freeze(snapshot)
     return snapshot
   }
   const baseObject = Array.isArray(initialObject)
