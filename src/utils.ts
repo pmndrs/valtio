@@ -146,13 +146,19 @@ export const proxyWithComputed = <T extends object, U extends object>(
   initialObject: T,
   computedFns: ComputedFns<T, U>
 ) => {
+  const isComputedFn = <T extends object, UU>(
+    item: ComputedFn<T, UU> | (UU extends object ? ComputedFns<T, UU> : never)
+  ): item is ComputedFn<T, UU> => typeof item === 'function' || 'get' in item
+  const COMPUTED_ERROR = Symbol()
+  const NOTIFIER = Symbol()
+  const COMPUTE = Symbol()
   const pending: ((snap: NonPromise<T & U>) => void)[] = []
+
   const walk = <UU extends object>(
     path: string[],
     obj: object,
     fns: ComputedFns<T, UU>
   ) => {
-    const NOTIFIER = Symbol()
     Object.defineProperty(obj, NOTIFIER, { value: 0 })
     const notify = () => {
       let tmpProxy = proxyObject
@@ -246,7 +252,8 @@ export const proxyWithComputed = <T extends object, U extends object>(
     })
   }
   walk([], initialObject, computedFns)
-  Object.defineProperty(initialObject, Symbol(), {
+
+  Object.defineProperty(initialObject, COMPUTE, {
     get() {
       const snap = snapshot(proxyObject)
       while (pending.length) {
@@ -278,9 +285,3 @@ type ComputedFns<T extends object, U extends object> = {
     | ComputedFn<T, U[K]>
     | (U[K] extends object ? ComputedFns<T, U[K]> : never)
 }
-
-const isComputedFn = <T extends object, UU>(
-  item: ComputedFn<T, UU> | (UU extends object ? ComputedFns<T, UU> : never)
-): item is ComputedFn<T, UU> => typeof item === 'function' || 'get' in item
-
-const COMPUTED_ERROR = Symbol()
