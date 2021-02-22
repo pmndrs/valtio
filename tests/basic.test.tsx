@@ -374,7 +374,7 @@ it('should not trigger re-render when mutating object wrapped in ref', async () 
 it('should not track object wrapped in ref assigned to proxy state', async () => {
   const obj = proxy<{ ui: JSX.Element | null }>({ ui: null })
 
-  const Counter: React.FC = () => {
+  const Component: React.FC = () => {
     const snapshot = useProxy(obj)
     return (
       <>
@@ -388,7 +388,7 @@ it('should not track object wrapped in ref assigned to proxy state', async () =>
 
   const { getByText, findByText } = render(
     <StrictMode>
-      <Counter />
+      <Component />
     </StrictMode>
   )
 
