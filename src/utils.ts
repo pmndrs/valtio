@@ -142,7 +142,6 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  *   }, // with optional setter
  * })
  */
-
 export const proxyWithComputed = <T extends object, U extends object>(
   initialObject: T,
   computedFns: {
@@ -169,7 +168,7 @@ export const proxyWithComputed = <T extends object, U extends object>(
     let affected = new WeakMap()
     const desc: PropertyDescriptor = {}
     desc.get = () => {
-      const nextSnapshot = snapshot(p)
+      const nextSnapshot = snapshot(proxyObject)
       if (
         !prevSnapshot ||
         isDeepChanged(prevSnapshot, nextSnapshot, affected)
@@ -179,7 +178,7 @@ export const proxyWithComputed = <T extends object, U extends object>(
         if (computedValue instanceof Promise) {
           computedValue.then((v) => {
             computedValue = v
-            ++(p as any)[NOTIFIER] // HACK notify update
+            ++(proxyObject as any)[NOTIFIER] // HACK notify update
           })
           // XXX no error handling
         }
@@ -188,10 +187,10 @@ export const proxyWithComputed = <T extends object, U extends object>(
       return computedValue
     }
     if (set) {
-      desc.set = (newValue) => set(p, newValue)
+      desc.set = (newValue) => set(proxyObject, newValue)
     }
     Object.defineProperty(initialObject, key, desc)
   })
-  const p = proxy(initialObject) as T & U
-  return p
+  const proxyObject = proxy(initialObject) as T & U
+  return proxyObject
 }

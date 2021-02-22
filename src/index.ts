@@ -42,26 +42,32 @@ const useAffectedDebugValue = <State>(
 
 type MutableSource = any
 const mutableSourceCache = new WeakMap<object, MutableSource>()
-const getMutableSource = (p: any): MutableSource => {
-  if (!mutableSourceCache.has(p)) {
-    mutableSourceCache.set(p, createMutableSource(p, getVersion))
+const getMutableSource = (proxyObject: any): MutableSource => {
+  if (!mutableSourceCache.has(proxyObject)) {
+    mutableSourceCache.set(
+      proxyObject,
+      createMutableSource(proxyObject, getVersion)
+    )
   }
-  return mutableSourceCache.get(p) as MutableSource
+  return mutableSourceCache.get(proxyObject) as MutableSource
 }
 
 type Options = {
   sync?: boolean
 }
 
-const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
+const useProxy = <T extends object>(
+  proxyObject: T,
+  options?: Options
+): NonPromise<T> => {
   const [, forceUpdate] = useReducer((c) => c + 1, 0)
   const affected = new WeakMap()
   const lastAffected = useRef<typeof affected>()
   const prevSnapshot = useRef<NonPromise<T>>()
   const lastSnapshot = useRef<NonPromise<T>>()
   useIsomorphicLayoutEffect(() => {
-    lastSnapshot.current = prevSnapshot.current = snapshot(p)
-  }, [p])
+    lastSnapshot.current = prevSnapshot.current = snapshot(proxyObject)
+  }, [proxyObject])
   useIsomorphicLayoutEffect(() => {
     lastAffected.current = affected
     if (
@@ -79,11 +85,11 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
   })
   const notifyInSync = options?.sync
   const sub = useCallback(
-    (p: T, cb: () => void) =>
+    (proxyObject: T, cb: () => void) =>
       subscribe(
-        p,
+        proxyObject,
         () => {
-          const nextSnapshot = snapshot(p)
+          const nextSnapshot = snapshot(proxyObject)
           lastSnapshot.current = nextSnapshot
           try {
             if (
@@ -108,7 +114,11 @@ const useProxy = <T extends object>(p: T, options?: Options): NonPromise<T> => {
       ),
     [notifyInSync]
   )
-  const currSnapshot = useMutableSource(getMutableSource(p), snapshot, sub)
+  const currSnapshot = useMutableSource(
+    getMutableSource(proxyObject),
+    snapshot,
+    sub
+  )
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useAffectedDebugValue(currSnapshot, affected)
