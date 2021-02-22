@@ -155,14 +155,14 @@ export const proxyWithComputed = <T extends object, U extends object>(
     const NOTIFIER = Symbol()
     Object.defineProperty(obj, NOTIFIER, { value: 0 })
     const notify = () => {
-      let loopP = proxyObject
-      let loopPath = path
-      while (loopPath.length > 0) {
-        const [first, ...rest] = loopPath
-        loopP = (loopP as any)[first]
-        loopPath = rest
+      let tmpProxy = proxyObject
+      let tmpPath = path
+      while (tmpPath.length > 0) {
+        const [first, ...rest] = tmpPath
+        tmpProxy = (tmpProxy as any)[first]
+        tmpPath = rest
       }
-      ++(loopP as any)[NOTIFIER]
+      ++(tmpProxy as any)[NOTIFIER]
     }
     const fnsKeys = Object.keys(fns) as (keyof typeof fns)[]
     fnsKeys.forEach((key, index) => {
@@ -204,15 +204,15 @@ export const proxyWithComputed = <T extends object, U extends object>(
                 })
             }
             prevSnapshot = snap
-            let loopS = snap
-            let loopPath = path
-            while (loopPath.length > 0) {
-              const [first, ...rest] = loopPath
-              loopS = (loopS as any)[first]
-              loopPath = rest
+            let tmpSnap = snap
+            let tmpPath = path
+            while (tmpPath.length > 0) {
+              const [first, ...rest] = tmpPath
+              tmpSnap = (tmpSnap as any)[first]
+              tmpPath = rest
             }
             if (computedValue instanceof Promise) {
-              Object.defineProperty(loopS, key, {
+              Object.defineProperty(tmpSnap, key, {
                 get() {
                   throw computedValue
                 },
@@ -221,16 +221,16 @@ export const proxyWithComputed = <T extends object, U extends object>(
               computedValue &&
               (computedValue as any)[COMPUTED_ERROR]
             ) {
-              Object.defineProperty(loopS, key, {
+              Object.defineProperty(tmpSnap, key, {
                 get() {
                   throw (computedValue as any)[COMPUTED_ERROR]
                 },
               })
             } else {
-              ;(loopS as any)[key] = computedValue
+              ;(tmpSnap as any)[key] = computedValue
             }
-            if (isLastItem && loopS !== snap) {
-              Object.freeze(loopS)
+            if (isLastItem && tmpSnap !== snap) {
+              Object.freeze(tmpSnap)
             }
           }
         })
