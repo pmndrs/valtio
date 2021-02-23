@@ -12,17 +12,17 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./index.module.js",
+      "module": "./index.module.js",
       "require": "./index.js",
       "types": "./index.d.ts"
     },
     "./vanilla": {
-      "import": "./vanilla.module.js",
+      "module": "./vanilla.module.js",
       "require": "./vanilla.js",
       "types": "./vanilla.d.ts"
     },
     "./utils": {
-      "import": "./utils.module.js",
+      "module": "./utils.module.js",
       "require": "./utils.js",
       "types": "./utils.d.ts"
     }
