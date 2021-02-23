@@ -118,6 +118,84 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
 }
 
 /**
+ * proxyWithComputed
+ *
+ * This is to create a proxy with initial object and additional object,
+ * which specifies getters for computed values with dependency tracking.
+ * It also accepts optional setters for computed values.
+ *
+ * [Notes]
+ * This is for expert users and not recommended for ordinary users.
+ * Contradictory to its name, this is costly and overlaps with useProxy.
+ * Do not try to optimize too early. It can worsen the performance.
+ * Measurement and comparison will be very important.
+ *
+ * @example
+ * import { proxyWithComputed } from 'valtio/utils'
+ * const state = proxyWithComputed({
+ *   count: 1,
+ * }, {
+ *   doubled: snap => snap.count * 2, // getter only
+ *   tripled: {
+ *     get: snap => snap.count * 3,
+ *     set: (state, newValue) => { state.count = newValue / 3 }
+ *   }, // with optional setter
+ * })
+ */
+export const proxyWithComputed = <T extends object, U extends object>(
+  initialObject: T,
+  computedFns: {
+    [K in keyof U]:
+      | ((snap: NonPromise<T>) => U[K])
+      | {
+          get: (snap: NonPromise<T>) => U[K]
+          set?: (state: T, newValue: U[K]) => void
+        }
+  }
+) => {
+  const NOTIFIER = Symbol()
+  Object.defineProperty(initialObject, NOTIFIER, { value: 0 })
+  ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
+    const computedFn = computedFns[key]
+    const { get, set } = (typeof computedFn === 'function'
+      ? { get: computedFn }
+      : computedFn) as {
+      get: (snap: NonPromise<T>) => U[typeof key]
+      set?: (state: T, newValue: U[typeof key]) => void
+    }
+    let computedValue: U[typeof key]
+    let prevSnapshot: NonPromise<T> | undefined
+    let affected = new WeakMap()
+    const desc: PropertyDescriptor = {}
+    desc.get = () => {
+      const nextSnapshot = snapshot(proxyObject)
+      if (
+        !prevSnapshot ||
+        isDeepChanged(prevSnapshot, nextSnapshot, affected)
+      ) {
+        affected = new WeakMap()
+        computedValue = get(createDeepProxy(nextSnapshot, affected))
+        if (computedValue instanceof Promise) {
+          computedValue.then((v) => {
+            computedValue = v
+            ++(proxyObject as any)[NOTIFIER] // HACK notify update
+          })
+          // XXX no error handling
+        }
+        prevSnapshot = nextSnapshot
+      }
+      return computedValue
+    }
+    if (set) {
+      desc.set = (newValue) => set(proxyObject, newValue)
+    }
+    Object.defineProperty(initialObject, key, desc)
+  })
+  const proxyObject = proxy(initialObject) as T & U
+  return proxyObject
+}
+
+/**
  * computed
  *
  * This creates a non-proxy object with computed values.
@@ -191,7 +269,7 @@ export const computed = <T extends object, U extends object>(
  *   }, // with optional setter
  * })
  */
-export const proxyWithComputed = <T extends object, U extends object>(
+export const proxyWithComputed2 = <T extends object, U extends object>(
   initialObject: T,
   computedFns: {
     [K in keyof U]:
