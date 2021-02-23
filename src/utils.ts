@@ -208,7 +208,7 @@ export const addComputed = <T extends object, U extends object>(
   computedFns: {
     [K in keyof U]: (snap: NonPromise<T>) => U[K]
   },
-  targetObject = proxyObject
+  targetObject: any = proxyObject
 ) => {
   ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
     if (Object.getOwnPropertyDescriptor(targetObject, key)) {
@@ -231,14 +231,14 @@ export const addComputed = <T extends object, U extends object>(
           pending = true
           value
             .then((v) => {
-              ;(targetObject as any)[key] = v
+              targetObject[key] = v
             })
             .finally(() => {
               pending = false
             })
           // XXX no error handling
         }
-        ;(targetObject as any)[key] = value
+        targetObject[key] = value
       }
     }
     subscribe(proxyObject, callback, true)

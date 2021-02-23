@@ -185,3 +185,43 @@ it('async addComputed', async () => {
   await findByText('loading')
   await findByText('count: 1, delayedCount: 2')
 })
+
+it('nested emulation with addComputed', async () => {
+  const computeDouble = jest.fn((x) => x * 2)
+  const state = proxy({ text: '', math: { count: 0 } })
+  addComputed(
+    state,
+    {
+      doubled: (snap) => computeDouble(snap.math.count),
+    },
+    state.math
+  )
+
+  const callback = jest.fn()
+  subscribe(state, callback)
+
+  expect(snapshot(state)).toMatchObject({
+    text: '',
+    math: { count: 0, doubled: 0 },
+  })
+  expect(computeDouble).toBeCalledTimes(1)
+  expect(callback).toBeCalledTimes(0)
+
+  state.math.count += 1
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({
+    text: '',
+    math: { count: 1, doubled: 2 },
+  })
+  expect(computeDouble).toBeCalledTimes(2)
+  expect(callback).toBeCalledTimes(1)
+
+  state.text = 'a'
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({
+    text: 'a',
+    math: { count: 1, doubled: 2 },
+  })
+  expect(computeDouble).toBeCalledTimes(2)
+  expect(callback).toBeCalledTimes(2)
+})
