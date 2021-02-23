@@ -189,6 +189,9 @@ export const proxyWithComputed = <T extends object, U extends object>(
     if (set) {
       desc.set = (newValue) => set(proxyObject, newValue)
     }
+    if (Object.getOwnPropertyDescriptor(initialObject, key)) {
+      throw new Error('object property already defined')
+    }
     Object.defineProperty(initialObject, key, desc)
   })
   const proxyObject = proxy(initialObject) as T & U
@@ -196,123 +199,49 @@ export const proxyWithComputed = <T extends object, U extends object>(
 }
 
 /**
- * computed
+ * attachComputed
  *
- * This creates a non-proxy object with computed values.
+ * This attaches computed values to an existing proxy object.
  */
-export const computed = <T extends object, U extends object>(
+export const attachComputed = <T extends object, U extends object>(
   proxyObject: T,
   computedFns: {
-    [K in keyof U]:
-      | ((snap: NonPromise<T>) => U[K])
-      | {
-          get: (snap: NonPromise<T>) => U[K]
-          set?: (state: T, newValue: U[K]) => void
-        }
-  }
-): U => {
-  const obj = {}
+    [K in keyof U]: (snap: NonPromise<T>) => U[K]
+  },
+  targetObject = proxyObject
+) => {
   ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
-    const computedFn = computedFns[key]
-    const { get, set } = (typeof computedFn === 'function'
-      ? { get: computedFn }
-      : computedFn) as {
-      get: (snap: NonPromise<T>) => U[typeof key]
-      set?: (state: T, newValue: U[typeof key]) => void
+    if (Object.getOwnPropertyDescriptor(targetObject, key)) {
+      throw new Error('object property already defined')
     }
-    let computedValue: U[typeof key]
+    const get = computedFns[key]
     let prevSnapshot: NonPromise<T> | undefined
     let affected = new WeakMap()
-    const desc: PropertyDescriptor = {}
-    desc.get = () => {
+    let pending = false
+    const callback = () => {
       const nextSnapshot = snapshot(proxyObject)
       if (
-        !prevSnapshot ||
-        isDeepChanged(prevSnapshot, nextSnapshot, affected)
+        !pending &&
+        (!prevSnapshot || isDeepChanged(prevSnapshot, nextSnapshot, affected))
       ) {
         affected = new WeakMap()
-        computedValue = get(createDeepProxy(nextSnapshot, affected))
+        const value = get(createDeepProxy(nextSnapshot, affected))
         prevSnapshot = nextSnapshot
-      }
-      return computedValue
-    }
-    if (set) {
-      desc.set = (newValue) => set(proxyObject, newValue)
-    }
-    Object.defineProperty(obj, key, desc)
-  })
-  return obj as U
-}
-
-/**
- * proxyWithComputed
- *
- * This is to create a proxy with initial object and additional object,
- * which specifies getters for computed values with dependency tracking.
- * It also accepts optional setters for computed values.
- *
- * [Notes]
- * This is for expert users and not recommended for ordinary users.
- * Contradictory to its name, this is costly and overlaps with useProxy.
- * Do not try to optimize too early. It can worsen the performance.
- * Measurement and comparison will be very important.
- *
- * @example
- * import { proxyWithComputed } from 'valtio/utils'
- * const state = proxyWithComputed({
- *   count: 1,
- * }, {
- *   doubled: snap => snap.count * 2, // getter only
- *   tripled: {
- *     get: snap => snap.count * 3,
- *     set: (state, newValue) => { state.count = newValue / 3 }
- *   }, // with optional setter
- * })
- */
-export const proxyWithComputed2 = <T extends object, U extends object>(
-  initialObject: T,
-  computedFns: {
-    [K in keyof U]:
-      | ((snap: NonPromise<T>) => U[K])
-      | {
-          get: (snap: NonPromise<T>) => U[K]
-          set?: (state: T, newValue: U[K]) => void
+        if (value instanceof Promise) {
+          pending = true
+          value
+            .then((v) => {
+              ;(targetObject as any)[key] = v
+            })
+            .finally(() => {
+              pending = false
+            })
+          // XXX no error handling
         }
-  }
-): T & U => {
-  const proxyObject = proxy(initialObject)
-  const originalObject = computed<T, T>(
-    proxyObject,
-    Object.fromEntries(
-      (Object.keys(initialObject) as (keyof T)[]).map((key) => [
-        key,
-        {
-          get: (snap: T) => snap[key],
-          set: (state: T, newValue: T[typeof key]) => {
-            state[key] = newValue
-          },
-        },
-      ])
-    ) as any
-  )
-  const computedObject = computed(proxyObject, computedFns)
-  const mergedObject = {}
-  Object.entries(Object.getOwnPropertyDescriptors(originalObject)).forEach(
-    ([p, d]) => {
-      Object.defineProperty(mergedObject, p, d)
+        ;(targetObject as any)[key] = value
+      }
     }
-  )
-  Object.entries(Object.getOwnPropertyDescriptors(computedObject)).forEach(
-    ([p, d]) => {
-      Object.defineProperty(mergedObject, p, d)
-    }
-  )
-  return proxy(mergedObject) as T & U
+    subscribe(proxyObject, callback, true)
+    callback()
+  })
 }
-
-/**
- * deepMerge
- *
- * Merge two object property descriptors deeply
- */
-// export const deepMerge = (left: T, right: U): T & U => {}
