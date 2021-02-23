@@ -1,7 +1,7 @@
 import React, { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, useProxy, snapshot, subscribe } from '../src/index'
-import { proxyWithComputed, attachComputed } from '../src/utils'
+import { proxyWithComputed, addComputed } from '../src/utils'
 
 const sleep = (ms: number) =>
   new Promise((resolve) => {
@@ -117,13 +117,13 @@ it('computed getters and setters', async () => {
   expect(computeDouble).toBeCalledTimes(3)
 })
 
-it('simple attachComputed', async () => {
+it('simple addComputed', async () => {
   const computeDouble = jest.fn((x) => x * 2)
   const state = proxy({
     text: '',
     count: 0,
   })
-  attachComputed(state, {
+  addComputed(state, {
     doubled: (snap) => computeDouble(snap.count),
   })
 
@@ -147,9 +147,9 @@ it('simple attachComputed', async () => {
   expect(callback).toBeCalledTimes(2)
 })
 
-it('async attachComputed', async () => {
+it('async addComputed', async () => {
   const state = proxy({ count: 0 })
-  attachComputed(state, {
+  addComputed(state, {
     delayedCount: async (snap) => {
       await sleep(10)
       return snap.count + 1

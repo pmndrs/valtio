@@ -199,11 +199,11 @@ export const proxyWithComputed = <T extends object, U extends object>(
 }
 
 /**
- * attachComputed
+ * addComputed
  *
- * This attaches computed values to an existing proxy object.
+ * This adds computed values to an existing proxy object.
  */
-export const attachComputed = <T extends object, U extends object>(
+export const addComputed = <T extends object, U extends object>(
   proxyObject: T,
   computedFns: {
     [K in keyof U]: (snap: NonPromise<T>) => U[K]
