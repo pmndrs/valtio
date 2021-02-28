@@ -129,7 +129,11 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       if (childListeners) {
         childListeners.delete(notifyUpdate)
       }
-      if (refSet.has(value) || !isSupportedObject(value)) {
+      if (
+        refSet.has(value) ||
+        !isSupportedObject(value) ||
+        Object.getOwnPropertyDescriptor(target, prop)?.set
+      ) {
         target[prop] = value
       } else if (value instanceof Promise) {
         target[prop] = value
@@ -160,7 +164,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       initialObject,
       key
     ) as PropertyDescriptor
-    if (desc.get) {
+    if (desc.get || desc.set) {
       Object.defineProperty(baseObject, key, desc)
     } else {
       proxyObject[key] = (initialObject as any)[key]
