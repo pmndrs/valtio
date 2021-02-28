@@ -190,6 +190,7 @@ const state2 = proxyWithComputed({
   fullName: {
     get: (snap) => snap.firstName + ' ' + snap.lastName,
     set: (state, newValue) => { [state.firstName, state.lastName] = newValue.split(' ') },
+  }
 })
 
 // if you want a computed value to derive from another computed, you must declare the dependency first:
