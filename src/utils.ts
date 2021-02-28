@@ -156,6 +156,9 @@ export const proxyWithComputed = <T extends object, U extends object>(
   const NOTIFIER = Symbol()
   Object.defineProperty(initialObject, NOTIFIER, { value: 0 })
   ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
+    if (Object.getOwnPropertyDescriptor(initialObject, key)) {
+      throw new Error('object property already defined')
+    }
     const computedFn = computedFns[key]
     const { get, set } = (typeof computedFn === 'function'
       ? { get: computedFn }
