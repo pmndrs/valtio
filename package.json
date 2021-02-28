@@ -1,13 +1,17 @@
 {
   "name": "valtio",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "💊 Valtio makes proxy-state simple for React and Vanilla",
   "main": "index.js",
   "module": "index.module.js",
   "types": "index.d.ts",
   "typesVersions": {
-    "<4.0": { "*": ["ts3.4/*"] }
+    "<4.0": {
+      "*": [
+        "ts3.4/*"
+      ]
+    }
   },
   "exports": {
     "./package.json": "./package.json",
