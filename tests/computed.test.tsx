@@ -110,3 +110,43 @@ it('computed getters and setters', async () => {
   expect(snapshot(state)).toMatchObject({ text: 'a', count: 0.5, doubled: 1 })
   expect(computeDouble).toBeCalledTimes(3)
 })
+
+it('computed setters with object and array', async () => {
+  const state = proxyWithComputed(
+    {
+      obj: { a: 1 },
+      arr: [2],
+    },
+    {
+      object: {
+        get: (snap) => snap.obj,
+        set: (state, newValue: any) => {
+          state.obj = newValue
+        },
+      },
+      array: {
+        get: (snap) => snap.arr,
+        set: (state, newValue: any) => {
+          state.arr = newValue
+        },
+      },
+    }
+  )
+
+  expect(snapshot(state)).toMatchObject({
+    obj: { a: 1 },
+    arr: [2],
+    object: { a: 1 },
+    array: [2],
+  })
+
+  state.object = { a: 2 }
+  state.array = [3]
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({
+    obj: { a: 2 },
+    arr: [3],
+    object: { a: 2 },
+    array: [3],
+  })
+})
