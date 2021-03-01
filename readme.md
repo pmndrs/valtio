@@ -95,7 +95,9 @@ function App() {
 }
 ```
 
-#### Avoid state properties to be wrapped with proxies
+#### Holding objects in state without tracking them
+
+This may be useful if you have large, nested objects with accessors that you don't want to proxy. `ref` allows you to keep these objects inside the state model.
 
 See https://github.com/pmndrs/valtio/pull/62 for more information.
 
