@@ -1,6 +1,6 @@
 import React, { StrictMode, useRef, useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, useProxy } from '../src/index'
+import { proxy, useSnapshot } from '../src/index'
 
 it('simple class without methods', async () => {
   class CountClass {
@@ -13,7 +13,7 @@ it('simple class without methods', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     return (
       <>
         <div>count: {snapshot.count}</div>
@@ -47,7 +47,7 @@ it('no extra re-renders with class', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -63,7 +63,7 @@ it('no extra re-renders with class', async () => {
   }
 
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -121,7 +121,7 @@ it('inherited class without methods', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     return (
       <>
         <div>count: {snapshot.count}</div>
@@ -156,7 +156,7 @@ it('class with a method', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -172,7 +172,7 @@ it('class with a method', async () => {
   }
 
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -224,7 +224,7 @@ it('inherited class with a method', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -240,7 +240,7 @@ it('inherited class with a method', async () => {
   }
 
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -299,7 +299,7 @@ it('no extra re-renders with getters', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -315,7 +315,7 @@ it('no extra re-renders with getters', async () => {
   }
 
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1

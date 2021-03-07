@@ -1,12 +1,12 @@
 import React, { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { proxy, useProxy } from '../src/index'
+import { proxy, useSnapshot } from '../src/index'
 
 it('unsupported map', async () => {
   const obj = proxy({ map: new Map([['count', 0]]) })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj) as any
+    const snapshot = useSnapshot(obj) as any
     return (
       <>
         <div>count: {snapshot.map.get('count')}</div>
@@ -32,7 +32,7 @@ it('unsupported set', async () => {
   const obj = proxy({ set: new Set([1, 2, 3]) })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj) as any
+    const snapshot = useSnapshot(obj) as any
     return (
       <>
         <div>count: {[...snapshot.set].join(',')}</div>

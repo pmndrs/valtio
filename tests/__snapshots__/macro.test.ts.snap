@@ -2,10 +2,10 @@
 
 exports[`valtio/macro 1. valtio/macro: 1. valtio/macro 1`] = `
 
-import { useBoundProxy } from '../dist/macro'
+import { useProxy } from '../dist/macro'
 
 const Component = () => {
-  useBoundProxy(state)
+  useProxy(state)
   return (
     <div>
       {state.count}
@@ -16,10 +16,10 @@ const Component = () => {
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
-import { useProxy as _useProxy } from 'valtio'
+import { useSnapshot as _useSnapshot } from 'valtio'
 
 const Component = () => {
-  const valtio_macro_snap_state = _useProxy(state)
+  const valtio_macro_snap_state = _useSnapshot(state)
 
   return (
     <div>

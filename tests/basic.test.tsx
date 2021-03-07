@@ -1,12 +1,12 @@
 import React, { StrictMode, useRef, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, useProxy } from '../src/index'
+import { proxy, useSnapshot } from '../src/index'
 
 it('simple counter', async () => {
   const obj = proxy({ count: 0 })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     return (
       <>
         <div>count: {snapshot.count}</div>
@@ -31,7 +31,7 @@ it('no extra re-renders (commits)', async () => {
   const obj = proxy({ count: 0, count2: 0 })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     const commitsRef = useRef(1)
     useEffect(() => {
       commitsRef.current += 1
@@ -47,7 +47,7 @@ it('no extra re-renders (commits)', async () => {
   }
 
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     const commitsRef = useRef(1)
     useEffect(() => {
       commitsRef.current += 1
@@ -92,7 +92,7 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
 
   const renderFn = jest.fn()
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     renderFn(snapshot.count)
     return (
       <>
@@ -104,7 +104,7 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
 
   const renderFn2 = jest.fn()
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     renderFn2(snapshot.count2)
     return (
       <>
@@ -175,7 +175,7 @@ it('object in object', async () => {
   const obj = proxy({ object: { count: 0 } })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     return (
       <>
         <div>count: {snapshot.object.count}</div>
@@ -200,7 +200,7 @@ it('array in object', async () => {
   const obj = proxy({ counts: [0, 1, 2] })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     return (
       <>
         <div>counts: {snapshot.counts.join(',')}</div>
@@ -227,7 +227,7 @@ it('array length after direct assignment', async () => {
   const obj = proxy({ counts: [0, 1, 2] })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     return (
       <>
         <div>counts: {snapshot.counts.join(',')}</div>
@@ -265,7 +265,7 @@ it('deleting property', async () => {
   const obj = proxy<{ count?: number }>({ count: 1 })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     return (
       <>
         <div>count: {snapshot.count ?? 'none'}</div>
@@ -292,7 +292,7 @@ it('circular object', async () => {
   obj.object.count = 0
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj) as any
+    const snapshot = useSnapshot(obj) as any
     return (
       <>
         <div>count: {snapshot.count}</div>
@@ -318,7 +318,7 @@ it('render from outside', async () => {
 
   const Counter: React.FC = () => {
     const [show, setShow] = useState(false)
-    const snapshot = useProxy(obj)
+    const snapshot = useSnapshot(obj)
     return (
       <>
         {show ? (

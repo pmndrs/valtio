@@ -56,7 +56,7 @@ type Options = {
   sync?: boolean
 }
 
-const useProxy = <T extends object>(
+const useSnapshot = <T extends object>(
   proxyObject: T,
   options?: Options
 ): NonPromise<T> => {
@@ -127,4 +127,15 @@ const useProxy = <T extends object>(
   return createDeepProxy(currSnapshot, affected, proxyCache)
 }
 
-export { proxy, subscribe, snapshot, ref, useProxy }
+export { proxy, subscribe, snapshot, ref, useSnapshot }
+
+/**
+ * @deprecated Renamed to useSnapshot
+ */
+export const useProxy = <T extends object>(
+  proxyObject: T,
+  options?: Options
+): NonPromise<T> => {
+  console.warn('DEPRECATED: Renamed to useSnapshot')
+  return useSnapshot(proxyObject, options)
+}
