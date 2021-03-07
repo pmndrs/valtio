@@ -58,7 +58,9 @@ export default [
   createCommonJSConfig('src/index.ts', 'dist/index.js'),
   createCommonJSConfig('src/vanilla.ts', 'dist/vanilla.js'),
   createCommonJSConfig('src/utils.ts', 'dist/utils.js'),
+  createCommonJSConfig('src/macro.ts', 'dist/macro.js'),
   createESMConfig('src/index.ts', 'dist/index.module.js'),
   createESMConfig('src/vanilla.ts', 'dist/vanilla.module.js'),
   createESMConfig('src/utils.ts', 'dist/utils.module.js'),
+  createESMConfig('src/macro.ts', 'dist/macro.module.js'),
 ]

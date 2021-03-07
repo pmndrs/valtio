@@ -1,6 +1,6 @@
 import React, { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { proxy, useProxy, snapshot, subscribe } from '../src/index'
+import { proxy, useSnapshot, snapshot, subscribe } from '../src/index'
 import { proxyWithComputed, addComputed } from '../src/utils'
 
 const sleep = (ms: number) =>
@@ -54,7 +54,7 @@ it('async compute getters', async () => {
   )
 
   const Counter: React.FC = () => {
-    const snap = useProxy(state)
+    const snap = useSnapshot(state)
     return (
       <>
         <div>
@@ -197,7 +197,7 @@ it('async addComputed', async () => {
   })
 
   const Counter: React.FC = () => {
-    const snap = useProxy(
+    const snap = useSnapshot(
       state as { count: number; delayedCount: Promise<number> }
     )
     return (

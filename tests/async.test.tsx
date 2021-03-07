@@ -1,6 +1,6 @@
 import React, { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { proxy, useProxy } from '../src/index'
+import { proxy, useSnapshot } from '../src/index'
 
 const sleep = (ms: number) =>
   new Promise((resolve) => {
@@ -15,10 +15,10 @@ it('delayed increment', async () => {
   }
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(state)
+    const snap = useSnapshot(state)
     return (
       <>
-        <div>count: {snapshot.count}</div>
+        <div>count: {snap.count}</div>
         <button onClick={delayedIncrement}>button</button>
       </>
     )
@@ -46,10 +46,10 @@ it('delayed object', async () => {
   }
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(state)
+    const snap = useSnapshot(state)
     return (
       <>
-        <div>text: {snapshot.object.text}</div>
+        <div>text: {snap.object.text}</div>
         <button onClick={delayedObject}>button</button>
       </>
     )
@@ -77,10 +77,10 @@ it('delayed falsy value', async () => {
   }
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(state)
+    const snap = useSnapshot(state)
     return (
       <>
-        <div>value: {String(snapshot.value)}</div>
+        <div>value: {String(snap.value)}</div>
         <button onClick={delayedValue}>button</button>
       </>
     )

@@ -1,6 +1,6 @@
 import React, { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, useProxy } from '../src/index'
+import { proxy, useSnapshot } from '../src/index'
 
 it('simple object getters', async () => {
   const computeDouble = jest.fn((x) => x * 2)
@@ -12,11 +12,11 @@ it('simple object getters', async () => {
   })
 
   const Counter: React.FC<{ name: string }> = ({ name }) => {
-    const snapshot = useProxy(state)
+    const snap = useSnapshot(state)
     return (
       <>
         <div>
-          {name} count: {snapshot.doubled}
+          {name} count: {snap.doubled}
         </div>
         <button onClick={() => ++state.count}>{name} button</button>
       </>
@@ -54,11 +54,11 @@ it('object getters returning object', async () => {
   })
 
   const Counter: React.FC<{ name: string }> = ({ name }) => {
-    const snapshot = useProxy(state)
+    const snap = useSnapshot(state)
     return (
       <>
         <div>
-          {name} count: {snapshot.doubled.value}
+          {name} count: {snap.doubled.value}
         </div>
         <button onClick={() => ++state.count}>{name} button</button>
       </>

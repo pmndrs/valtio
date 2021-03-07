@@ -4,7 +4,7 @@ import { createDeepProxy, isDeepChanged } from 'proxy-compare'
 import type { NonPromise } from './vanilla'
 
 /**
- * useLocalProxy
+ * @deprecated useLocalProxy
  *
  * This is to create a proxy in a component at mount.
  * and discard it when the component unmounts.
@@ -126,7 +126,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  *
  * [Notes]
  * This is for expert users and not recommended for ordinary users.
- * Contradictory to its name, this is costly and overlaps with useProxy.
+ * Contradictory to its name, this is costly and overlaps with useSnapshot.
  * Do not try to optimize too early. It can worsen the performance.
  * Measurement and comparison will be very important.
  *
