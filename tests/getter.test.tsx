@@ -12,11 +12,11 @@ it('simple object getters', async () => {
   })
 
   const Counter: React.FC<{ name: string }> = ({ name }) => {
-    const snapshot = useSnapshot(state)
+    const snap = useSnapshot(state)
     return (
       <>
         <div>
-          {name} count: {snapshot.doubled}
+          {name} count: {snap.doubled}
         </div>
         <button onClick={() => ++state.count}>{name} button</button>
       </>
@@ -54,11 +54,11 @@ it('object getters returning object', async () => {
   })
 
   const Counter: React.FC<{ name: string }> = ({ name }) => {
-    const snapshot = useSnapshot(state)
+    const snap = useSnapshot(state)
     return (
       <>
         <div>
-          {name} count: {snapshot.doubled.value}
+          {name} count: {snap.doubled.value}
         </div>
         <button onClick={() => ++state.count}>{name} button</button>
       </>
