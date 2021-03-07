@@ -40,7 +40,7 @@ function Counter() {
   return (
     <div>
       {snap.count}
-      <button onClick={() => ++state.count}>+1</button>
+      <button onClick={() => ++snap.count}>+1</button>
     </div>
   )
 }
