@@ -11,10 +11,10 @@ pluginTester({
   },
   tests: [
     `
-import { bindProxy } from '../dist/macro'
+import { useBoundProxy } from '../dist/macro'
 
 const Component = () => {
-  bindProxy(state)
+  useBoundProxy(state)
   return (
     <div>
       {state.count}
