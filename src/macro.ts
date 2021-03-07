@@ -5,8 +5,8 @@ import { createMacro, MacroError } from 'babel-plugin-macros'
 import { addNamed } from '@babel/helper-module-imports'
 
 const macro = ({ references }: any) => {
-  references.useBoundProxy?.forEach((path: NodePath) => {
-    const hook = addNamed(path, 'useProxy', 'valtio')
+  references.useProxy?.forEach((path: NodePath) => {
+    const hook = addNamed(path, 'useSnapshot', 'valtio')
     const proxy = (path.parentPath.get('arguments.0') as any).node
     if (!t.isIdentifier(proxy)) throw new MacroError('no proxy object')
     const snap = t.identifier(`valtio_macro_snap_${proxy.name}`)
@@ -34,6 +34,6 @@ const macro = ({ references }: any) => {
   })
 }
 
-export declare function useBoundProxy<T extends object>(proxyObject: T): void
+export declare function useProxy<T extends object>(proxyObject: T): void
 
 export default createMacro(macro, { configName: 'valtio' })

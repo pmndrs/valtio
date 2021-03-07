@@ -15,7 +15,7 @@
 Valtio turns the object you pass it into a self-aware proxy.
 
 ```jsx
-import { proxy, useProxy } from 'valtio'
+import { proxy, useSnapshot } from 'valtio'
 
 const state = proxy({ count: 0, text: 'hello' })
 ```
@@ -30,16 +30,16 @@ setInterval(() => {
 }, 1000)
 ```
 
-#### React via useProxy
+#### React via useSnapshot
 
 Create a local snapshot that catches changes. Rule of thumb: read from snapshots, mutate the source. The component will only re-render when the parts of the state you access have changed, it is render-optimized.
 
 ```jsx
 function Counter() {
-  const snapshot = useProxy(state)
+  const snap = useSnapshot(state)
   return (
     <div>
-      {snapshot.count}
+      {snap.count}
       <button onClick={() => ++state.count}>+1</button>
     </div>
   )
@@ -82,8 +82,8 @@ Valtio supports React-suspense and will throw promises that you access within a 
 const state = proxy({ post: fetch(url).then((res) => res.json()) })
 
 function Post() {
-  const snapshot = useProxy(state)
-  return <div>{snapshot.post.title}</div>
+  const snap = useSnapshot(state)
+  return <div>{snap.post.title}</div>
 }
 
 function App() {
@@ -127,8 +127,8 @@ By default, state mutations are batched before triggering re-render. Sometimes, 
 
 ```jsx
 function TextBox() {
-  const snapshot = useProxy(state, { sync: true })
-  return <input value={snapshot.text} onChange={(e) => (state.text = e.target.value)} />
+  const snap = useSnapshot(state, { sync: true })
+  return <input value={snap.text} onChange={(e) => (state.text = e.target.value)} />
 }
 ```
 
@@ -156,18 +156,6 @@ subscribe(state, () => {
   console.log('state is mutated')
   const obj = snapshot(state) // A snapshot is an immutable object
 })
-```
-
-#### Use it locally in components
-
-You can use it locally in components.
-[Notes](./src/utils.ts#L7-L17)
-
-```jsx
-import { useLocalProxy } from 'valtio/utils'
-
-function Foo() {
-  const [snapshot, state] = useLocalProxy({ count: 0, text: 'hello' })
 ```
 
 #### Proxy with computed
