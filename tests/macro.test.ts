@@ -17,7 +17,8 @@ const Component = () => {
   bindProxy(state)
   return (
     <div>
-      {state.count} <button onClick={() => ++state.count}>inc</button>
+      {state.count}
+      <button onClick={() => ++state.count}>inc</button>
     </div>
   )
 }

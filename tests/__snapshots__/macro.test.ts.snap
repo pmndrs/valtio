@@ -8,7 +8,8 @@ const Component = () => {
   bindProxy(state)
   return (
     <div>
-      {state.count} <button onClick={() => ++state.count}>inc</button>
+      {state.count}
+      <button onClick={() => ++state.count}>inc</button>
     </div>
   )
 }
@@ -22,7 +23,7 @@ const Component = () => {
 
   return (
     <div>
-      {valtio_macro_snap_state.count}{' '}
+      {valtio_macro_snap_state.count}
       <button onClick={() => ++state.count}>inc</button>
     </div>
   )
