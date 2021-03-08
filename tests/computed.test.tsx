@@ -40,47 +40,6 @@ it('simple computed getters', async () => {
   expect(callback).toBeCalledTimes(2)
 })
 
-it('async compute getters', async () => {
-  const state = proxyWithComputed(
-    { count: 0 },
-    {
-      delayedCount: {
-        get: async (snap) => {
-          await sleep(10)
-          return snap.count + 1
-        },
-      },
-    }
-  )
-
-  const Counter: React.FC = () => {
-    const snap = useSnapshot(state)
-    return (
-      <>
-        <div>
-          count: {snap.count}, delayedCount: {snap.delayedCount}
-        </div>
-        <button onClick={() => ++state.count}>button</button>
-      </>
-    )
-  }
-
-  const { getByText, findByText } = render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </StrictMode>
-  )
-
-  await findByText('loading')
-  await findByText('count: 0, delayedCount: 1')
-
-  fireEvent.click(getByText('button'))
-  await findByText('loading')
-  await findByText('count: 1, delayedCount: 2')
-})
-
 it('computed getters and setters', async () => {
   const computeDouble = jest.fn((x) => x * 2)
   const state = proxyWithComputed(
