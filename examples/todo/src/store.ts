@@ -1,4 +1,4 @@
-import { proxy, useProxy } from 'valtio'
+import { proxy, useSnapshot } from 'valtio'
 
 export interface Todo {
   id: number
@@ -41,7 +41,7 @@ export const actions = {
 }
 
 export function useTodos() {
-  const snapShot = useProxy(store)
+  const snapShot = useSnapshot(store)
 
   switch (snapShot.filter) {
     case 'all':
@@ -54,5 +54,5 @@ export function useTodos() {
 }
 
 export function useFilter() {
-  return useProxy(store).filter
+  return useSnapshot(store).filter
 }

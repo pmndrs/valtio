@@ -1,5 +1,5 @@
 import React from 'react'
-import { proxy, useProxy } from 'valtio'
+import { proxy, useSnapshot } from 'valtio'
 
 // You wrap your state
 const state = proxy({ number: 0 })
@@ -9,13 +9,13 @@ state.nested = { ticks: 0 }
 setInterval(() => state.nested.ticks++, 200)
 
 function Figure() {
-  const snapshot = useProxy(state)
+  const snapshot = useSnapshot(state)
   // This component *only* renders when state.number changes ...
   return <div className="figure">{snapshot.number}</div>
 }
 
 function Ticks() {
-  const snapshot = useProxy(state)
+  const snapshot = useSnapshot(state)
   // This component *only* renders when state.nested.ticks changes ...
   return <div className="ticks">{snapshot.nested.ticks} —</div>
 }
