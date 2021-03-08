@@ -118,6 +118,80 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
 }
 
 /**
+ * addComputed
+ *
+ * This adds computed values to an existing proxy object.
+ *
+ * [Notes]
+ * This is for expert users and not recommended for ordinary users.
+ * Contradictory to its name, this is costly and overlaps with useSnapshot.
+ * Do not try to optimize too early. It can worsen the performance.
+ * Measurement and comparison will be very important.
+ *
+ * @example
+ * import { proxy } from 'valtio'
+ * import { addComputed } from 'valtio/utils'
+ * const state = proxy({
+ *   count: 1,
+ * })
+ * addComputed(state, {
+ *   doubled: snap => snap.count * 2,
+ * })
+ */
+export const addComputed = <T extends object, U extends object>(
+  proxyObject: T,
+  computedFns: {
+    [K in keyof U]: (snap: NonPromise<T>) => U[K]
+  },
+  targetObject: any = proxyObject
+) => {
+  ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
+    if (Object.getOwnPropertyDescriptor(targetObject, key)) {
+      throw new Error('object property already defined')
+    }
+    const get = computedFns[key]
+    let prevSnapshot: NonPromise<T> | undefined
+    let affected = new WeakMap()
+    let pending = false
+    const callback = () => {
+      const nextSnapshot = snapshot(proxyObject)
+      if (
+        !pending &&
+        (!prevSnapshot || isDeepChanged(prevSnapshot, nextSnapshot, affected))
+      ) {
+        affected = new WeakMap()
+        const value = get(createDeepProxy(nextSnapshot, affected))
+        prevSnapshot = nextSnapshot
+        if (value instanceof Promise) {
+          pending = true
+          value
+            .then((v) => {
+              targetObject[key] = v
+            })
+            .catch((e) => {
+              // not ideal but best effort for throwing error with proxy
+              targetObject[key] = new Proxy(
+                {},
+                {
+                  get() {
+                    throw e
+                  },
+                }
+              )
+            })
+            .finally(() => {
+              pending = false
+            })
+        }
+        targetObject[key] = value
+      }
+    }
+    subscribe(proxyObject, callback, true)
+    callback()
+  })
+}
+
+/**
  * proxyWithComputed
  *
  * This is to create a proxy with initial object and additional object,
@@ -153,8 +227,6 @@ export const proxyWithComputed = <T extends object, U extends object>(
         }
   }
 ) => {
-  const NOTIFIER = Symbol()
-  Object.defineProperty(initialObject, NOTIFIER, { value: 0 })
   ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
     if (Object.getOwnPropertyDescriptor(initialObject, key)) {
       throw new Error('object property already defined')
@@ -178,13 +250,6 @@ export const proxyWithComputed = <T extends object, U extends object>(
       ) {
         affected = new WeakMap()
         computedValue = get(createDeepProxy(nextSnapshot, affected))
-        if (computedValue instanceof Promise) {
-          computedValue.then((v) => {
-            computedValue = v
-            ++(proxyObject as any)[NOTIFIER] // HACK notify update
-          })
-          // XXX no error handling
-        }
         prevSnapshot = nextSnapshot
       }
       return computedValue

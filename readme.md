@@ -158,10 +158,46 @@ subscribe(state, () => {
 })
 ```
 
-#### Proxy with computed
+#### Computed values
 
-You can have computed values with dependency tracking. This is for experts.
-[Notes](./src/utils.ts#L121-L143)
+You can have computed values with dependency tracking.
+Dependency tracking in valtio conflicts with the work in useSnapshot.
+React users should consider using render functions (optionally useMemo)
+as a primary mean. Computed works well for some edge cases.
+
+##### `addComputed`
+
+This is to add new computed to an existing proxy state.
+It can add computed to different proxy state.
+
+```js
+import { addComputed } from 'valtio/utils'
+
+// create a base proxy
+const state = proxy({
+  count: 1,
+})
+
+// add computed to state
+addComputed(state, {
+  doubled: snap => snap.count * 2,
+})
+
+// create another proxy
+const state2 = proxy({
+  text: 'hello',
+})
+
+// add computed from state to state2
+addComputed(state, {
+  doubled: snap => snap.count * 2,
+}, state2)
+```
+
+##### `proxyWithComputed`
+
+This is to create a proxy state with computed at the same time.
+It can define setters optionally.
 
 ```js
 import { proxyWithComputed } from 'valtio/utils'
