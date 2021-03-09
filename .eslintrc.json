@@ -55,7 +55,10 @@
       },
       "alias": {
         "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"],
-        "map": [["valtio", "./src/index.ts"]]
+        "map": [
+          ["valtio/vanilla", "./src/vanilla.ts"],
+          ["valtio", "./src/index.ts"]
+	]
       }
     }
   },

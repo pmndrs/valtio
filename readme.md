@@ -163,7 +163,8 @@ subscribe(state, () => {
 You can have computed values with dependency tracking.
 Dependency tracking in valtio conflicts with the work in useSnapshot.
 React users should consider using render functions (optionally useMemo)
-as a primary mean. Computed works well for some edge cases.
+as a primary mean.
+Computed works well for some edge cases and for vanilla-js users.
 
 ##### `addComputed`
 
