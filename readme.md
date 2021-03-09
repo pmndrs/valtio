@@ -72,7 +72,7 @@ state.arr.push('world')
 ```
 
 To subscribe to a primitive value of state,
-consider [subscribeKey](./src/utils.ts#L30-L37) in utils.
+consider [subscribeKey](./src/utils.ts#L31-L39) in utils.
 
 #### Suspend your components
 
