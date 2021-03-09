@@ -31,6 +31,7 @@ export const useLocalProxy = <T extends object>(init: T | (() => T)) => {
  *
  * The subscribeKey utility enables subscription to a primitive subproperty of a given state proxy.
  * Subscriptions created with subscribeKey will only fire when the specified property changes.
+ * notifyInSync: same as the parameter to subscribe(); true disables batching of subscriptions.
  *
  * @example
  * import { subscribeKey } from 'valtio/utils'
@@ -39,15 +40,20 @@ export const useLocalProxy = <T extends object>(init: T | (() => T)) => {
 export const subscribeKey = <T extends object>(
   proxyObject: T,
   key: keyof T,
-  callback: (value: T[typeof key]) => void
+  callback: (value: T[typeof key]) => void,
+  notifyInSync?: boolean
 ) => {
   let prevValue = proxyObject[key]
-  return subscribe(proxyObject, () => {
-    const nextValue = proxyObject[key]
-    if (!Object.is(prevValue, nextValue)) {
-      callback((prevValue = nextValue))
-    }
-  })
+  return subscribe(
+    proxyObject,
+    () => {
+      const nextValue = proxyObject[key]
+      if (!Object.is(prevValue, nextValue)) {
+        callback((prevValue = nextValue))
+      }
+    },
+    notifyInSync
+  )
 }
 
 /**
