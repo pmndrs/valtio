@@ -172,6 +172,9 @@
     },
     "babel-plugin-macros": {
       "optional": true
+    },
+    "react": {
+      "optional": true
     }
   }
 }
