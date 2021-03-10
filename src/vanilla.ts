@@ -140,6 +140,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
           .then((v) => {
             target[prop][PROMISE_RESULT] = v
             notifyUpdate()
+            return v
           })
           .catch((e) => {
             target[prop][PROMISE_ERROR] = e
