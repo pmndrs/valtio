@@ -8,9 +8,6 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "valtio/vanilla": [
-        "./src/vanilla.ts"
-      ],
       "valtio": [
         "./src/index.ts"
       ]
