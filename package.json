@@ -94,7 +94,6 @@
   "jest": {
     "rootDir": ".",
     "moduleNameMapper": {
-      "^valtio/vanilla$": "<rootDir>/src/vanilla.ts",
       "^valtio$": "<rootDir>/src/index.ts"
     },
     "modulePathIgnorePatterns": [

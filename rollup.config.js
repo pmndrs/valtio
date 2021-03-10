@@ -7,7 +7,8 @@ import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 const createBabelConfig = require('./babel.config')
 
 const { root } = path.parse(process.cwd())
-const external = (id) => !id.startsWith('.') && !id.startsWith(root)
+const external = (id) =>
+  id.startsWith('./vanilla') || (!id.startsWith('.') && !id.startsWith(root))
 const extensions = ['.js', '.ts', '.tsx']
 const getBabelOptions = (targets) => ({
   ...createBabelConfig({ env: (env) => env === 'build' }, targets),
