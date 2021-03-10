@@ -1,8 +1,8 @@
 {
   "index.js": {
-    "bundled": 5830,
-    "minified": 2636,
-    "gzipped": 1075
+    "bundled": 11820,
+    "minified": 5431,
+    "gzipped": 1943
   },
   "vanilla.js": {
     "bundled": 6414,
@@ -10,21 +10,21 @@
     "gzipped": 1178
   },
   "utils.js": {
-    "bundled": 7924,
-    "minified": 2518,
-    "gzipped": 1088
+    "bundled": 19171,
+    "minified": 7452,
+    "gzipped": 2591
   },
   "index.module.js": {
-    "bundled": 5059,
-    "minified": 2146,
-    "gzipped": 944,
+    "bundled": 10831,
+    "minified": 4840,
+    "gzipped": 1838,
     "treeshaked": {
       "rollup": {
-        "code": 160,
-        "import_statements": 59
+        "code": 137,
+        "import_statements": 36
       },
       "webpack": {
-        "code": 1311
+        "code": 1301
       }
     }
   },
@@ -43,16 +43,16 @@
     }
   },
   "utils.module.js": {
-    "bundled": 7362,
-    "minified": 2133,
-    "gzipped": 1012,
+    "bundled": 17871,
+    "minified": 6778,
+    "gzipped": 2499,
     "treeshaked": {
       "rollup": {
-        "code": 74,
-        "import_statements": 74
+        "code": 137,
+        "import_statements": 36
       },
       "webpack": {
-        "code": 1157
+        "code": 1301
       }
     }
   },

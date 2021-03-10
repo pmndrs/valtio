@@ -1,6 +1,6 @@
 import { useRef } from 'react'
-import { proxy, subscribe, snapshot } from 'valtio/vanilla'
-import { useProxy } from 'valtio'
+import { proxy, subscribe, snapshot } from './vanilla'
+import { useProxy } from '.'
 import { createDeepProxy, isDeepChanged } from 'proxy-compare'
 import type { NonPromise } from './vanilla'
 
