@@ -70,6 +70,44 @@ it('delayed object', async () => {
   await findByText('text: hello')
 })
 
+it('delayed object update fullfilled', async () => {
+  const state = proxy<any>({
+    object: sleep(10).then(() => ({ text: 'counter', count: 0 })),
+  })
+  const updateObject = () => {
+    state.object = state.object.then((v: any) => ({ ...v, count: v.count + 1 }))
+  }
+
+  const Counter: React.FC = () => {
+    const snap = useSnapshot(state)
+    return (
+      <>
+        <div>text: {snap.object.text}</div>
+        <div>count: {snap.object.count}</div>
+        <button onClick={updateObject}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('text: counter')
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('button'))
+
+  await findByText('loading')
+  await findByText('text: counter')
+  await findByText('count: 1')
+})
+
 it('delayed falsy value', async () => {
   const state = proxy<any>({ value: true })
   const delayedValue = () => {
