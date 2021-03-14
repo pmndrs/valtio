@@ -16,24 +16,28 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
+      "types": "./index.d.ts",
       "module": "./index.module.js",
-      "require": "./index.js",
-      "types": "./index.d.ts"
+      "import": "./index.module.js",
+      "default": "./index.js"
     },
     "./vanilla": {
+      "types": "./vanilla.d.ts",
       "module": "./vanilla.module.js",
-      "require": "./vanilla.js",
-      "types": "./vanilla.d.ts"
+      "import": "./vanilla.module.js",
+      "default": "./vanilla.js"
     },
     "./utils": {
+      "types": "./utils.d.ts",
       "module": "./utils.module.js",
-      "require": "./utils.js",
-      "types": "./utils.d.ts"
+      "import": "./utils.module.js",
+      "default": "./utils.js"
     },
     "./macro": {
+      "types": "./macro.d.ts",
       "module": "./macro.module.js",
-      "require": "./macro.js",
-      "types": "./macro.d.ts"
+      "import": "./macro.module.js",
+      "default": "./macro.js"
     }
   },
   "files": [
