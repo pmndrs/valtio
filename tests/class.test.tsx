@@ -1,6 +1,6 @@
 import React, { StrictMode, useRef, useEffect } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, useProxy } from '../src/index'
+import { proxy, useSnapshot } from '../src/index'
 
 it('simple class without methods', async () => {
   class CountClass {
@@ -13,10 +13,10 @@ it('simple class without methods', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     return (
       <>
-        <div>count: {snapshot.count}</div>
+        <div>count: {snap.count}</div>
         <button onClick={() => ++obj.count}>button</button>
       </>
     )
@@ -47,7 +47,7 @@ it('no extra re-renders with class', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -55,7 +55,7 @@ it('no extra re-renders with class', async () => {
     return (
       <>
         <div>
-          count: {snapshot.count} ({commitsRef.current})
+          count: {snap.count} ({commitsRef.current})
         </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
@@ -63,7 +63,7 @@ it('no extra re-renders with class', async () => {
   }
 
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -71,7 +71,7 @@ it('no extra re-renders with class', async () => {
     return (
       <>
         <div>
-          count2: {snapshot.count2} ({commitsRef.current})
+          count2: {snap.count2} ({commitsRef.current})
         </div>
         <button onClick={() => ++obj.count2}>button2</button>
       </>
@@ -121,10 +121,10 @@ it('inherited class without methods', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     return (
       <>
-        <div>count: {snapshot.count}</div>
+        <div>count: {snap.count}</div>
         <button onClick={() => ++obj.count}>button</button>
       </>
     )
@@ -156,7 +156,7 @@ it('class with a method', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -164,7 +164,7 @@ it('class with a method', async () => {
     return (
       <>
         <div>
-          doubled: {snapshot.doubled()} ({commitsRef.current})
+          doubled: {snap.doubled()} ({commitsRef.current})
         </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
@@ -172,14 +172,14 @@ it('class with a method', async () => {
   }
 
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
     })
     return (
       <div>
-        count: {snapshot.count} ({commitsRef.current})
+        count: {snap.count} ({commitsRef.current})
       </div>
     )
   }
@@ -224,7 +224,7 @@ it('inherited class with a method', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -232,7 +232,7 @@ it('inherited class with a method', async () => {
     return (
       <>
         <div>
-          doubled: {snapshot.doubled()} ({commitsRef.current})
+          doubled: {snap.doubled()} ({commitsRef.current})
         </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
@@ -240,7 +240,7 @@ it('inherited class with a method', async () => {
   }
 
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -248,7 +248,7 @@ it('inherited class with a method', async () => {
     return (
       <>
         <div>
-          count2: {snapshot.count2} ({commitsRef.current})
+          count2: {snap.count2} ({commitsRef.current})
         </div>
         <button onClick={() => ++obj.count2}>button2</button>
       </>
@@ -299,7 +299,7 @@ it('no extra re-renders with getters', async () => {
   const obj = proxy(new CountClass())
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -307,7 +307,7 @@ it('no extra re-renders with getters', async () => {
     return (
       <>
         <div>
-          count: {snapshot.count1} ({commitsRef.current})
+          count: {snap.count1} ({commitsRef.current})
         </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
@@ -315,7 +315,7 @@ it('no extra re-renders with getters', async () => {
   }
 
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     const commitsRef = useRef(0)
     useEffect(() => {
       commitsRef.current += 1
@@ -323,7 +323,7 @@ it('no extra re-renders with getters', async () => {
     return (
       <>
         <div>
-          sum: {snapshot.sum} ({commitsRef.current})
+          sum: {snap.sum} ({commitsRef.current})
         </div>
         <button onClick={() => ++obj.count2}>button2</button>
       </>

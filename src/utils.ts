@@ -1,10 +1,11 @@
 import { useRef } from 'react'
-import { proxy, useProxy, subscribe, snapshot } from 'valtio'
+import { proxy, subscribe, snapshot } from './vanilla'
+import { useProxy } from 'valtio'
 import { createDeepProxy, isDeepChanged } from 'proxy-compare'
 import type { NonPromise } from './vanilla'
 
 /**
- * useLocalProxy
+ * @deprecated useLocalProxy
  *
  * This is to create a proxy in a component at mount.
  * and discard it when the component unmounts.
@@ -31,6 +32,7 @@ export const useLocalProxy = <T extends object>(init: T | (() => T)) => {
  *
  * The subscribeKey utility enables subscription to a primitive subproperty of a given state proxy.
  * Subscriptions created with subscribeKey will only fire when the specified property changes.
+ * notifyInSync: same as the parameter to subscribe(); true disables batching of subscriptions.
  *
  * @example
  * import { subscribeKey } from 'valtio/utils'
@@ -39,15 +41,20 @@ export const useLocalProxy = <T extends object>(init: T | (() => T)) => {
 export const subscribeKey = <T extends object>(
   proxyObject: T,
   key: keyof T,
-  callback: (value: T[typeof key]) => void
+  callback: (value: T[typeof key]) => void,
+  notifyInSync?: boolean
 ) => {
   let prevValue = proxyObject[key]
-  return subscribe(proxyObject, () => {
-    const nextValue = proxyObject[key]
-    if (!Object.is(prevValue, nextValue)) {
-      callback((prevValue = nextValue))
-    }
-  })
+  return subscribe(
+    proxyObject,
+    () => {
+      const nextValue = proxyObject[key]
+      if (!Object.is(prevValue, nextValue)) {
+        callback((prevValue = nextValue))
+      }
+    },
+    notifyInSync
+  )
 }
 
 /**
@@ -118,6 +125,80 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
 }
 
 /**
+ * addComputed
+ *
+ * This adds computed values to an existing proxy object.
+ *
+ * [Notes]
+ * This is for expert users and not recommended for ordinary users.
+ * Contradictory to its name, this is costly and overlaps with useSnapshot.
+ * Do not try to optimize too early. It can worsen the performance.
+ * Measurement and comparison will be very important.
+ *
+ * @example
+ * import { proxy } from 'valtio'
+ * import { addComputed } from 'valtio/utils'
+ * const state = proxy({
+ *   count: 1,
+ * })
+ * addComputed(state, {
+ *   doubled: snap => snap.count * 2,
+ * })
+ */
+export const addComputed = <T extends object, U extends object>(
+  proxyObject: T,
+  computedFns: {
+    [K in keyof U]: (snap: NonPromise<T>) => U[K]
+  },
+  targetObject: any = proxyObject
+) => {
+  ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
+    if (Object.getOwnPropertyDescriptor(targetObject, key)) {
+      throw new Error('object property already defined')
+    }
+    const get = computedFns[key]
+    let prevSnapshot: NonPromise<T> | undefined
+    let affected = new WeakMap()
+    let pending = false
+    const callback = () => {
+      const nextSnapshot = snapshot(proxyObject)
+      if (
+        !pending &&
+        (!prevSnapshot || isDeepChanged(prevSnapshot, nextSnapshot, affected))
+      ) {
+        affected = new WeakMap()
+        const value = get(createDeepProxy(nextSnapshot, affected))
+        prevSnapshot = nextSnapshot
+        if (value instanceof Promise) {
+          pending = true
+          value
+            .then((v) => {
+              targetObject[key] = v
+            })
+            .catch((e) => {
+              // not ideal but best effort for throwing error with proxy
+              targetObject[key] = new Proxy(
+                {},
+                {
+                  get() {
+                    throw e
+                  },
+                }
+              )
+            })
+            .finally(() => {
+              pending = false
+            })
+        }
+        targetObject[key] = value
+      }
+    }
+    subscribe(proxyObject, callback, true)
+    callback()
+  })
+}
+
+/**
  * proxyWithComputed
  *
  * This is to create a proxy with initial object and additional object,
@@ -126,7 +207,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  *
  * [Notes]
  * This is for expert users and not recommended for ordinary users.
- * Contradictory to its name, this is costly and overlaps with useProxy.
+ * Contradictory to its name, this is costly and overlaps with useSnapshot.
  * Do not try to optimize too early. It can worsen the performance.
  * Measurement and comparison will be very important.
  *
@@ -153,8 +234,6 @@ export const proxyWithComputed = <T extends object, U extends object>(
         }
   }
 ) => {
-  const NOTIFIER = Symbol()
-  Object.defineProperty(initialObject, NOTIFIER, { value: 0 })
   ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
     if (Object.getOwnPropertyDescriptor(initialObject, key)) {
       throw new Error('object property already defined')
@@ -178,13 +257,6 @@ export const proxyWithComputed = <T extends object, U extends object>(
       ) {
         affected = new WeakMap()
         computedValue = get(createDeepProxy(nextSnapshot, affected))
-        if (computedValue instanceof Promise) {
-          computedValue.then((v) => {
-            computedValue = v
-            ++(proxyObject as any)[NOTIFIER] // HACK notify update
-          })
-          // XXX no error handling
-        }
         prevSnapshot = nextSnapshot
       }
       return computedValue

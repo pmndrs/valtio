@@ -1,15 +1,15 @@
 import React, { StrictMode, useRef, useEffect, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, useProxy } from '../src/index'
+import { proxy, useSnapshot } from '../src/index'
 
 it('simple counter', async () => {
   const obj = proxy({ count: 0 })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     return (
       <>
-        <div>count: {snapshot.count}</div>
+        <div>count: {snap.count}</div>
         <button onClick={() => ++obj.count}>button</button>
       </>
     )
@@ -31,7 +31,7 @@ it('no extra re-renders (commits)', async () => {
   const obj = proxy({ count: 0, count2: 0 })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     const commitsRef = useRef(1)
     useEffect(() => {
       commitsRef.current += 1
@@ -39,7 +39,7 @@ it('no extra re-renders (commits)', async () => {
     return (
       <>
         <div>
-          count: {snapshot.count} ({commitsRef.current})
+          count: {snap.count} ({commitsRef.current})
         </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
@@ -47,7 +47,7 @@ it('no extra re-renders (commits)', async () => {
   }
 
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     const commitsRef = useRef(1)
     useEffect(() => {
       commitsRef.current += 1
@@ -55,7 +55,7 @@ it('no extra re-renders (commits)', async () => {
     return (
       <>
         <div>
-          count2: {snapshot.count2} ({commitsRef.current})
+          count2: {snap.count2} ({commitsRef.current})
         </div>
         <button onClick={() => ++obj.count2}>button2</button>
       </>
@@ -92,11 +92,11 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
 
   const renderFn = jest.fn()
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
-    renderFn(snapshot.count)
+    const snap = useSnapshot(obj)
+    renderFn(snap.count)
     return (
       <>
-        <div>count: {snapshot.count}</div>
+        <div>count: {snap.count}</div>
         <button onClick={() => ++obj.count}>button</button>
       </>
     )
@@ -104,11 +104,11 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
 
   const renderFn2 = jest.fn()
   const Counter2: React.FC = () => {
-    const snapshot = useProxy(obj)
-    renderFn2(snapshot.count2)
+    const snap = useSnapshot(obj)
+    renderFn2(snap.count2)
     return (
       <>
-        <div>count2: {snapshot.count2}</div>
+        <div>count2: {snap.count2}</div>
         <button onClick={() => ++obj.count2}>button2</button>
       </>
     )
@@ -175,10 +175,10 @@ it('object in object', async () => {
   const obj = proxy({ object: { count: 0 } })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     return (
       <>
-        <div>count: {snapshot.object.count}</div>
+        <div>count: {snap.object.count}</div>
         <button onClick={() => ++obj.object.count}>button</button>
       </>
     )
@@ -200,10 +200,10 @@ it('array in object', async () => {
   const obj = proxy({ counts: [0, 1, 2] })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     return (
       <>
-        <div>counts: {snapshot.counts.join(',')}</div>
+        <div>counts: {snap.counts.join(',')}</div>
         <button onClick={() => obj.counts.push(obj.counts.length)}>
           button
         </button>
@@ -227,11 +227,11 @@ it('array length after direct assignment', async () => {
   const obj = proxy({ counts: [0, 1, 2] })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     return (
       <>
-        <div>counts: {snapshot.counts.join(',')}</div>
-        <div>length: {snapshot.counts.length}</div>
+        <div>counts: {snap.counts.join(',')}</div>
+        <div>length: {snap.counts.length}</div>
         <button
           onClick={() => (obj.counts[obj.counts.length] = obj.counts.length)}>
           increment
@@ -265,10 +265,10 @@ it('deleting property', async () => {
   const obj = proxy<{ count?: number }>({ count: 1 })
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     return (
       <>
-        <div>count: {snapshot.count ?? 'none'}</div>
+        <div>count: {snap.count ?? 'none'}</div>
         <button onClick={() => delete obj.count}>button</button>
       </>
     )
@@ -292,10 +292,10 @@ it('circular object', async () => {
   obj.object.count = 0
 
   const Counter: React.FC = () => {
-    const snapshot = useProxy(obj) as any
+    const snap = useSnapshot(obj) as any
     return (
       <>
-        <div>count: {snapshot.count}</div>
+        <div>count: {snap.count}</div>
         <button onClick={() => ++obj.count}>button</button>
       </>
     )
@@ -318,13 +318,13 @@ it('render from outside', async () => {
 
   const Counter: React.FC = () => {
     const [show, setShow] = useState(false)
-    const snapshot = useProxy(obj)
+    const snap = useSnapshot(obj)
     return (
       <>
         {show ? (
-          <div>count: {snapshot.count}</div>
+          <div>count: {snap.count}</div>
         ) : (
-          <div>anotherCount: {snapshot.anotherCount}</div>
+          <div>anotherCount: {snap.anotherCount}</div>
         )}
         <button onClick={() => ++obj.count}>button</button>
         <button onClick={() => setShow((x) => !x)}>toggle</button>

@@ -1,0 +1,33 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`valtio/macro 1. valtio/macro: 1. valtio/macro 1`] = `
+
+import { useProxy } from '../dist/macro'
+
+const Component = () => {
+  useProxy(state)
+  return (
+    <div>
+      {state.count}
+      <button onClick={() => ++state.count}>inc</button>
+    </div>
+  )
+}
+
+      ↓ ↓ ↓ ↓ ↓ ↓
+
+import { useSnapshot as _useSnapshot } from 'valtio'
+
+const Component = () => {
+  const valtio_macro_snap_state = _useSnapshot(state)
+
+  return (
+    <div>
+      {valtio_macro_snap_state.count}
+      <button onClick={() => ++state.count}>inc</button>
+    </div>
+  )
+}
+
+
+`;

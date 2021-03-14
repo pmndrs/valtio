@@ -15,7 +15,7 @@
 Valtio turns the object you pass it into a self-aware proxy.
 
 ```jsx
-import { proxy, useProxy } from 'valtio'
+import { proxy, useSnapshot } from 'valtio'
 
 const state = proxy({ count: 0, text: 'hello' })
 ```
@@ -30,16 +30,16 @@ setInterval(() => {
 }, 1000)
 ```
 
-#### React via useProxy
+#### React via useSnapshot
 
 Create a local snapshot that catches changes. Rule of thumb: read from snapshots, mutate the source. The component will only re-render when the parts of the state you access have changed, it is render-optimized.
 
 ```jsx
 function Counter() {
-  const snapshot = useProxy(state)
+  const snap = useSnapshot(state)
   return (
     <div>
-      {snapshot.count}
+      {snap.count}
       <button onClick={() => ++state.count}>+1</button>
     </div>
   )
@@ -72,7 +72,7 @@ state.arr.push('world')
 ```
 
 To subscribe to a primitive value of state,
-consider [subscribeKey](./src/utils.ts#L30-L37) in utils.
+consider [subscribeKey](./src/utils.ts#L31-L39) in utils.
 
 #### Suspend your components
 
@@ -82,8 +82,8 @@ Valtio supports React-suspense and will throw promises that you access within a 
 const state = proxy({ post: fetch(url).then((res) => res.json()) })
 
 function Post() {
-  const snapshot = useProxy(state)
-  return <div>{snapshot.post.title}</div>
+  const snap = useSnapshot(state)
+  return <div>{snap.post.title}</div>
 }
 
 function App() {
@@ -127,8 +127,8 @@ By default, state mutations are batched before triggering re-render. Sometimes, 
 
 ```jsx
 function TextBox() {
-  const snapshot = useProxy(state, { sync: true })
-  return <input value={snapshot.text} onChange={(e) => (state.text = e.target.value)} />
+  const snap = useSnapshot(state, { sync: true })
+  return <input value={snap.text} onChange={(e) => (state.text = e.target.value)} />
 }
 ```
 
@@ -158,22 +158,47 @@ subscribe(state, () => {
 })
 ```
 
-#### Use it locally in components
+#### Computed values
 
-You can use it locally in components.
-[Notes](./src/utils.ts#L7-L17)
+You can have computed values with dependency tracking.
+Dependency tracking in valtio conflicts with the work in useSnapshot.
+React users should consider using render functions (optionally useMemo)
+as a primary mean.
+Computed works well for some edge cases and for vanilla-js users.
 
-```jsx
-import { useLocalProxy } from 'valtio/utils'
+##### `addComputed`
 
-function Foo() {
-  const [snapshot, state] = useLocalProxy({ count: 0, text: 'hello' })
+This is to add new computed to an existing proxy state.
+It can add computed to different proxy state.
+
+```js
+import { addComputed } from 'valtio/utils'
+
+// create a base proxy
+const state = proxy({
+  count: 1,
+})
+
+// add computed to state
+addComputed(state, {
+  doubled: snap => snap.count * 2,
+})
+
+// create another proxy
+const state2 = proxy({
+  text: 'hello',
+})
+
+// add computed from state to state2
+addComputed(state, {
+  doubled: snap => snap.count * 2,
+}, state2)
 ```
 
-#### Proxy with computed
+##### `proxyWithComputed`
 
-You can have computed values with dependency tracking. This is for experts.
-[Notes](./src/utils.ts#L121-L143)
+This is to create a proxy state with computed at the same time.
+It can define setters optionally.
 
 ```js
 import { proxyWithComputed } from 'valtio/utils'
