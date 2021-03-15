@@ -18,25 +18,21 @@
     ".": {
       "types": "./index.d.ts",
       "module": "./index.module.js",
-      "import": "./index.module.js",
       "default": "./index.js"
     },
     "./vanilla": {
       "types": "./vanilla.d.ts",
       "module": "./vanilla.module.js",
-      "import": "./vanilla.module.js",
       "default": "./vanilla.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
       "module": "./utils.module.js",
-      "import": "./utils.module.js",
       "default": "./utils.js"
     },
     "./macro": {
       "types": "./macro.d.ts",
       "module": "./macro.module.js",
-      "import": "./macro.module.js",
       "default": "./macro.js"
     }
   },
