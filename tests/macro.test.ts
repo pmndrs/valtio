@@ -22,6 +22,22 @@ const Component = () => {
     </div>
   )
 }
-    `,
+`,
+    `
+import { useProxy } from '../dist/macro'
+
+const Component = () => {
+  useProxy(state)
+  return (
+    <div>
+      <button onClick={() => {
+        ;(() => ++state.count)()
+        ++state.count
+      }}>inc</button>
+      {state.count}
+    </div>
+  )
+}
+`,
   ],
 })
