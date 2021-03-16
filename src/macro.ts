@@ -15,19 +15,23 @@ const macro = ({ references }: any) => {
         t.variableDeclarator(snap, t.callExpression(hook, [proxy])),
       ])
     )
-    let inRender = true
+    let inFunction = 0
     path.parentPath.getFunctionParent()?.traverse({
       Identifier(p) {
-        if (inRender && p.node !== proxy && p.node.name === proxy.name) {
+        if (
+          inFunction === 0 && // in render
+          p.node !== proxy &&
+          p.node.name === proxy.name
+        ) {
           p.node.name = snap.name
         }
       },
       Function: {
         enter() {
-          inRender = false
+          ++inFunction
         },
         exit() {
-          inRender = true
+          --inFunction
         },
       },
     })
