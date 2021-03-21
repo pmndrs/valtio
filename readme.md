@@ -182,7 +182,7 @@ const Component = () => {
   )
 }
 
-// the code above becomes the code blow.
+// the code above becomes the code below.
 
 import { useSnapshot } from 'valtio'
 
