@@ -170,7 +170,8 @@ const Component = () => {
   useProxy(state)
   return (
     <div>
-      {state.count} <button onClick={() => ++state.count}>inc</button>
+      {state.count}
+      <button onClick={() => ++state.count}>+1</button>
     </div>
   )
 }
@@ -183,7 +184,8 @@ const Component = () => {
   const snap = useSnapshot(state)
   return (
     <div>
-      {snap.count} <button onClick={() => ++state.count}>inc</button>
+      {snap.count}
+      <button onClick={() => ++state.count}>+1</button>
     </div>
   )
 }
