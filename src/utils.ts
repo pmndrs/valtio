@@ -105,7 +105,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  * This adds computed values to an existing proxy object.
  *
  * [Notes]
- * This comes with cost and overlaps with useSnapshot.
+ * This comes with a cost and overlaps with useSnapshot.
  * Do not try to optimize too early. It can worsen the performance.
  * Measurement and comparison will be very important.
  *
@@ -180,7 +180,7 @@ export const addComputed = <T extends object, U extends object>(
  * It also accepts optional setters for computed values.
  *
  * [Notes]
- * This comes with cost and overlaps with useSnapshot.
+ * This comes with a cost and overlaps with useSnapshot.
  * Do not try to optimize too early. It can worsen the performance.
  * Measurement and comparison will be very important.
  *
