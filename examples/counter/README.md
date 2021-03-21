@@ -5,11 +5,8 @@
 ```bash
 git clone https://github.com/pmndrs/valtio
 
-# install project dependencies & build the library
-cd valtio && yarn
-
 # move to the examples folder & install dependencies
-cd examples/counter && yarn
+cd valtio/examples/counter && yarn
 
 # start the dev server
 yarn start

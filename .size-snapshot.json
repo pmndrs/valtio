@@ -57,21 +57,21 @@
     }
   },
   "macro.js": {
-    "bundled": 1536,
-    "minified": 936,
-    "gzipped": 512
+    "bundled": 2205,
+    "minified": 1332,
+    "gzipped": 659
   },
   "macro.module.js": {
-    "bundled": 1382,
-    "minified": 850,
-    "gzipped": 472,
+    "bundled": 1313,
+    "minified": 787,
+    "gzipped": 466,
     "treeshaked": {
       "rollup": {
-        "code": 743,
-        "import_statements": 251
+        "code": 723,
+        "import_statements": 153
       },
       "webpack": {
-        "code": 1804
+        "code": 1764
       }
     }
   }
