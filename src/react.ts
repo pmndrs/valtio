@@ -120,14 +120,3 @@ export const useSnapshot = <T extends object>(
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
   return createDeepProxy(currSnapshot, affected, proxyCache)
 }
-
-/**
- * @deprecated Renamed to useSnapshot
- */
-export const useProxy = <T extends object>(
-  proxyObject: T,
-  options?: Options
-): NonPromise<T> => {
-  console.warn('DEPRECATED: Renamed to useSnapshot')
-  return useSnapshot(proxyObject, options)
-}

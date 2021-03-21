@@ -1,31 +1,6 @@
-import { useRef } from 'react'
-import { proxy, subscribe, snapshot } from './vanilla'
-import { useProxy } from 'valtio'
 import { createDeepProxy, isDeepChanged } from 'proxy-compare'
+import { proxy, subscribe, snapshot } from './vanilla'
 import type { NonPromise } from './vanilla'
-
-/**
- * @deprecated useLocalProxy
- *
- * This is to create a proxy in a component at mount.
- * and discard it when the component unmounts.
- * It returns a tuple of snapshot and state.
- *
- * [Notes]
- * Valtio is designed for module state and this use case for component states
- * is not a primary target. It might not be ideal for such use cases.
- * For component state, alternatively consider using
- * [useImmer](https://github.com/immerjs/use-immer).
- */
-export const useLocalProxy = <T extends object>(init: T | (() => T)) => {
-  const ref = useRef<T>()
-  if (!ref.current) {
-    const initialObject =
-      typeof init === 'function' ? (init as () => T)() : init
-    ref.current = proxy(initialObject)
-  }
-  return [useProxy(ref.current), ref.current] as const
-}
 
 /**
  * subscribeKey
@@ -130,8 +105,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
  * This adds computed values to an existing proxy object.
  *
  * [Notes]
- * This is for expert users and not recommended for ordinary users.
- * Contradictory to its name, this is costly and overlaps with useSnapshot.
+ * This comes with a cost and overlaps with useSnapshot.
  * Do not try to optimize too early. It can worsen the performance.
  * Measurement and comparison will be very important.
  *
@@ -206,8 +180,7 @@ export const addComputed = <T extends object, U extends object>(
  * It also accepts optional setters for computed values.
  *
  * [Notes]
- * This is for expert users and not recommended for ordinary users.
- * Contradictory to its name, this is costly and overlaps with useSnapshot.
+ * This comes with a cost and overlaps with useSnapshot.
  * Do not try to optimize too early. It can worsen the performance.
  * Measurement and comparison will be very important.
  *

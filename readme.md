@@ -71,8 +71,14 @@ subscribe(state.arr, () => console.log('state.arr has changed to', state.arr))
 state.arr.push('world')
 ```
 
-To subscribe to a primitive value of state,
-consider [subscribeKey](./src/utils.ts#L31-L39) in utils.
+To subscribe to a primitive value of state, consider subscribeKey in utils.
+
+```jsx
+import { subscribeKey } from 'valtio/utils'
+
+const state = proxy({ count: 0, text: 'hello' })
+subscribeKey(state, 'count', (v) => console.log('state.count has changed to', v))
+```
 
 #### Suspend your components
 
