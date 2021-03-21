@@ -158,6 +158,37 @@ subscribe(state, () => {
 })
 ```
 
+#### `useProxy` macro
+
+We have a convenient macro with
+[babel-plugin-macros](https://www.npmjs.com/package/babel-plugin-macros).
+
+```js
+import { useProxy } from 'valtio/macro'
+
+const Component = () => {
+  useProxy(state)
+  return (
+    <div>
+      {state.count} <button onClick={() => ++state.count}>inc</button>
+    </div>
+  )
+}
+
+// the code above becomes the code blow.
+
+import { useSnapshot } from 'valtio'
+
+const Component = () => {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      {snap.count} <button onClick={() => ++state.count}>inc</button>
+    </div>
+  )
+}
+```
+
 #### Computed values
 
 You can have computed values with dependency tracking.
