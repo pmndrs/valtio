@@ -4,7 +4,7 @@
   "dependencies": {
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "valtio": "^0.8.2"
+    "valtio": "^1.0.0"
   },
   "devDependencies": {
     "react-scripts": "^4.0.3",
