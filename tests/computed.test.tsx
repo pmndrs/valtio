@@ -224,3 +224,18 @@ it('nested emulation with addComputed', async () => {
   expect(computeDouble).toBeCalledTimes(2)
   expect(callback).toBeCalledTimes(2)
 })
+
+it('addComputed with array.pop (#124)', async () => {
+  const state = proxy({
+    arr: [1, 2, 3],
+  })
+  addComputed(state, {
+    doubled: (snap) => snap.arr.map((x) => x * 2),
+  })
+
+  expect(snapshot(state)).toMatchObject({ arr: [1, 2, 3], doubled: [2, 4, 6] })
+
+  state.arr.pop()
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({ arr: [1, 2], doubled: [2, 4] })
+})
