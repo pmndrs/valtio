@@ -223,6 +223,35 @@ it('array in object', async () => {
   await findByText('counts: 0,1,2,3')
 })
 
+it('array pop and splice', async () => {
+  const arr = proxy([0, 1, 2])
+
+  const Counter: React.FC = () => {
+    const snap = useSnapshot(arr)
+    return (
+      <>
+        <div>counts: {snap.join(',')}</div>
+        <button onClick={() => arr.pop()}>button</button>
+        <button onClick={() => arr.splice(1, 0, 10, 11)}>button2</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>
+  )
+
+  await findByText('counts: 0,1,2')
+
+  fireEvent.click(getByText('button'))
+  await findByText('counts: 0,1')
+
+  fireEvent.click(getByText('button2'))
+  await findByText('counts: 0,10,11,1')
+})
+
 it('array length after direct assignment', async () => {
   const obj = proxy({ counts: [0, 1, 2] })
 
