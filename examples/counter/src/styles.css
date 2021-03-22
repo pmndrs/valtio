@@ -1,24 +1,28 @@
-@import url("https://rsms.me/inter/inter.css");
+@import url('https://rsms.me/inter/inter.css');
+html {
+  font-family: 'Inter', sans-serif;
+}
 
 * {
   box-sizing: border-box;
 }
 
 html,
-body,
-#root {
+body {
   width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
-body {
+.app {
   background: white;
-  font-family: "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   user-select: none;
+  position: relative;
+  width: 100%;
+  height: 100vh;
 }
 
 svg {
@@ -65,4 +69,24 @@ path {
   width: 100px;
   height: 100px;
   cursor: pointer;
+}
+
+.code {
+  padding: 10%;
+}
+
+pre {
+  font-size: 0.8em;
+  margin-left: -2.5rem !important;
+  margin-right: -2.5rem !important;
+  width: calc(100% + 5rem);
+  padding: 3em !important;
+  border: 1px solid #eee !important;
+  border-radius: 4px;
+}
+
+.src a * {
+  opacity: 0.5;
+  display: inline-block;
+  margin: 10px 5px;
 }
