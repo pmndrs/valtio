@@ -1,10 +1,10 @@
-import React from 'react'
-import { proxy, useSnapshot } from 'valtio'
-
 // @ts-ignore
 import PrismCode from 'react-prism'
 import 'prismjs'
 import 'prismjs/components/prism-jsx.min'
+
+import React from 'react'
+import { proxy, useSnapshot } from 'valtio'
 
 // You wrap your state
 const state = proxy({ number: 0 })
@@ -14,15 +14,15 @@ state.nested = { ticks: 0 }
 setInterval(() => state.nested.ticks++, 200)
 
 const Figure = () => {
-  const snapshot = useSnapshot(state)
+  const snap = useSnapshot(state)
   // This component *only* renders when state.number changes ...
-  return <div className="figure">{snapshot.number}</div>
+  return <div className="figure">{snap.number}</div>
 }
 
 const Ticks = () => {
-  const snapshot = useSnapshot(state)
+  const snap = useSnapshot(state)
   // This component *only* renders when state.nested.ticks changes ...
-  return <div className="ticks">{snapshot.nested.ticks} —</div>
+  return <div className="ticks">{snap.nested.ticks} —</div>
 }
 
 const Controls = () => {
@@ -65,15 +65,15 @@ state.nested = { ticks: 0 }
 setInterval(() => state.nested.ticks++, 200)
 
 const Figure = () => {
-  const snapshot = useSnapshot(state)
+  const snap = useSnapshot(state)
   // This component *only* renders when state.number changes ...
-  return <div className="figure">{snapshot.number}</div>
+  return <div className="figure">{snap.number}</div>
 }
 
 const Ticks = () => {
-  const snapshot = useSnapshot(state)
+  const snap = useSnapshot(state)
   // This component *only* renders when state.nested.ticks changes ...
-  return <div className="ticks">{snapshot.nested.ticks} —</div>
+  return <div className="ticks">{snap.nested.ticks} —</div>
 }
 
 const Controls = () => {
