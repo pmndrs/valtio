@@ -167,7 +167,7 @@ export const addComputed = <T extends object, U extends object>(
         targetObject[key] = value
       }
     }
-    subscribe(proxyObject, callback, true)
+    subscribe(proxyObject, callback)
     callback()
   })
 }

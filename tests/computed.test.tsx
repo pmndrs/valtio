@@ -137,6 +137,7 @@ it('simple addComputed', async () => {
   await Promise.resolve()
   expect(snapshot(state)).toMatchObject({ text: '', count: 1, doubled: 2 })
   expect(computeDouble).toBeCalledTimes(2)
+  await Promise.resolve()
   expect(callback).toBeCalledTimes(1)
 
   state.text = 'a'
@@ -213,6 +214,7 @@ it('nested emulation with addComputed', async () => {
     math: { count: 1, doubled: 2 },
   })
   expect(computeDouble).toBeCalledTimes(2)
+  await Promise.resolve()
   expect(callback).toBeCalledTimes(1)
 
   state.text = 'a'
