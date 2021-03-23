@@ -227,15 +227,21 @@ it('nested emulation with addComputed', async () => {
 
 it('addComputed with array.pop (#124)', async () => {
   const state = proxy({
-    arr: [1, 2, 3],
+    arr: [{ n: 1 }, { n: 2 }, { n: 3 }],
   })
   addComputed(state, {
-    doubled: (snap) => snap.arr.map((x) => x * 2),
+    nums: (snap) => snap.arr.map((item) => item.n),
   })
 
-  expect(snapshot(state)).toMatchObject({ arr: [1, 2, 3], doubled: [2, 4, 6] })
+  expect(snapshot(state)).toMatchObject({
+    arr: [{ n: 1 }, { n: 2 }, { n: 3 }],
+    nums: [1, 2, 3],
+  })
 
   state.arr.pop()
   await Promise.resolve()
-  expect(snapshot(state)).toMatchObject({ arr: [1, 2], doubled: [2, 4] })
+  expect(snapshot(state)).toMatchObject({
+    arr: [{ n: 1 }, { n: 2 }],
+    nums: [1, 2],
+  })
 })
