@@ -137,6 +137,7 @@ it('simple addComputed', async () => {
   await Promise.resolve()
   expect(snapshot(state)).toMatchObject({ text: '', count: 1, doubled: 2 })
   expect(computeDouble).toBeCalledTimes(2)
+  await Promise.resolve()
   expect(callback).toBeCalledTimes(1)
 
   state.text = 'a'
@@ -213,6 +214,7 @@ it('nested emulation with addComputed', async () => {
     math: { count: 1, doubled: 2 },
   })
   expect(computeDouble).toBeCalledTimes(2)
+  await Promise.resolve()
   expect(callback).toBeCalledTimes(1)
 
   state.text = 'a'
@@ -223,4 +225,25 @@ it('nested emulation with addComputed', async () => {
   })
   expect(computeDouble).toBeCalledTimes(2)
   expect(callback).toBeCalledTimes(2)
+})
+
+it('addComputed with array.pop (#124)', async () => {
+  const state = proxy({
+    arr: [{ n: 1 }, { n: 2 }, { n: 3 }],
+  })
+  addComputed(state, {
+    nums: (snap) => snap.arr.map((item) => item.n),
+  })
+
+  expect(snapshot(state)).toMatchObject({
+    arr: [{ n: 1 }, { n: 2 }, { n: 3 }],
+    nums: [1, 2, 3],
+  })
+
+  state.arr.pop()
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({
+    arr: [{ n: 1 }, { n: 2 }],
+    nums: [1, 2],
+  })
 })
