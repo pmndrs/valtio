@@ -50,6 +50,56 @@ type Options = {
   sync?: boolean
 }
 
+/**
+ * useSnapshot
+ *
+ * Create a local snapshot that catches changes. Rule of thumb: read from snapshots, mutate the source.
+ * The component will only re-render when the parts of the state you access have changed, it is render-optimized.
+ *
+ * [Notes]
+ * Every object inside your proxy also becomes a proxy (if you don't use "ref"), so you can also use them to create
+ *   the local snapshot as seen on example B.
+ * Beware that you still can replace the child proxy with something else so it will break your snapshot.
+ * In this case we recommend the example C or D. On both examples you don't need to worry with re-render,
+ *   because it is render-optimized.
+ *
+ * @example A
+ * function Counter() {
+ *   const snap = useSnapshot(state)
+ *   return (
+ *     <div>
+ *       {snap.count}
+ *       <button onClick={() => ++state.count}>+1</button>
+ *     </div>
+ *   )
+ * }
+ *
+ * @example B
+ * function ProfileName() {
+ *   const snap = useSnapshot(state.profile)
+ *   return (
+ *     <div>
+ *       {snap.name}
+ *     </div>
+ *   )
+ * }
+ *
+ * @example C
+ * const snap = useSnapshot(state)
+ * return (
+ *   <div>
+ *     {snap.profile.name}
+ *   </div>
+ * )
+ *
+ * @example D
+ * const { profile } = useSnapshot(state)
+ * return (
+ *   <div>
+ *     {profile.name}
+ *   </div>
+ * )
+ */
 export const useSnapshot = <T extends object>(
   proxyObject: T,
   options?: Options
