@@ -1,21 +1,21 @@
 {
   "index.js": {
-    "bundled": 5591,
+    "bundled": 4937,
     "minified": 2506,
     "gzipped": 1023
   },
   "vanilla.js": {
-    "bundled": 6414,
+    "bundled": 6374,
     "minified": 3149,
     "gzipped": 1178
   },
   "utils.js": {
-    "bundled": 6909,
-    "minified": 2261,
-    "gzipped": 1003
+    "bundled": 4776,
+    "minified": 2258,
+    "gzipped": 1001
   },
   "index.module.js": {
-    "bundled": 4846,
+    "bundled": 4347,
     "minified": 2041,
     "gzipped": 896,
     "treeshaked": {
@@ -29,9 +29,9 @@
     }
   },
   "vanilla.module.js": {
-    "bundled": 5913,
-    "minified": 2821,
-    "gzipped": 1090,
+    "bundled": 5814,
+    "minified": 2829,
+    "gzipped": 1099,
     "treeshaked": {
       "rollup": {
         "code": 22,
@@ -43,9 +43,9 @@
     }
   },
   "utils.module.js": {
-    "bundled": 6402,
-    "minified": 1916,
-    "gzipped": 935,
+    "bundled": 4073,
+    "minified": 1906,
+    "gzipped": 930,
     "treeshaked": {
       "rollup": {
         "code": 40,
@@ -57,12 +57,12 @@
     }
   },
   "macro.js": {
-    "bundled": 2205,
+    "bundled": 2086,
     "minified": 1332,
     "gzipped": 659
   },
   "macro.module.js": {
-    "bundled": 1313,
+    "bundled": 1190,
     "minified": 787,
     "gzipped": 466,
     "treeshaked": {
