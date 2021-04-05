@@ -4,10 +4,13 @@
   "version": "1.0.1",
   "description": "💊 Valtio makes proxy-state simple for React and Vanilla",
   "main": "index.js",
-  "module": "index.module.js",
+  "module": "esm/index.js",
   "types": "index.d.ts",
   "typesVersions": {
     "<4.0": {
+      "esm/*": [
+        "ts3.4/*"
+      ],
       "*": [
         "ts3.4/*"
       ]
@@ -17,22 +20,22 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./index.d.ts",
-      "module": "./index.module.js",
+      "module": "./esm/index.js",
       "default": "./index.js"
     },
     "./vanilla": {
       "types": "./vanilla.d.ts",
-      "module": "./vanilla.module.js",
+      "module": "./esm/vanilla.js",
       "default": "./vanilla.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
-      "module": "./utils.module.js",
+      "module": "./esm/utils.js",
       "default": "./utils.js"
     },
     "./macro": {
       "types": "./macro.d.ts",
-      "module": "./macro.module.js",
+      "module": "./esm/macro.js",
       "default": "./macro.js"
     }
   },
@@ -55,7 +58,7 @@
     "test": "jest && jest --setupFiles ./tests/setNodeEnvProduction.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp dist/index.d.ts dist/index.module.d.ts && shx cp dist/vanilla.d.ts dist/vanilla.module.d.ts && shx cp dist/utils.d.ts dist/utils.module.d.ts && shx cp dist/macro.d.ts dist/macro.module.d.ts && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.husky=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "husky": {
     "hooks": {
