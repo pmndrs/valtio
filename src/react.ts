@@ -20,7 +20,7 @@ import type { NonPromise } from './vanilla'
 const isSSR =
   typeof window === 'undefined' ||
   !window.navigator ||
-  /ServerSideRendering/.test(window.navigator.userAgent)
+  /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
 
 const useIsomorphicLayoutEffect = isSSR ? useEffect : useLayoutEffect
 
