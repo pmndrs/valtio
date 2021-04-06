@@ -2,6 +2,7 @@ import path from 'path'
 import babel from '@rollup/plugin-babel'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
+import alias from '@rollup/plugin-alias'
 import esbuild from 'rollup-plugin-esbuild'
 import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 
@@ -46,7 +47,12 @@ function createESMConfig(input, output) {
     input,
     output: { file: output, format: 'esm' },
     external,
-    plugins: [resolve({ extensions }), getEsbuild('node12'), sizeSnapshot()],
+    plugins: [
+      alias({ entries: { './vanilla': 'valtio/vanilla' } }),
+      resolve({ extensions }),
+      getEsbuild('node12'),
+      sizeSnapshot(),
+    ],
   }
 }
 
@@ -56,6 +62,7 @@ function createCommonJSConfig(input, output) {
     output: { file: output, format: 'cjs', exports: 'named' },
     external,
     plugins: [
+      alias({ entries: { './vanilla': 'valtio/vanilla' } }),
       resolve({ extensions }),
       babel(getBabelOptions({ ie: 11 })),
       sizeSnapshot(),

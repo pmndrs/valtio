@@ -13,7 +13,7 @@ import {
   affectedToPathList,
 } from 'proxy-compare'
 
-import { getVersion, subscribe, snapshot } from 'valtio/vanilla'
+import { getVersion, subscribe, snapshot } from './vanilla'
 import { createMutableSource, useMutableSource } from './useMutableSource'
 import type { NonPromise } from './vanilla'
 

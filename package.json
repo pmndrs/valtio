@@ -101,7 +101,6 @@
   "jest": {
     "rootDir": ".",
     "moduleNameMapper": {
-      "^valtio/vanilla$": "<rootDir>/src/vanilla.ts",
       "^valtio$": "<rootDir>/src/index.ts"
     },
     "modulePathIgnorePatterns": [
@@ -131,6 +130,7 @@
     "@babel/plugin-transform-typescript": "^7.13.0",
     "@babel/preset-env": "^7.13.12",
     "@babel/types": "^7.13.14",
+    "@rollup/plugin-alias": "^3.1.2",
     "@rollup/plugin-babel": "^5.3.0",
     "@rollup/plugin-node-resolve": "^11.2.1",
     "@rollup/plugin-typescript": "^8.2.1",

@@ -1,2 +1,2 @@
-export * from 'valtio/vanilla'
+export * from './vanilla'
 export * from './react'

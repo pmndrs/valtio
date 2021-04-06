@@ -1,5 +1,5 @@
 import { createDeepProxy, isDeepChanged } from 'proxy-compare'
-import { proxy, subscribe, snapshot } from 'valtio/vanilla'
+import { proxy, subscribe, snapshot } from './vanilla'
 import type { NonPromise } from './vanilla'
 
 /**
