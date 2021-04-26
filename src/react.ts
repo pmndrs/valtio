@@ -15,7 +15,7 @@ import {
 
 import { getVersion, subscribe, snapshot } from './vanilla'
 import { createMutableSource, useMutableSource } from './useMutableSource'
-import type { NonPromise } from './vanilla'
+import type { DeepResolveType } from './vanilla'
 
 const isSSR =
   typeof window === 'undefined' ||
@@ -126,12 +126,12 @@ type Options = {
 export const useSnapshot = <T extends object>(
   proxyObject: T,
   options?: Options
-): NonPromise<T> => {
+): DeepResolveType<T> => {
   const [, forceUpdate] = useReducer((c) => c + 1, 0)
   const affected = new WeakMap()
   const lastAffected = useRef<typeof affected>()
-  const prevSnapshot = useRef<NonPromise<T>>()
-  const lastSnapshot = useRef<NonPromise<T>>()
+  const prevSnapshot = useRef<DeepResolveType<T>>()
+  const lastSnapshot = useRef<DeepResolveType<T>>()
   useIsomorphicLayoutEffect(() => {
     lastSnapshot.current = prevSnapshot.current = snapshot(proxyObject)
   }, [proxyObject])

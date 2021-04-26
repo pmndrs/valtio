@@ -6,10 +6,11 @@ const SNAPSHOT = Symbol()
 const PROMISE_RESULT = Symbol()
 const PROMISE_ERROR = Symbol()
 
+const enum AsRef {}
 const refSet = new WeakSet()
-export const ref = <T extends object>(o: T): T => {
+export const ref = <T extends object>(o: T): T & AsRef => {
   refSet.add(o)
-  return o
+  return o as T & AsRef
 }
 
 const isSupportedObject = (x: unknown): x is object =>
@@ -216,17 +217,21 @@ export const subscribe = (
   }
 }
 
-export type NonPromise<T> = T extends Function
+export type DeepResolveType<T> = T extends Function
+  ? T
+  : T extends AsRef
   ? T
   : T extends Promise<infer V>
   ? V
   : T extends object
   ? {
-      [K in keyof T]: NonPromise<T[K]>
+      [K in keyof T]: DeepResolveType<T[K]>
     }
   : T
 
-export const snapshot = <T extends object>(proxyObject: T): NonPromise<T> => {
+export const snapshot = <T extends object>(
+  proxyObject: T
+): DeepResolveType<T> => {
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&
