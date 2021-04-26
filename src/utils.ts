@@ -97,9 +97,9 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
         const computedStates =
           message.payload.nextLiftedState?.computedStates || []
 
-        computedStates.forEach(({ state }: { state: any }, index: number) => {
-          isTimeTraveling = true
+        isTimeTraveling = true
 
+        computedStates.forEach(({ state }: { state: any }, index: number) => {
           const action =
             actions[index] || `Update - ${new Date().toLocaleString()}`
 
