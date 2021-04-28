@@ -64,6 +64,7 @@ function createCommonJSConfig(input, output) {
     plugins: [
       alias({ entries: { './vanilla': 'valtio/vanilla' } }),
       resolve({ extensions }),
+      typescript(),
       babel(getBabelOptions({ ie: 11 })),
       sizeSnapshot(),
     ],

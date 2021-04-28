@@ -1,6 +1,6 @@
 import { createDeepProxy, isDeepChanged } from 'proxy-compare'
 import { proxy, subscribe, snapshot } from './vanilla'
-import type { NonPromise } from './vanilla'
+import type { DeepResolveType } from './vanilla'
 
 /**
  * subscribeKey
@@ -122,7 +122,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
 export const addComputed = <T extends object, U extends object>(
   proxyObject: T,
   computedFns: {
-    [K in keyof U]: (snap: NonPromise<T>) => U[K]
+    [K in keyof U]: (snap: DeepResolveType<T>) => U[K]
   },
   targetObject: any = proxyObject
 ) => {
@@ -131,7 +131,7 @@ export const addComputed = <T extends object, U extends object>(
       throw new Error('object property already defined')
     }
     const get = computedFns[key]
-    let prevSnapshot: NonPromise<T> | undefined
+    let prevSnapshot: DeepResolveType<T> | undefined
     let affected = new WeakMap()
     let pending = false
     const callback = () => {
@@ -200,9 +200,9 @@ export const proxyWithComputed = <T extends object, U extends object>(
   initialObject: T,
   computedFns: {
     [K in keyof U]:
-      | ((snap: NonPromise<T>) => U[K])
+      | ((snap: DeepResolveType<T>) => U[K])
       | {
-          get: (snap: NonPromise<T>) => U[K]
+          get: (snap: DeepResolveType<T>) => U[K]
           set?: (state: T, newValue: U[K]) => void
         }
   }
@@ -215,11 +215,11 @@ export const proxyWithComputed = <T extends object, U extends object>(
     const { get, set } = (typeof computedFn === 'function'
       ? { get: computedFn }
       : computedFn) as {
-      get: (snap: NonPromise<T>) => U[typeof key]
+      get: (snap: DeepResolveType<T>) => U[typeof key]
       set?: (state: T, newValue: U[typeof key]) => void
     }
     let computedValue: U[typeof key]
-    let prevSnapshot: NonPromise<T> | undefined
+    let prevSnapshot: DeepResolveType<T> | undefined
     let affected = new WeakMap()
     const desc: PropertyDescriptor = {}
     desc.get = () => {

@@ -100,6 +100,15 @@
   "homepage": "https://github.com/pmndrs/valtio",
   "jest": {
     "rootDir": ".",
+    "preset": "ts-jest",
+    "globals": {
+      "ts-jest": {
+        "tsconfig": {
+          "target": "es2015",
+          "jsx": "react"
+        }
+      }
+    },
     "moduleNameMapper": {
       "^valtio$": "<rootDir>/src/index.ts"
     },
@@ -127,7 +136,6 @@
     "@babel/core": "^7.13.14",
     "@babel/helper-module-imports": "^7.13.12",
     "@babel/plugin-transform-react-jsx": "^7.13.12",
-    "@babel/plugin-transform-typescript": "^7.13.0",
     "@babel/preset-env": "^7.13.12",
     "@babel/types": "^7.13.14",
     "@rollup/plugin-alias": "^3.1.2",
@@ -166,6 +174,7 @@
     "rollup-plugin-esbuild": "^3.0.2",
     "rollup-plugin-size-snapshot": "^0.12.0",
     "shx": "^0.3.3",
+    "ts-jest": "^26.5.5",
     "tslib": "^2.2.0",
     "typescript": "^4.2.3"
   },
