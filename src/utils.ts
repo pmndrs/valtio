@@ -89,6 +89,30 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
         message.payload?.type === 'COMMIT'
       ) {
         devtools.init(snapshot(proxyObject))
+      } else if (
+        message.type === 'DISPATCH' &&
+        message.payload?.type === 'IMPORT_STATE'
+      ) {
+        const actions = message.payload.nextLiftedState?.actionsById
+        const computedStates =
+          message.payload.nextLiftedState?.computedStates || []
+
+        isTimeTraveling = true
+
+        computedStates.forEach(({ state }: { state: any }, index: number) => {
+          const action =
+            actions[index] || `Update - ${new Date().toLocaleString()}`
+
+          Object.keys(state).forEach((key) => {
+            ;(proxyObject as any)[key] = state[key]
+          })
+
+          if (index === 0) {
+            devtools.init(snapshot(proxyObject))
+          } else {
+            devtools.send(action, snapshot(proxyObject))
+          }
+        })
       }
     }
   )
