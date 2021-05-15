@@ -267,8 +267,8 @@ export const proxyWithComputed = <T extends object, U extends object>(
   return proxyObject
 }
 
-export type WatchGet = <T extends object>(value: T) => T
-export type WatchCallback = (get: WatchGet) => (() => void) | void | undefined
+type WatchGet = <T extends object>(value: T) => T
+type WatchCallback = (get: WatchGet) => (() => void) | void | undefined
 
 let currentCleanups: Set<() => void>
 
