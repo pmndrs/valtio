@@ -1,4 +1,4 @@
-import { getUntrackedObject, markToTrack } from 'proxy-compare'
+import { getUntracked, markToTrack } from 'proxy-compare'
 
 const VERSION = Symbol()
 const LISTENERS = Symbol()
@@ -148,7 +148,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
             notifyUpdate()
           })
       } else {
-        value = getUntrackedObject(value) || value
+        value = getUntracked(value) || value
         if (value[LISTENERS]) {
           target[prop] = value
         } else {
