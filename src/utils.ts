@@ -236,9 +236,9 @@ export const proxyWithComputed = <T extends object, U extends object>(
       throw new Error('object property already defined')
     }
     const computedFn = computedFns[key]
-    const { get, set } = (typeof computedFn === 'function'
-      ? { get: computedFn }
-      : computedFn) as {
+    const { get, set } = (
+      typeof computedFn === 'function' ? { get: computedFn } : computedFn
+    ) as {
       get: (snap: DeepResolveType<T>) => U[typeof key]
       set?: (state: T, newValue: U[typeof key]) => void
     }
