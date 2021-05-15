@@ -8,8 +8,8 @@ import {
   useRef,
 } from 'react'
 import {
-  createDeepProxy,
-  isDeepChanged,
+  createProxy as createProxyToCompare,
+  isChanged,
   affectedToPathList,
 } from 'proxy-compare'
 
@@ -139,7 +139,7 @@ export const useSnapshot = <T extends object>(
     lastAffected.current = affected
     if (
       prevSnapshot.current !== lastSnapshot.current &&
-      isDeepChanged(
+      isChanged(
         prevSnapshot.current,
         lastSnapshot.current,
         affected,
@@ -161,7 +161,7 @@ export const useSnapshot = <T extends object>(
           try {
             if (
               lastAffected.current &&
-              !isDeepChanged(
+              !isChanged(
                 prevSnapshot.current,
                 nextSnapshot,
                 lastAffected.current,
@@ -191,5 +191,5 @@ export const useSnapshot = <T extends object>(
     useAffectedDebugValue(currSnapshot, affected)
   }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
-  return createDeepProxy(currSnapshot, affected, proxyCache)
+  return createProxyToCompare(currSnapshot, affected, proxyCache)
 }

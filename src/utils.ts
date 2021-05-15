@@ -1,4 +1,4 @@
-import { createDeepProxy, isDeepChanged } from 'proxy-compare'
+import { createProxy as createProxyToCompare, isChanged } from 'proxy-compare'
 import { proxy, subscribe, snapshot } from './vanilla'
 import type { DeepResolveType } from './vanilla'
 
@@ -162,10 +162,10 @@ export const addComputed = <T extends object, U extends object>(
       const nextSnapshot = snapshot(proxyObject)
       if (
         !pending &&
-        (!prevSnapshot || isDeepChanged(prevSnapshot, nextSnapshot, affected))
+        (!prevSnapshot || isChanged(prevSnapshot, nextSnapshot, affected))
       ) {
         affected = new WeakMap()
-        const value = get(createDeepProxy(nextSnapshot, affected))
+        const value = get(createProxyToCompare(nextSnapshot, affected))
         prevSnapshot = nextSnapshot
         if (value instanceof Promise) {
           pending = true
@@ -248,12 +248,9 @@ export const proxyWithComputed = <T extends object, U extends object>(
     const desc: PropertyDescriptor = {}
     desc.get = () => {
       const nextSnapshot = snapshot(proxyObject)
-      if (
-        !prevSnapshot ||
-        isDeepChanged(prevSnapshot, nextSnapshot, affected)
-      ) {
+      if (!prevSnapshot || isChanged(prevSnapshot, nextSnapshot, affected)) {
         affected = new WeakMap()
-        computedValue = get(createDeepProxy(nextSnapshot, affected))
+        computedValue = get(createProxyToCompare(nextSnapshot, affected))
         prevSnapshot = nextSnapshot
       }
       return computedValue

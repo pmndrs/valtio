@@ -125,7 +125,7 @@
     ]
   },
   "dependencies": {
-    "proxy-compare": "1.1.6"
+    "proxy-compare": "2.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.13.16",
