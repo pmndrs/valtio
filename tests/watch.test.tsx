@@ -1,4 +1,4 @@
-import { proxy } from '../src/vanilla'
+import { proxy, subscribe } from '../src/vanilla'
 import { watch } from '../src/utils'
 
 describe('watch', () => {
@@ -64,25 +64,37 @@ describe('watch', () => {
     stop()
     expect(callback).toBeCalledTimes(1)
   })
-  it('should cleanup recursively when stopped', () => {
+  it('should cleanup recursively when stopped', async () => {
+    const example = proxy({ value: 'A' })
+
     const callback = jest.fn()
 
-    const stop = watch(() =>
-      watch(() => () => {
-        callback()
-      })
-    )
+    const stop = watch(() => {
+      const unsubscribe = subscribe(example, callback)
+
+      return () => {
+        unsubscribe()
+      }
+    })
 
     expect(callback).toBeCalledTimes(0)
     stop()
-    expect(callback).toBeCalledTimes(1)
+    example.value = 'B'
+    await Promise.resolve()
+    expect(callback).toBeCalledTimes(0)
   })
   it('should cleanup internal effects when stopped', () => {
     const callback = jest.fn()
 
     const stop = watch(() => {
-      watch(() => () => {
-        callback()
+      watch(() => {
+        watch(() => {
+          watch(() => {
+            watch(() => () => {
+              callback()
+            })
+          })
+        })
       })
     })
 
