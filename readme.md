@@ -279,3 +279,10 @@ const state = proxyWithComputed({
   quadrupled: snap => snap.doubled * 2
 })
 ```
+
+#### Recipes
+
+Valtio is unopinionated about organizing state.
+The community is working on best practices on wiki pages.
+
+- [How to organize actions](https://github.com/pmndrs/valtio/wiki/How-to-organize-actions)
