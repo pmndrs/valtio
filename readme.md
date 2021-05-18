@@ -47,6 +47,19 @@ function Counter() {
 }
 ```
 
+<details>
+<summary>Note: useSnapshot returns a new proxy for render optimization.</summary>
+
+Internally, `useSnapshot` calls `snapshot` in valtio/vanilla,
+and wraps the snapshot object with another proxy to detect property access.
+This feature is based on [proxy-compare](https://github.com/dai-shi/proxy-compare).
+
+Two kinds of proxies are used for different purposes:
+
+- `proxy()` from `valtio/vanilla` is for mutation tracking or write tracking.
+- `createProxy()` from `proxy-compare` is for usage tracking or read tracking.
+</details>
+
 #### Subscribe from anywhere
 
 You can access state outside of your components and subscribe to changes.
