@@ -3,7 +3,6 @@ import {
   useDebugValue,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useReducer,
   useRef,
 } from 'react'
@@ -127,7 +126,7 @@ export const useSnapshot = <T extends object>(
   proxyObject: T,
   options?: Options
 ): DeepResolveType<T> => {
-  const [, forceUpdate] = useReducer((c) => c + 1, 0)
+  const forceUpdate = useReducer((c) => c + 1, 0)[1]
   const affected = new WeakMap()
   const lastAffected = useRef<typeof affected>()
   const prevSnapshot = useRef<DeepResolveType<T>>()
@@ -190,6 +189,9 @@ export const useSnapshot = <T extends object>(
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useAffectedDebugValue(currSnapshot, affected)
   }
-  const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
-  return createProxyToCompare(currSnapshot, affected, proxyCache)
+  const proxyCache = useRef<WeakMap<object, unknown>>() // per-hook proxyCache
+  if (!proxyCache.current) {
+    proxyCache.current = new WeakMap()
+  }
+  return createProxyToCompare(currSnapshot, affected, proxyCache.current)
 }

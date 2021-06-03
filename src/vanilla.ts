@@ -32,10 +32,7 @@ const proxyCache = new WeakMap<object, ProxyObject>()
 let globalVersion = 1
 const snapshotCache = new WeakMap<
   object,
-  {
-    version: number
-    snapshot: unknown
-  }
+  [version: number, snapshot: unknown]
 >()
 
 export const proxy = <T extends object>(initialObject: T = {} as T): T => {
@@ -58,14 +55,14 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   }
   const createSnapshot = (target: any, receiver: any) => {
     const cache = snapshotCache.get(receiver)
-    if (cache && cache.version === version) {
-      return cache.snapshot
+    if (cache?.[0] === version) {
+      return cache[1]
     }
     const snapshot: any = Array.isArray(target)
       ? []
       : Object.create(Object.getPrototypeOf(target))
     markToTrack(snapshot, true) // mark to track
-    snapshotCache.set(receiver, { version, snapshot })
+    snapshotCache.set(receiver, [version, snapshot])
     Reflect.ownKeys(target).forEach((key) => {
       const value = target[key]
       if (refSet.has(value)) {
@@ -111,7 +108,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
     },
     deleteProperty(target, prop) {
       const prevValue = target[prop]
-      const childListeners = prevValue && (prevValue as any)[LISTENERS]
+      const childListeners = (prevValue as any)?.[LISTENERS]
       if (childListeners) {
         childListeners.delete(notifyUpdate)
       }
@@ -126,7 +123,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       if (Object.is(prevValue, value)) {
         return true
       }
-      const childListeners = prevValue && (prevValue as any)[LISTENERS]
+      const childListeners = (prevValue as any)?.[LISTENERS]
       if (childListeners) {
         childListeners.delete(notifyUpdate)
       }
