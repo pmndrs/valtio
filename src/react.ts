@@ -127,7 +127,7 @@ export const useSnapshot = <T extends object>(
   proxyObject: T,
   options?: Options
 ): DeepResolveType<T> => {
-  const [, forceUpdate] = useReducer((c) => c + 1, 0)
+  const forceUpdate = useReducer((c) => c + 1, 0)[1]
   const affected = new WeakMap()
   const lastAffected = useRef<typeof affected>()
   const prevSnapshot = useRef<DeepResolveType<T>>()
