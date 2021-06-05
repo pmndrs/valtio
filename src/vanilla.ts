@@ -39,8 +39,9 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   if (!isSupportedObject(initialObject)) {
     throw new Error('unsupported object type')
   }
-  if (proxyCache.has(initialObject)) {
-    return proxyCache.get(initialObject) as T
+  const found = proxyCache.get(initialObject) as T | undefined
+  if (found) {
+    return found
   }
   let version = globalVersion
   const listeners = new Set<(nextVersion: number) => void>()
@@ -176,7 +177,7 @@ export const getVersion = (proxyObject: any): number => {
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&
-    (!proxyObject || !proxyObject[VERSION])
+    !proxyObject?.[VERSION]
   ) {
     throw new Error('Please use proxy object')
   }
@@ -191,7 +192,7 @@ export const subscribe = (
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&
-    (!proxyObject || !proxyObject[LISTENERS])
+    !proxyObject?.[LISTENERS]
   ) {
     throw new Error('Please use proxy object')
   }
@@ -232,7 +233,7 @@ export const snapshot = <T extends object>(
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&
-    (!proxyObject || !(proxyObject as any)[SNAPSHOT])
+    !(proxyObject as any)?.[SNAPSHOT]
   ) {
     throw new Error('Please use proxy object')
   }
