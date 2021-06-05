@@ -3,6 +3,7 @@ import {
   useDebugValue,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useReducer,
   useRef,
 } from 'react'
@@ -189,9 +190,6 @@ export const useSnapshot = <T extends object>(
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useAffectedDebugValue(currSnapshot, affected)
   }
-  const proxyCache = useRef<WeakMap<object, unknown>>() // per-hook proxyCache
-  if (!proxyCache.current) {
-    proxyCache.current = new WeakMap()
-  }
-  return createProxyToCompare(currSnapshot, affected, proxyCache.current)
+  const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
+  return createProxyToCompare(currSnapshot, affected, proxyCache)
 }
