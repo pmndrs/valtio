@@ -28,7 +28,7 @@
     }
   },
   "utils.js": {
-    "bundled": 5859,
+    "bundled": 5867,
     "minified": 2678,
     "gzipped": 1197,
     "treeshaked": {
@@ -41,64 +41,8 @@
       }
     }
   },
-  "index.module.js": {
-    "bundled": 4605,
-    "minified": 2099,
-    "gzipped": 914,
-    "treeshaked": {
-      "rollup": {
-        "code": 155,
-        "import_statements": 54
-      },
-      "webpack": {
-        "code": 1306
-      }
-    }
-  },
-  "vanilla.module.js": {
-    "bundled": 5814,
-    "minified": 2829,
-    "gzipped": 1099,
-    "treeshaked": {
-      "rollup": {
-        "code": 22,
-        "import_statements": 22
-      },
-      "webpack": {
-        "code": 1087
-      }
-    }
-  },
-  "utils.module.js": {
-    "bundled": 4073,
-    "minified": 1906,
-    "gzipped": 930,
-    "treeshaked": {
-      "rollup": {
-        "code": 40,
-        "import_statements": 40
-      },
-      "webpack": {
-        "code": 1057
-      }
-    }
-  },
   "macro.js": {
-    "bundled": 1190,
-    "minified": 787,
-    "gzipped": 466,
-    "treeshaked": {
-      "rollup": {
-        "code": 723,
-        "import_statements": 153
-      },
-      "webpack": {
-        "code": 1764
-      }
-    }
-  },
-  "macro.module.js": {
-    "bundled": 1190,
+    "bundled": 1194,
     "minified": 787,
     "gzipped": 466,
     "treeshaked": {
