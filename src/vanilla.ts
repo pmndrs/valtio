@@ -1,10 +1,10 @@
 import { getUntracked, markToTrack } from 'proxy-compare'
 
-const VERSION = Symbol()
-const LISTENERS = Symbol()
-const SNAPSHOT = Symbol()
-const PROMISE_RESULT = Symbol()
-const PROMISE_ERROR = Symbol()
+const VERSION = Symbol.for('valtio.version')
+const LISTENERS = Symbol.for('valtio.listeners')
+const SNAPSHOT = Symbol.for('valtio.snapshot')
+const PROMISE_RESULT = Symbol.for('promise.result')
+const PROMISE_ERROR = Symbol.for('promise.error')
 
 const enum AsRef {}
 const refSet = new WeakSet()
