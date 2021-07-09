@@ -21,21 +21,25 @@
     ".": {
       "types": "./index.d.ts",
       "module": "./esm/index.js",
+      "import": "./esm/index.js",
       "default": "./index.js"
     },
     "./vanilla": {
       "types": "./vanilla.d.ts",
       "module": "./esm/vanilla.js",
+      "import": "./esm/vanilla.js",
       "default": "./vanilla.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
       "module": "./esm/utils.js",
+      "import": "./esm/utils.js",
       "default": "./utils.js"
     },
     "./macro": {
       "types": "./macro.d.ts",
       "module": "./esm/macro.js",
+      "import": "./esm/macro.js",
       "default": "./macro.js"
     }
   },
