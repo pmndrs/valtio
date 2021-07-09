@@ -42,16 +42,16 @@
     }
   },
   "macro.js": {
-    "bundled": 1194,
-    "minified": 787,
-    "gzipped": 466,
+    "bundled": 1359,
+    "minified": 886,
+    "gzipped": 505,
     "treeshaked": {
       "rollup": {
-        "code": 723,
+        "code": 822,
         "import_statements": 153
       },
       "webpack": {
-        "code": 1764
+        "code": 1863
       }
     }
   }
