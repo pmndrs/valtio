@@ -1,5 +1,29 @@
 import { getUntracked, markToTrack } from 'proxy-compare'
 
+/*
+ * overall design
+ *
+ * valtio's proxy has only one goal: create an immutable snapshot object
+ *
+ * some design principles:
+ * 1. snapshot is created on demand
+ * 2. changes are tracked only with version number
+ * 3. subscription is used for notifying update (version)
+ * 4. version number is hidden as implementation detail
+ * 5. proxies are basically used only for version and subscription
+ * 6. snapshot creation is optimized with version number
+ *
+ * some notes about the implementation:
+ * 1. proxy can be nested (created at the initialization)
+ * 2. proxy can have circular structure (globalVersion to detect it)
+ *
+ * some notes about promise handling:
+ * 1. proxy can have a promise but does nothing
+ * 2. when creating a snapshot, it will store the resolved value
+ * 3. if it's not resolved, a special object will throw a promise/error
+ *
+ */
+
 const VERSION = Symbol()
 const LISTENERS = Symbol()
 const SNAPSHOT = Symbol()
