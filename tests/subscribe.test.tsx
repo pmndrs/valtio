@@ -111,15 +111,15 @@ describe('subscribe', () => {
     await Promise.resolve()
     expect(handler).toBeCalledTimes(1)
     expect(handler).lastCalledWith([
-      ['set', ['count1'], 1],
-      ['set', ['count2'], 2],
+      ['set', ['count1'], 1, 0],
+      ['set', ['count2'], 2, 0],
     ])
 
     delete obj.count2
 
     await Promise.resolve()
     expect(handler).toBeCalledTimes(2)
-    expect(handler).lastCalledWith([['delete', ['count2'], undefined]])
+    expect(handler).lastCalledWith([['delete', ['count2'], 2]])
   })
 
   it('should notify nested ops', async () => {
@@ -132,12 +132,12 @@ describe('subscribe', () => {
 
     await Promise.resolve()
     expect(handler).toBeCalledTimes(1)
-    expect(handler).lastCalledWith([['set', ['nested', 'count'], 1]])
+    expect(handler).lastCalledWith([['set', ['nested', 'count'], 1, 0]])
 
     delete obj.nested.count
 
     await Promise.resolve()
     expect(handler).toBeCalledTimes(2)
-    expect(handler).lastCalledWith([['delete', ['nested', 'count'], undefined]])
+    expect(handler).lastCalledWith([['delete', ['nested', 'count'], 1]])
   })
 })
