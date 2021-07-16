@@ -191,6 +191,7 @@ export const addComputed = <T extends object, U extends object>(
         targetObject[key] = value
       }
     }
+    // FIXME no way to clean up the subscription
     subscribe(proxyObject, callback)
     callback()
   })
