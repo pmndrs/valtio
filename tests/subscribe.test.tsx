@@ -1,4 +1,5 @@
 import { proxy, ref, subscribe } from '../src/index'
+import { subscribeKey } from '../src/utils'
 
 describe('subscribe', () => {
   it('should call subscription', async () => {
@@ -139,5 +140,30 @@ describe('subscribe', () => {
     await Promise.resolve()
     expect(handler).toBeCalledTimes(2)
     expect(handler).lastCalledWith([['delete', ['nested', 'count'], 1]])
+  })
+})
+
+describe('subscribeKey', () => {
+  it('should call subscription', async () => {
+    const obj = proxy({ count1: 0, count2: 0 })
+    const handler1 = jest.fn()
+    const handler2 = jest.fn()
+
+    subscribeKey(obj, 'count1', handler1)
+    subscribeKey(obj, 'count2', handler2)
+
+    obj.count1 += 10
+
+    await Promise.resolve()
+    expect(handler1).toBeCalledTimes(1)
+    expect(handler1).lastCalledWith(10)
+    expect(handler2).toBeCalledTimes(0)
+
+    obj.count2 += 20
+
+    await Promise.resolve()
+    expect(handler1).toBeCalledTimes(1)
+    expect(handler2).toBeCalledTimes(1)
+    expect(handler2).lastCalledWith(20)
   })
 })
