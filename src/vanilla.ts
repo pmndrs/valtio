@@ -31,7 +31,12 @@ const proxyCache = new WeakMap<object, ProxyObject>()
 
 type Op = 'set' | 'delete' | 'resolve' | 'reject'
 type Path = (string | symbol)[]
-type Listener = (op: Op, path: Path, nextVersion: number) => void
+type Listener = (
+  op: Op,
+  path: Path,
+  value: unknown,
+  nextVersion: number
+) => void
 
 let globalVersion = 1
 const snapshotCache = new WeakMap<
@@ -49,21 +54,28 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   }
   let version = globalVersion
   const listeners = new Set<Listener>()
-  const notifyUpdate = (op: Op, path: Path, nextVersion?: number) => {
+  const notifyUpdate = (
+    op: Op,
+    path: Path,
+    value?: unknown,
+    nextVersion?: number
+  ) => {
     if (!nextVersion) {
       nextVersion = ++globalVersion
     }
     if (version !== nextVersion) {
       version = nextVersion
-      listeners.forEach((listener) => listener(op, path, nextVersion as number))
+      listeners.forEach((listener) =>
+        listener(op, path, value, nextVersion as number)
+      )
     }
   }
   const propListeners = new Map<string | symbol, Listener>()
   const getPropListener = (prop: string | symbol) => {
     let propListener = propListeners.get(prop)
     if (!propListener) {
-      propListener = (op, path, nextVersion) => {
-        notifyUpdate(op, [prop, ...path], nextVersion)
+      propListener = (op, path, value, nextVersion) => {
+        notifyUpdate(op, [prop, ...path], value, nextVersion)
       }
       propListeners.set(prop, propListener)
     }
@@ -158,12 +170,12 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         target[prop] = value
           .then((v) => {
             target[prop][PROMISE_RESULT] = v
-            notifyUpdate('resolve', [prop])
+            notifyUpdate('resolve', [prop], v)
             return v
           })
           .catch((e) => {
             target[prop][PROMISE_ERROR] = e
-            notifyUpdate('reject', [prop])
+            notifyUpdate('reject', [prop], e)
           })
       } else {
         value = getUntracked(value) || value
@@ -174,7 +186,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         }
         target[prop][LISTENERS].add(getPropListener(prop))
       }
-      notifyUpdate('set', [prop])
+      notifyUpdate('set', [prop], value)
       return true
     },
   })
@@ -206,7 +218,7 @@ export const getVersion = (proxyObject: any): number => {
 
 export const subscribe = (
   proxyObject: any,
-  callback: (ops: [Op, Path][]) => void,
+  callback: (ops: [Op, Path, unknown][]) => void,
   notifyInSync?: boolean
 ) => {
   if (
@@ -217,9 +229,9 @@ export const subscribe = (
     throw new Error('Please use proxy object')
   }
   let pendingVersion = 0
-  const ops: [Op, Path][] = []
-  const listener: Listener = (op, path, nextVersion) => {
-    ops.push([op, path])
+  const ops: [Op, Path, unknown][] = []
+  const listener: Listener = (op, path, value, nextVersion) => {
+    ops.push([op, path, value])
     if (notifyInSync) {
       callback(ops.splice(0))
       return
