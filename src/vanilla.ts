@@ -29,6 +29,10 @@ const isSupportedObject = (x: unknown): x is object =>
 type ProxyObject = object
 const proxyCache = new WeakMap<object, ProxyObject>()
 
+type Op = 'set' | 'delete' | 'resolve' | 'reject'
+type Path = (string | symbol)[]
+type Listener = (op: Op, path: Path, nextVersion: number) => void
+
 let globalVersion = 1
 const snapshotCache = new WeakMap<
   object,
@@ -44,15 +48,31 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
     return found
   }
   let version = globalVersion
-  const listeners = new Set<(nextVersion: number) => void>()
-  const notifyUpdate = (nextVersion?: number) => {
+  const listeners = new Set<Listener>()
+  const notifyUpdate = (op: Op, path: Path, nextVersion?: number) => {
     if (!nextVersion) {
       nextVersion = ++globalVersion
     }
     if (version !== nextVersion) {
       version = nextVersion
-      listeners.forEach((listener) => listener(nextVersion as number))
+      listeners.forEach((listener) => listener(op, path, nextVersion as number))
     }
+  }
+  const propListeners = new Map<string | symbol, Listener>()
+  const getPropListener = (prop: string | symbol) => {
+    let propListener = propListeners.get(prop)
+    if (!propListener) {
+      propListener = (op, path, nextVersion) => {
+        notifyUpdate(op, [prop, ...path], nextVersion)
+      }
+      propListeners.set(prop, propListener)
+    }
+    return propListener
+  }
+  const popPropListener = (prop: string | symbol) => {
+    const propListener = propListeners.get(prop)
+    propListeners.delete(prop)
+    return propListener
   }
   const createSnapshot = (target: any, receiver: any) => {
     const cache = snapshotCache.get(receiver)
@@ -111,11 +131,11 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       const prevValue = target[prop]
       const childListeners = (prevValue as any)?.[LISTENERS]
       if (childListeners) {
-        childListeners.delete(notifyUpdate)
+        childListeners.delete(popPropListener(prop))
       }
       const deleted = Reflect.deleteProperty(target, prop)
       if (deleted) {
-        notifyUpdate()
+        notifyUpdate('delete', [prop])
       }
       return deleted
     },
@@ -126,7 +146,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       }
       const childListeners = (prevValue as any)?.[LISTENERS]
       if (childListeners) {
-        childListeners.delete(notifyUpdate)
+        childListeners.delete(popPropListener(prop))
       }
       if (
         refSet.has(value) ||
@@ -138,12 +158,12 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         target[prop] = value
           .then((v) => {
             target[prop][PROMISE_RESULT] = v
-            notifyUpdate()
+            notifyUpdate('resolve', [prop])
             return v
           })
           .catch((e) => {
             target[prop][PROMISE_ERROR] = e
-            notifyUpdate()
+            notifyUpdate('reject', [prop])
           })
       } else {
         value = getUntracked(value) || value
@@ -152,9 +172,9 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
         } else {
           target[prop] = proxy(value)
         }
-        target[prop][LISTENERS].add(notifyUpdate)
+        target[prop][LISTENERS].add(getPropListener(prop))
       }
-      notifyUpdate()
+      notifyUpdate('set', [prop])
       return true
     },
   })
@@ -186,7 +206,7 @@ export const getVersion = (proxyObject: any): number => {
 
 export const subscribe = (
   proxyObject: any,
-  callback: () => void,
+  callback: (ops: [Op, Path][]) => void,
   notifyInSync?: boolean
 ) => {
   if (
@@ -197,15 +217,17 @@ export const subscribe = (
     throw new Error('Please use proxy object')
   }
   let pendingVersion = 0
-  const listener = (nextVersion: number) => {
+  const ops: [Op, Path][] = []
+  const listener: Listener = (op, path, nextVersion) => {
+    ops.push([op, path])
     if (notifyInSync) {
-      callback()
+      callback(ops.splice(0))
       return
     }
     pendingVersion = nextVersion
     Promise.resolve().then(() => {
       if (nextVersion === pendingVersion) {
-        callback()
+        callback(ops.splice(0))
       }
     })
   }

@@ -95,4 +95,49 @@ describe('subscribe', () => {
     await Promise.resolve()
     expect(handler).toBeCalledTimes(0)
   })
+
+  it('should notify ops', async () => {
+    const obj = proxy<{ count1: number; count2?: number }>({
+      count1: 0,
+      count2: 0,
+    })
+    const handler = jest.fn()
+
+    subscribe(obj, handler)
+
+    obj.count1 += 1
+    obj.count2 = 1
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(1)
+    expect(handler).lastCalledWith([
+      ['set', ['count1']],
+      ['set', ['count2']],
+    ])
+
+    delete obj.count2
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(2)
+    expect(handler).lastCalledWith([['delete', ['count2']]])
+  })
+
+  it('should notify nested ops', async () => {
+    const obj = proxy<{ nested: { count?: number } }>({ nested: { count: 0 } })
+    const handler = jest.fn()
+
+    subscribe(obj, handler)
+
+    obj.nested.count = 1
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(1)
+    expect(handler).lastCalledWith([['set', ['nested', 'count']]])
+
+    delete obj.nested.count
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(2)
+    expect(handler).lastCalledWith([['delete', ['nested', 'count']]])
+  })
 })
