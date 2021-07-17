@@ -1,4 +1,5 @@
 import { proxy, ref, subscribe } from '../src/index'
+import { subscribeKey } from '../src/utils'
 
 describe('subscribe', () => {
   it('should call subscription', async () => {
@@ -94,5 +95,75 @@ describe('subscribe', () => {
 
     await Promise.resolve()
     expect(handler).toBeCalledTimes(0)
+  })
+
+  it('should notify ops', async () => {
+    const obj = proxy<{ count1: number; count2?: number }>({
+      count1: 0,
+      count2: 0,
+    })
+    const handler = jest.fn()
+
+    subscribe(obj, handler)
+
+    obj.count1 += 1
+    obj.count2 = 2
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(1)
+    expect(handler).lastCalledWith([
+      ['set', ['count1'], 1, 0],
+      ['set', ['count2'], 2, 0],
+    ])
+
+    delete obj.count2
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(2)
+    expect(handler).lastCalledWith([['delete', ['count2'], 2]])
+  })
+
+  it('should notify nested ops', async () => {
+    const obj = proxy<{ nested: { count?: number } }>({ nested: { count: 0 } })
+    const handler = jest.fn()
+
+    subscribe(obj, handler)
+
+    obj.nested.count = 1
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(1)
+    expect(handler).lastCalledWith([['set', ['nested', 'count'], 1, 0]])
+
+    delete obj.nested.count
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(2)
+    expect(handler).lastCalledWith([['delete', ['nested', 'count'], 1]])
+  })
+})
+
+describe('subscribeKey', () => {
+  it('should call subscription', async () => {
+    const obj = proxy({ count1: 0, count2: 0 })
+    const handler1 = jest.fn()
+    const handler2 = jest.fn()
+
+    subscribeKey(obj, 'count1', handler1)
+    subscribeKey(obj, 'count2', handler2)
+
+    obj.count1 += 10
+
+    await Promise.resolve()
+    expect(handler1).toBeCalledTimes(1)
+    expect(handler1).lastCalledWith(10)
+    expect(handler2).toBeCalledTimes(0)
+
+    obj.count2 += 20
+
+    await Promise.resolve()
+    expect(handler1).toBeCalledTimes(1)
+    expect(handler2).toBeCalledTimes(1)
+    expect(handler2).lastCalledWith(20)
   })
 })

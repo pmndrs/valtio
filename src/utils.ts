@@ -18,19 +18,16 @@ export const subscribeKey = <T extends object>(
   key: keyof T,
   callback: (value: T[typeof key]) => void,
   notifyInSync?: boolean
-) => {
-  let prevValue = proxyObject[key]
-  return subscribe(
+) =>
+  subscribe(
     proxyObject,
-    () => {
-      const nextValue = proxyObject[key]
-      if (!Object.is(prevValue, nextValue)) {
-        callback((prevValue = nextValue))
+    (ops) => {
+      if (ops.some((op) => op[1][0] === key)) {
+        callback(proxyObject[key])
       }
     },
     notifyInSync
   )
-}
 
 /**
  * devtools
