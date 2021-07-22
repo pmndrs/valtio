@@ -293,6 +293,21 @@ const state = proxyWithComputed({
 })
 ```
 
+#### `proxyWithHistory` util
+
+This is a utility function to create a proxy with snapshot history.
+
+```js
+const state = proxyWithHistory({ count: 0 })
+console.log(state.value) // ---> { count: 0 }
+state.value.count += 1
+console.log(state.value) // ---> { count: 1 }
+state.undo()
+console.log(state.value) // ---> { count: 0 }
+state.redo()
+console.log(state.value) // ---> { count: 1 }
+```
+
 #### Recipes
 
 Valtio is unopinionated about organizing state.
