@@ -60,6 +60,27 @@ Two kinds of proxies are used for different purposes:
 - `createProxy()` from `proxy-compare` is for usage tracking or read tracking.
 </details>
 
+<details>
+<summary>Use of `this` is for expert users.</summary>
+
+Valtio tries best to handle `this` behavior
+but it's hard to understand without familiarity.
+
+```js
+const state = proxy({ count: 0, inc() { ++this.count } })
+state.inc() // `this` points to `state` and it works fine
+const snap = useSnapshot(state)
+snap.inc() // `this` points to `snap` and it doesn't work because snapshot is frozen
+```
+
+To avoid this pitfall, the recommended pattern is not to use `this` and prefer arrow function.
+
+```js
+const state = proxy({ count: 0, inc: () => { ++state.count } })
+```
+
+</details>
+
 #### Subscribe from anywhere
 
 You can access state outside of your components and subscribe to changes.
