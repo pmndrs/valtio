@@ -128,9 +128,7 @@ function App() {
 
 #### Holding objects in state without tracking them
 
-Plain objects and arrays are fully supported with proxy and snapshot. Objects with prototypes may not work for some cases with some unexpected errors. In such cases, you want to bypass tracking with `ref`.
-
-This may also be useful if you have large, nested objects with accessors that you don't want to proxy. `ref` allows you to keep these objects inside the state model.
+This may be useful if you have large, nested objects with accessors that you don't want to proxy. `ref` allows you to keep these objects inside the state model.
 
 See [https://github.com/pmndrs/valtio/issues/61](#61) and [https://github.com/pmndrs/valtio/issues/178](#178) for more information.
 
