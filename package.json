@@ -18,6 +18,7 @@
   },
   "exports": {
     "./package.json": "./package.json",
+    "./": "./",
     ".": {
       "types": "./index.d.ts",
       "module": "./esm/index.mjs",
