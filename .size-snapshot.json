@@ -1,5 +1,10 @@
 {
   "index.js": {
+    "bundled": 5116,
+    "minified": 2566,
+    "gzipped": 1043
+  },
+  "index.mjs": {
     "bundled": 4603,
     "minified": 2099,
     "gzipped": 917,
@@ -14,6 +19,11 @@
     }
   },
   "vanilla.js": {
+    "bundled": 7203,
+    "minified": 3456,
+    "gzipped": 1298
+  },
+  "vanilla.mjs": {
     "bundled": 6624,
     "minified": 3127,
     "gzipped": 1218,
@@ -28,6 +38,11 @@
     }
   },
   "utils.js": {
+    "bundled": 8190,
+    "minified": 3870,
+    "gzipped": 1486
+  },
+  "utils.mjs": {
     "bundled": 6916,
     "minified": 3262,
     "gzipped": 1411,
@@ -42,6 +57,11 @@
     }
   },
   "macro.js": {
+    "bundled": 2592,
+    "minified": 1413,
+    "gzipped": 693
+  },
+  "macro.mjs": {
     "bundled": 1359,
     "minified": 886,
     "gzipped": 505,
