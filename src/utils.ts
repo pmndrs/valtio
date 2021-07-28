@@ -388,7 +388,7 @@ export const proxyWithHistory = <V>(initialValue: V) => {
       wip: initialValue, // to avoid infinite loop
       snapshots: [] as V[],
       index: -1,
-    }),
+    }) as { wip: V; snapshots: V[]; index: number },
     canUndo: () => proxyObject.history.index > 0,
     undo: () => {
       if (proxyObject.canUndo()) {
