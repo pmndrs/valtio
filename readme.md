@@ -310,7 +310,8 @@ console.log(state.value) // ---> { count: 1 }
 
 #### Recipes
 
-Valtio is unopinionated about organizing state.
-The community is working on best practices on wiki pages.
+Valtio is unopinionated about best practices.
+The community is working on recipes on wiki pages.
 
 - [How to organize actions](https://github.com/pmndrs/valtio/wiki/How-to-organize-actions)
+- [How to persist states](https://github.com/pmndrs/valtio/wiki/How-to-persist-states)
