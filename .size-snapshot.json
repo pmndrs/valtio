@@ -38,14 +38,14 @@
     }
   },
   "utils.js": {
-    "bundled": 8190,
-    "minified": 3870,
-    "gzipped": 1486
+    "bundled": 8427,
+    "minified": 4012,
+    "gzipped": 1497
   },
   "utils.mjs": {
-    "bundled": 6916,
-    "minified": 3262,
-    "gzipped": 1411,
+    "bundled": 7137,
+    "minified": 3388,
+    "gzipped": 1425,
     "treeshaked": {
       "rollup": {
         "code": 45,

@@ -394,6 +394,10 @@ export const proxyWithHistory = <V>(initialValue: V) => {
       if (proxyObject.canUndo()) {
         proxyObject.value = proxyObject.history.wip =
           proxyObject.history.snapshots[--proxyObject.history.index]
+        // refresh snapshot to use again
+        proxyObject.history.snapshots[proxyObject.history.index] = snapshot(
+          proxyObject
+        ).value as V
       }
     },
     canRedo: () =>
@@ -402,6 +406,10 @@ export const proxyWithHistory = <V>(initialValue: V) => {
       if (proxyObject.canRedo()) {
         proxyObject.value = proxyObject.history.wip =
           proxyObject.history.snapshots[++proxyObject.history.index]
+        // refresh snapshot to use again
+        proxyObject.history.snapshots[proxyObject.history.index] = snapshot(
+          proxyObject
+        ).value as V
       }
     },
     saveHistory: () => {
@@ -410,6 +418,7 @@ export const proxyWithHistory = <V>(initialValue: V) => {
       ++proxyObject.history.index
     },
   })
+  proxyObject.saveHistory()
   subscribe(proxyObject, (ops) => {
     if (
       ops.some(
