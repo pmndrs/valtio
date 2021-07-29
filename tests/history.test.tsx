@@ -46,6 +46,9 @@ it('simple count', async () => {
 
   fireEvent.click(getByText('undo'))
   await findByText('count: 1')
+
+  fireEvent.click(getByText('undo'))
+  await findByText('count: 0')
 })
 
 it('count in object', async () => {
