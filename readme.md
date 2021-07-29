@@ -151,7 +151,7 @@ function App() {
 
 This may be useful if you have large, nested objects with accessors that you don't want to proxy. `ref` allows you to keep these objects inside the state model.
 
-See [https://github.com/pmndrs/valtio/issues/61](#61) and [https://github.com/pmndrs/valtio/issues/178](#178) for more information.
+See [#61](https://github.com/pmndrs/valtio/issues/61) and [#178](https://github.com/pmndrs/valtio/issues/178) for more information.
 
 ```js
 import { proxy, ref } from 'valtio'
