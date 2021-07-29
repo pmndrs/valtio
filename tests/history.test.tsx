@@ -49,6 +49,12 @@ it('simple count', async () => {
 
   fireEvent.click(getByText('undo'))
   await findByText('count: 0')
+
+  fireEvent.click(getByText('inc'))
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('undo'))
+  await findByText('count: 0')
 })
 
 it('count in object', async () => {
@@ -93,6 +99,12 @@ it('count in object', async () => {
   await findByText('count: 2')
 
   fireEvent.click(getByText('undo'))
+  await findByText('count: 1')
+
+  fireEvent.click(getByText('undo'))
+  await findByText('count: 0')
+
+  fireEvent.click(getByText('inc'))
   await findByText('count: 1')
 
   fireEvent.click(getByText('undo'))
