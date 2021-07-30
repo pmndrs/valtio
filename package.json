@@ -4,8 +4,8 @@
   "version": "1.1.1",
   "description": "💊 Valtio makes proxy-state simple for React and Vanilla",
   "main": "./index.js",
-  "module": "./esm/index.mjs",
-  "types": "index.d.ts",
+  "module": "./esm/index.js",
+  "types": "./index.d.ts",
   "typesVersions": {
     "<4.0": {
       "esm/*": [
@@ -21,26 +21,26 @@
     "./": "./",
     ".": {
       "types": "./index.d.ts",
-      "module": "./esm/index.mjs",
-      "import": "./esm/index.mjs",
+      "module": "./esm/index.js",
+      "import": "./esm/index.js",
       "default": "./index.js"
     },
     "./vanilla": {
       "types": "./vanilla.d.ts",
-      "module": "./esm/vanilla.mjs",
-      "import": "./esm/vanilla.mjs",
+      "module": "./esm/vanilla.js",
+      "import": "./esm/vanilla.js",
       "default": "./vanilla.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
-      "module": "./esm/utils.mjs",
-      "import": "./esm/utils.mjs",
+      "module": "./esm/utils.js",
+      "import": "./esm/utils.js",
       "default": "./utils.js"
     },
     "./macro": {
       "types": "./macro.d.ts",
-      "module": "./esm/macro.mjs",
-      "import": "./esm/macro.mjs",
+      "module": "./esm/macro.js",
+      "import": "./esm/macro.js",
       "default": "./macro.js"
     }
   },
