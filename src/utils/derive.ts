@@ -1,4 +1,4 @@
-import { proxy, subscribe } from '../vanilla'
+import { proxy, subscribe, getVersion } from '../vanilla'
 
 type DeriveGet = <T extends object>(value: T) => T
 
@@ -33,7 +33,7 @@ export const derive = <T extends object, U extends object>(
   options?: {
     proxy?: T
     sync?: boolean
-    cleanupToken?: { cleanup?: () => void }
+    cleanupObj?: { cleanup?: () => void }
   }
 ) => {
   const proxyObject = (options?.proxy || proxy({})) as U
@@ -42,9 +42,12 @@ export const derive = <T extends object, U extends object>(
     object,
     [callbackMap: Map<keyof U, () => void>, unsubscribe: () => void]
   >()
-  if (options?.cleanupToken) {
-    options.cleanupToken.cleanup = () => {
-      // TODO
+  if (options?.cleanupObj) {
+    options.cleanupObj.cleanup = () => {
+      subscriptions.forEach(([, unsubscribe]) => {
+        unsubscribe()
+      })
+      subscriptions.clear()
     }
   }
   const addSubscription = (p: object, key: keyof U, callback: () => void) => {
@@ -79,21 +82,28 @@ export const derive = <T extends object, U extends object>(
       throw new Error('object property already defined')
     }
     const fn = derivedFns[key]
-    let lastDependencies = new Set<object>()
+    let lastDependencies: Map<object, number> | null = null
     const evaluate = () => {
-      // FIXME should avoid duplicated evaluation
-      const dependencies = new Set<object>()
+      if (lastDependencies) {
+        if (
+          Array.from(lastDependencies).every(([p, n]) => getVersion(p) === n)
+        ) {
+          // no dependencies are changed
+          return
+        }
+      }
+      const dependencies = new Map<object, number>()
       const get = <P extends object>(p: P) => {
-        dependencies.add(p)
+        dependencies.set(p, getVersion(p))
         return p
       }
       proxyObject[key] = fn(get)
-      dependencies.forEach((p) => {
-        if (!lastDependencies.has(p)) {
+      dependencies.forEach((_, p) => {
+        if (!lastDependencies?.has(p)) {
           addSubscription(p, key, evaluate)
         }
       })
-      lastDependencies.forEach((p) => {
+      lastDependencies?.forEach((_, p) => {
         if (!dependencies.has(p)) {
           removeSubscription(p, key)
         }
