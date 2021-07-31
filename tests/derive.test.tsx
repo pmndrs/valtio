@@ -1,5 +1,12 @@
-import { proxy, snapshot, subscribe } from '../src/index'
+import React, { StrictMode, Suspense } from 'react'
+import { fireEvent, render } from '@testing-library/react'
+import { proxy, useSnapshot, snapshot, subscribe } from '../src/index'
 import { derive } from '../src/utils'
+
+const sleep = (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
 
 it('basic derive', async () => {
   const computeDouble = jest.fn((x) => x * 2)
@@ -137,4 +144,106 @@ it('derive with two dependencies', async () => {
   expect(computeSum).toBeCalledTimes(3)
   await Promise.resolve()
   expect(callback).toBeCalledTimes(2)
+})
+
+it('async derive', async () => {
+  const state = proxy({ count: 0 })
+  const derived = derive({
+    delayedCount: async (get) => {
+      await sleep(10)
+      return get(state).count + 1
+    },
+  })
+
+  const Counter: React.FC = () => {
+    const snap = useSnapshot(state)
+    const snap2 = useSnapshot(derived)
+    return (
+      <>
+        <div>
+          count: {snap.count}, delayedCount: {snap2.delayedCount}
+        </div>
+        <button onClick={() => ++state.count}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Suspense fallback="loading">
+        <Counter />
+      </Suspense>
+    </StrictMode>
+  )
+
+  await findByText('loading')
+  await findByText('count: 0, delayedCount: 1')
+
+  fireEvent.click(getByText('button'))
+  await findByText('loading')
+  await findByText('count: 1, delayedCount: 2')
+})
+
+it('nested emulation with derive', async () => {
+  const computeDouble = jest.fn((x) => x * 2)
+  const state = proxy({ text: '', math: { count: 0 } })
+  derive(
+    {
+      doubled: (get) => computeDouble(get(state.math).count),
+    },
+    { proxy: state.math }
+  )
+
+  const callback = jest.fn()
+  subscribe(state, callback)
+
+  expect(snapshot(state)).toMatchObject({
+    text: '',
+    math: { count: 0, doubled: 0 },
+  })
+  expect(computeDouble).toBeCalledTimes(1)
+  expect(callback).toBeCalledTimes(0)
+
+  state.math.count += 1
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({
+    text: '',
+    math: { count: 1, doubled: 2 },
+  })
+  expect(computeDouble).toBeCalledTimes(2)
+  await Promise.resolve()
+  expect(callback).toBeCalledTimes(2)
+
+  state.text = 'a'
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({
+    text: 'a',
+    math: { count: 1, doubled: 2 },
+  })
+  expect(computeDouble).toBeCalledTimes(3)
+  expect(callback).toBeCalledTimes(3)
+})
+
+it('derive with array.pop', async () => {
+  const state = proxy({
+    arr: [{ n: 1 }, { n: 2 }, { n: 3 }],
+  })
+  derive(
+    {
+      nums: (get) => get(state.arr).map((item) => item.n),
+    },
+    { proxy: state }
+  )
+
+  expect(snapshot(state)).toMatchObject({
+    arr: [{ n: 1 }, { n: 2 }, { n: 3 }],
+    nums: [1, 2, 3],
+  })
+
+  state.arr.pop()
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({
+    arr: [{ n: 1 }, { n: 2 }],
+    nums: [1, 2],
+  })
 })

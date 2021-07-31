@@ -1,6 +1,6 @@
 import { proxy, subscribe, getVersion } from '../vanilla'
 
-type DeriveGet = <T extends object>(value: T) => T
+type DeriveGet = <T extends object>(proxyObject: T) => T
 
 /**
  * derive
@@ -97,18 +97,26 @@ export const derive = <T extends object, U extends object>(
         dependencies.set(p, getVersion(p))
         return p
       }
-      proxyObject[key] = fn(get)
-      dependencies.forEach((_, p) => {
-        if (!lastDependencies?.has(p)) {
-          addSubscription(p, key, evaluate)
-        }
-      })
-      lastDependencies?.forEach((_, p) => {
-        if (!dependencies.has(p)) {
-          removeSubscription(p, key)
-        }
-      })
-      lastDependencies = dependencies
+      const value = fn(get)
+      const subscribe = () => {
+        dependencies.forEach((_, p) => {
+          if (!lastDependencies?.has(p)) {
+            addSubscription(p, key, evaluate)
+          }
+        })
+        lastDependencies?.forEach((_, p) => {
+          if (!dependencies.has(p)) {
+            removeSubscription(p, key)
+          }
+        })
+        lastDependencies = dependencies
+      }
+      if (value instanceof Promise) {
+        value.then(subscribe)
+      } else {
+        subscribe()
+      }
+      proxyObject[key] = value
     }
     evaluate()
   })
