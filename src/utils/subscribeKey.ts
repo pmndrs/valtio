@@ -1,0 +1,28 @@
+import { subscribe } from '../vanilla'
+
+/**
+ * subscribeKey
+ *
+ * The subscribeKey utility enables subscription to a primitive subproperty of a given state proxy.
+ * Subscriptions created with subscribeKey will only fire when the specified property changes.
+ * notifyInSync: same as the parameter to subscribe(); true disables batching of subscriptions.
+ *
+ * @example
+ * import { subscribeKey } from 'valtio/utils'
+ * subscribeKey(state, 'count', (v) => console.log('state.count has changed to', v))
+ */
+export const subscribeKey = <T extends object>(
+  proxyObject: T,
+  key: keyof T,
+  callback: (value: T[typeof key]) => void,
+  notifyInSync?: boolean
+) =>
+  subscribe(
+    proxyObject,
+    (ops) => {
+      if (ops.some((op) => op[1][0] === key)) {
+        callback(proxyObject[key])
+      }
+    },
+    notifyInSync
+  )
