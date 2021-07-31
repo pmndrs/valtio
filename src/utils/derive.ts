@@ -57,7 +57,14 @@ export const derive = <T extends object, U extends object>(
     } else {
       const unsubscribe = subscribe(
         p,
-        () => {
+        (ops) => {
+          if (
+            p === proxyObject &&
+            ops.every((op) => op[1].length === 1 && op[1][0] in derivedFns)
+          ) {
+            // only setting derived properties
+            return
+          }
           subscriptions.get(p)?.[0].forEach((cb) => {
             cb()
           })

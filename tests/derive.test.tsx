@@ -110,7 +110,7 @@ it('derive with self', async () => {
   state.text = 'a'
   await Promise.resolve()
   expect(snapshot(state)).toMatchObject({ text: 'a', count: 1, doubled: 2 })
-  expect(computeDouble).toBeCalledTimes(4)
+  expect(computeDouble).toBeCalledTimes(3)
   await Promise.resolve()
   expect(callback).toBeCalledTimes(2)
 })
@@ -148,20 +148,24 @@ it('derive with two dependencies', async () => {
 
 it('async derive', async () => {
   const state = proxy({ count: 0 })
-  const derived = derive({
-    delayedCount: async (get) => {
-      await sleep(10)
-      return get(state).count + 1
+  derive(
+    {
+      delayedCount: async (get) => {
+        await sleep(10)
+        return get(state).count + 1
+      },
     },
-  })
+    { proxy: state }
+  )
 
   const Counter: React.FC = () => {
-    const snap = useSnapshot(state)
-    const snap2 = useSnapshot(derived)
+    const snap = useSnapshot(
+      state as { count: number; delayedCount: Promise<number> }
+    )
     return (
       <>
         <div>
-          count: {snap.count}, delayedCount: {snap2.delayedCount}
+          count: {snap.count}, delayedCount: {snap.delayedCount}
         </div>
         <button onClick={() => ++state.count}>button</button>
       </>
@@ -220,7 +224,7 @@ it('nested emulation with derive', async () => {
     text: 'a',
     math: { count: 1, doubled: 2 },
   })
-  expect(computeDouble).toBeCalledTimes(3)
+  expect(computeDouble).toBeCalledTimes(2)
   expect(callback).toBeCalledTimes(3)
 })
 
