@@ -3,6 +3,19 @@ import { fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot, snapshot, subscribe } from '../src/index'
 import { proxyWithComputed, addComputed } from '../src/utils'
 
+const consoleWarn = console.warn
+beforeEach(() => {
+  console.warn = jest.fn((message) => {
+    if (message.startsWith('addComputed is deprecated.')) {
+      return
+    }
+    consoleWarn(message)
+  })
+})
+afterEach(() => {
+  console.warn = consoleWarn
+})
+
 const sleep = (ms: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms)
@@ -143,7 +156,7 @@ it('simple addComputed', async () => {
   state.text = 'a'
   await Promise.resolve()
   expect(snapshot(state)).toMatchObject({ text: 'a', count: 1, doubled: 2 })
-  expect(computeDouble).toBeCalledTimes(2)
+  // This can't pass with derive emulation: expect(computeDouble).toBeCalledTimes(2)
   expect(callback).toBeCalledTimes(2)
 })
 
@@ -223,7 +236,7 @@ it('nested emulation with addComputed', async () => {
     text: 'a',
     math: { count: 1, doubled: 2 },
   })
-  expect(computeDouble).toBeCalledTimes(2)
+  // This can't pass with derive emulation: expect(computeDouble).toBeCalledTimes(2)
   expect(callback).toBeCalledTimes(2)
 })
 
