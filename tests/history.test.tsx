@@ -3,6 +3,22 @@ import { fireEvent, render } from '@testing-library/react'
 import { useSnapshot } from '../src/index'
 import { proxyWithHistory } from '../src/utils'
 
+const consoleError = console.error
+beforeEach(() => {
+  console.error = jest.fn((message) => {
+    if (
+      process.env.NODE_ENV === 'production' &&
+      message.startsWith('act(...) is not supported in production')
+    ) {
+      return
+    }
+    consoleError(message)
+  })
+})
+afterEach(() => {
+  console.error = consoleError
+})
+
 it('simple count', async () => {
   const state = proxyWithHistory(0)
 
