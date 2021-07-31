@@ -33,7 +33,7 @@ export const derive = <T extends object, U extends object>(
   options?: {
     proxy?: T
     sync?: boolean
-    cleanupObj?: { cleanup?: () => void }
+    registerCleanup?: (cleanup: () => void) => void
   }
 ) => {
   const proxyObject = (options?.proxy || proxy({})) as U
@@ -42,13 +42,13 @@ export const derive = <T extends object, U extends object>(
     object,
     [callbackMap: Map<keyof U, () => void>, unsubscribe: () => void]
   >()
-  if (options?.cleanupObj) {
-    options.cleanupObj.cleanup = () => {
+  if (options?.registerCleanup) {
+    options.registerCleanup(() => {
       subscriptions.forEach(([, unsubscribe]) => {
         unsubscribe()
       })
       subscriptions.clear()
-    }
+    })
   }
   const addSubscription = (p: object, key: keyof U, callback: () => void) => {
     const subscription = subscriptions.get(p)
