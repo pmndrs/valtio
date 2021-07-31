@@ -77,9 +77,10 @@ export const derive = <T extends object, U extends object>(
   const removeSubscription = (p: object, key: keyof U) => {
     const subscription = subscriptions.get(p)
     if (subscription) {
-      subscription[0].delete(key)
-      if (!subscription[0].size) {
-        subscription[1]()
+      const [callbackMap, unsubscribe] = subscription
+      callbackMap.delete(key)
+      if (!callbackMap.size) {
+        unsubscribe()
         subscriptions.delete(p)
       }
     }
