@@ -43,11 +43,23 @@ const snapshotCache = new WeakMap<
   [version: number, snapshot: unknown]
 >()
 
-export const proxy = <T extends object>(initialObject: T = {} as T): T => {
+export type SubstitutePromises<T> = T extends Promise<infer V>
+  ? Promise<V> | V
+  : T extends Function
+  ? T
+  : T extends {}
+  ? { [K in keyof T]: SubstitutePromises<T[K]> }
+  : T
+
+export const proxy = <T extends object>(
+  initialObject: T = {} as T
+): SubstitutePromises<T> => {
   if (!isSupportedObject(initialObject)) {
     throw new Error('unsupported object type')
   }
-  const found = proxyCache.get(initialObject) as T | undefined
+  const found = proxyCache.get(initialObject) as
+    | SubstitutePromises<T>
+    | undefined
   if (found) {
     return found
   }

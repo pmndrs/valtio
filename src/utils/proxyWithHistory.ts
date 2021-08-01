@@ -1,4 +1,4 @@
-import { proxy, subscribe, snapshot, ref } from '../vanilla'
+import { proxy, subscribe, snapshot, ref, SubstitutePromises } from '../vanilla'
 
 /**
  * proxyWithHistory
@@ -28,7 +28,7 @@ export const proxyWithHistory = <V>(initialValue: V) => {
     value: initialValue,
     history: ref({
       wip: initialValue, // to avoid infinite loop
-      snapshots: [] as V[],
+      snapshots: [] as SubstitutePromises<V>[],
       index: -1,
     }) as { wip: V; snapshots: V[]; index: number },
     canUndo: () => proxyObject.history.index > 0,
@@ -39,7 +39,7 @@ export const proxyWithHistory = <V>(initialValue: V) => {
         // refresh snapshot to use again
         proxyObject.history.snapshots[proxyObject.history.index] = snapshot(
           proxyObject
-        ).value as V
+        ).value as SubstitutePromises<V>
       }
     },
     canRedo: () =>
@@ -51,12 +51,14 @@ export const proxyWithHistory = <V>(initialValue: V) => {
         // refresh snapshot to use again
         proxyObject.history.snapshots[proxyObject.history.index] = snapshot(
           proxyObject
-        ).value as V
+        ).value as SubstitutePromises<V>
       }
     },
     saveHistory: () => {
       proxyObject.history.snapshots.splice(proxyObject.history.index + 1)
-      proxyObject.history.snapshots.push(snapshot(proxyObject).value as V)
+      proxyObject.history.snapshots.push(
+        snapshot(proxyObject).value as SubstitutePromises<V>
+      )
       ++proxyObject.history.index
     },
   })
