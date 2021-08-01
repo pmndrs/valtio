@@ -107,7 +107,6 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
               if (PROMISE_RESULT in (value as any)) {
                 return (value as any)[PROMISE_RESULT]
               }
-
               throw errorOrPromise
             },
           })
