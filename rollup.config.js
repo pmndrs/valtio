@@ -48,7 +48,12 @@ function createESMConfig(input, output) {
     output: { file: output, format: 'esm' },
     external,
     plugins: [
-      alias({ entries: { './vanilla': 'valtio/vanilla' } }),
+      alias({
+        entries: {
+          './vanilla': 'valtio/vanilla',
+          '../vanilla': 'valtio/vanilla',
+        },
+      }),
       resolve({ extensions }),
       getEsbuild('node12'),
       sizeSnapshot(),
@@ -62,7 +67,12 @@ function createCommonJSConfig(input, output) {
     output: { file: output, format: 'cjs', exports: 'named' },
     external,
     plugins: [
-      alias({ entries: { './vanilla': 'valtio/vanilla' } }),
+      alias({
+        entries: {
+          './vanilla': 'valtio/vanilla',
+          '../vanilla': 'valtio/vanilla',
+        },
+      }),
       resolve({ extensions }),
       typescript(),
       babel(getBabelOptions({ ie: 11 })),
