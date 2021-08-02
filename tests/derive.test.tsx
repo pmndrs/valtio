@@ -1,7 +1,7 @@
 import React, { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot, snapshot, subscribe } from '../src/index'
-import { derive } from '../src/utils'
+import { derive, underive } from '../src/utils'
 
 const consoleError = console.error
 beforeEach(() => {
@@ -266,4 +266,35 @@ it('derive with array.pop', async () => {
     arr: [{ n: 1 }, { n: 2 }],
     nums: [1, 2],
   })
+})
+
+it('basic underive', async () => {
+  const computeDouble = jest.fn((x) => x * 2)
+  const state = proxy({ count: 0 })
+  const derived = derive({
+    doubled: (get) => computeDouble(get(state).count),
+  })
+
+  const callback = jest.fn()
+  subscribe(derived, callback)
+
+  expect(snapshot(derived)).toMatchObject({ doubled: 0 })
+  expect(computeDouble).toBeCalledTimes(1)
+  expect(callback).toBeCalledTimes(0)
+
+  state.count += 1
+  await Promise.resolve()
+  expect(snapshot(derived)).toMatchObject({ doubled: 2 })
+  expect(computeDouble).toBeCalledTimes(2)
+  await Promise.resolve()
+  expect(callback).toBeCalledTimes(1)
+
+  underive(derived)
+
+  state.count += 1
+  await Promise.resolve()
+  expect(snapshot(derived)).toMatchObject({ doubled: 2 })
+  expect(computeDouble).toBeCalledTimes(2)
+  await Promise.resolve()
+  expect(callback).toBeCalledTimes(1)
 })

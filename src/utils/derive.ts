@@ -2,6 +2,22 @@ import { proxy, subscribe, getVersion } from '../vanilla'
 
 type DeriveGet = <T extends object>(proxyObject: T) => T
 
+type Subscriptions<U extends object> = Map<
+  object,
+  [callbackMap: Map<keyof U, () => void>, unsubscribe: () => void]
+>
+
+const subscriptionsCache = new WeakMap<object, Subscriptions<object>>()
+
+const getSubscriptions = (proxyObject: object) => {
+  let subscriptions = subscriptionsCache.get(proxyObject)
+  if (!subscriptions) {
+    subscriptions = new Map()
+    subscriptionsCache.set(proxyObject, subscriptions)
+  }
+  return subscriptions
+}
+
 /**
  * derive
  *
@@ -16,7 +32,7 @@ type DeriveGet = <T extends object>(proxyObject: T) => T
  *   count: 1,
  * })
  *
- * const derived = derive({
+ * const derivedState = derive({
  *   doubled: (get) => get(state).count * 2,
  * })
  *
@@ -33,23 +49,11 @@ export const derive = <T extends object, U extends object>(
   options?: {
     proxy?: T
     sync?: boolean
-    registerCleanup?: (cleanup: () => void) => void
   }
 ) => {
   const proxyObject = (options?.proxy || proxy({})) as U
   const notifyInSync = options?.sync
-  const subscriptions = new Map<
-    object,
-    [callbackMap: Map<keyof U, () => void>, unsubscribe: () => void]
-  >()
-  if (options?.registerCleanup) {
-    options.registerCleanup(() => {
-      subscriptions.forEach(([, unsubscribe]) => {
-        unsubscribe()
-      })
-      subscriptions.clear()
-    })
-  }
+  const subscriptions: Subscriptions<U> = getSubscriptions(proxyObject)
   const addSubscription = (p: object, key: keyof U, callback: () => void) => {
     const subscription = subscriptions.get(p)
     if (subscription) {
@@ -132,4 +136,65 @@ export const derive = <T extends object, U extends object>(
     evaluate()
   })
   return proxyObject as T & U
+}
+
+/**
+ * underive
+ *
+ * This stops derived properties to evaluate.
+ * It will stop all (or specified by `keys` option) subscriptions.
+ * If you specify `delete` option, it will delete the properties
+ * and you can attach new derived properties.
+ *
+ * @example
+ * import { proxy } from 'valtio'
+ * import { derive, underive } from 'valtio/utils'
+ *
+ * const state = proxy({
+ *   count: 1,
+ * })
+ *
+ * const derivedState = derive({
+ *   doubled: (get) => get(state).count * 2,
+ * })
+ *
+ * underive(derivedState)
+ */
+export const underive = <T extends object, U extends object>(
+  proxyObject: T & U,
+  options?: {
+    delete?: boolean
+    keys?: (keyof U)[]
+  }
+) => {
+  const subscriptions: Subscriptions<U> = getSubscriptions(proxyObject)
+  const keysToDelete = options?.delete ? new Set<keyof U>() : null
+  subscriptions.forEach(([callbackMap, unsubscribe], p) => {
+    if (options?.keys) {
+      options.keys.forEach((key) => {
+        if (callbackMap.has(key)) {
+          callbackMap.delete(key)
+          if (keysToDelete) {
+            keysToDelete.add(key)
+          }
+        }
+      })
+    } else {
+      if (keysToDelete) {
+        Array.from(callbackMap.keys()).forEach((key) => {
+          keysToDelete.add(key)
+        })
+      }
+      callbackMap.clear()
+    }
+    if (!callbackMap.size) {
+      unsubscribe()
+      subscriptions.delete(p)
+    }
+  })
+  if (keysToDelete) {
+    keysToDelete.forEach((key) => {
+      delete proxyObject[key]
+    })
+  }
 }
