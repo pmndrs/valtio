@@ -270,10 +270,10 @@ derive({
 
 #### `proxyWithComputed`
 
-You can have computed values with dependency tracking.
-Dependency tracking in valtio conflicts with the work in `useSnapshot`.
+You can have computed values with dependency tracking with property access.
+Dependency tracking in `proxyWithComputed` conflicts with the work in `useSnapshot`.
 React users should prefer using `derive`.
-Computed works well for some edge cases and for vanilla-js users.
+`proxyWithComputed` works well for some edge cases and for vanilla-js users.
 
 ```js
 import { proxyWithComputed } from 'valtio/utils'
