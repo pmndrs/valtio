@@ -18,6 +18,12 @@ const getSubscriptions = (proxyObject: object) => {
   return subscriptions
 }
 
+// NOTE This is experimentally exported.
+// The availability is not guaranteed, and it will be renamed,
+// changed or removed without any notice in future versions.
+// It's not expected to use this in production.
+export const unstable_getDeriveSubscriptions = getSubscriptions
+
 /**
  * derive
  *

@@ -3,7 +3,7 @@ import { derive } from './derive'
 /**
  * addComputed (DEPRECATED)
  *
- * Please consider using `derive` or `proxyWithComputed` instead.
+ * @deprecated Please consider using `derive` or `proxyWithComputed` instead.
  */
 export const addComputed_DEPRECATED = <T extends object, U extends object>(
   proxyObject: T,
