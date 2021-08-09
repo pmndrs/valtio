@@ -243,47 +243,37 @@ const Component = () => {
 }
 ```
 
-#### Computed values
+#### `derive` util
 
-You can have computed values with dependency tracking.
-Dependency tracking in valtio conflicts with the work in useSnapshot.
-React users should consider using render functions (optionally useMemo)
-as a primary mean.
-Computed works well for some edge cases and for vanilla-js users.
-
-##### `addComputed`
-
-This is to add new computed to an existing proxy state.
-It can add computed to different proxy state.
+You can subscribe to some proxies and create a derived proxy.
 
 ```js
-import { addComputed } from 'valtio/utils'
+import { derive } from 'valtio/utils'
 
 // create a base proxy
 const state = proxy({
   count: 1,
 })
 
-// add computed to state
-addComputed(state, {
-  doubled: snap => snap.count * 2,
+// create a derived proxy
+const derived = derive({
+  doubled: (get) => get(state).count * 2,
 })
 
-// create another proxy
-const state2 = proxy({
-  text: 'hello',
+// alternatively, attach derived properties to an existing proxy
+derive({
+  tripled: (get) => get(state).count * 3,
+}, {
+  proxy: state,
 })
-
-// add computed from state to state2
-addComputed(state, {
-  doubled: snap => snap.count * 2,
-}, state2)
 ```
 
-##### `proxyWithComputed`
+#### `proxyWithComputed`
 
-This is to create a proxy state with computed at the same time.
-It can define setters optionally.
+You can have computed values with dependency tracking with property access.
+Dependency tracking in `proxyWithComputed` conflicts with the work in `useSnapshot`.
+React users should prefer using `derive`.
+`proxyWithComputed` works well for some edge cases and for vanilla-js users.
 
 ```js
 import { proxyWithComputed } from 'valtio/utils'
