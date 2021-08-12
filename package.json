@@ -18,7 +18,6 @@
   },
   "exports": {
     "./package.json": "./package.json",
-    "./": "./",
     ".": {
       "types": "./index.d.ts",
       "module": "./esm/index.js",
@@ -131,7 +130,7 @@
     ]
   },
   "dependencies": {
-    "proxy-compare": "https://pkg.csb.dev/dai-shi/proxy-compare/commit/adfee28f/proxy-compare"
+    "proxy-compare": "https://pkg.csb.dev/dai-shi/proxy-compare/commit/fe5dd412/proxy-compare"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",

@@ -5703,9 +5703,9 @@ prop-types@^15.7.2:
     object-assign "^4.1.1"
     react-is "^16.8.1"
 
-"proxy-compare@https://pkg.csb.dev/dai-shi/proxy-compare/commit/adfee28f/proxy-compare":
+"proxy-compare@https://pkg.csb.dev/dai-shi/proxy-compare/commit/fe5dd412/proxy-compare":
   version "2.0.1"
-  resolved "https://pkg.csb.dev/dai-shi/proxy-compare/commit/adfee28f/proxy-compare#4f2ae770cb6a064d919e1eb7c4a59233281825d1"
+  resolved "https://pkg.csb.dev/dai-shi/proxy-compare/commit/fe5dd412/proxy-compare#7ae487ba0f02d868a7cbd8c4c605ae4b95326774"
 
 prr@~1.0.1:
   version "1.0.1"
