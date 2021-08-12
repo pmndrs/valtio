@@ -2,4 +2,4 @@
 
 ## Simple examples
 
-* [Counter](https://github.com/pmndrs/valtio/tree/master/examples/counter)
+* [Counter](https://github.com/pmndrs/valtio/tree/main/examples/counter)
