@@ -130,7 +130,7 @@
     ]
   },
   "dependencies": {
-    "proxy-compare": "https://pkg.csb.dev/dai-shi/proxy-compare/commit/fe5dd412/proxy-compare"
+    "proxy-compare": "2.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",
