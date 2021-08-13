@@ -18,7 +18,6 @@
   },
   "exports": {
     "./package.json": "./package.json",
-    "./": "./",
     ".": {
       "types": "./index.d.ts",
       "module": "./esm/index.js",
@@ -131,7 +130,7 @@
     ]
   },
   "dependencies": {
-    "proxy-compare": "2.0.1"
+    "proxy-compare": "2.0.2"
   },
   "devDependencies": {
     "@babel/core": "^7.15.0",
