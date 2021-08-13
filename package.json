@@ -1,7 +1,7 @@
 {
   "name": "valtio",
   "private": true,
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "💊 Valtio makes proxy-state simple for React and Vanilla",
   "main": "./index.js",
   "module": "./esm/index.js",
