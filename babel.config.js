@@ -15,6 +15,13 @@ module.exports = (api, targets) => {
         },
       ],
     ],
-    plugins: ['@babel/plugin-transform-react-jsx'],
+    plugins: [
+      [
+        '@babel/plugin-transform-react-jsx',
+        {
+          runtime: 'automatic',
+        },
+      ],
+    ],
   }
 }

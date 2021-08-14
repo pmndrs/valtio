@@ -1,5 +1,5 @@
-import { proxy } from '../src/vanilla'
 import { watch } from '../src/utils'
+import { proxy } from '../src/vanilla'
 
 describe('watch', () => {
   it('should re-run for individual proxy updates', async () => {

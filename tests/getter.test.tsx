@@ -1,4 +1,4 @@
-import React, { StrictMode } from 'react'
+import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { proxy, useSnapshot } from '../src/index'
 
@@ -27,7 +27,7 @@ it('simple object getters', async () => {
     },
   })
 
-  const Counter: React.FC<{ name: string }> = ({ name }) => {
+  const Counter = ({ name }: { name: string }) => {
     const snap = useSnapshot(state)
     return (
       <>
@@ -69,7 +69,7 @@ it('object getters returning object', async () => {
     },
   })
 
-  const Counter: React.FC<{ name: string }> = ({ name }) => {
+  const Counter = ({ name }: { name: string }) => {
     const snap = useSnapshot(state)
     return (
       <>

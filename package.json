@@ -105,7 +105,7 @@
       "ts-jest": {
         "tsconfig": {
           "target": "es2015",
-          "jsx": "react"
+          "jsx": "react-jsx"
         }
       }
     },

@@ -1,4 +1,4 @@
-import React, { StrictMode, useRef, useEffect } from 'react'
+import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, ref, useSnapshot } from '../src/index'
 
@@ -21,7 +21,7 @@ afterEach(() => {
 it('should trigger re-render setting objects with ref wrapper', async () => {
   const obj = proxy({ nested: ref({ count: 0 }) })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(obj)
     const commitsRef = useRef(1)
     useEffect(() => {
@@ -52,7 +52,7 @@ it('should trigger re-render setting objects with ref wrapper', async () => {
 it('should not track object wrapped in ref assigned to proxy state', async () => {
   const obj = proxy<{ ui: JSX.Element | null }>({ ui: null })
 
-  const Component: React.FC = () => {
+  const Component = () => {
     const snap = useSnapshot(obj)
     return (
       <>
@@ -79,7 +79,7 @@ it('should not track object wrapped in ref assigned to proxy state', async () =>
 it('should not trigger re-render when mutating object wrapped in ref', async () => {
   const obj = proxy({ nested: ref({ count: 0 }) })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(obj)
     return (
       <>

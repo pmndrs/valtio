@@ -1,8 +1,8 @@
-import type { NodePath } from '@babel/traverse'
-import * as t from '@babel/types'
-import { createMacro, MacroError } from 'babel-plugin-macros'
 // @ts-ignore
 import { addNamed } from '@babel/helper-module-imports'
+import type { NodePath } from '@babel/traverse'
+import * as t from '@babel/types'
+import { MacroError, createMacro } from 'babel-plugin-macros'
 
 const macro = ({ references }: any) => {
   references.useProxy?.forEach((path: NodePath) => {

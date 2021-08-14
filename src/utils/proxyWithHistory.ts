@@ -1,4 +1,4 @@
-import { proxy, subscribe, snapshot, ref } from '../vanilla'
+import { proxy, ref, snapshot, subscribe } from '../vanilla'
 
 /**
  * proxyWithHistory

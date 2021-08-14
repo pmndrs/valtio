@@ -1,4 +1,4 @@
-import React, { StrictMode } from 'react'
+import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot } from '../src/index'
 
@@ -21,7 +21,7 @@ afterEach(() => {
 it('unsupported map', async () => {
   const obj = proxy({ map: new Map([['count', 0]]) })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(obj) as any
     return (
       <>
@@ -47,7 +47,7 @@ it('unsupported map', async () => {
 it('unsupported set', async () => {
   const obj = proxy({ set: new Set([1, 2, 3]) })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(obj) as any
     return (
       <>

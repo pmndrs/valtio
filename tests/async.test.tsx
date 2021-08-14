@@ -1,4 +1,4 @@
-import React, { StrictMode, Suspense } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot } from '../src/index'
 
@@ -30,7 +30,7 @@ it('delayed increment', async () => {
     state.count = sleep(10).then(() => nextCount)
   }
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(state)
     return (
       <>
@@ -61,7 +61,7 @@ it('delayed object', async () => {
     state.object = sleep(10).then(() => ({ text: 'hello' }))
   }
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(state)
     return (
       <>
@@ -94,7 +94,7 @@ it('delayed object update fullfilled', async () => {
     state.object = state.object.then((v: any) => ({ ...v, count: v.count + 1 }))
   }
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(state)
     return (
       <>
@@ -130,7 +130,7 @@ it('delayed falsy value', async () => {
     state.value = sleep(10).then(() => null)
   }
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(state)
     return (
       <>
