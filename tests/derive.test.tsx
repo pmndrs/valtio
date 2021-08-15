@@ -1,6 +1,6 @@
-import React, { StrictMode, Suspense } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { proxy, useSnapshot, snapshot, subscribe } from '../src/index'
+import { proxy, snapshot, subscribe, useSnapshot } from '../src/index'
 import { derive, underive } from '../src/utils'
 
 const consoleError = console.error
@@ -174,7 +174,7 @@ it('async derive', async () => {
     { proxy: state }
   )
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(
       state as { count: number; delayedCount: Promise<number> }
     )

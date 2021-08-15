@@ -1,4 +1,4 @@
-import React, { StrictMode } from 'react'
+import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { useSnapshot } from '../src/index'
 import { proxyWithHistory } from '../src/utils'
@@ -22,7 +22,7 @@ afterEach(() => {
 it('simple count', async () => {
   const state = proxyWithHistory(0)
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(state)
     return (
       <>
@@ -76,7 +76,7 @@ it('simple count', async () => {
 it('count in object', async () => {
   const state = proxyWithHistory({ count: 0 })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(state)
     return (
       <>
@@ -130,7 +130,7 @@ it('count in object', async () => {
 it('count in nested object', async () => {
   const state = proxyWithHistory({ nested: { count: 0 } })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(state)
     return (
       <>

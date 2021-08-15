@@ -1,4 +1,4 @@
-import { subscribe, snapshot } from '../vanilla'
+import { snapshot, subscribe } from '../vanilla'
 
 /**
  * devtools

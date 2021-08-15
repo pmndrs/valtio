@@ -8,13 +8,12 @@ import {
   useRef,
 } from 'react'
 import {
+  affectedToPathList,
   createProxy as createProxyToCompare,
   isChanged,
-  affectedToPathList,
 } from 'proxy-compare'
-
-import { getVersion, subscribe, snapshot } from './vanilla'
 import { createMutableSource, useMutableSource } from './useMutableSource'
+import { getVersion, snapshot, subscribe } from './vanilla'
 import type { DeepResolveType } from './vanilla'
 
 const isSSR =

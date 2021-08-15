@@ -1,7 +1,7 @@
-import React, { StrictMode, Suspense } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { proxy, useSnapshot, snapshot, subscribe } from '../src/index'
-import { proxyWithComputed, addComputed } from '../src/utils'
+import { proxy, snapshot, subscribe, useSnapshot } from '../src/index'
+import { addComputed, proxyWithComputed } from '../src/utils'
 
 const consoleError = console.error
 beforeEach(() => {
@@ -185,7 +185,7 @@ it('async addComputed', async () => {
     },
   })
 
-  const Counter: React.FC = () => {
+  const Counter = () => {
     const snap = useSnapshot(
       state as { count: number; delayedCount: Promise<number> }
     )
