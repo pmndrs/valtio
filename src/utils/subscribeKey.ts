@@ -11,10 +11,10 @@ import { subscribe } from '../vanilla'
  * import { subscribeKey } from 'valtio/utils'
  * subscribeKey(state, 'count', (v) => console.log('state.count has changed to', v))
  */
-export const subscribeKey = <T extends object>(
+export const subscribeKey = <T extends object, K extends keyof T>(
   proxyObject: T,
-  key: keyof T,
-  callback: (value: T[typeof key]) => void,
+  key: K,
+  callback: (value: T[K]) => void,
   notifyInSync?: boolean
 ) =>
   subscribe(
