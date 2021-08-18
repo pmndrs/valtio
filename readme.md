@@ -304,6 +304,9 @@ const state = proxyWithComputed({
 })
 ```
 
+The last use case fails to infer types in TypeScript
+[#192](https://github.com/pmndrs/valtio/issues/192).
+
 #### `proxyWithHistory` util
 
 This is a utility function to create a proxy with snapshot history.
