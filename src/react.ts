@@ -34,9 +34,11 @@ const useAffectedDebugValue = <State>(
   useDebugValue(pathList.current)
 }
 
-type MutableSource = any
-const mutableSourceCache = new WeakMap<object, MutableSource>()
-const getMutableSource = (proxyObject: any): MutableSource => {
+const mutableSourceCache = new WeakMap<object, unknown>()
+const getMutableSource = <T extends object>(proxyObject: T) => {
+  // Note this is just for inferring type
+  const create = () => createMutableSource(proxyObject, getVersion)
+  type MutableSource = ReturnType<typeof create>
   if (!mutableSourceCache.has(proxyObject)) {
     mutableSourceCache.set(
       proxyObject,
