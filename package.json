@@ -7,6 +7,9 @@
   "types": "./index.d.ts",
   "typesVersions": {
     "<4.0": {
+      "esm/*": [
+        "ts3.4/*"
+      ],
       "*": [
         "ts3.4/*"
       ]
@@ -16,26 +19,26 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./index.d.ts",
-      "module": "./index.mjs",
-      "import": "./index.mjs",
+      "module": "./esm/index.js",
+      "import": "./esm/index.mjs",
       "default": "./index.js"
     },
     "./vanilla": {
       "types": "./vanilla.d.ts",
-      "module": "./vanilla.mjs",
-      "import": "./vanilla.mjs",
+      "module": "./esm/vanilla.js",
+      "import": "./esm/vanilla.mjs",
       "default": "./vanilla.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
-      "module": "./utils.mjs",
-      "import": "./utils.mjs",
+      "module": "./esm/utils.js",
+      "import": "./esm/utils.mjs",
       "default": "./utils.js"
     },
     "./macro": {
       "types": "./macro.d.ts",
-      "module": "./macro.mjs",
-      "import": "./macro.mjs",
+      "module": "./esm/macro.js",
+      "import": "./esm/macro.mjs",
       "default": "./macro.js"
     }
   },
@@ -58,7 +61,7 @@
     "test": "jest && jest --setupFiles ./tests/setNodeEnvProduction.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+    "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "prettier": {
     "semi": false,
