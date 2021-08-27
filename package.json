@@ -4,7 +4,6 @@
   "version": "1.2.1",
   "description": "💊 Valtio makes proxy-state simple for React and Vanilla",
   "main": "./index.js",
-  "module": "./esm/index.js",
   "types": "./index.d.ts",
   "typesVersions": {
     "<4.0": {
@@ -21,25 +20,25 @@
     ".": {
       "types": "./index.d.ts",
       "module": "./esm/index.js",
-      "import": "./esm/index.js",
+      "import": "./esm/index.mjs",
       "default": "./index.js"
     },
     "./vanilla": {
       "types": "./vanilla.d.ts",
       "module": "./esm/vanilla.js",
-      "import": "./esm/vanilla.js",
+      "import": "./esm/vanilla.mjs",
       "default": "./vanilla.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
       "module": "./esm/utils.js",
-      "import": "./esm/utils.js",
+      "import": "./esm/utils.mjs",
       "default": "./utils.js"
     },
     "./macro": {
       "types": "./macro.d.ts",
       "module": "./esm/macro.js",
-      "import": "./esm/macro.js",
+      "import": "./esm/macro.mjs",
       "default": "./macro.js"
     }
   },
@@ -62,7 +61,7 @@
     "test": "jest && jest --setupFiles ./tests/setNodeEnvProduction.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\" && shx echo '{\"type\":\"module\"}' > dist/esm/package.json && json -I -f dist/esm/package.json"
+    "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "prettier": {
     "semi": false,

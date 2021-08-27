@@ -1,8 +1,8 @@
 import path from 'path'
+import alias from '@rollup/plugin-alias'
 import babel from '@rollup/plugin-babel'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
-import alias from '@rollup/plugin-alias'
 import esbuild from 'rollup-plugin-esbuild'
 import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
 
@@ -38,7 +38,13 @@ function createDeclarationConfig(input, output) {
       dir: output,
     },
     external,
-    plugins: [typescript({ declaration: true, outDir: output })],
+    plugins: [
+      typescript({
+        declaration: true,
+        emitDeclarationOnly: true,
+        outDir: output,
+      }),
+    ],
   }
 }
 
@@ -87,12 +93,14 @@ export default function (args) {
     c = c.slice('config-'.length)
     return [
       createCommonJSConfig(`src/${c}.ts`, `dist/${c}.js`),
+      createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`),
       createESMConfig(`src/${c}.ts`, `dist/esm/${c}.js`),
     ]
   }
   return [
     createDeclarationConfig('src/index.ts', 'dist'),
     createCommonJSConfig('src/index.ts', 'dist/index.js'),
+    createESMConfig('src/index.ts', 'dist/esm/index.mjs'),
     createESMConfig('src/index.ts', 'dist/esm/index.js'),
   ]
 }
