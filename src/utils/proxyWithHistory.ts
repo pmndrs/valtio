@@ -59,6 +59,17 @@ export const proxyWithHistory = <V>(initialValue: V, skipSubscribe = false) => {
       proxyObject.history.snapshots.push(snapshot(proxyObject).value as V)
       ++proxyObject.history.index
     },
+    subscribe: () => subscribe(proxyObject, (ops) => {
+      if (
+        ops.some(
+          (op) =>
+            op[1][0] === 'value' &&
+            (op[0] !== 'set' || op[2] !== proxyObject.history.wip)
+        )
+      ) {
+        proxyObject.saveHistory()
+      }
+    }),
   })
   proxyObject.saveHistory()
   if (autoSave) {
