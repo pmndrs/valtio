@@ -56,9 +56,9 @@
     }
   },
   "utils.js": {
-    "bundled": 10177,
-    "minified": 4646,
-    "gzipped": 1926,
+    "bundled": 10284,
+    "minified": 4684,
+    "gzipped": 1936,
     "treeshaked": {
       "rollup": {
         "code": 45,
@@ -70,9 +70,9 @@
     }
   },
   "utils.mjs": {
-    "bundled": 10177,
-    "minified": 4646,
-    "gzipped": 1926,
+    "bundled": 10284,
+    "minified": 4684,
+    "gzipped": 1936,
     "treeshaked": {
       "rollup": {
         "code": 45,
