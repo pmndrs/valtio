@@ -29,12 +29,13 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
 
   let isTimeTraveling = false
   const devtools = extension.connect({ name })
-  const unsub1 = subscribe(proxyObject, () => {
+  const unsub1 = subscribe(proxyObject, (ops) => {
+    const action = ops.map(([op, path]) => `${op}:${path.join('.')}`).join(', ')
     if (isTimeTraveling) {
       isTimeTraveling = false
     } else {
       devtools.send(
-        `Update - ${new Date().toLocaleString()}`,
+        `${action} - ${new Date().toLocaleString()}`,
         snapshot(proxyObject)
       )
     }
