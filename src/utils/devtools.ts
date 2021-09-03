@@ -1,4 +1,6 @@
-import { snapshot, subscribe } from '../vanilla'
+import { snapshot, subscribe, DEVTOOLS } from '../vanilla'
+
+type Message = { type: string; payload?: any; state?: any }
 
 /**
  * devtools
@@ -41,18 +43,15 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
     }
   })
   const unsub2 = devtools.subscribe(
-    (message: { type: string; payload?: any; state?: any }) => {
+    (message: Message) => {
       if (message.type === 'DISPATCH' && message.state) {
         if (
           message.payload?.type === 'JUMP_TO_ACTION' ||
           message.payload?.type === 'JUMP_TO_STATE'
         ) {
           isTimeTraveling = true
-        }
-        const nextValue = JSON.parse(message.state)
-        Object.keys(nextValue).forEach((key) => {
-          ;(proxyObject as any)[key] = nextValue[key]
-        })
+        } 
+        ;(proxyObject as any)[DEVTOOLS] = message
       } else if (
         message.type === 'DISPATCH' &&
         message.payload?.type === 'COMMIT'

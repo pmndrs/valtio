@@ -6,6 +6,8 @@ const SNAPSHOT = Symbol()
 const PROMISE_RESULT = Symbol()
 const PROMISE_ERROR = Symbol()
 
+export const DEVTOOLS = Symbol()
+
 const enum AsRef {}
 const refSet = new WeakSet()
 export const ref = <T extends object>(o: T): T & AsRef => {
@@ -149,6 +151,10 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       return deleted
     },
     set(target, prop, value) {
+      if (prop === DEVTOOLS) {
+        target[prop] = value
+        return true
+      }
       const prevValue = target[prop]
       if (Object.is(prevValue, value)) {
         return true
