@@ -122,7 +122,7 @@ import { watch } from 'valtio/utils'
 
 const state = proxy({ count: 0 })
 const stop = watch((get) => {
-  console.log('state has changed to', get(state))) // auto-subscribe on use
+  console.log('state has changed to', get(state)) // auto-subscribe on use
 })
 ```
 
