@@ -36,7 +36,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
   const unsub1 = subscribe(proxyObject, (ops) => {
     const action = ops
       .filter(([_, path]) => path[0] !== DEVTOOLS)
-      .map(String)
+      .flatMap(([op, path]) => `${op}:${path.map(String).join('.')}`)
       .join(', ')
 
     if (!action) {
