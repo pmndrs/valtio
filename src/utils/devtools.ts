@@ -1,6 +1,8 @@
-import { snapshot, subscribe, DEVTOOLS } from '../vanilla'
+import { snapshot, subscribe } from '../vanilla'
 
 type Message = { type: string; payload?: any; state?: any }
+
+const DEVTOOLS = Symbol()
 
 /**
  * devtools
@@ -32,58 +34,69 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
   let isTimeTraveling = false
   const devtools = extension.connect({ name })
   const unsub1 = subscribe(proxyObject, (ops) => {
-    const action = ops.map(([op, path]) => `${op}:${path.join('.')}`).join(', ')
+    const action = ops
+      .flatMap(([op, path]) =>
+        path.some((x) => typeof x === 'symbol')
+          ? []
+          : [`${op}:${path.join('.')}`]
+      )
+      .join(', ')
+
+    if (!action) {
+      return
+    }
     if (isTimeTraveling) {
       isTimeTraveling = false
     } else {
+      const proxyWithoutDevtools = Object.assign({}, proxyObject)
+      delete (proxyWithoutDevtools as any)[DEVTOOLS]
+
       devtools.send(
         `${action} - ${new Date().toLocaleString()}`,
-        snapshot(proxyObject)
+        proxyWithoutDevtools
       )
     }
   })
-  const unsub2 = devtools.subscribe(
-    (message: Message) => {
-      if (message.type === 'DISPATCH' && message.state) {
-        if (
-          message.payload?.type === 'JUMP_TO_ACTION' ||
-          message.payload?.type === 'JUMP_TO_STATE'
-        ) {
-          isTimeTraveling = true
-        } 
-        ;(proxyObject as any)[DEVTOOLS] = message
-      } else if (
-        message.type === 'DISPATCH' &&
-        message.payload?.type === 'COMMIT'
+  const unsub2 = devtools.subscribe((message: Message) => {
+    if (message.type === 'DISPATCH' && message.state) {
+      if (
+        message.payload?.type === 'JUMP_TO_ACTION' ||
+        message.payload?.type === 'JUMP_TO_STATE'
       ) {
-        devtools.init(snapshot(proxyObject))
-      } else if (
-        message.type === 'DISPATCH' &&
-        message.payload?.type === 'IMPORT_STATE'
-      ) {
-        const actions = message.payload.nextLiftedState?.actionsById
-        const computedStates =
-          message.payload.nextLiftedState?.computedStates || []
-
         isTimeTraveling = true
-
-        computedStates.forEach(({ state }: { state: any }, index: number) => {
-          const action =
-            actions[index] || `Update - ${new Date().toLocaleString()}`
-
-          Object.keys(state).forEach((key) => {
-            ;(proxyObject as any)[key] = state[key]
-          })
-
-          if (index === 0) {
-            devtools.init(snapshot(proxyObject))
-          } else {
-            devtools.send(action, snapshot(proxyObject))
-          }
-        })
       }
+      ;(proxyObject as any)[DEVTOOLS] = message
+    } else if (
+      message.type === 'DISPATCH' &&
+      message.payload?.type === 'COMMIT'
+    ) {
+      devtools.init(snapshot(proxyObject))
+    } else if (
+      message.type === 'DISPATCH' &&
+      message.payload?.type === 'IMPORT_STATE'
+    ) {
+      const actions = message.payload.nextLiftedState?.actionsById
+      const computedStates =
+        message.payload.nextLiftedState?.computedStates || []
+
+      isTimeTraveling = true
+
+      computedStates.forEach(({ state }: { state: any }, index: number) => {
+        const action =
+          actions[index] || `Update - ${new Date().toLocaleString()}`
+
+        Object.keys(state).forEach((key) => {
+          ;(proxyObject as any)[key] = state[key]
+        })
+
+        if (index === 0) {
+          devtools.init(snapshot(proxyObject))
+        } else {
+          devtools.send(action, snapshot(proxyObject))
+        }
+      })
     }
-  )
+  })
   devtools.init(snapshot(proxyObject))
   return () => {
     unsub1()
