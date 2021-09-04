@@ -35,20 +35,18 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
   const devtools = extension.connect({ name })
   const unsub1 = subscribe(proxyObject, (ops) => {
     const action = ops
-      .flatMap(([op, path]) =>
-        path.some((x) => typeof x === 'symbol')
-          ? []
-          : [`${op}:${path.join('.')}`]
-      )
+      .filter(([_, path]) => path[0] !== DEVTOOLS)
+      .map(String)
       .join(', ')
 
     if (!action) {
       return
     }
+
     if (isTimeTraveling) {
       isTimeTraveling = false
     } else {
-      const proxyWithoutDevtools = Object.assign({}, proxyObject)
+      const proxyWithoutDevtools = Object.assign({}, snapshot(proxyObject))
       delete (proxyWithoutDevtools as any)[DEVTOOLS]
 
       devtools.send(
