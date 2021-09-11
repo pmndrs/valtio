@@ -1,10 +1,9 @@
 {
   "name": "valtio",
   "private": true,
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "💊 Valtio makes proxy-state simple for React and Vanilla",
   "main": "./index.js",
-  "module": "./esm/index.js",
   "types": "./index.d.ts",
   "typesVersions": {
     "<4.0": {
@@ -21,25 +20,25 @@
     ".": {
       "types": "./index.d.ts",
       "module": "./esm/index.js",
-      "import": "./esm/index.js",
+      "import": "./esm/index.mjs",
       "default": "./index.js"
     },
     "./vanilla": {
       "types": "./vanilla.d.ts",
       "module": "./esm/vanilla.js",
-      "import": "./esm/vanilla.js",
+      "import": "./esm/vanilla.mjs",
       "default": "./vanilla.js"
     },
     "./utils": {
       "types": "./utils.d.ts",
       "module": "./esm/utils.js",
-      "import": "./esm/utils.js",
+      "import": "./esm/utils.mjs",
       "default": "./utils.js"
     },
     "./macro": {
       "types": "./macro.d.ts",
       "module": "./esm/macro.js",
-      "import": "./esm/macro.js",
+      "import": "./esm/macro.mjs",
       "default": "./macro.js"
     }
   },
@@ -55,14 +54,14 @@
     "build:utils": "rollup -c --config-utils",
     "build:macro": "rollup -c --config-macro",
     "postbuild": "yarn copy",
-    "eslint": "eslint --fix '{src,tests}/**/*.{js,ts,jsx,tsx}'",
-    "eslint:ci": "eslint '{src,tests}/**/*.{js,ts,jsx,tsx}'",
+    "eslint": "eslint --fix '*.{js,json}' '{src,tests}/**/*.{ts,tsx}'",
+    "eslint:ci": "eslint '*.{js,json}' '{src,tests}/**/*.{ts,tsx}'",
     "prepare": "yarn build",
     "pretest": "tsc --noEmit",
     "test": "jest && jest --setupFiles ./tests/setNodeEnvProduction.ts",
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
-    "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\" && shx echo '{\"type\":\"module\"}' > dist/esm/package.json && json -I -f dist/esm/package.json"
+    "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
   },
   "prettier": {
     "semi": false,
@@ -144,39 +143,39 @@
     "@rollup/plugin-typescript": "^8.2.5",
     "@testing-library/react": "^12.0.0",
     "@types/babel-plugin-macros": "^2.8.5",
-    "@types/jest": "^26.0.24",
-    "@types/react": "^17.0.16",
+    "@types/jest": "^27.0.1",
+    "@types/react": "^17.0.19",
     "@types/react-dom": "^17.0.9",
     "@types/use-subscription": "^1.0.0",
-    "@typescript-eslint/eslint-plugin": "^4.29.1",
-    "@typescript-eslint/parser": "^4.29.1",
+    "@typescript-eslint/eslint-plugin": "^4.29.3",
+    "@typescript-eslint/parser": "^4.29.3",
     "babel-plugin-macros": "^3.0.1",
     "babel-plugin-tester": "^10.1.0",
     "concurrently": "^6.2.1",
     "downlevel-dts": "^0.7.0",
-    "esbuild": "^0.12.19",
+    "esbuild": "^0.12.24",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-import-resolver-alias": "^1.1.2",
-    "eslint-plugin-import": "^2.24.0",
+    "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-jest": "^24.4.0",
-    "eslint-plugin-prettier": "^3.4.0",
-    "eslint-plugin-react": "^7.24.0",
+    "eslint-plugin-prettier": "^3.4.1",
+    "eslint-plugin-react": "^7.25.0",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "husky": "^7.0.1",
-    "jest": "^27.0.6",
+    "husky": "^7.0.2",
+    "jest": "^27.1.0",
     "json": "^11.0.0",
     "lint-staged": "^11.1.2",
     "prettier": "^2.3.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "rollup": "^2.56.2",
+    "rollup": "^2.56.3",
     "rollup-plugin-esbuild": "^4.5.0",
     "rollup-plugin-size-snapshot": "^0.12.0",
     "shx": "^0.3.3",
-    "ts-jest": "^27.0.4",
-    "tslib": "^2.3.0",
-    "typescript": "^4.4.2"
+    "ts-jest": "^27.0.5",
+    "tslib": "^2.3.1",
+    "typescript": "^4.4.3"
   },
   "peerDependencies": {
     "@babel/helper-module-imports": ">=7.12",

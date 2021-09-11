@@ -23,7 +23,7 @@ import { proxy, ref, snapshot, subscribe } from '../vanilla'
  *   count: 1,
  * })
  */
-export const proxyWithHistory = <V>(initialValue: V) => {
+export const proxyWithHistory = <V>(initialValue: V, skipSubscribe = false) => {
   const proxyObject = proxy({
     value: initialValue,
     history: ref({
@@ -59,18 +59,22 @@ export const proxyWithHistory = <V>(initialValue: V) => {
       proxyObject.history.snapshots.push(snapshot(proxyObject).value as V)
       ++proxyObject.history.index
     },
+    subscribe: () =>
+      subscribe(proxyObject, (ops) => {
+        if (
+          ops.some(
+            (op) =>
+              op[1][0] === 'value' &&
+              (op[0] !== 'set' || op[2] !== proxyObject.history.wip)
+          )
+        ) {
+          proxyObject.saveHistory()
+        }
+      }),
   })
   proxyObject.saveHistory()
-  subscribe(proxyObject, (ops) => {
-    if (
-      ops.some(
-        (op) =>
-          op[1][0] === 'value' &&
-          (op[0] !== 'set' || op[2] !== proxyObject.history.wip)
-      )
-    ) {
-      proxyObject.saveHistory()
-    }
-  })
+  if (!skipSubscribe) {
+    proxyObject.subscribe()
+  }
   return proxyObject
 }
