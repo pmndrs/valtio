@@ -34,8 +34,8 @@ export const proxyWithHistory = <V>(initialValue: V, skipSubscribe = false) => {
     canUndo: () => proxyObject.history.index > 0,
     undo: () => {
       if (proxyObject.canUndo()) {
-        proxyObject.value = proxyObject.history.wip =
-          proxyObject.history.snapshots[--proxyObject.history.index]
+        proxyObject.value = proxyObject.history.wip = proxyObject.history
+          .snapshots[--proxyObject.history.index] as V
         // refresh snapshot to use again
         proxyObject.history.snapshots[proxyObject.history.index] = snapshot(
           proxyObject
@@ -46,8 +46,8 @@ export const proxyWithHistory = <V>(initialValue: V, skipSubscribe = false) => {
       proxyObject.history.index < proxyObject.history.snapshots.length - 1,
     redo: () => {
       if (proxyObject.canRedo()) {
-        proxyObject.value = proxyObject.history.wip =
-          proxyObject.history.snapshots[++proxyObject.history.index]
+        proxyObject.value = proxyObject.history.wip = proxyObject.history
+          .snapshots[++proxyObject.history.index] as V
         // refresh snapshot to use again
         proxyObject.history.snapshots[proxyObject.history.index] = snapshot(
           proxyObject
