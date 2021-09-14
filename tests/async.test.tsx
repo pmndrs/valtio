@@ -1,5 +1,5 @@
 import { StrictMode, Suspense } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { proxy, useSnapshot } from '../src/index'
 
 const consoleError = console.error
@@ -86,7 +86,7 @@ it('delayed object', async () => {
   await findByText('text: hello')
 })
 
-it('delayed object update fullfilled', async () => {
+it('delayed object update fulfilled', async () => {
   const state = proxy<any>({
     object: sleep(10).then(() => ({ text: 'counter', count: 0 })),
   })
@@ -114,14 +114,18 @@ it('delayed object update fullfilled', async () => {
   )
 
   await findByText('loading')
-  await findByText('text: counter')
-  await findByText('count: 0')
+  await waitFor(() => {
+    getByText('text: counter')
+    getByText('count: 0')
+  })
 
   fireEvent.click(getByText('button'))
 
   await findByText('loading')
-  await findByText('text: counter')
-  await findByText('count: 1')
+  await waitFor(() => {
+    getByText('text: counter')
+    getByText('count: 1')
+  })
 })
 
 it('delayed falsy value', async () => {
