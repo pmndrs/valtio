@@ -389,3 +389,37 @@ it('render from outside', async () => {
   fireEvent.click(getByText('toggle'))
   await findByText('count: 1')
 })
+
+it('counter with sync option', async () => {
+  const obj = proxy({ count: 0 })
+
+  const Counter = () => {
+    const snap = useSnapshot(obj, { sync: true })
+    const commitsRef = useRef(1)
+    useEffect(() => {
+      commitsRef.current += 1
+    })
+    return (
+      <>
+        <div>
+          count: {snap.count} ({commitsRef.current})
+        </div>
+        <button onClick={() => ++obj.count}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>
+  )
+
+  await findByText('count: 0 (1)')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1 (2)')
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 2 (3)')
+})

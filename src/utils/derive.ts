@@ -70,7 +70,9 @@ export const derive = <T extends object, U extends object>(
         (ops) => {
           if (
             p === proxyObject &&
-            ops.every((op) => op[1].length === 1 && op[1][0] in derivedFns)
+            ops.every(
+              (op) => op[1].length === 1 && (op[1][0] as string) in derivedFns
+            )
           ) {
             // only setting derived properties
             return

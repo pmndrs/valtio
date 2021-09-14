@@ -329,3 +329,4 @@ The community is working on recipes on wiki pages.
 
 - [How to organize actions](https://github.com/pmndrs/valtio/wiki/How-to-organize-actions)
 - [How to persist states](https://github.com/pmndrs/valtio/wiki/How-to-persist-states)
+- [How to use with context](https://github.com/pmndrs/valtio/wiki/How-to-use-with-context)
