@@ -312,6 +312,8 @@ The last use case fails to infer types in TypeScript
 This is a utility function to create a proxy with snapshot history.
 
 ```js
+import { proxyWithHistory } from 'valtio/utils'
+
 const state = proxyWithHistory({ count: 0 })
 console.log(state.value) // ---> { count: 0 }
 state.value.count += 1
