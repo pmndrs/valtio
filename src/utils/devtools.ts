@@ -79,8 +79,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
       isTimeTraveling = true
 
       computedStates.forEach(({ state }: { state: any }, index: number) => {
-        const action =
-          actions[index] || 'No action found'
+        const action = actions[index] || 'No action found'
 
         Object.keys(state).forEach((key) => {
           ;(proxyObject as any)[key] = state[key]
