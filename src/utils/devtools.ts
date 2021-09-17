@@ -36,7 +36,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
   const unsub1 = subscribe(proxyObject, (ops) => {
     const action = ops
       .filter(([_, path]) => path[0] !== DEVTOOLS)
-      .flatMap(([op, path]) => `${op}:${path.map(String).join('.')}`)
+      .map(([op, path]) => `${op}:${path.map(String).join('.')}`)
       .join(', ')
 
     if (!action) {
@@ -48,11 +48,10 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
     } else {
       const proxyWithoutDevtools = Object.assign({}, snapshot(proxyObject))
       delete (proxyWithoutDevtools as any)[DEVTOOLS]
-
-      devtools.send(
-        `${action} - ${new Date().toLocaleString()}`,
-        proxyWithoutDevtools
-      )
+      devtools.send({
+        type: action,
+        updatedAt: new Date().toLocaleString(),
+      })
     }
   })
   const unsub2 = devtools.subscribe((message: Message) => {
