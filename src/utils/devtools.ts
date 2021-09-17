@@ -81,7 +81,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
 
       computedStates.forEach(({ state }: { state: any }, index: number) => {
         const action =
-          actions[index] || `Update - ${new Date().toLocaleString()}`
+          actions[index] || 'No action found'
 
         Object.keys(state).forEach((key) => {
           ;(proxyObject as any)[key] = state[key]
