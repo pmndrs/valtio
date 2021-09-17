@@ -46,12 +46,15 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
     if (isTimeTraveling) {
       isTimeTraveling = false
     } else {
-      const proxyWithoutDevtools = Object.assign({}, snapshot(proxyObject))
-      delete (proxyWithoutDevtools as any)[DEVTOOLS]
-      devtools.send({
-        type: action,
-        updatedAt: new Date().toLocaleString(),
-      })
+      const snapWithoutDevtools = Object.assign({}, snapshot(proxyObject))
+      delete (snapWithoutDevtools as any)[DEVTOOLS]
+      devtools.send(
+        {
+          type: action,
+          updatedAt: new Date().toLocaleString(),
+        },
+        snapWithoutDevtools
+      )
     }
   })
   const unsub2 = devtools.subscribe((message: Message) => {
