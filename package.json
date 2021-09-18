@@ -23,23 +23,11 @@
       "import": "./esm/index.mjs",
       "default": "./index.js"
     },
-    "./vanilla": {
-      "types": "./vanilla.d.ts",
-      "module": "./esm/vanilla.js",
-      "import": "./esm/vanilla.mjs",
-      "default": "./vanilla.js"
-    },
-    "./utils": {
-      "types": "./utils.d.ts",
-      "module": "./esm/utils.js",
-      "import": "./esm/utils.mjs",
-      "default": "./utils.js"
-    },
-    "./macro": {
-      "types": "./macro.d.ts",
-      "module": "./esm/macro.js",
-      "import": "./esm/macro.mjs",
-      "default": "./macro.js"
+    "./*": {
+      "types": "./*.d.ts",
+      "module": "./esm/*.js",
+      "import": "./esm/*.mjs",
+      "default": "./*.js"
     }
   },
   "files": [
@@ -62,6 +50,9 @@
     "test:dev": "jest --watch --no-coverage",
     "test:coverage:watch": "jest --watch",
     "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined; this['lint-staged']=undefined;\""
+  },
+  "engines": {
+    "node": ">=12"
   },
   "prettier": {
     "semi": false,
