@@ -56,30 +56,30 @@
     }
   },
   "utils.js": {
-    "bundled": 10284,
-    "minified": 4684,
-    "gzipped": 1936,
+    "bundled": 10509,
+    "minified": 4795,
+    "gzipped": 2014,
     "treeshaked": {
       "rollup": {
         "code": 45,
         "import_statements": 45
       },
       "webpack": {
-        "code": 1074
+        "code": 1083
       }
     }
   },
   "utils.mjs": {
-    "bundled": 10284,
-    "minified": 4684,
-    "gzipped": 1936,
+    "bundled": 10509,
+    "minified": 4795,
+    "gzipped": 2014,
     "treeshaked": {
       "rollup": {
         "code": 45,
         "import_statements": 45
       },
       "webpack": {
-        "code": 1074
+        "code": 1083
       }
     }
   },
