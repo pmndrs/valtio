@@ -4,7 +4,6 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
-  useReducer,
   useRef,
 } from 'react'
 import {
@@ -12,8 +11,9 @@ import {
   createProxy as createProxyToCompare,
   isChanged,
 } from 'proxy-compare'
-import { createMutableSource, useMutableSource } from './useMutableSource'
-import { getVersion, snapshot, subscribe } from './vanilla'
+// @ts-ignore
+import { useSyncExternalStore } from 'use-sync-external-store'
+import { snapshot, subscribe } from './vanilla'
 import type { DeepResolveType } from './vanilla'
 
 const isSSR =
@@ -32,20 +32,6 @@ const useAffectedDebugValue = <State>(
     pathList.current = affectedToPathList(state, affected)
   })
   useDebugValue(pathList.current)
-}
-
-const mutableSourceCache = new WeakMap<object, unknown>()
-const getMutableSource = <T extends object>(proxyObject: T) => {
-  // Note this is just for inferring type
-  const create = () => createMutableSource(proxyObject, getVersion)
-  type MutableSource = ReturnType<typeof create>
-  if (!mutableSourceCache.has(proxyObject)) {
-    mutableSourceCache.set(
-      proxyObject,
-      createMutableSource(proxyObject, getVersion)
-    )
-  }
-  return mutableSourceCache.get(proxyObject) as MutableSource
 }
 
 type Options = {
@@ -128,64 +114,41 @@ export const useSnapshot = <T extends object>(
   proxyObject: T,
   options?: Options
 ): DeepResolveType<T> => {
-  const forceUpdate = useReducer((c) => c + 1, 0)[1]
   const affected = new WeakMap()
   const lastAffected = useRef<typeof affected>()
-  const prevSnapshot = useRef<DeepResolveType<T>>()
-  const lastSnapshot = useRef<DeepResolveType<T>>()
-  useIsomorphicLayoutEffect(() => {
-    lastSnapshot.current = prevSnapshot.current = snapshot(proxyObject)
-  }, [proxyObject])
   useIsomorphicLayoutEffect(() => {
     lastAffected.current = affected
-    if (
-      prevSnapshot.current !== lastSnapshot.current &&
-      isChanged(
-        prevSnapshot.current,
-        lastSnapshot.current,
-        affected,
-        new WeakMap()
-      )
-    ) {
-      prevSnapshot.current = lastSnapshot.current
-      forceUpdate()
-    }
   })
   const notifyInSync = options?.sync
-  const sub = useCallback(
-    (proxyObject: T, cb: () => void) =>
-      subscribe(
-        proxyObject,
-        () => {
-          const nextSnapshot = snapshot(proxyObject)
-          lastSnapshot.current = nextSnapshot
-          try {
-            if (
-              lastAffected.current &&
-              !isChanged(
-                prevSnapshot.current,
-                nextSnapshot,
-                lastAffected.current,
-                new WeakMap()
-              )
-            ) {
-              // not changed
-              return
-            }
-          } catch (e) {
-            // ignore if a promise or something is thrown
+  const currSnapshot = useSyncExternalStore(
+    useCallback(
+      (callback: () => void) => subscribe(proxyObject, callback, notifyInSync),
+      [proxyObject, notifyInSync]
+    ),
+    useMemo(() => {
+      let prevSnapshot: DeepResolveType<T> | undefined
+      return () => {
+        const nextSnapshot = snapshot(proxyObject)
+        try {
+          if (
+            prevSnapshot &&
+            lastAffected.current &&
+            !isChanged(
+              prevSnapshot,
+              nextSnapshot,
+              lastAffected.current,
+              new WeakMap()
+            )
+          ) {
+            // not changed
+            return prevSnapshot
           }
-          prevSnapshot.current = nextSnapshot
-          cb()
-        },
-        notifyInSync
-      ),
-    [notifyInSync]
-  )
-  const currSnapshot = useMutableSource(
-    getMutableSource(proxyObject),
-    snapshot,
-    sub
+        } catch (e) {
+          // ignore if a promise or something is thrown
+        }
+        return (prevSnapshot = nextSnapshot)
+      }
+    }, [proxyObject])
   )
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
