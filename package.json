@@ -121,7 +121,7 @@
   },
   "dependencies": {
     "proxy-compare": "2.0.2",
-    "use-sync-external-store": "^0.0.0-experimental-bc9bb87c2-20210917"
+    "use-sync-external-store": "^0.0.0-experimental-b1a1cb116-20210924"
   },
   "devDependencies": {
     "@babel/core": "^7.15.5",
@@ -139,6 +139,7 @@
     "@types/react": "^17.0.21",
     "@types/react-dom": "^17.0.9",
     "@types/use-subscription": "^1.0.0",
+    "@types/use-sync-external-store": "^0.0.0",
     "@typescript-eslint/eslint-plugin": "^4.31.1",
     "@typescript-eslint/parser": "^4.31.1",
     "babel-plugin-macros": "^3.0.1",

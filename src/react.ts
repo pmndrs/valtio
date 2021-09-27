@@ -11,7 +11,6 @@ import {
   createProxy as createProxyToCompare,
   isChanged,
 } from 'proxy-compare'
-// @ts-ignore
 import { useSyncExternalStore } from 'use-sync-external-store'
 import { snapshot, subscribe } from './vanilla'
 import type { DeepResolveType } from './vanilla'
