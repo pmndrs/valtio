@@ -121,7 +121,7 @@ export const useSnapshot = <T extends object>(
   const notifyInSync = options?.sync
   const currSnapshot = useSyncExternalStore(
     useCallback(
-      (callback: () => void) => subscribe(proxyObject, callback, notifyInSync),
+      (callback) => subscribe(proxyObject, callback, notifyInSync),
       [proxyObject, notifyInSync]
     ),
     useMemo(() => {
