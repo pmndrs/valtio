@@ -81,6 +81,9 @@ const state = proxy({ count: 0, inc: () => { ++state.count } })
 
 </details>
 
+If you are new to this, it's highly recommended to use
+[eslint-plugin-valtio](https://github.com/pmndrs/eslint-plugin-valtio).
+
 #### Subscribe from anywhere
 
 You can access state outside of your components and subscribe to changes.
@@ -268,7 +271,7 @@ derive({
 })
 ```
 
-#### `proxyWithComputed`
+#### `proxyWithComputed` util
 
 You can have computed values with dependency tracking with property access.
 Dependency tracking in `proxyWithComputed` conflicts with the work in `useSnapshot`.
@@ -323,6 +326,10 @@ console.log(state.value) // ---> { count: 0 }
 state.redo()
 console.log(state.value) // ---> { count: 1 }
 ```
+
+#### Plugins
+
+- [eslint-plugin-valtio](https://github.com/pmndrs/eslint-plugin-valtio)
 
 #### Recipes
 
