@@ -87,7 +87,7 @@ function createCommonJSConfig(input, output) {
   }
 }
 
-export default function(args) {
+export default function (args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
   if (c) {
     c = c.slice('config-'.length).replace(/_/g, '/')
