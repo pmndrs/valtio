@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { useSnapshot } from '../src/index'
-import { proxyWithHistory } from '../src/utils'
+import { useSnapshot } from 'valtio'
+import { proxyWithHistory } from 'valtio/utils'
 
 const consoleError = console.error
 beforeEach(() => {

@@ -1,5 +1,5 @@
-import { watch } from '../src/utils'
-import { proxy } from '../src/vanilla'
+import { watch } from 'valtio/utils'
+import { proxy } from 'valtio/vanilla'
 
 describe('watch', () => {
   it('should re-run for individual proxy updates', async () => {

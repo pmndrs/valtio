@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { proxy, ref, useSnapshot } from '../src/index'
+import { proxy, ref, useSnapshot } from 'valtio'
 
 const consoleError = console.error
 beforeEach(() => {

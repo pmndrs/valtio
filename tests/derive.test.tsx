@@ -1,7 +1,7 @@
 import { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { proxy, snapshot, subscribe, useSnapshot } from '../src/index'
-import { derive, underive } from '../src/utils'
+import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
+import { derive, underive } from 'valtio/utils'
 
 const consoleError = console.error
 beforeEach(() => {
