@@ -4,7 +4,7 @@ import babelPlugin from '@rollup/plugin-babel'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
 import esbuild from 'rollup-plugin-esbuild'
-import { sizeSnapshot } from 'rollup-plugin-size-snapshot'
+
 const createBabelConfig = require('./babel.config')
 
 const extensions = ['.js', '.ts', '.tsx']
@@ -62,7 +62,6 @@ function createESMConfig(input, output) {
       }),
       resolve({ extensions }),
       getEsbuild('node12'),
-      sizeSnapshot(),
     ],
   }
 }
@@ -82,12 +81,11 @@ function createCommonJSConfig(input, output) {
       resolve({ extensions }),
       typescript(),
       babelPlugin(getBabelOptions({ ie: 11 })),
-      sizeSnapshot(),
     ],
   }
 }
 
-export default function (args) {
+export default function(args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
   if (c) {
     c = c.slice('config-'.length).replace(/_/g, '/')
