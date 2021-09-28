@@ -4,7 +4,6 @@ import babelPlugin from '@rollup/plugin-babel'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
 import esbuild from 'rollup-plugin-esbuild'
-
 const createBabelConfig = require('./babel.config')
 
 const extensions = ['.js', '.ts', '.tsx']
