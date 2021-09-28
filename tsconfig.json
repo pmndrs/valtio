@@ -8,7 +8,8 @@
     "noUncheckedIndexedAccess": true,
     "baseUrl": ".",
     "paths": {
-      "valtio": ["./src/index.ts"]
+      "valtio": ["./src/index.ts"],
+      "valtio/*": ["./src/*.ts"]
     }
   },
   "include": ["src/**/*", "tests/**/*"],

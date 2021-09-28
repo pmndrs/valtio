@@ -95,7 +95,10 @@
       },
       "alias": {
         "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"],
-        "map": [["valtio", "./src/index.ts"]]
+        "map": [
+          ["^valtio$", "./src/index.ts"],
+          ["valtio", "./src"]
+        ]
       }
     }
   },
