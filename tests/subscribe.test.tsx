@@ -1,5 +1,5 @@
-import { proxy, ref, subscribe } from '../src/index'
-import { subscribeKey } from '../src/utils'
+import { proxy, ref, subscribe } from 'valtio'
+import { subscribeKey } from 'valtio/utils'
 
 describe('subscribe', () => {
   it('should call subscription', async () => {
