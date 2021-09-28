@@ -17,14 +17,9 @@ jobs:
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
-      - name: Test Build # we don't have any other workflows to test build
-        run: yarn build
-      - name: Test Default with Provider
+      - run: yarn build
+      - name: Test Default
         run: yarn test:ci
-      - name: Test Default without Provider
-        run: yarn test:ci
-        env:
-          PROVIDER_LESS_MODE: 'true'
 
   test_matrix:
     runs-on: ubuntu-latest
@@ -45,6 +40,7 @@ jobs:
           cache: yarn
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
+      - run: yarn build
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
