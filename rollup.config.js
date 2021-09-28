@@ -4,6 +4,7 @@ import babelPlugin from '@rollup/plugin-babel'
 import resolve from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
 import esbuild from 'rollup-plugin-esbuild'
+
 const createBabelConfig = require('./babel.config')
 
 const extensions = ['.js', '.ts', '.tsx']
@@ -50,7 +51,10 @@ function createDeclarationConfig(input, output) {
 function createESMConfig(input, output) {
   return {
     input,
-    output: { file: output, format: 'esm' },
+    output: [
+      { file: `${output}.js`, format: 'esm' },
+      { file: `${output}.mjs`, format: 'esm' },
+    ],
     external,
     plugins: [
       alias({
@@ -84,20 +88,18 @@ function createCommonJSConfig(input, output) {
   }
 }
 
-export default function (args) {
+export default function(args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
   if (c) {
     c = c.slice('config-'.length).replace(/_/g, '/')
     return [
       createCommonJSConfig(`src/${c}.ts`, `dist/${c}.js`),
-      createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`),
-      createESMConfig(`src/${c}.ts`, `dist/esm/${c}.js`),
+      createESMConfig(`src/${c}.ts`, `dist/esm/${c}`),
     ]
   }
   return [
     createDeclarationConfig('src/index.ts', 'dist'),
     createCommonJSConfig('src/index.ts', 'dist/index.js'),
-    createESMConfig('src/index.ts', 'dist/esm/index.mjs'),
-    createESMConfig('src/index.ts', 'dist/esm/index.js'),
+    createESMConfig('src/index.ts', 'dist/esm/index'),
   ]
 }
