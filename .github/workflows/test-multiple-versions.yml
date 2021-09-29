@@ -54,7 +54,7 @@ jobs:
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
           sed -i~ '1s/^/import React from "react";/' tests/*.tsx
-          sed -i~ 's/automatic/classic/' babel.config.js
+          sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' package.json
       - name: Test ${{ matrix.react }} ${{ matrix.env }}
         run: |
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
