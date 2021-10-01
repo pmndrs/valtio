@@ -5070,10 +5070,10 @@ uri-js@^4.2.2:
   dependencies:
     punycode "^2.1.0"
 
-use-sync-external-store@^0.0.0-experimental-b1a1cb116-20210924:
-  version "0.0.0-experimental-b1a1cb116-20210924"
-  resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-0.0.0-experimental-b1a1cb116-20210924.tgz#9506e0fae23522c106e36d8a3bce6ad9c2859903"
-  integrity sha512-KMaJzMIlHucOIRFgKcDZdztIjweJxqs6IurFaw61zo17BWQrc6jmZwHX/IpslT7dNqL3xkI/soK2SOGaLPX8LQ==
+use-sync-external-store@^0.0.0-experimental-7d38e4fd8-20210930:
+  version "0.0.0-experimental-7d38e4fd8-20210930"
+  resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-0.0.0-experimental-7d38e4fd8-20210930.tgz#e19347e9db200a1407772c4322a508c01cc9a7f3"
+  integrity sha512-WKomTf2T6KUNzwuJRPaRMGHs+cUFkctnV8fBc1kc4GQFOpaxSqkhbfx0MyGgrzVFzuvH08gqg2wU7kRffRLGcw==
 
 v8-compile-cache@^2.0.3:
   version "2.3.0"
