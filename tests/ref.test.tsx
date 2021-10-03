@@ -38,9 +38,9 @@ it('should trigger re-render setting objects with ref wrapper', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Counter />
-    </StrictMode>
+    </>
   )
 
   await findByText('count: 0 (1)')

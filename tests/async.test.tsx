@@ -27,7 +27,7 @@ it('delayed increment', async () => {
   const state = proxy<any>({ count: 0 })
   const delayedIncrement = () => {
     const nextCount = state.count + 1
-    state.count = sleep(10).then(() => nextCount)
+    state.count = sleep(300).then(() => nextCount)
   }
 
   const Counter = () => {
@@ -58,7 +58,7 @@ it('delayed increment', async () => {
 it('delayed object', async () => {
   const state = proxy<any>({ object: { text: 'none' } })
   const delayedObject = () => {
-    state.object = sleep(10).then(() => ({ text: 'hello' }))
+    state.object = sleep(300).then(() => ({ text: 'hello' }))
   }
 
   const Counter = () => {
@@ -88,10 +88,12 @@ it('delayed object', async () => {
 
 it('delayed object update fulfilled', async () => {
   const state = proxy<any>({
-    object: sleep(10).then(() => ({ text: 'counter', count: 0 })),
+    object: sleep(300).then(() => ({ text: 'counter', count: 0 })),
   })
   const updateObject = () => {
-    state.object = state.object.then((v: any) => ({ ...v, count: v.count + 1 }))
+    state.object = state.object.then((v: any) =>
+      sleep(300).then(() => ({ ...v, count: v.count + 1 }))
+    )
   }
 
   const Counter = () => {
@@ -131,7 +133,7 @@ it('delayed object update fulfilled', async () => {
 it('delayed falsy value', async () => {
   const state = proxy<any>({ value: true })
   const delayedValue = () => {
-    state.value = sleep(10).then(() => null)
+    state.value = sleep(300).then(() => null)
   }
 
   const Counter = () => {

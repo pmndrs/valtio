@@ -180,7 +180,7 @@ it('async addComputed', async () => {
   const state = proxy({ count: 0 })
   addComputed(state, {
     delayedCount: async (snap) => {
-      await sleep(10)
+      await sleep(300)
       return snap.count + 1
     },
   })
