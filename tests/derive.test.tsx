@@ -167,7 +167,7 @@ it('async derive', async () => {
   derive(
     {
       delayedCount: async (get) => {
-        await sleep(10)
+        await sleep(300)
         return get(state).count + 1
       },
     },

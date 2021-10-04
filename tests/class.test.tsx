@@ -95,10 +95,10 @@ it('no extra re-renders with class', async () => {
   }
 
   const { getByText } = render(
-    <StrictMode>
+    <>
       <Counter />
       <Counter2 />
-    </StrictMode>
+    </>
   )
 
   await waitFor(() => {
@@ -201,10 +201,10 @@ it('class with a method', async () => {
   }
 
   const { getByText } = render(
-    <StrictMode>
+    <>
       <Counter />
       <Counter2 />
-    </StrictMode>
+    </>
   )
 
   await waitFor(() => {
@@ -272,10 +272,10 @@ it('inherited class with a method', async () => {
   }
 
   const { getByText } = render(
-    <StrictMode>
+    <>
       <Counter />
       <Counter2 />
-    </StrictMode>
+    </>
   )
 
   await waitFor(() => {
@@ -347,10 +347,10 @@ it('no extra re-renders with getters', async () => {
   }
 
   const { getByText } = render(
-    <StrictMode>
+    <>
       <Counter />
       <Counter2 />
-    </StrictMode>
+    </>
   )
 
   await waitFor(() => {

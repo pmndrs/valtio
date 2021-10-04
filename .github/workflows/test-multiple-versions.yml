@@ -1,0 +1,66 @@
+name: Test Multiple Versions
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+          cache: yarn
+      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - run: yarn install --frozen-lockfile --check-files
+      - run: yarn build
+      - name: Test Default
+        run: yarn test:ci
+
+  test_matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        react:
+          - 16.8.0
+          - 16.9.0
+          - 17.0.0
+          - 18.0.0-alpha-f2c381131-20211004
+          - 0.0.0-experimental-f2c381131-20211004
+        env: [development, production]
+        testing: [default, alpha]
+        exclude:
+          - { react: 16.8.0, env: production } # somehow fails
+          - { react: 16.8.0, testing: alpha }
+          - { react: 16.9.0, testing: alpha }
+          - { react: 17.0.0, testing: alpha }
+          - { react: 18.0.0-alpha-f2c381131-20211004, testing: default } # suspense doesn't work?
+          - { react: 0.0.0-experimental-f2c381131-20211004, testing: default } # suspense doesn't work?
+          - { react: 18.0.0-alpha-f2c381131-20211004, env: production } # act(...) is not supported in production builds of React.
+          - { react: 0.0.0-experimental-f2c381131-20211004, env: production } # act(...) is not supported in production builds of React.
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+          cache: yarn
+      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+      - run: yarn install --frozen-lockfile --check-files
+      - run: yarn build
+      - name: Install alpha testing-library
+        if: ${{ matrix.testing == 'alpha' }}
+        run: yarn add -D @testing-library/react@alpha
+      - name: Patch for React 16
+        if: ${{ startsWith(matrix.react, '16.') }}
+        run: |
+          sed -i~ '1s/^/import React from "react";/' tests/*.tsx
+          sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' package.json
+      - name: Test ${{ matrix.react }} ${{ matrix.env }}
+        run: |
+          yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
+          env NODE_ENV=${{ matrix.env }} yarn test:ci
