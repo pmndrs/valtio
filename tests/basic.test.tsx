@@ -79,10 +79,10 @@ it('no extra re-renders (commits)', async () => {
   }
 
   const { getByText } = render(
-    <StrictMode>
+    <>
       <Counter />
       <Counter2 />
-    </StrictMode>
+    </>
   )
 
   await waitFor(() => {
@@ -410,9 +410,9 @@ it('counter with sync option', async () => {
   }
 
   const { getByText, findByText } = render(
-    <StrictMode>
+    <>
       <Counter />
-    </StrictMode>
+    </>
   )
 
   await findByText('count: 0 (1)')
