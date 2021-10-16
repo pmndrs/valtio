@@ -165,14 +165,24 @@ const state = proxy({
 })
 ```
 
-#### Update transiently
+#### Update transiently (for often occuring state-changes)
 
-You can subscribe a component to state without causing render, just stick the subscribe function into useEffect.
+You can read state in a component without causing re-render.
 
 ```jsx
 function Foo() {
-  const ref = useRef(state.obj)
-  useEffect(() => subscribe(state.obj, () => ref.current = state.obj), [state.obj])
+  const { count, text } = state
+  // ...
+```
+
+Or, you can have more control with subscribing in useEffect.
+
+```jsx
+function Foo() {
+  const total = useRef(0)
+  useEffect(() => subscribe(state.arr, () => {
+    total.current = state.arr.reduce((p, c) => p + c)
+  }), [state.obj])
   // ...
 ```
 
