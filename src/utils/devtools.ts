@@ -64,6 +64,11 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
         message.payload?.type === 'JUMP_TO_STATE'
       ) {
         isTimeTraveling = true
+
+        const state = JSON.parse(message.state)
+        Object.keys(state).forEach((key) => {
+          ;(proxyObject as any)[key] = state[key]
+        })
       }
       ;(proxyObject as any)[DEVTOOLS] = message
     } else if (
