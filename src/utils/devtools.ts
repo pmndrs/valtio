@@ -66,9 +66,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
         isTimeTraveling = true
 
         const state = JSON.parse(message.state)
-        Object.keys(state).forEach((key) => {
-          ;(proxyObject as any)[key] = state[key]
-        })
+        Object.assign(proxyObject, state)
       }
       ;(proxyObject as any)[DEVTOOLS] = message
     } else if (
@@ -89,9 +87,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
       computedStates.forEach(({ state }: { state: any }, index: number) => {
         const action = actions[index] || 'No action found'
 
-        Object.keys(state).forEach((key) => {
-          ;(proxyObject as any)[key] = state[key]
-        })
+        Object.assign(proxyObject, state)
 
         if (index === 0) {
           devtools.init(snapshot(proxyObject))
