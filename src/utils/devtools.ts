@@ -62,14 +62,14 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
       let newState: unknown
       try {
         newState = JSON.parse(message.payload)
+        if (newState) {
+          Object.assign(proxyObject, newState)
+        }
       } catch (e) {
         console.error(
           'please dispatch a serializable value that JSON.parse() and proxy() support\n',
           e
         )
-      }
-      if (newState) {
-        Object.assign(proxyObject, newState)
       }
     }
     if (message.type === 'DISPATCH' && message.state) {
