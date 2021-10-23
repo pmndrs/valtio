@@ -61,7 +61,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
     if (message.type === 'ACTION' && message.payload) {
       let newState: unknown
       try {
-        newState = JSON.parse(message.payload)
+        const newState = JSON.parse(message.payload)
         if (newState) {
           Object.assign(proxyObject, newState)
         }
