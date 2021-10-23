@@ -59,7 +59,6 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
   })
   const unsub2 = devtools.subscribe((message: Message) => {
     if (message.type === 'ACTION' && message.payload) {
-      let newState: unknown
       try {
         const newState = JSON.parse(message.payload)
         if (newState) {
