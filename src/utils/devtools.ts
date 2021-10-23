@@ -60,10 +60,7 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
   const unsub2 = devtools.subscribe((message: Message) => {
     if (message.type === 'ACTION' && message.payload) {
       try {
-        const newState = JSON.parse(message.payload)
-        if (newState) {
-          Object.assign(proxyObject, newState)
-        }
+        Object.assign(proxyObject, JSON.parse(message.payload))
       } catch (e) {
         console.error(
           'please dispatch a serializable value that JSON.parse() and proxy() support\n',
