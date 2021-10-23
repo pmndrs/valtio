@@ -62,10 +62,6 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
       let newState: unknown
       try {
         newState = JSON.parse(message.payload)
-        if (!isSupportedObject(newState)) {
-          newState = null
-          throw new Error('unsupported object type')
-        }
       } catch (e) {
         console.error(
           'please dispatch a serializable value that JSON.parse() and proxy() support\n',
