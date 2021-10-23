@@ -1,4 +1,4 @@
-import { snapshot, subscribe, isSupportedObject } from '../vanilla'
+import { snapshot, subscribe } from '../vanilla'
 
 type Message = { type: string; payload?: any; state?: any }
 
