@@ -1,4 +1,4 @@
-import { snapshot, subscribe } from '../vanilla'
+import { snapshot, subscribe, isSupportedObject } from '../vanilla'
 
 type Message = { type: string; payload?: any; state?: any }
 
@@ -58,6 +58,24 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
     }
   })
   const unsub2 = devtools.subscribe((message: Message) => {
+    if (message.type === 'ACTION' && message.payload) {
+      let newState: unknown
+      try {
+        newState = JSON.parse(message.payload)
+        if (!isSupportedObject(newState)) {
+          newState = null
+          throw new Error('unsupported object type')
+        }
+      } catch (e) {
+        console.error(
+          'please dispatch a serializable value that JSON.parse() and proxy() support\n',
+          e
+        )
+      }
+      if (newState) {
+        Object.assign(proxyObject, newState)
+      }
+    }
     if (message.type === 'DISPATCH' && message.state) {
       if (
         message.payload?.type === 'JUMP_TO_ACTION' ||

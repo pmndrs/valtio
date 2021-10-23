@@ -1,4 +1,5 @@
 import { proxy, useSnapshot } from 'valtio'
+import { devtools } from 'valtio/utils'
 
 export interface Todo {
   id: number
@@ -18,6 +19,7 @@ export const store = proxy<Store>({
   todos: [],
   filter: 'all',
 })
+devtools(store)
 
 let id = 0
 export const actions = {

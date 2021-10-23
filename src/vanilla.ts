@@ -13,7 +13,7 @@ export const ref = <T extends object>(o: T): T & AsRef => {
   return o as T & AsRef
 }
 
-const isSupportedObject = (x: unknown): x is object =>
+export const isSupportedObject = (x: unknown): x is object =>
   typeof x === 'object' &&
   x !== null &&
   (Array.isArray(x) || !(x as any)[Symbol.iterator]) &&
