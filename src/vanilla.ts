@@ -202,16 +202,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   return proxyObject
 }
 
-export const getVersion = (proxyObject: any): number => {
-  if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production' &&
-    !proxyObject?.[VERSION]
-  ) {
-    throw new Error('Please use proxy object')
-  }
-  return proxyObject[VERSION]
-}
+export const getVersion = (proxyObject: any): number => proxyObject[VERSION]
 
 export const subscribe = (
   proxyObject: any,
@@ -223,7 +214,7 @@ export const subscribe = (
     process.env.NODE_ENV !== 'production' &&
     !proxyObject?.[LISTENERS]
   ) {
-    throw new Error('Please use proxy object')
+    console.warn('Please use proxy object')
   }
   let pendingVersion = 0
   const ops: Op[] = []
@@ -266,7 +257,7 @@ export const snapshot = <T extends object>(
     process.env.NODE_ENV !== 'production' &&
     !(proxyObject as any)?.[SNAPSHOT]
   ) {
-    throw new Error('Please use proxy object')
+    console.warn('Please use proxy object')
   }
   return (proxyObject as any)[SNAPSHOT]
 }
