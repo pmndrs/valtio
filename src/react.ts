@@ -11,7 +11,8 @@ import {
   createProxy as createProxyToCompare,
   isChanged,
 } from 'proxy-compare'
-import { useSyncExternalStore } from 'use-sync-external-store'
+// @ts-ignore
+import { useSyncExternalStore } from 'use-sync-external-store/shim'
 import { snapshot, subscribe } from './vanilla'
 import type { DeepResolveType } from './vanilla'
 
@@ -121,6 +122,7 @@ export const useSnapshot = <T extends object>(
   const notifyInSync = options?.sync
   const currSnapshot = useSyncExternalStore(
     useCallback(
+      // @ts-ignore
       (callback) => subscribe(proxyObject, callback, notifyInSync),
       [proxyObject, notifyInSync]
     ),
