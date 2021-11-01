@@ -350,3 +350,7 @@ The community is working on recipes on wiki pages.
 - [How to persist states](https://github.com/pmndrs/valtio/wiki/How-to-persist-states)
 - [How to use with context](https://github.com/pmndrs/valtio/wiki/How-to-use-with-context)
 - [How to split and compose states](https://github.com/pmndrs/valtio/wiki/How-to-split-and-compose-states)
+
+#### Related Libraries
+
+- [valtio-persist](https://github.com/Noitidart/valtio-persist) - Save state to disk.
