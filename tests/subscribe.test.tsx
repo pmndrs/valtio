@@ -1,6 +1,19 @@
 import { proxy, ref, subscribe } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 
+const consoleWarn = console.warn
+beforeEach(() => {
+  console.warn = jest.fn((message) => {
+    if (message === 'Please use proxy object') {
+      return
+    }
+    consoleWarn(message)
+  })
+})
+afterEach(() => {
+  console.warn = consoleWarn
+})
+
 describe('subscribe', () => {
   it('should call subscription', async () => {
     const obj = proxy({ count: 0 })
