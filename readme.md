@@ -188,7 +188,9 @@ function Foo() {
 
 #### Update synchronously
 
-By default, state mutations are batched before triggering re-render. Sometimes, we want to disable the batching.
+By default, state mutations are batched before triggering re-render.
+Sometimes, we want to disable the batching.
+The known use case of this is `<input>` [#270](https://github.com/pmndrs/valtio/issues/270).
 
 ```jsx
 function TextBox() {
