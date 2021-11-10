@@ -210,6 +210,11 @@ const state = proxy({ count: 0, text: 'hello' })
 const unsub = devtools(state, 'state name')
 ```
 
+##### Changing State
+The screenshot below shows how to use Redux DevTools to manipulate state. First select the object from the instances drop down. Then type in a JSON object to dispatch. Then click "Dispatch". Notice how it changes the state.
+
+<img width="564" alt="image" src="https://user-images.githubusercontent.com/6372489/141134955-26e9ffce-1e2a-4c8c-a9b3-d9da739610fe.png">
+
 #### Use it vanilla
 
 Valtio is not tied to React, you can use it in vanilla-js.
@@ -224,6 +229,7 @@ subscribe(state, () => {
   const obj = snapshot(state) // A snapshot is an immutable object
 })
 ```
+
 
 #### `useProxy` macro
 
