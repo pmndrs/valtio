@@ -1408,10 +1408,10 @@
   resolved "https://registry.yarnpkg.com/@types/use-subscription/-/use-subscription-1.0.0.tgz#d146f8d834f70f50d48bd8246a481d096f11db19"
   integrity sha512-0WWZ5GUDKMXUY/1zy4Ur5/zsC0s/B+JjXfHdkvx6JgDNZzZV5eW+KKhDqsTGyqX56uh99gwGwbsKbVwkcVIKQA==
 
-"@types/use-sync-external-store@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@types/use-sync-external-store/-/use-sync-external-store-0.0.1.tgz#c7770934b794d479ff7ed166e924f003b5c6f9e3"
-  integrity sha512-BXzjGOKNNxDtAwMRhT0TB/LiPmrJ82g5CKS/cGbJUVssMmEFUbHWOOSkHi9gQyAzI934frXfFHXM72affyX0wg==
+"@types/use-sync-external-store@^0.0.3":
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/@types/use-sync-external-store/-/use-sync-external-store-0.0.3.tgz#b6725d5f4af24ace33b36fafd295136e75509f43"
+  integrity sha512-EwmlvuaxPNej9+T4v5AuBPJa2x2UOJVdjCtDHgcDqitUeOtjnJKJ+apYjVcAoBEMjKW1VVFGZLUb5+qqa09XFA==
 
 "@types/yargs-parser@*":
   version "20.2.1"
@@ -4953,10 +4953,10 @@ uri-js@^4.2.2:
   dependencies:
     punycode "^2.1.0"
 
-use-sync-external-store@1.0.0-alpha-6bce0355c-20211031:
-  version "1.0.0-alpha-6bce0355c-20211031"
-  resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.0.0-alpha-6bce0355c-20211031.tgz#fe9ca2a354d6e84792aa9272403040796cbd3be0"
-  integrity sha512-/ajDkTy2FDKWIEOJESxvyVHNihCKsyOPXivgEYW8XGJHsARwwwVOFsDlf+3lCvaXOEY28mPNlE13kC7u+JJp+A==
+use-sync-external-store@^1.0.0-beta-96ca8d915-20211115:
+  version "1.0.0-beta-96ca8d915-20211115"
+  resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.0.0-beta-96ca8d915-20211115.tgz#80777c497f60b57ca23f52de760ff22080814a3c"
+  integrity sha512-Xkzd7SoZv29jYc95GO0k1v69oSHUdC+4nNaBQ309zvFFyvzYn+I87ee+OD1RKF8SGRwkEJQxjyFzYRcncdpSSg==
 
 v8-compile-cache@^2.0.3:
   version "2.3.0"
