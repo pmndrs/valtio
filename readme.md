@@ -5,7 +5,7 @@
 <code>npm i valtio</code> makes proxy-state simple
 
 [![Build Status](https://img.shields.io/github/workflow/status/pmndrs/valtio/Lint?style=flat&colorA=000000&colorB=000000)](https://github.com/pmndrs/valtio/actions?query=workflow%3ALint)
-[![Build Size](https://img.shields.io/bundlephobia/min/valtio?label=bundle%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=valtio)
+[![Build Size](https://img.shields.io/bundlephobia/minzip/valtio?label=bundle%20size&style=flat&colorA=000000&colorB=000000)](https://bundlephobia.com/result?p=valtio)
 [![Version](https://img.shields.io/npm/v/valtio?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/valtio)
 [![Downloads](https://img.shields.io/npm/dt/valtio.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/valtio)
 [![Discord Shield](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=ffffff)](https://discord.gg/poimandres)
@@ -188,7 +188,9 @@ function Foo() {
 
 #### Update synchronously
 
-By default, state mutations are batched before triggering re-render. Sometimes, we want to disable the batching.
+By default, state mutations are batched before triggering re-render.
+Sometimes, we want to disable the batching.
+The known use case of this is `<input>` [#270](https://github.com/pmndrs/valtio/issues/270).
 
 ```jsx
 function TextBox() {
@@ -208,6 +210,14 @@ const state = proxy({ count: 0, text: 'hello' })
 const unsub = devtools(state, 'state name')
 ```
 
+
+<details>
+  <summary>Manipulating state with Redux DevTools</summary>
+The screenshot below shows how to use Redux DevTools to manipulate state. First select the object from the instances drop down. Then type in a JSON object to dispatch. Then click "Dispatch". Notice how it changes the state.
+
+<img width="564" alt="image" src="https://user-images.githubusercontent.com/6372489/141134955-26e9ffce-1e2a-4c8c-a9b3-d9da739610fe.png">
+</details>
+
 #### Use it vanilla
 
 Valtio is not tied to React, you can use it in vanilla-js.
@@ -222,6 +232,7 @@ subscribe(state, () => {
   const obj = snapshot(state) // A snapshot is an immutable object
 })
 ```
+
 
 #### `useProxy` macro
 
