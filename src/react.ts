@@ -1,26 +1,12 @@
-import {
-  useCallback,
-  useDebugValue,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-} from 'react'
+import { useCallback, useDebugValue, useEffect, useMemo, useRef } from 'react'
 import {
   affectedToPathList,
   createProxy as createProxyToCompare,
   isChanged,
 } from 'proxy-compare'
 import { useSyncExternalStore } from 'use-sync-external-store/shim'
-import { snapshot, subscribe } from './vanilla'
+import { getVersion, snapshot, subscribe } from './vanilla'
 import type { DeepResolveType } from './vanilla'
-
-const isSSR =
-  typeof window === 'undefined' ||
-  !window.navigator ||
-  /ServerSideRendering|^Deno\//.test(window.navigator.userAgent)
-
-const useIsomorphicLayoutEffect = isSSR ? useEffect : useLayoutEffect
 
 const useAffectedDebugValue = <State>(
   state: State,
@@ -115,13 +101,18 @@ export const useSnapshot = <T extends object>(
 ): DeepResolveType<T> => {
   const affected = new WeakMap()
   const lastAffected = useRef<typeof affected>()
-  useIsomorphicLayoutEffect(() => {
-    lastAffected.current = affected
-  })
+  const lastCallback = useRef<() => void>()
   const notifyInSync = options?.sync
   const currSnapshot = useSyncExternalStore(
     useCallback(
-      (callback) => subscribe(proxyObject, callback, notifyInSync),
+      (callback) => {
+        lastCallback.current = callback
+        const unsub = subscribe(proxyObject, callback, notifyInSync)
+        return () => {
+          unsub()
+          lastCallback.current = undefined
+        }
+      },
       [proxyObject, notifyInSync]
     ),
     useMemo(() => {
@@ -149,6 +140,21 @@ export const useSnapshot = <T extends object>(
       }
     }, [proxyObject])
   )
+  const currVersion = getVersion(proxyObject)
+  useEffect(() => {
+    lastAffected.current = affected
+    // check if state has changed between render and commit
+    if (currVersion !== getVersion(proxyObject)) {
+      if (lastCallback.current) {
+        lastCallback.current()
+      } else if (
+        typeof process === 'object' &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        console.warn('[Bug] last callback is undefined')
+      }
+    }
+  })
   if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useAffectedDebugValue(currSnapshot, affected)
