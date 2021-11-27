@@ -237,7 +237,7 @@ export const subscribe = (
   }
 }
 
-export type DeepResolveType<T> = T extends Function
+export type DeepResolveType<T> = T extends (...args: any[]) => any
   ? T
   : T extends AsRef
   ? T
