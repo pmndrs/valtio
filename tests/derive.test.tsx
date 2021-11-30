@@ -232,7 +232,7 @@ it('nested emulation with derive', async () => {
   })
   expect(computeDouble).toBeCalledTimes(2)
   await Promise.resolve()
-  expect(callback).toBeCalledTimes(2)
+  expect(callback).toBeCalledTimes(1)
 
   state.text = 'a'
   await Promise.resolve()
@@ -241,7 +241,8 @@ it('nested emulation with derive', async () => {
     math: { count: 1, doubled: 2 },
   })
   expect(computeDouble).toBeCalledTimes(2)
-  expect(callback).toBeCalledTimes(3)
+  await Promise.resolve()
+  expect(callback).toBeCalledTimes(2)
 })
 
 it('derive with array.pop', async () => {
