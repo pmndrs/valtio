@@ -216,20 +216,20 @@ export const subscribe = (
   ) {
     console.warn('Please use proxy object')
   }
-  let pendingVersion = 0
+  let promise: Promise<void> | undefined
   const ops: Op[] = []
-  const listener: Listener = (op, nextVersion) => {
+  const listener: Listener = (op) => {
     ops.push(op)
     if (notifyInSync) {
       callback(ops.splice(0))
       return
     }
-    pendingVersion = nextVersion
-    Promise.resolve().then(() => {
-      if (nextVersion === pendingVersion) {
+    if (!promise) {
+      promise = Promise.resolve().then(() => {
+        promise = undefined
         callback(ops.splice(0))
-      }
-    })
+      })
+    }
   }
   proxyObject[LISTENERS].add(listener)
   return () => {
