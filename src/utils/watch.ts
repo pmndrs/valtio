@@ -2,6 +2,9 @@ import { subscribe } from '../vanilla'
 
 type WatchGet = <T extends object>(value: T) => T
 type WatchCallback = (get: WatchGet) => (() => void) | void | undefined
+type WatchOptions = {
+  sync?: boolean
+}
 
 let currentCleanups: Set<() => void> | undefined
 
@@ -28,7 +31,10 @@ let currentCleanups: Set<() => void> | undefined
  * @returns A cleanup function that stops the callback from reevaluating and
  * also performs cleanups registered into `watch`.
  */
-export const watch = (callback: WatchCallback): (() => void) => {
+export const watch = (
+  callback: WatchCallback,
+  options?: WatchOptions
+): (() => void) => {
   const cleanups = new Set<() => void>()
   const subscriptions = new Set<object>()
 
@@ -72,7 +78,7 @@ export const watch = (callback: WatchCallback): (() => void) => {
 
     // Subscribe to all collected proxies
     subscriptions.forEach((proxy) => {
-      const clean = subscribe(proxy, revalidate)
+      const clean = subscribe(proxy, revalidate, options?.sync)
       cleanups.add(clean)
     })
   }
