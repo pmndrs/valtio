@@ -19,7 +19,9 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
   let extension: any
   try {
     extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__
-  } catch {}
+  } catch {
+    // ignored
+  }
   if (!extension) {
     if (
       typeof process === 'object' &&

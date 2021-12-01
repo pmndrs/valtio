@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { addNamed } from '@babel/helper-module-imports'
 import type { NodePath } from '@babel/traverse'
