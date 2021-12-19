@@ -132,10 +132,7 @@ export const derive = <T extends object, U extends object>(
         lastDependencies = dependencies
       }
       if (value instanceof Promise) {
-        value.then(() => {
-          subscribe()
-          evaluate()
-        })
+        value.finally(subscribe)
       } else {
         subscribe()
       }
