@@ -28,6 +28,22 @@ beforeEach(() => {
   extensionSubscriber = undefined
 })
 
+it('every name should have one instance', () => {
+  const originalInstances = (window as any).__REDUX_DEVTOOLS_EXTENSION__
+    .instances
+
+  delete (window as any).__REDUX_DEVTOOLS_EXTENSION__.instances
+
+  const obj = proxy({ count: 0 })
+  devtools(obj)
+  devtools(obj)
+  devtools(obj, 'second')
+  devtools(obj, 'second')
+
+  expect((window as any).__REDUX_DEVTOOLS_EXTENSION__.instances.size).toBe(2)
+  ;(window as any).__REDUX_DEVTOOLS_EXTENSION__.instances = originalInstances
+})
+
 it('connects to the extension by initialiing', () => {
   const obj = proxy({ count: 0 })
   devtools(obj)

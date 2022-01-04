@@ -4,12 +4,6 @@ type Message = { type: string; payload?: any; state?: any }
 
 const DEVTOOLS = Symbol()
 
-const instances =
-  (window as any).__REDUX_DEVTOOLS_EXTENSION__.instances ||
-  new Map<string | undefined, any>()
-
-;(window as any).__REDUX_DEVTOOLS_EXTENSION__.instances = instances
-
 /**
  * devtools
  *
@@ -23,12 +17,17 @@ const instances =
  */
 export const devtools = <T extends object>(proxyObject: T, name?: string) => {
   let extension: any
+  let instances: Map<string | undefined, any> | undefined
   try {
     extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__
+
+    instances =
+      (window as any).__REDUX_DEVTOOLS_EXTENSION__?.instances || new Map()
+    ;(window as any).__REDUX_DEVTOOLS_EXTENSION__.instances = instances
   } catch {
     // ignored
   }
-  if (!extension) {
+  if (!extension || !instances) {
     if (
       typeof process === 'object' &&
       process.env.NODE_ENV === 'development' &&
