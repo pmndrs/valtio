@@ -4,7 +4,12 @@ type Message = { type: string; payload?: any; state?: any }
 
 const DEVTOOLS = Symbol()
 
-const instances = new Map<string | undefined, any>()
+const instances =
+  (window as any).__REDUX_DEVTOOLS_EXTENSION__.instances ||
+  new Map<string | undefined, any>()
+
+;(window as any).__REDUX_DEVTOOLS_EXTENSION__.instances = instances
+
 /**
  * devtools
  *
@@ -35,9 +40,14 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
   }
 
   let isTimeTraveling = false
-  const devtools = instances.has(name)
-    ? instances.get(name)
-    : extension.connect({ name })
+  let devtools: any
+  if (instances.has(name)) {
+    devtools = instances.get(name)
+  } else {
+    devtools = extension.connect({ name })
+    instances.set(name, devtools)
+  }
+
   const unsub1 = subscribe(proxyObject, (ops) => {
     const action = ops
       .filter(([_, path]) => path[0] !== DEVTOOLS)
