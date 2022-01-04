@@ -4,6 +4,7 @@ type Message = { type: string; payload?: any; state?: any }
 
 const DEVTOOLS = Symbol()
 
+const instances = new Map<string | undefined, any>()
 /**
  * devtools
  *
@@ -34,7 +35,9 @@ export const devtools = <T extends object>(proxyObject: T, name?: string) => {
   }
 
   let isTimeTraveling = false
-  const devtools = extension.connect({ name })
+  const devtools = instances.has(name)
+    ? instances.get(name)
+    : extension.connect({ name })
   const unsub1 = subscribe(proxyObject, (ops) => {
     const action = ops
       .filter(([_, path]) => path[0] !== DEVTOOLS)
