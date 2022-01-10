@@ -94,8 +94,7 @@ function createUMDConfig(input, output) {
       file: output,
       format: 'umd',
       exports: 'named',
-      name: 'zustand',
-      esModule: true,
+      name: 'valtio',
     },
     external,
     plugins: [
@@ -119,7 +118,6 @@ function createSystemConfig(input, output) {
       file: output,
       format: 'system',
       exports: 'named',
-      esModule: true,
     },
     external,
     plugins: [
@@ -131,7 +129,7 @@ function createSystemConfig(input, output) {
       }),
       resolve({ extensions }),
       typescript(),
-      babelPlugin(getBabelOptions({ ie: 11 })),
+      getEsbuild('node12'),
     ],
   }
 }
