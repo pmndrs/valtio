@@ -1,15 +1,13 @@
 type Dict = Record<string, any>;
 interface Navigation {
-  name: string;
-  href?: string;
-  icon?: React.ReactElement;
-  current?: boolean;
-  children?: Navigation[];
+  href: string;
+  match?: RegExp;
+  title: string;
+  published?: boolean;
+  isActive?: boolean;
 }
 
 interface Doc {
   mdxSource: string;
   frontMatter: Dict;
 }
-
-declare module "nightwind/helper";

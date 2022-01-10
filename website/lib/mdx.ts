@@ -151,32 +151,77 @@ export async function getDocBySlug(slug: string) {
   };
 }
 
-// export async function getAllFilesFrontMatter(folder: string) {
-//   const prefixPaths = path.join(root, "docs", folder);
+export async function getAllFilesFrontMatter(folder: string) {
+  const prefixPaths = path.join(docsPath, folder);
 
-//   const files = getAllFilesRecursively(prefixPaths);
+  const files = getAllFilesRecursively(prefixPaths);
 
-//   const allFrontMatter: any[] = [];
+  const allFrontMatter: any[] = [];
 
-//   files.forEach((file) => {
-//     // Replace is needed to work on Windows
-//     const fileName = file.slice(prefixPaths.length + 1).replace(/\\/g, "/");
-//     // Remove Unexpected File
-//     if (path.extname(fileName) !== ".md" && path.extname(fileName) !== ".mdx") {
-//       return;
-//     }
-//     const source = fs.readFileSync(file, "utf8");
-//     const { data: frontmatter } = matter(source);
-//     if (frontmatter.draft !== true) {
-//       allFrontMatter.push({
-//         ...frontmatter,
-//         slug: formatSlug(fileName),
-//         date: frontmatter.date
-//           ? new Date(frontmatter.date).toISOString()
-//           : null,
-//       });
-//     }
-//   });
+  files.forEach((file) => {
+    // Replace is needed to work on Windows
+    const fileName = file.slice(prefixPaths.length + 1).replace(/\\/g, "/");
+    // Remove Unexpected File
+    if (path.extname(fileName) !== ".md" && path.extname(fileName) !== ".mdx") {
+      return;
+    }
+    const source = fs.readFileSync(file, "utf8");
+    const { data: frontmatter } = matter(source);
+    if (frontmatter.draft !== true) {
+      allFrontMatter.push({
+        ...frontmatter,
+        slug: formatSlug(fileName),
+        date: frontmatter.date
+          ? new Date(frontmatter.date).toISOString()
+          : null,
+      });
+    }
+  });
 
-//   return allFrontMatter.sort((a, b) => dateSortDesc(a.date, b.date));
-// }
+  return allFrontMatter.sort((a, b) => dateSortDesc(a.date, b.date));
+}
+
+const removeExtension = (path: string) => {
+  return path.replace(/\.[^/.]+$/, "");
+};
+
+function prepareDoc(doc: string) {
+  const href = `/docs/${removeExtension(doc)}`;
+  const title = (doc && removeExtension(doc.split("/").pop()!)) || "";
+  return {
+    title,
+    href,
+    slug: title,
+  };
+}
+
+export function getDocsMap(): Record<string, Navigation> {
+  const docs = getAllDocs();
+  return docs.reduce((acc, d) => {
+    const doc = prepareDoc(d);
+
+    return { ...acc, [doc.slug]: doc as Navigation };
+  }, {});
+}
+
+export function getDocsNav(): Record<string, Navigation[]> {
+  const pages = getDocsMap();
+  return {
+    Basic: [pages["useSnapshot"], pages["proxy"]],
+    Advanced: [pages["ref"], pages["subscribe"], pages["snapshot"]],
+    Utils: [
+      pages["subscribeKey"],
+      pages["watch"],
+      pages["devtools"],
+      pages["derive"],
+      pages["underive"],
+      pages["unstable_getDeriveSubscriptions"],
+      pages["addComputed"],
+      pages["proxyWithComputed"],
+      pages["proxyWithHistory"],
+    ],
+    Hacks: [pages["getVersion"], pages["getHandler"]],
+    Plugins: [],
+    "API Reference": [],
+  };
+}
