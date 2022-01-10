@@ -1,28 +1,16 @@
-export interface ProxySet<T> {
-  add(value: T): this
-  clear(): void
-  delete(value: T): boolean
-  has(value: T): boolean
-  readonly size: number
-  forEach: Array<T>['forEach']
-  map: Array<T>['map']
-  filter(
-    predicate: (value: T, index: number, array: T[]) => boolean,
-    thisArg?: any
-  ): T[]
-  toString(): string
-}
+import { CUSTOM_TYPE } from '../vanilla'
 
 // properies that we don't want to expose to the end-user
-interface InternalProxySet<T> extends ProxySet<T> {
+interface InternalProxySet<T> extends Set<T> {
   data: T[]
   // used for JSON.stringify
   toJSON(): T[]
+  [CUSTOM_TYPE]: boolean
 }
 
-export function proxySet<T = any>(values: T[] | null = []): ProxySet<T> {
+export function proxySet<T>(initialValues: Iterable<T> = []): Set<T> {
   const set: InternalProxySet<T> = {
-    data: [...new Set(values)],
+    data: [...new Set(initialValues)],
     has(value) {
       return this.data.indexOf(value) !== -1
     },
@@ -45,24 +33,48 @@ export function proxySet<T = any>(values: T[] | null = []): ProxySet<T> {
     get size() {
       return this.data.length
     },
-    forEach(cb, thisArg) {
-      this.data.forEach(cb, thisArg)
+    forEach(cb) {
+      for (let i = 0; i < this.data.length; i++) {
+        const value = this.data[i] as T
+        cb(value, value, this)
+      }
     },
-    map(cb, thisArg) {
-      return this.data.map(cb, thisArg)
+    get [Symbol.toStringTag]() {
+      return 'Set'
     },
-    filter(cb, thisArg) {
-      return this.data.filter(cb, thisArg)
+    [Symbol.iterator]() {
+      let index = 0
+
+      return {
+        next: () =>
+          index < this.data.length
+            ? { value: this.data[index++], done: false }
+            : { done: true },
+      } as IterableIterator<T>
     },
-    toString() {
-      return this.data.toString()
-    },
+    [CUSTOM_TYPE]: true,
     toJSON() {
       return this.data
     },
+    values() {
+      return this.data.values()
+    },
+    keys() {
+      // for Set same has Set.values()
+      return this.data.values()
+    },
+    entries() {
+      // array.entries returns [index, value] while Set [value, value]
+      return new Set(this.data).entries()
+    },
   }
+  Object.defineProperties(set, {
+    data: {
+      writable: true,
+    },
+  })
 
-  Object.freeze(set)
+  Object.seal(set)
 
-  return set as ProxySet<T>
+  return set as Set<T>
 }

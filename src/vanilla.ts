@@ -5,6 +5,7 @@ const LISTENERS = Symbol()
 const SNAPSHOT = Symbol()
 const PROMISE_RESULT = Symbol()
 const PROMISE_ERROR = Symbol()
+export const CUSTOM_TYPE = Symbol()
 
 const enum AsRef {}
 const refSet = new WeakSet()
@@ -16,7 +17,9 @@ export const ref = <T extends object>(o: T): T & AsRef => {
 const isSupportedObject = (x: unknown): x is object =>
   typeof x === 'object' &&
   x !== null &&
-  (Array.isArray(x) || !(x as any)[Symbol.iterator]) &&
+  (Array.isArray(x) ||
+    (x as any)[CUSTOM_TYPE] ||
+    !(x as any)[Symbol.iterator]) &&
   !(x instanceof WeakMap) &&
   !(x instanceof WeakSet) &&
   !(x instanceof Error) &&

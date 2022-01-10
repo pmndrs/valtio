@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, useSnapshot, snapshot } from 'valtio'
+import { proxy, snapshot, useSnapshot } from 'valtio'
 import { proxySet } from 'valtio/utils/proxySet'
 
 const consoleError = console.error
@@ -17,6 +17,43 @@ beforeEach(() => {
 })
 afterEach(() => {
   console.error = consoleError
+})
+
+it('support features parity with native Set', () => {
+  const set = proxySet([1, 2, 3])
+  const nativeSet = new Set([1, 2, 3])
+
+  // check for Symbol.toStringTag
+  expect(`${set}`).toBe(`${nativeSet}`)
+
+  // everytime we modify the proxy set we ensure
+  // that the output is the same as the native set
+  const matchWithNativeSet = () => {
+    expect(set.size).toBe(nativeSet.size)
+    expect(Array.from(set.values())).toStrictEqual(
+      Array.from(nativeSet.values())
+    )
+    expect(Array.from(set.keys())).toStrictEqual(Array.from(nativeSet.keys()))
+    expect(Array.from(set.entries())).toStrictEqual(
+      Array.from(nativeSet.entries())
+    )
+
+    for (const value of set) {
+      expect(nativeSet.has(value)).toBe(true)
+    }
+  }
+
+  set.add(4)
+  nativeSet.add(4)
+  expect(set.has(4)).toBe(nativeSet.has(4))
+  matchWithNativeSet()
+
+  expect(set.delete(2)).toBe(nativeSet.delete(2))
+  matchWithNativeSet()
+
+  set.clear()
+  nativeSet.clear()
+  matchWithNativeSet()
 })
 
 it('support adding value and lookup', async () => {
@@ -213,120 +250,6 @@ it('support forEach', async () => {
   getByText('children: 1,2,3')
 
   expect(() => getByText('children: 1,2,3,4')).toThrow()
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('children: 1,2,3,4')
-  })
-})
-
-it('support map', async () => {
-  const state = proxy({
-    set: proxySet([1, 2, 3]),
-  })
-
-  const TestComponent = () => {
-    const snap = useSnapshot(state)
-
-    return (
-      <>
-        <ul>
-          {snap.set.map((v) => (
-            <li key={v}>children: {v}</li>
-          ))}
-        </ul>
-        <button onClick={() => state.set.add(4)}>button</button>
-      </>
-    )
-  }
-
-  const { getByText } = render(
-    <StrictMode>
-      <TestComponent />
-    </StrictMode>
-  )
-
-  ;[1, 2, 3].forEach((v) => {
-    getByText(`children: ${v}`)
-  })
-
-  expect(() => getByText('children: 4')).toThrow()
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    ;[1, 2, 3, 4].forEach((v) => {
-      getByText(`children: ${v}`)
-    })
-  })
-})
-
-it('support filter', async () => {
-  const state = proxy({
-    set: proxySet([1, 2, 3]),
-  })
-
-  const TestComponent = () => {
-    const snap = useSnapshot(state)
-
-    return (
-      <>
-        <ul>
-          {snap.set
-            .filter((v) => v !== 1)
-            .map((v) => (
-              <li key={v}>children: {v}</li>
-            ))}
-        </ul>
-        <button onClick={() => state.set.add(4)}>button</button>
-      </>
-    )
-  }
-
-  const { getByText } = render(
-    <StrictMode>
-      <TestComponent />
-    </StrictMode>
-  )
-
-  ;[2, 3].forEach((v) => {
-    getByText(`children: ${v}`)
-  })
-
-  expect(() => getByText('children: 1')).toThrow()
-  expect(() => getByText('children: 4')).toThrow()
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    ;[2, 3, 4].forEach((v) => {
-      getByText(`children: ${v}`)
-    })
-  })
-})
-
-it('support toString', async () => {
-  const state = proxy({
-    set: proxySet([1, 2, 3]),
-  })
-
-  const TestComponent = () => {
-    const snap = useSnapshot(state)
-
-    // using template literal to ensure that `toString` method is properly called
-    return (
-      <>
-        <div>children: {`${snap.set}`}</div>
-        <button onClick={() => state.set.add(4)}>button</button>
-      </>
-    )
-  }
-
-  const { getByText } = render(
-    <StrictMode>
-      <TestComponent />
-    </StrictMode>
-  )
-
-  getByText('children: 1,2,3')
 
   fireEvent.click(getByText('button'))
   await waitFor(() => {
