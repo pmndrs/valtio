@@ -9,3 +9,4 @@ export {
 export { addComputed_DEPRECATED as addComputed } from './utils/addComputed'
 export { proxyWithComputed } from './utils/proxyWithComputed'
 export { proxyWithHistory } from './utils/proxyWithHistory'
+export { proxySet, ProxySet } from './utils/proxySet'
