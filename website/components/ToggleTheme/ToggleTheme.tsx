@@ -6,7 +6,7 @@ export default function ToggleTheme() {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <div onClick={() => toggleTheme()}>
+    <div onClick={() => toggleTheme()} className="text-gray-600">
       {theme === "light" ? (
         <SunIcon className="h-5 w-5" />
       ) : (
