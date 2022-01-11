@@ -3,6 +3,7 @@ import { getUntracked, markToTrack } from 'proxy-compare'
 const VERSION = Symbol()
 const LISTENERS = Symbol()
 const SNAPSHOT = Symbol()
+const HANDLER = Symbol()
 const PROMISE_RESULT = Symbol()
 const PROMISE_ERROR = Symbol()
 
@@ -80,7 +81,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
     propListeners.delete(prop)
     return propListener
   }
-  const createSnapshot = (target: any, receiver: any) => {
+  const createSnapshot = (target: T, receiver: any) => {
     const cache = snapshotCache.get(receiver)
     if (cache?.[0] === version) {
       return cache[1]
@@ -91,7 +92,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
     markToTrack(snapshot, true) // mark to track
     snapshotCache.set(receiver, [version, snapshot])
     Reflect.ownKeys(target).forEach((key) => {
-      const value = target[key]
+      const value = Reflect.get(target, key, receiver)
       if (refSet.has(value)) {
         markToTrack(value, false) // mark not to track
         snapshot[key] = value
@@ -123,8 +124,8 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   const baseObject = Array.isArray(initialObject)
     ? []
     : Object.create(Object.getPrototypeOf(initialObject))
-  const proxyObject = new Proxy(baseObject, {
-    get(target, prop, receiver) {
+  const handler = {
+    get(target: T, prop: string | symbol, receiver: any) {
       if (prop === VERSION) {
         return version
       }
@@ -134,11 +135,14 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       if (prop === SNAPSHOT) {
         return createSnapshot(target, receiver)
       }
-      return target[prop]
+      if (prop === HANDLER) {
+        return handler
+      }
+      return Reflect.get(target, prop, receiver)
     },
-    deleteProperty(target, prop) {
-      const prevValue = target[prop]
-      const childListeners = (prevValue as any)?.[LISTENERS]
+    deleteProperty(target: T, prop: string | symbol) {
+      const prevValue = Reflect.get(target, prop)
+      const childListeners = prevValue?.[LISTENERS]
       if (childListeners) {
         childListeners.delete(popPropListener(prop))
       }
@@ -148,45 +152,45 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       }
       return deleted
     },
-    set(target, prop, value) {
-      const prevValue = target[prop]
-      if (Object.is(prevValue, value)) {
+    is: Object.is,
+    set(target: T, prop: string | symbol, value: any, receiver: any) {
+      const prevValue = Reflect.get(target, prop, receiver)
+      if (this.is(prevValue, value)) {
         return true
       }
-      const childListeners = (prevValue as any)?.[LISTENERS]
+      const childListeners = prevValue?.[LISTENERS]
       if (childListeners) {
         childListeners.delete(popPropListener(prop))
       }
+      let nextValue: any
       if (
         refSet.has(value) ||
         !isSupportedObject(value) ||
         Object.getOwnPropertyDescriptor(target, prop)?.set
       ) {
-        target[prop] = value
+        nextValue = value
       } else if (value instanceof Promise) {
-        target[prop] = value
+        nextValue = value
           .then((v) => {
-            target[prop][PROMISE_RESULT] = v
+            ;(nextValue as any)[PROMISE_RESULT] = v
             notifyUpdate(['resolve', [prop], v])
             return v
           })
           .catch((e) => {
-            target[prop][PROMISE_ERROR] = e
+            ;(nextValue as any)[PROMISE_ERROR] = e
             notifyUpdate(['reject', [prop], e])
           })
       } else {
         value = getUntracked(value) || value
-        if (value[LISTENERS]) {
-          target[prop] = value
-        } else {
-          target[prop] = proxy(value)
-        }
-        target[prop][LISTENERS].add(getPropListener(prop))
+        nextValue = value[LISTENERS] ? value : proxy(value)
+        nextValue[LISTENERS].add(getPropListener(prop))
       }
+      Reflect.set(target, prop, nextValue, receiver)
       notifyUpdate(['set', [prop], value, prevValue])
       return true
     },
-  })
+  }
+  const proxyObject = new Proxy(baseObject, handler)
   proxyCache.set(initialObject, proxyObject)
   Reflect.ownKeys(initialObject).forEach((key) => {
     const desc = Object.getOwnPropertyDescriptor(
@@ -260,4 +264,15 @@ export const snapshot = <T extends object>(
     console.warn('Please use proxy object')
   }
   return (proxyObject as any)[SNAPSHOT]
+}
+
+export const getHandler = <T extends object>(proxyObject: T) => {
+  if (
+    typeof process === 'object' &&
+    process.env.NODE_ENV !== 'production' &&
+    !(proxyObject as any)?.[HANDLER]
+  ) {
+    console.warn('Please use proxy object')
+  }
+  return (proxyObject as any)[HANDLER]
 }
