@@ -14,7 +14,7 @@ export const ref = <T extends object>(o: T): T & AsRef => {
   return o as T & AsRef
 }
 
-const isSupportedObject = (x: unknown): x is object =>
+const canProxy = (x: unknown) =>
   typeof x === 'object' &&
   x !== null &&
   (Array.isArray(x) || !(x as any)[Symbol.iterator]) &&
@@ -25,7 +25,8 @@ const isSupportedObject = (x: unknown): x is object =>
   !(x instanceof Date) &&
   !(x instanceof String) &&
   !(x instanceof RegExp) &&
-  !(x instanceof ArrayBuffer)
+  !(x instanceof ArrayBuffer) &&
+  !refSet.has(x)
 
 type ProxyObject = object
 const proxyCache = new WeakMap<object, ProxyObject>()
@@ -45,8 +46,8 @@ const snapshotCache = new WeakMap<
 >()
 
 export const proxy = <T extends object>(initialObject: T = {} as T): T => {
-  if (!isSupportedObject(initialObject)) {
-    throw new Error('unsupported object type')
+  if (typeof initialObject !== 'object' || initialObject === null) {
+    throw new Error('object required')
   }
   const found = proxyCache.get(initialObject) as T | undefined
   if (found) {
@@ -96,8 +97,6 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       if (refSet.has(value)) {
         markToTrack(value, false) // mark not to track
         snapshot[key] = value
-      } else if (!isSupportedObject(value)) {
-        snapshot[key] = value
       } else if (value instanceof Promise) {
         if (PROMISE_RESULT in (value as any)) {
           snapshot[key] = (value as any)[PROMISE_RESULT]
@@ -112,7 +111,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
             },
           })
         }
-      } else if ((value as any)[VERSION]) {
+      } else if (value && (value as any)[VERSION]) {
         snapshot[key] = (value as any)[SNAPSHOT]
       } else {
         snapshot[key] = value
@@ -153,6 +152,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       return deleted
     },
     is: Object.is,
+    canProxy,
     set(target: T, prop: string | symbol, value: any, receiver: any) {
       const prevValue = Reflect.get(target, prop, receiver)
       if (this.is(prevValue, value)) {
@@ -164,8 +164,7 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
       }
       let nextValue: any
       if (
-        refSet.has(value) ||
-        !isSupportedObject(value) ||
+        !this.canProxy(value) ||
         Object.getOwnPropertyDescriptor(target, prop)?.set
       ) {
         nextValue = value
