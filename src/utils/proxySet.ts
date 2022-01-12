@@ -1,11 +1,8 @@
-import { CUSTOM_TYPE } from '../vanilla'
-
 // properies that we don't want to expose to the end-user
 interface InternalProxySet<T> extends Set<T> {
   data: T[]
   // used for JSON.stringify
   toJSON(): T[]
-  [CUSTOM_TYPE]: boolean
 }
 
 export function proxySet<T>(initialValues: Iterable<T> = []): Set<T> {
@@ -52,7 +49,6 @@ export function proxySet<T>(initialValues: Iterable<T> = []): Set<T> {
             : { done: true },
       } as IterableIterator<T>
     },
-    [CUSTOM_TYPE]: true,
     toJSON() {
       return this.data
     },
