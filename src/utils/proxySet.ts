@@ -1,15 +1,22 @@
+import { proxy } from 'valtio'
+
 // properies that we don't want to expose to the end-user
 interface InternalProxySet<T> extends Set<T> {
   data: T[]
-  // used for JSON.stringify
-  toJSON(): T[]
+  toJSON: object
 }
 
-export function proxySet<T>(initialValues: Iterable<T> = []): Set<T> {
+export function proxySet<T>(
+  initialValues: Iterable<T> | null | undefined = []
+): Set<T> {
   const set: InternalProxySet<T> = {
-    data: [...new Set(initialValues)],
+    data: Array.from(new Set(initialValues)),
     has(value) {
-      return this.data.indexOf(value) !== -1
+      return (
+        this.data.indexOf(
+          typeof value === 'object' ? proxy(value as any) : value
+        ) !== -1
+      )
     },
     add(value) {
       if (this.data.indexOf(value) === -1) {
@@ -39,6 +46,9 @@ export function proxySet<T>(initialValues: Iterable<T> = []): Set<T> {
     get [Symbol.toStringTag]() {
       return 'Set'
     },
+    toJSON() {
+      return {}
+    },
     [Symbol.iterator]() {
       let index = 0
 
@@ -49,14 +59,11 @@ export function proxySet<T>(initialValues: Iterable<T> = []): Set<T> {
             : { done: true },
       } as IterableIterator<T>
     },
-    toJSON() {
-      return this.data
-    },
     values() {
       return this.data.values()
     },
     keys() {
-      // for Set same has Set.values()
+      // for Set.keys is an alias for Set.values()
       return this.data.values()
     },
     entries() {
@@ -67,10 +74,14 @@ export function proxySet<T>(initialValues: Iterable<T> = []): Set<T> {
   Object.defineProperties(set, {
     data: {
       writable: true,
+      enumerable: false,
+    },
+    size: {
+      enumerable: false,
     },
   })
 
   Object.seal(set)
 
-  return set as Set<T>
+  return proxy(set) as Set<T>
 }
