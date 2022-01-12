@@ -114,7 +114,7 @@ export const derive = <T extends object, U extends object>(
       }
       const dependencies = new Map<object, number>()
       const get = <P extends object>(p: P) => {
-        dependencies.set(p, getVersion(p))
+        dependencies.set(p, getVersion(p) as number)
         return p
       }
       const value = fn(get)
