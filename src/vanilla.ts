@@ -241,21 +241,21 @@ export const subscribe = (
   }
 }
 
-export type Snapshot<T> = T extends (...args: any[]) => any
+export type DeepResolveType<T> = T extends (...args: any[]) => any
   ? T
   : T extends AsRef
-  ? Readonly<T>
+  ? T
   : T extends Promise<infer V>
-  ? Readonly<V>
+  ? DeepResolveType<V>
   : T extends object
   ? {
-      readonly [K in keyof T]: Snapshot<T[K]>
+      readonly [K in keyof T]: DeepResolveType<T[K]>
     }
-  : T extends any
-  ? any
   : Readonly<T>
 
-export const snapshot = <T extends object>(proxyObject: T): Snapshot<T> => {
+export const snapshot = <T extends object>(
+  proxyObject: T
+): DeepResolveType<T> => {
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&
