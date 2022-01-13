@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, snapshot, useSnapshot } from 'valtio'
-import { proxySet } from 'valtio/utils/proxySet'
+import { proxy, useSnapshot } from 'valtio'
+import { proxySet } from 'valtio/utils'
 
 const consoleError = console.error
 beforeEach(() => {
@@ -12,6 +12,7 @@ beforeEach(() => {
     ) {
       return
     }
+
     consoleError(message)
   })
 })
@@ -19,254 +20,314 @@ afterEach(() => {
   console.error = consoleError
 })
 
-it('support features parity with native Set', () => {
-  const set = proxySet([1, 2, 3])
-  const nativeSet = new Set([1, 2, 3])
+// used to initialize proxySet during tests
+const initialValues = [
+  {
+    name: 'array',
+    value: ['lorem', false, 1],
+  },
+  {
+    name: 'nested array',
+    value: [
+      [1, 2, 3],
+      [1, 2],
+      [51, 2, 3],
+    ],
+  },
+  {
+    name: 'Map',
+    value: new Map([
+      ['key1', 'value1'],
+      ['key2', 'value2'],
+    ]),
+  },
+  {
+    name: 'Set',
+    value: new Set([
+      ['key1', 'value1'],
+      ['key2', 'value2'],
+    ]),
+  },
+  {
+    name: 'string value',
+    value: 'hello',
+  },
+  {
+    name: 'nested Set',
+    value: new Set([
+      new Set([1, 2, 3]),
+      new Set([1, 2]),
+      new Set(['x', 'y', 'z']),
+    ]),
+  },
+  {
+    name: 'proxySet',
+    value: proxySet([1, {}, true]),
+  },
+  {
+    name: 'array of proxySet',
+    value: [proxySet([1, 2, 3]), proxySet([1, 2]), proxySet(['x', 'y', 'z'])],
+  },
+  {
+    name: 'list of objects',
+    value: [
+      { id: Symbol(), field: 'field', bool: true, null: null },
+      { id: Symbol(), field: 'field1', bool: false, null: null },
+      { id: Symbol(), field: 'field3', bool: true, null: null },
+    ],
+  },
+]
 
-  // check for Symbol.toStringTag
-  expect(`${set}`).toBe(`${nativeSet}`)
+// used to test various input types
+const inputValues = [
+  {
+    name: 'array',
+    value: [1, 'hello'],
+  },
+  {
+    name: 'nested array',
+    value: [[1, 'hello']],
+  },
+  {
+    name: 'Map',
+    value: new Map<any, any>([
+      ['key1', 'value1'],
+      [{}, 'value2'],
+    ]),
+  },
+  {
+    name: 'boolean',
+    value: false,
+  },
+  {
+    name: 'number',
+    value: 123,
+  },
+  {
+    name: 'string',
+    value: 'hello',
+  },
+  {
+    name: 'Set',
+    value: new Set([1, 2, 3]),
+  },
+  {
+    name: 'proxySet',
+    value: proxySet([1, {}, null, 'xyz', Symbol()]),
+  },
+  {
+    name: 'object',
+    value: { id: Symbol(), field: 'field', bool: true, null: null },
+  },
+]
 
-  // everytime we modify the proxy set we ensure
-  // that the output is the same as the native set
-  const matchWithNativeSet = () => {
-    expect(set.size).toBe(nativeSet.size)
-    expect(Array.from(set.values())).toStrictEqual(
-      Array.from(nativeSet.values())
-    )
-    expect(Array.from(set.keys())).toStrictEqual(Array.from(nativeSet.keys()))
-    expect(Array.from(set.entries())).toStrictEqual(
-      Array.from(nativeSet.entries())
-    )
+describe('features parity with native Set', () => {
+  initialValues.forEach(({ name, value }) => {
+    it(`support Set operations on ${name}`, () => {
+      const set = proxySet<unknown>(value)
+      const nativeSet = new Set<unknown>(value)
 
-    for (const value of set) {
-      expect(nativeSet.has(value)).toBe(true)
-    }
-  }
+      // check for Symbol.toStringTag / toString
+      expect(`${set}`).toBe(`${nativeSet}`)
 
-  set.add(4)
-  nativeSet.add(4)
-  expect(set.has(4)).toBe(nativeSet.has(4))
-  matchWithNativeSet()
+      const expectOutputToMatch = () => {
+        expect(set.size).toStrictEqual(nativeSet.size)
+        expect(Array.from(set.values())).toStrictEqual(
+          Array.from(nativeSet.values())
+        )
+        expect(Array.from(set.keys())).toStrictEqual(
+          Array.from(nativeSet.keys())
+        )
+        expect(Array.from(set.entries())).toStrictEqual(
+          Array.from(nativeSet.entries())
+        )
+        expect(JSON.stringify(set)).toStrictEqual(JSON.stringify(nativeSet))
 
-  expect(set.delete(2)).toBe(nativeSet.delete(2))
-  matchWithNativeSet()
+        // cover loops
+        const handleForEach = jest.fn()
+        const handleForOf = jest.fn()
 
-  set.clear()
-  nativeSet.clear()
-  matchWithNativeSet()
-})
+        set.forEach(handleForEach)
+        expect(handleForEach).toHaveBeenCalledTimes(set.size)
 
-it('support adding value and lookup', async () => {
-  const state = proxy({
-    set: proxySet(),
+        for (const _ of set) {
+          handleForOf()
+        }
+
+        expect(handleForOf).toHaveBeenCalledTimes(set.size)
+      }
+
+      expectOutputToMatch()
+
+      const [valueToDeleteFromSet] = set
+      const [valueToDeleteFromNativeSet] = nativeSet
+
+      expect(set.delete(valueToDeleteFromSet)).toBe(
+        nativeSet.delete(valueToDeleteFromNativeSet)
+      )
+
+      expectOutputToMatch()
+
+      set.add('newValue')
+      nativeSet.add('newValue')
+      expectOutputToMatch()
+
+      set.clear()
+      nativeSet.clear()
+      expectOutputToMatch()
+    })
   })
 
-  const TestComponent = () => {
-    const snap = useSnapshot(state)
+  inputValues.forEach(({ value, name }) => {
+    it(`prevent adding duplicate for type ${name}`, () => {
+      const set = proxySet<unknown>([value])
 
-    return (
-      <>
-        <div>hasValue: {snap.set.has('aValue').toString()}</div>
-        <button onClick={() => state.set.add('aValue')}>button</button>
-      </>
-    )
-  }
+      expect(set.size).toBe(1)
 
-  const { getByText } = render(
-    <StrictMode>
-      <TestComponent />
-    </StrictMode>
-  )
-  getByText('hasValue: false')
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('hasValue: true')
-  })
-})
-
-it('report size', async () => {
-  const state = proxy({
-    set: proxySet(),
-  })
-
-  const TestComponent = () => {
-    const snap = useSnapshot(state)
-
-    return (
-      <>
-        <div>size: {snap.set.size}</div>
-        <button onClick={() => state.set.add('aValue')}>button</button>
-      </>
-    )
-  }
-
-  const { getByText } = render(
-    <StrictMode>
-      <TestComponent />
-    </StrictMode>
-  )
-  getByText('size: 0')
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('size: 1')
-  })
-})
-
-it('prevent duplicate value', async () => {
-  const state = proxy({
-    set: proxySet(),
-  })
-
-  const TestComponent = () => {
-    const snap = useSnapshot(state)
-
-    return (
-      <>
-        <div>size: {snap.set.size}</div>
-        <button onClick={() => state.set.add('aValue')}>button</button>
-      </>
-    )
-  }
-
-  const { getByText } = render(
-    <StrictMode>
-      <TestComponent />
-    </StrictMode>
-  )
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('size: 1')
-  })
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('size: 1')
-  })
-})
-
-it('support delete', async () => {
-  const state = proxy({
-    set: proxySet([1, 2, 3]),
-  })
-
-  const TestComponent = () => {
-    const snap = useSnapshot(state)
-
-    return (
-      <>
-        <div>size: {snap.set.size}</div>
-        <div>hasValue: {snap.set.has(2).toString()}</div>
-        <button onClick={() => state.set.delete(2)}>button</button>
-      </>
-    )
-  }
-
-  const { getByText } = render(
-    <StrictMode>
-      <TestComponent />
-    </StrictMode>
-  )
-
-  getByText('size: 3')
-  getByText('hasValue: true')
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('size: 2')
-    getByText('hasValue: false')
-  })
-})
-
-it('return false when nothing to delete', () => {
-  const state = proxy({
-    set: proxySet([1]),
-  })
-
-  expect(snapshot(state).set.delete(10)).toBe(false)
-})
-
-it('support clear', async () => {
-  const state = proxy({
-    set: proxySet([1, 2, 3]),
-  })
-
-  const TestComponent = () => {
-    const snap = useSnapshot(state)
-
-    return (
-      <>
-        <div>size: {snap.set.size}</div>
-        <button onClick={() => state.set.clear()}>button</button>
-      </>
-    )
-  }
-
-  const { getByText } = render(
-    <StrictMode>
-      <TestComponent />
-    </StrictMode>
-  )
-
-  getByText('size: 3')
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('size: 0')
+      set.add(value)
+      expect(set.size).toBe(1)
+    })
   })
 })
 
-it('support forEach', async () => {
-  const state = proxy({
-    set: proxySet([1, 2, 3]),
-  })
-
-  const TestComponent = () => {
-    const snap = useSnapshot(state)
-
-    const renderWithForEach = () => {
-      const children: number[] = []
-      snap.set.forEach((v) => {
-        children.push(v)
-      })
-
-      return children.join(',')
-    }
-
-    return (
-      <>
-        <ul>children: {renderWithForEach()}</ul>
-        <button onClick={() => state.set.add(4)}>button</button>
-      </>
-    )
-  }
-
-  const { getByText } = render(
-    <StrictMode>
-      <TestComponent />
-    </StrictMode>
-  )
-
-  getByText('children: 1,2,3')
-
-  expect(() => getByText('children: 1,2,3,4')).toThrow()
-
-  fireEvent.click(getByText('button'))
-  await waitFor(() => {
-    getByText('children: 1,2,3,4')
-  })
-})
-
-it('support toJSON', async () => {
-  const initialValue = [
-    { id: 1, val: 'hello' },
-    { id: 2, val: 'world' },
+describe('unsupported initial values', () => {
+  const unsupportedInputTestCases = [
+    {
+      name: 'boolean',
+      value: true,
+    },
+    {
+      name: 'number',
+      value: 123,
+    },
+    {
+      name: 'symbol',
+      value: Symbol(),
+    },
   ]
 
-  const state = proxy({
-    set: proxySet(initialValue),
+  unsupportedInputTestCases.forEach(({ name, value }) => {
+    it(`throw type error when using ${name} as initial value`, () => {
+      expect(() => proxySet(value as any)).toThrow(TypeError)
+    })
   })
-  expect(JSON.stringify(snapshot(state).set)).toMatch(
-    JSON.stringify(initialValue)
-  )
+})
+
+describe('clear set', () => {
+  initialValues.forEach(({ name, value }) => {
+    it(`clear proxySet of ${name}`, async () => {
+      const state = proxy({
+        set: proxySet<unknown>(value),
+      })
+
+      const TestComponent = () => {
+        const snap = useSnapshot(state)
+
+        return (
+          <>
+            <div>size: {snap.set.size}</div>
+            <button onClick={() => state.set.clear()}>button</button>
+          </>
+        )
+      }
+
+      const { getByText } = render(
+        <StrictMode>
+          <TestComponent />
+        </StrictMode>
+      )
+
+      getByText(`size: ${state.set.size}`)
+
+      fireEvent.click(getByText('button'))
+      await waitFor(() => {
+        getByText('size: 0')
+      })
+    })
+  })
+})
+
+describe('add value', () => {
+  inputValues.forEach(({ name, value }) => {
+    it(`update size when adding ${name}`, async () => {
+      const state = proxy({
+        set: proxySet(),
+      })
+
+      const TestComponent = () => {
+        const snap = useSnapshot(state)
+
+        return (
+          <>
+            <div>size: {snap.set.size}</div>
+            <button onClick={() => state.set.add(value)}>button</button>
+          </>
+        )
+      }
+
+      const { getByText } = render(
+        <StrictMode>
+          <TestComponent />
+        </StrictMode>
+      )
+
+      getByText('size: 0')
+      fireEvent.click(getByText('button'))
+
+      await waitFor(() => {
+        getByText('size: 1')
+      })
+    })
+  })
+})
+
+describe('delete', () => {
+  initialValues.forEach(({ name, value }) => {
+    it(`support delete on ${name}`, async () => {
+      const state = proxy({
+        set: proxySet<unknown>(value),
+      })
+
+      // pick a random value from the set
+      const valueToDelete = Array.from(state.set)[
+        Math.floor(Math.random() * state.set.size)
+      ]
+
+      const TestComponent = () => {
+        const snap = useSnapshot(state)
+
+        return (
+          <>
+            <div>size: {snap.set.size}</div>
+            <button onClick={() => state.set.delete(valueToDelete)}>
+              button
+            </button>
+          </>
+        )
+      }
+
+      const { getByText } = render(
+        <StrictMode>
+          <TestComponent />
+        </StrictMode>
+      )
+
+      getByText(`size: ${state.set.size}`)
+
+      let expectedSizeAfterDelete = state.set.size >= 1 ? state.set.size - 1 : 0
+
+      fireEvent.click(getByText('button'))
+      await waitFor(() => {
+        getByText(`size: ${expectedSizeAfterDelete}`)
+      })
+    })
+  })
+
+  inputValues.forEach(({ name, value }) => {
+    it(`return false when trying to delete non-existing value of type ${name}`, () => {
+      const set = proxySet()
+
+      expect(set.delete(value)).toBe(false)
+    })
+  })
 })
