@@ -246,10 +246,10 @@ export type DeepResolveType<T> = T extends (...args: any[]) => any
   : T extends AsRef
   ? T
   : T extends Promise<infer V>
-  ? V
+  ? DeepResolveType<V>
   : T extends object
   ? {
-      [K in keyof T]: DeepResolveType<T[K]>
+      readonly [K in keyof T]: DeepResolveType<T[K]>
     }
   : T
 
