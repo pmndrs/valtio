@@ -314,7 +314,8 @@ describe('delete', () => {
 
       getByText(`size: ${state.set.size}`)
 
-      let expectedSizeAfterDelete = state.set.size >= 1 ? state.set.size - 1 : 0
+      const expectedSizeAfterDelete =
+        state.set.size > 1 ? state.set.size - 1 : 0
 
       fireEvent.click(getByText('button'))
       await waitFor(() => {
