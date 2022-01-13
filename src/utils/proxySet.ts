@@ -4,28 +4,33 @@ import { proxy } from 'valtio'
 interface InternalProxySet<T> extends Set<T> {
   data: T[]
   toJSON: object
+  hasProxy(value: T): boolean
 }
 
 export function proxySet<T>(
   initialValues: Iterable<T> | null | undefined = []
 ): Set<T> {
-  const set: InternalProxySet<T> = {
+  const set: InternalProxySet<T> = proxy({
     data: Array.from(new Set(initialValues)),
     has(value) {
-      return (
-        this.data.indexOf(
-          typeof value === 'object' ? proxy(value as any) : value
-        ) !== -1
-      )
+      return this.data.indexOf(value) !== -1
+    },
+    hasProxy(value) {
+      let hasProxy = false
+      if (typeof value === 'object') {
+        hasProxy = this.data.indexOf(proxy(value as any)) !== -1
+      }
+
+      return hasProxy
     },
     add(value) {
-      if (this.data.indexOf(value) === -1) {
+      if (!this.has(value) && !this.hasProxy(value)) {
         this.data.push(value)
       }
       return this
     },
     delete(value) {
-      if (this.data.indexOf(value) === -1) {
+      if (!this.has(value) && !this.hasProxy(value)) {
         return false
       }
       this.data = this.data.filter((v: T) => v !== value)
@@ -70,7 +75,8 @@ export function proxySet<T>(
       // array.entries returns [index, value] while Set [value, value]
       return new Set(this.data).entries()
     },
-  }
+  })
+
   Object.defineProperties(set, {
     data: {
       writable: true,
@@ -79,9 +85,12 @@ export function proxySet<T>(
     size: {
       enumerable: false,
     },
+    hasProxy: {
+      enumerable: false,
+    },
   })
 
   Object.seal(set)
 
-  return proxy(set) as Set<T>
+  return set as Set<T>
 }
