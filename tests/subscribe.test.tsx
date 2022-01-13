@@ -56,7 +56,7 @@ describe('subscribe', () => {
     const obj = proxy({ count: 0 })
     const handler = jest.fn()
 
-    expect(() => subscribe(obj.count, handler)).toThrow()
+    expect(() => subscribe(obj.count as any, handler)).toThrow()
   })
 
   it('should not re-run subscription if no change', async () => {
