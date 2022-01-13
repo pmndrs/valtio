@@ -251,7 +251,7 @@ export type DeepResolveType<T> = T extends (...args: any[]) => any
   ? {
       readonly [K in keyof T]: DeepResolveType<T[K]>
     }
-  : Readonly<T>
+  : T
 
 export const snapshot = <T extends object>(
   proxyObject: T
