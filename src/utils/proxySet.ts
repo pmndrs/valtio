@@ -4,7 +4,6 @@ import { proxy } from 'valtio'
 type InternalProxySet<T> = Set<T> & {
   data: T[]
   toJSON: object
-  hasProxy(value: T): boolean
 }
 
 /**
@@ -28,15 +27,12 @@ export const proxySet = <T>(initialValues: Iterable<T> | null = []): Set<T> => {
     has(value) {
       return this.data.indexOf(value) !== -1
     },
-    hasProxy(value) {
+    add(value) {
       let hasProxy = false
       if (typeof value === 'object' && value !== null) {
-        hasProxy = this.data.indexOf(proxy(value as any)) !== -1
+        hasProxy = this.data.indexOf(proxy(value as T & object)) !== -1
       }
-      return hasProxy
-    },
-    add(value) {
-      if (!this.has(value) && !this.hasProxy(value)) {
+      if (this.data.indexOf(value) === -1 && !hasProxy) {
         this.data.push(value)
       }
       return this
@@ -88,9 +84,6 @@ export const proxySet = <T>(initialValues: Iterable<T> | null = []): Set<T> => {
       enumerable: false,
     },
     size: {
-      enumerable: false,
-    },
-    hasProxy: {
       enumerable: false,
     },
     toJSON: {

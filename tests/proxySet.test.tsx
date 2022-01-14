@@ -339,7 +339,7 @@ describe('proxySet internal', () => {
   })
 
   it('should list only enumerable properties', () => {
-    const notEnumerableProps = ['data', 'size', 'toJSON', 'hasProxy']
+    const notEnumerableProps = ['data', 'size', 'toJSON']
     expect(
       Object.keys(proxySet()).some((k) => notEnumerableProps.includes(k))
     ).toBe(false)
