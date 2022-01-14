@@ -1,15 +1,13 @@
 import { proxy } from 'valtio'
 
 // properies that we don't want to expose to the end-user
-interface InternalProxySet<T> extends Set<T> {
+type InternalProxySet<T> = Set<T> & {
   data: T[]
   toJSON: object
   hasProxy(value: T): boolean
 }
 
-export function proxySet<T>(
-  initialValues: Iterable<T> | null | undefined = []
-): Set<T> {
+export const proxySet = <T>(initialValues: Iterable<T> | null = []): Set<T> => {
   const set: InternalProxySet<T> = proxy({
     data: Array.from(new Set(initialValues)),
     has(value) {
@@ -17,10 +15,9 @@ export function proxySet<T>(
     },
     hasProxy(value) {
       let hasProxy = false
-      if (typeof value === 'object') {
+      if (typeof value === 'object' && value !== null) {
         hasProxy = this.data.indexOf(proxy(value as any)) !== -1
       }
-
       return hasProxy
     },
     add(value) {
@@ -30,23 +27,23 @@ export function proxySet<T>(
       return this
     },
     delete(value) {
-      if (!this.has(value) && !this.hasProxy(value)) {
+      const index = this.data.indexOf(value)
+      if (index === -1) {
         return false
       }
-      this.data = this.data.filter((v: T) => v !== value)
+      this.data.splice(index, 1)
       return true
     },
     clear() {
-      this.data = []
+      this.data.splice(0)
     },
     get size() {
       return this.data.length
     },
     forEach(cb) {
-      for (let i = 0; i < this.data.length; i++) {
-        const value = this.data[i] as T
+      this.data.forEach((value) => {
         cb(value, value, this)
-      }
+      })
     },
     get [Symbol.toStringTag]() {
       return 'Set'
@@ -55,14 +52,7 @@ export function proxySet<T>(
       return {}
     },
     [Symbol.iterator]() {
-      let index = 0
-
-      return {
-        next: () =>
-          index < this.data.length
-            ? { value: this.data[index++], done: false }
-            : { done: true },
-      } as IterableIterator<T>
+      return this.data[Symbol.iterator]()
     },
     values() {
       return this.data.values()
@@ -86,6 +76,9 @@ export function proxySet<T>(
       enumerable: false,
     },
     hasProxy: {
+      enumerable: false,
+    },
+    toJSON: {
       enumerable: false,
     },
   })

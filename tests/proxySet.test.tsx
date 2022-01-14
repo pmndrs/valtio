@@ -332,3 +332,16 @@ describe('delete', () => {
     })
   })
 })
+
+describe('proxySet internal', () => {
+  it('should be sealed', () => {
+    expect(Object.isSealed(proxySet())).toBe(true)
+  })
+
+  it('should list only enumerable properties', () => {
+    const notEnumerableProps = ['data', 'size', 'toJSON', 'hasProxy']
+    expect(
+      Object.keys(proxySet()).some((k) => notEnumerableProps.includes(k))
+    ).toBe(false)
+  })
+})
