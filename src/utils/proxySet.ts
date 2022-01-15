@@ -80,7 +80,6 @@ export const proxySet = <T>(initialValues: Iterable<T> | null = []): Set<T> => {
 
   Object.defineProperties(set, {
     data: {
-      writable: true,
       enumerable: false,
     },
     size: {
