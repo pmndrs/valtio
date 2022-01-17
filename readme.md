@@ -348,6 +348,26 @@ state.redo()
 console.log(state.value) // ---> { count: 1 }
 ```
 
+#### `proxySet` util
+
+This is to create a proxy which mimic the native Set behavior. The API is the same as Set API
+
+```js
+
+import { proxySet } from 'valtio/utils'
+ 
+const state = proxySet([1,2,3])
+//can be used inside a proxy as well
+//const state = proxy({
+//    count: 1,
+//    set: proxySet()
+//})
+
+state.add(4)
+state.delete(1)
+state.forEach(v => console.log(v)) // 2,3,4
+```
+
 #### Plugins
 
 - [eslint-plugin-valtio](https://github.com/pmndrs/eslint-plugin-valtio)
