@@ -1,107 +1,88 @@
 import { proxy } from 'valtio'
 
-type InternalProxyMap<K, V> = Map<K, V> & {
-  data: {
-    [key: string]: V
-  }
-  toJSON: object
-  makeMap(): Map<K, V>
+type KeyValRecord<K, V> = {
+  key: K
+  value: V
 }
 
-export const proxyMap = <K, V>(entries?: [K, V][] | null): Map<K, V> => {
-  // store user key and dataRef used to access the value provided by the user
-  const keyStore = new Map<K, number>()
-  let dataRef = 0
+type InternalProxyMap<K, V> = Map<K, V> & {
+  data: KeyValRecord<K, V>[]
+  toJSON: object
+}
 
-  const map: InternalProxyMap<K, V> = proxy({
-    data: Object.create(null),
+export const proxyMap = <K, V>(
+  entries: Iterable<readonly [K, V]> | null = []
+): Map<K, V> => {
+  const map = proxy<InternalProxyMap<K, V>>({
+    data:
+      entries === null
+        ? []
+        : Array.from(entries).map((v) => ({ key: v[0], value: v[1] })),
     has(key) {
-      // force proxy read so snapshot.has(key) would trigger a rerender
-      this.size
-      return keyStore.has(key)
+      return this.data.findIndex((p) => p.key === key) !== -1
     },
     set(key, value) {
-      let id: number
-      if (keyStore.has(key)) {
-        id = keyStore.get(key) as number
-      } else {
-        dataRef++
-        keyStore.set(key, dataRef)
-        id = dataRef
+      const idx = this.data.findIndex((p) => p.key === key)
+      const payload = {
+        key,
+        value,
       }
-
-      this.data[id] = value
-
+      if (idx !== -1) {
+        this.data[idx] = payload
+      } else {
+        this.data.push(payload)
+      }
       return this
     },
     get(key) {
-      const id = keyStore.get(key)
-      if (id) return this.data[id]
+      return this.data.find((p) => p.key === key)?.value
     },
     delete(key) {
-      const id = keyStore.get(key)
-      if (id) {
-        keyStore.delete(key)
-        return delete this.data[id]
+      const index = this.data.findIndex((p) => p.key === key)
+      if (index === -1) {
+        return false
       }
-      return false
+
+      this.data.splice(index, 1)
+      return true
     },
     clear() {
-      keyStore.forEach((id) => {
-        delete this.data[id]
-      })
-      keyStore.clear()
+      this.data.splice(0)
     },
     get size() {
-      // trigger the get proxy trap. Allowing us to read the size directly from the map itself
-      return keyStore.size
+      return this.data.length
     },
     toJSON() {
       return {}
     },
     forEach(cb) {
-      keyStore.forEach((id, key) => {
-        cb(this.data[id] as V, key, this)
+      this.data.forEach(({ key, value }) => {
+        cb(value, key, this)
       })
     },
     keys() {
-      return keyStore.keys()
+      return this.data.map(({ key }) => key).values()
     },
     values() {
-      return Object.keys(this.data)
-        .map((k) => this.data[k])
-        .values() as IterableIterator<V>
+      return this.data.map(({ value }) => value).values()
     },
     entries() {
-      return this.makeMap().entries()
+      const map = new Map<K, V>()
+      this.data.forEach(({ key, value }) => {
+        map.set(key, value)
+      })
+      return map.entries()
     },
     get [Symbol.toStringTag]() {
       return 'Map'
     },
     [Symbol.iterator]() {
-      return this.makeMap()[Symbol.iterator]()
-    },
-    makeMap() {
-      const map = new Map<K, V>()
-      keyStore.forEach((v, k) => {
-        map.set(k, this.data[v] as V)
-      })
-      return map
+      return this.entries()
     },
   })
 
-  if (entries) {
-    entries.forEach((value) => {
-      const [k, v] = value
-      map.set(k, v)
-    })
-  }
-
   Object.defineProperties(map, {
     data: {
-      enumerable: false,
-    },
-    makeMap: {
       enumerable: false,
     },
     toJSON: {
