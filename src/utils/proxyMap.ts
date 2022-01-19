@@ -10,6 +10,22 @@ type InternalProxyMap<K, V> = Map<K, V> & {
   toJSON: object
 }
 
+/**
+ * proxyMap
+ *
+ * This is to create a proxy which mimic the native Map behavior.
+ * The API is the same as Map API
+ *
+ * @example
+ * import { proxyMap } from 'valtio/utils'
+ * const state = proxyMap([["key", "value"]])
+ *
+ * //can be used inside a proxy as well
+ * const state = proxy({
+ *   count: 1,
+ *   map: proxyMap()
+ * })
+ */
 export const proxyMap = <K, V>(
   entries: Iterable<readonly [K, V]> | null = []
 ): Map<K, V> => {
