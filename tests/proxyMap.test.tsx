@@ -1,8 +1,5 @@
-import { StrictMode } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, useSnapshot } from 'valtio'
-import { proxyMap } from 'valtio/utils/proxyMap'
 import { proxySet } from 'valtio/utils'
+import { proxyMap } from 'valtio/utils/proxyMap'
 
 const consoleError = console.error
 beforeEach(() => {

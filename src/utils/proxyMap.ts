@@ -10,7 +10,7 @@ type InternalProxyMap<K, V> = Map<K, V> & {
 
 export const proxyMap = <K, V>(entries?: [K, V][] | null): Map<K, V> => {
   // store user key and dataRef used to access the value provided by the user
-  let keyStore = new Map<K, number>()
+  const keyStore = new Map<K, number>()
   let dataRef = 0
 
   const map: InternalProxyMap<K, V> = proxy({
