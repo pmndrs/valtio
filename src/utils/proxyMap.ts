@@ -42,7 +42,6 @@ export const proxyMap = <K, V>(
       if (index === -1) {
         return false
       }
-
       this.data.splice(index, 1)
       return true
     },
@@ -83,6 +82,9 @@ export const proxyMap = <K, V>(
 
   Object.defineProperties(map, {
     data: {
+      enumerable: false,
+    },
+    size: {
       enumerable: false,
     },
     toJSON: {
