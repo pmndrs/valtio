@@ -25,6 +25,18 @@ type InternalProxyMap<K, V> = Map<K, V> & {
  *   count: 1,
  *   map: proxyMap()
  * })
+ *
+ * // When using an object as a key, you can wrap it with `ref` so it's not proxied
+ * // this is useful if you want to preserve the key equality
+ * import { ref } from 'valtio'
+ *
+ * const key = ref({})
+ * state.set(key, "value")
+ * state.get(key) //value
+ *
+ * const key = {}
+ * state.set(key, "value")
+ * state.get(key) //undefined
  */
 export const proxyMap = <K, V>(
   entries: Iterable<readonly [K, V]> | null = []
@@ -35,18 +47,17 @@ export const proxyMap = <K, V>(
         ? []
         : Array.from(entries).map((v) => ({ key: v[0], value: v[1] })),
     has(key) {
-      return this.data.findIndex((p) => p.key === key) !== -1
+      return this.data.some((p) => p.key === key)
     },
     set(key, value) {
-      const idx = this.data.findIndex((p) => p.key === key)
-      const payload = {
-        key,
-        value,
-      }
-      if (idx !== -1) {
-        this.data[idx] = payload
+      const record = this.data.find((p) => p.key === key)
+      if (record) {
+        record.value = value
       } else {
-        this.data.push(payload)
+        this.data.push({
+          key,
+          value,
+        })
       }
       return this
     },
