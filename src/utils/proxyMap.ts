@@ -45,7 +45,7 @@ export const proxyMap = <K, V>(
     data:
       entries === null
         ? []
-        : Array.from(entries).map((v) => ({ key: v[0], value: v[1] })),
+        : Array.from(entries, (v) => ({ key: v[0], value: v[1] })),
     has(key) {
       return this.data.some((p) => p.key === key)
     },
