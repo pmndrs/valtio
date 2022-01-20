@@ -368,6 +368,21 @@ state.delete(1)
 state.forEach(v => console.log(v)) // 2,3,4
 ```
 
+#### `proxyMap` util
+
+This is to create a proxy which emulate the native Map behavior. The API is the same as Map API
+
+```js
+
+import { proxyMap } from 'valtio/utils'
+ 
+const state = proxyMap([["key", "value"], ["key2", "value2"]])
+state.set("key", "value")
+state.delete("key")
+state.get("key") // ---> value
+state.forEach((value, key) => console.log(key, value)) // ---> "key", "value", "key2", "value2"
+```
+
 #### Plugins
 
 - [eslint-plugin-valtio](https://github.com/pmndrs/eslint-plugin-valtio)
