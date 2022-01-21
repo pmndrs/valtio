@@ -22,6 +22,7 @@ module.exports = (api, targets) => {
           runtime: 'automatic',
         },
       ],
+      ['@babel/plugin-transform-typescript', { isTSX: true }],
     ],
   }
 }
