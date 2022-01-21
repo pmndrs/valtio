@@ -1,9 +1,6 @@
 import { proxy } from 'valtio'
 
-type KeyValRecord<K, V> = {
-  key: K
-  value: V
-}
+type KeyValRecord<K, V> = [key: K, value: V]
 
 type InternalProxyMap<K, V> = Map<K, V> & {
   data: KeyValRecord<K, V>[]
@@ -42,27 +39,24 @@ export const proxyMap = <K, V>(
   entries?: Iterable<readonly [K, V]> | null
 ): Map<K, V> => {
   const map = proxy<InternalProxyMap<K, V>>({
-    data: Array.from(entries || [], (v) => ({ key: v[0], value: v[1] })),
+    data: Array.from(entries || []) as KeyValRecord<K, V>[],
     has(key) {
-      return this.data.some((p) => p.key === key)
+      return this.data.some((p) => p[0] === key)
     },
     set(key, value) {
-      const record = this.data.find((p) => p.key === key)
+      const record = this.data.find((p) => p[0] === key)
       if (record) {
-        record.value = value
+        record[1] = value
       } else {
-        this.data.push({
-          key,
-          value,
-        })
+        this.data.push([key, value])
       }
       return this
     },
     get(key) {
-      return this.data.find((p) => p.key === key)?.value
+      return this.data.find((p) => p[0] === key)?.[1]
     },
     delete(key) {
-      const index = this.data.findIndex((p) => p.key === key)
+      const index = this.data.findIndex((p) => p[0] === key)
       if (index === -1) {
         return false
       }
@@ -79,22 +73,18 @@ export const proxyMap = <K, V>(
       return {}
     },
     forEach(cb) {
-      this.data.forEach(({ key, value }) => {
-        cb(value, key, this)
+      this.data.forEach((p) => {
+        cb(p[1], p[0], this)
       })
     },
     keys() {
-      return this.data.map(({ key }) => key).values()
+      return this.data.map((p) => p[0]).values()
     },
     values() {
-      return this.data.map(({ value }) => value).values()
+      return this.data.map((p) => p[1]).values()
     },
     entries() {
-      const map = new Map<K, V>()
-      this.data.forEach(({ key, value }) => {
-        map.set(key, value)
-      })
-      return map.entries()
+      return new Map(this.data).entries()
     },
     get [Symbol.toStringTag]() {
       return 'Map'
