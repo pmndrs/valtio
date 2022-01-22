@@ -38,7 +38,7 @@ type InternalProxyMap<K, V> = Map<K, V> & {
 export const proxyMap = <K, V>(
   entries?: Iterable<readonly [K, V]> | null
 ): Map<K, V> => {
-  const map = proxy<InternalProxyMap<K, V>>({
+  const map: InternalProxyMap<K, V> = proxy({
     data: Array.from(entries || []) as KeyValRecord<K, V>[],
     has(key) {
       return this.data.some((p) => p[0] === key)
