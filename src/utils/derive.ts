@@ -118,7 +118,7 @@ export const derive = <T extends object, U extends object>(
         return p
       }
       const value = fn(get)
-      const subscribe = () => {
+      const subscribeToDependencies = () => {
         dependencies.forEach((_, p) => {
           if (!lastDependencies?.has(p)) {
             addSubscription(p, key, evaluate)
@@ -132,9 +132,9 @@ export const derive = <T extends object, U extends object>(
         lastDependencies = dependencies
       }
       if (value instanceof Promise) {
-        value.finally(subscribe)
+        value.finally(subscribeToDependencies)
       } else {
-        subscribe()
+        subscribeToDependencies()
       }
       proxyObject[key] = value
     }
