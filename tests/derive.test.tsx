@@ -384,4 +384,51 @@ describe('glich free', () => {
     await findByText('value: 1')
     expect(computeValue).toBeCalledTimes(2)
   })
+
+  it('double chain', async () => {
+    const state = proxy({ value: 0 })
+    const derived1 = derive({
+      value: (get) => get(state).value,
+    })
+    const derived2 = derive({
+      value: (get) => get(derived1).value,
+    })
+    const derived3 = derive({
+      value: (get) => get(derived2).value,
+    })
+    const computeValue = jest.fn((get) => {
+      const v0 = get(state).value
+      const v1 = get(derived1).value
+      const v2 = get(derived2).value
+      const v3 = get(derived3).value
+      return v0 + (v1 - v2) + v3 * 0
+    })
+    const derived4 = derive({
+      value: (get) => computeValue(get),
+    })
+
+    const App = () => {
+      const snap = useSnapshot(derived4)
+      return (
+        <div>
+          value: {snap.value}
+          <button onClick={() => ++state.value}>button</button>
+        </div>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <StrictMode>
+        <App />
+      </StrictMode>
+    )
+
+    await findByText('value: 0')
+    expect(computeValue).toBeCalledTimes(1)
+
+    fireEvent.click(getByText('button'))
+    await findByText('value: 1')
+    expect(computeValue).toBeCalledTimes(2)
+  })
+
 })
