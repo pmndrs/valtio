@@ -2,10 +2,12 @@ import { getVersion, proxy, subscribe } from '../vanilla'
 
 type DeriveGet = <T extends object>(proxyObject: T) => T
 
-type Subscriptions<U extends object> = Map<
-  object,
-  [callbackMap: Map<keyof U, () => void>, unsubscribe: () => void]
->
+type Subscription<U extends object> = [
+  callbackMap: Map<keyof U, () => void>,
+  unsubscribe: () => void
+]
+
+type Subscriptions<U extends object> = Map<object, Subscription<U>>
 
 const subscriptionsCache = new WeakMap<object, Subscriptions<object>>()
 
@@ -23,6 +25,25 @@ const getSubscriptions = (proxyObject: object) => {
 // changed or removed without any notice in future versions.
 // It's not expected to use this in production.
 export const unstable_getDeriveSubscriptions = getSubscriptions
+
+// to make derive glitch free: https://github.com/pmndrs/valtio/pull/335
+const pendingCountMap = new WeakMap<object, number>()
+const markPending = (proxyObject: object) => {
+  const count = pendingCountMap.get(proxyObject) || 0
+  pendingCountMap.set(proxyObject, count + 1)
+}
+const unmarkPending = (proxyObject: object) => {
+  const count = pendingCountMap.get(proxyObject) || 0
+  if (count > 1) {
+    pendingCountMap.set(proxyObject, count - 1)
+  } else {
+    pendingCountMap.delete(proxyObject)
+  }
+}
+const isPending = (proxyObject: object) => {
+  const count = pendingCountMap.get(proxyObject) || 0
+  return count > 0
+}
 
 /**
  * derive
@@ -61,10 +82,11 @@ export const derive = <T extends object, U extends object>(
   const notifyInSync = options?.sync
   const subscriptions: Subscriptions<U> = getSubscriptions(proxyObject)
   const addSubscription = (p: object, key: keyof U, callback: () => void) => {
-    const subscription = subscriptions.get(p)
-    if (subscription) {
-      subscription[0].set(key, callback)
-    } else {
+    let subscription = subscriptions.get(p)
+    if (!subscription) {
+      const notify = () =>
+        (subscription as Subscription<U>)[0].forEach((cb) => cb())
+      let promise: Promise<void> | undefined
       const unsubscribe = subscribe(
         p,
         (ops) => {
@@ -77,14 +99,28 @@ export const derive = <T extends object, U extends object>(
             // only setting derived properties
             return
           }
-          subscriptions.get(p)?.[0].forEach((cb) => {
-            cb()
-          })
+          if (promise) {
+            // already scheduled
+            return
+          }
+          markPending(p)
+          if (notifyInSync) {
+            unmarkPending(p)
+            notify()
+          } else {
+            promise = Promise.resolve().then(() => {
+              promise = undefined
+              unmarkPending(p)
+              notify()
+            })
+          }
         },
-        notifyInSync
+        true
       )
-      subscriptions.set(p, [new Map([[key, callback]]), unsubscribe])
+      subscription = [new Map(), unsubscribe]
+      subscriptions.set(p, subscription)
     }
+    subscription[0].set(key, callback)
   }
   const removeSubscription = (p: object, key: keyof U) => {
     const subscription = subscriptions.get(p)
@@ -105,6 +141,10 @@ export const derive = <T extends object, U extends object>(
     let lastDependencies: Map<object, number> | null = null
     const evaluate = () => {
       if (lastDependencies) {
+        if (Array.from(lastDependencies).some(([p]) => isPending(p))) {
+          // some dependencies are still pending
+          return
+        }
         if (
           Array.from(lastDependencies).every(([p, n]) => getVersion(p) === n)
         ) {
@@ -118,7 +158,7 @@ export const derive = <T extends object, U extends object>(
         return p
       }
       const value = fn(get)
-      const subscribe = () => {
+      const subscribeToDependencies = () => {
         dependencies.forEach((_, p) => {
           if (!lastDependencies?.has(p)) {
             addSubscription(p, key, evaluate)
@@ -132,9 +172,9 @@ export const derive = <T extends object, U extends object>(
         lastDependencies = dependencies
       }
       if (value instanceof Promise) {
-        value.finally(subscribe)
+        value.finally(subscribeToDependencies)
       } else {
-        subscribe()
+        subscribeToDependencies()
       }
       proxyObject[key] = value
     }
