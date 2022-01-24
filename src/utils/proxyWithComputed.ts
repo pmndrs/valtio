@@ -1,6 +1,12 @@
 import { createProxy as createProxyToCompare, isChanged } from 'proxy-compare'
 import { proxy, snapshot } from '../vanilla'
-import type { DeepResolveType } from '../vanilla'
+
+class SnapshotWrapper<T extends object> {
+  fn(p: T) {
+    return snapshot(p)
+  }
+}
+type Snapshot<T extends object> = ReturnType<SnapshotWrapper<T>['fn']>
 
 /**
  * proxyWithComputed
@@ -30,9 +36,9 @@ export const proxyWithComputed = <T extends object, U extends object>(
   initialObject: T,
   computedFns: {
     [K in keyof U]:
-      | ((snap: DeepResolveType<T>) => U[K])
+      | ((snap: Snapshot<T>) => U[K])
       | {
-          get: (snap: DeepResolveType<T>) => U[K]
+          get: (snap: Snapshot<T>) => U[K]
           set?: (state: T, newValue: U[K]) => void
         }
   }
@@ -45,11 +51,11 @@ export const proxyWithComputed = <T extends object, U extends object>(
     const { get, set } = (
       typeof computedFn === 'function' ? { get: computedFn } : computedFn
     ) as {
-      get: (snap: DeepResolveType<T>) => U[typeof key]
+      get: (snap: Snapshot<T>) => U[typeof key]
       set?: (state: T, newValue: U[typeof key]) => void
     }
     let computedValue: U[typeof key]
-    let prevSnapshot: DeepResolveType<T> | undefined
+    let prevSnapshot: Snapshot<T> | undefined
     let affected = new WeakMap()
     const desc: PropertyDescriptor = {}
     desc.get = () => {

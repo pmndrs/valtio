@@ -81,8 +81,52 @@ function createCommonJSConfig(input, output) {
         },
       }),
       resolve({ extensions }),
-      typescript(),
       babelPlugin(getBabelOptions({ ie: 11 })),
+    ],
+  }
+}
+
+function createUMDConfig(input, output) {
+  return {
+    input,
+    output: {
+      file: output,
+      format: 'umd',
+      exports: 'named',
+      name: 'valtio',
+    },
+    external,
+    plugins: [
+      alias({
+        entries: {
+          './vanilla': 'valtio/vanilla',
+          '../vanilla': 'valtio/vanilla',
+        },
+      }),
+      resolve({ extensions }),
+      babelPlugin(getBabelOptions({ ie: 11 })),
+    ],
+  }
+}
+
+function createSystemConfig(input, output) {
+  return {
+    input,
+    output: {
+      file: output,
+      format: 'system',
+      exports: 'named',
+    },
+    external,
+    plugins: [
+      alias({
+        entries: {
+          './vanilla': 'valtio/vanilla',
+          '../vanilla': 'valtio/vanilla',
+        },
+      }),
+      resolve({ extensions }),
+      getEsbuild('node12'),
     ],
   }
 }
@@ -94,11 +138,15 @@ export default function (args) {
     return [
       createCommonJSConfig(`src/${c}.ts`, `dist/${c}.js`),
       createESMConfig(`src/${c}.ts`, `dist/esm/${c}`),
+      createUMDConfig(`src/${c}.ts`, `dist/umd/${c}.js`),
+      createSystemConfig(`src/${c}.ts`, `dist/system/${c}.js`),
     ]
   }
   return [
     createDeclarationConfig('src/index.ts', 'dist'),
     createCommonJSConfig('src/index.ts', 'dist/index.js'),
     createESMConfig('src/index.ts', 'dist/esm/index'),
+    createUMDConfig('src/index.ts', 'dist/umd/index.js'),
+    createSystemConfig('src/index.ts', 'dist/system/index.js'),
   ]
 }

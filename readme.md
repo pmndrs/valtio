@@ -295,7 +295,7 @@ derive({
 #### `proxyWithComputed` util
 
 You can have computed values with dependency tracking with property access.
-Dependency tracking in `proxyWithComputed` conflicts with the work in `useSnapshot`.
+Dependency tracking in `proxyWithComputed` overlaps the work in `useSnapshot`.
 React users should prefer using `derive`.
 `proxyWithComputed` works well for some edge cases and for vanilla-js users.
 
@@ -346,6 +346,41 @@ state.undo()
 console.log(state.value) // ---> { count: 0 }
 state.redo()
 console.log(state.value) // ---> { count: 1 }
+```
+
+#### `proxySet` util
+
+This is to create a proxy which mimic the native Set behavior. The API is the same as Set API
+
+```js
+
+import { proxySet } from 'valtio/utils'
+ 
+const state = proxySet([1,2,3])
+//can be used inside a proxy as well
+//const state = proxy({
+//    count: 1,
+//    set: proxySet()
+//})
+
+state.add(4)
+state.delete(1)
+state.forEach(v => console.log(v)) // 2,3,4
+```
+
+#### `proxyMap` util
+
+This is to create a proxy which emulate the native Map behavior. The API is the same as Map API
+
+```js
+
+import { proxyMap } from 'valtio/utils'
+ 
+const state = proxyMap([["key", "value"], ["key2", "value2"]])
+state.set("key", "value")
+state.delete("key")
+state.get("key") // ---> value
+state.forEach((value, key) => console.log(key, value)) // ---> "key", "value", "key2", "value2"
 ```
 
 #### Plugins
