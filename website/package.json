@@ -24,6 +24,7 @@
     "rehype-prism-plus": "^1.2.2",
     "rehype-slug": "^5.0.1",
     "remark-gfm": "^3.0.1",
+    "remark-mdx-images": "^1.0.3",
     "unified": "^10.1.1"
   },
   "devDependencies": {

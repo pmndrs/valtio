@@ -9,6 +9,7 @@ import remarkGfm from "remark-gfm";
 import oembedTransformer from "@remark-embedder/transformer-oembed";
 import remarkEmbedder from "@remark-embedder/core";
 import type { TransformerInfo } from "@remark-embedder/core";
+import { remarkMdxImages } from "remark-mdx-images";
 
 // Rehype packages
 import rehypePrismPlus from "rehype-prism-plus";
@@ -117,10 +118,12 @@ export async function getDocBySlug(slug: string) {
 
   // Parsing frontmatter here to pass it in as options to rehype plugin
   const { data: frontmatter } = matter(source);
+  const cwd = path.dirname(mdxPath);
   const { code } = await bundleMDX({
     source,
     // mdx imports can be automatically source from the components directory
-    cwd: path.join(root, "components"),
+    // cwd: path.join(root, "components"),
+    cwd,
     xdmOptions(options) {
       // this is the recommended way to add custom remark/rehype plugins:
       // The syntax might look weird, but it protects you in case we add/remove
@@ -130,6 +133,7 @@ export async function getDocBySlug(slug: string) {
         rehypeSlug,
         [rehypeAutolinkHeadings, { behavior: "wrap" }],
         remarkGfm,
+        remarkMdxImages,
         ...remarkPlugins,
       ];
       options.rehypePlugins = [
@@ -145,7 +149,16 @@ export async function getDocBySlug(slug: string) {
         ...options.loader,
         ".js": "jsx",
         ".ts": "tsx",
+        ".svg": "dataurl",
+        ".png": "dataurl",
       };
+      options.outdir = path.join(root, "build");
+      // Set the public path to /img
+      options.publicPath = "/docs/img";
+
+      // Set write to true so that esbuild will output the files.
+      options.write = true;
+
       return options;
     },
   });
