@@ -3,6 +3,22 @@ import { act, fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 import { devtools } from 'valtio/utils'
 
+const consoleError = console.error
+beforeEach(() => {
+  console.error = jest.fn((message) => {
+    if (
+      process.env.NODE_ENV === 'production' &&
+      message.startsWith('act(...) is not supported in production')
+    ) {
+      return
+    }
+    consoleError(message)
+  })
+})
+afterEach(() => {
+  console.error = consoleError
+})
+
 let extensionSubscriber: ((message: any) => void) | undefined
 
 const extension = {
@@ -48,10 +64,13 @@ it('connects to the extension by initialiing', () => {
 })
 
 describe('If there is no extension installed...', () => {
+  let savedDEV: boolean
   beforeAll(() => {
+    savedDEV = __DEV__
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
   afterAll(() => {
+    __DEV__ = savedDEV
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
   })
 
@@ -69,15 +88,15 @@ describe('If there is no extension installed...', () => {
   }
 
   it('does not throw', () => {
+    __DEV__ = false
     devtools(obj)
     expect(() => {
       render(<Counter />)
     }).not.toThrow()
   })
 
-  it('warns in dev env', () => {
-    const originalNodeEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
+  it('[DEV-ONLY] warns in dev env', () => {
+    __DEV__ = true
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
     devtools(obj)
@@ -87,11 +106,11 @@ describe('If there is no extension installed...', () => {
       '[Warning] Please install/enable Redux devtools extension'
     )
 
-    process.env.NODE_ENV = originalNodeEnv
     console.warn = originalConsoleWarn
   })
 
-  it('does not warn if not in dev env', () => {
+  it('[PRD-ONLY] does not warn if not in dev env', () => {
+    __DEV__ = false
     const consoleWarn = jest.spyOn(console, 'warn')
 
     render(<Counter />)
