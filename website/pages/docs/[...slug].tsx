@@ -1,14 +1,14 @@
 import { GetStaticPaths, GetStaticProps } from "next";
 import { DocLayout } from "~/components/layouts";
 import MDXRenderer from "~/components/MDXRenderer";
-import { formatSlug, getAllDocs, getDocBySlug, getDocsNav } from "~/lib/mdx";
+import { getSlugs, getAllDocs, getDocBySlug, getDocsNav } from "~/lib/mdx";
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const docs = getAllDocs();
   return {
     paths: docs.map((p) => ({
       params: {
-        slug: formatSlug(p).split("/"),
+        slug: getSlugs(p),
       },
     })),
     fallback: false,

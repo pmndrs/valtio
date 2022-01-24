@@ -2,7 +2,7 @@ import { bundleMDX } from "mdx-bundler";
 import fs from "fs";
 import matter from "gray-matter";
 import path from "path";
-import { getAllFilesRecursively } from "_utils/file_helpers";
+import { getAllFilesRecursively, slugify } from "_utils/file_helpers";
 
 // Remark packages
 import remarkGfm from "remark-gfm";
@@ -74,10 +74,20 @@ export function formatSlug(slug: string) {
   return slug.replace(/\.(mdx|md)/, "");
 }
 
+export function getSlugs(p: string) {
+  return formatSlug(p).split("/").map(slugify);
+}
+
 export function dateSortDesc(a: any, b: any) {
   if (a > b) return -1;
   if (a < b) return 1;
   return 0;
+}
+
+function getSourceFromSlug(slug: string) {
+  const mdxPath = path.join(docsPath, slug);
+
+  return fs.readFileSync(mdxPath, "utf8");
 }
 
 export async function getDocBySlug(slug: string) {
@@ -170,7 +180,7 @@ export async function getAllFilesFrontMatter(folder: string) {
     if (frontmatter.draft !== true) {
       allFrontMatter.push({
         ...frontmatter,
-        slug: formatSlug(fileName),
+        slug: getSlugs(fileName),
         date: frontmatter.date
           ? new Date(frontmatter.date).toISOString()
           : null,
@@ -185,13 +195,21 @@ const removeExtension = (path: string) => {
   return path.replace(/\.[^/.]+$/, "");
 };
 
+const getTitle = (path: string) => {
+  return removeExtension(path.split("/").pop() || "");
+};
+
 function prepareDoc(doc: string) {
-  const href = `/docs/${removeExtension(doc)}`;
-  const title = (doc && removeExtension(doc.split("/").pop()!)) || "";
+  const slugs = getSlugs(doc);
+  const href = `/docs/${slugs.map(slugify).join("/")}`;
+  const source = getSourceFromSlug(doc);
+  const { data: frontmatter } = matter(source);
+  const title = frontmatter.title ?? getTitle(doc);
+  console.log(frontmatter);
   return {
     title,
     href,
-    slug: title,
+    slug: slugs[slugs.length - 1],
   };
 }
 
@@ -207,6 +225,7 @@ export function getDocsMap(): Record<string, Navigation> {
 export function getDocsNav(): Record<string, Navigation[]> {
   const pages = getDocsMap();
   return {
+    Introduction: [pages["installation"], pages["getting-started"]],
     Basic: [pages["useSnapshot"], pages["proxy"]],
     Advanced: [pages["ref"], pages["subscribe"], pages["snapshot"]],
     Utils: [

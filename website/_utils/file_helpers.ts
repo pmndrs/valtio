@@ -32,4 +32,18 @@ const getAllFilesRecursively: (folder: string) => string[] = (folder) =>
     flattenArray
   )(folder);
 
-export { getAllFilesRecursively };
+const slugify = (str: string) => {
+  return (
+    str
+      .replace(/\s+/g, "-") // Replace spaces with -
+      .replace(/[^\w\-]+/g, "") // Remove all non-word chars
+      .replace(/\-\-+/g, "-") // Replace multiple - with single -
+      // .replace(/([A-Z])/g, "_$1") // Replace uppercase with _ and lowercase
+      // .toLowerCase()
+      .replace(/^_+/, "") // Trim _ from start of text
+      .replace(/^-+/, "") // Trim - from start of text
+      .replace(/-+$/, "")
+  ); // Trim - from end of text
+};
+
+export { getAllFilesRecursively, slugify };
