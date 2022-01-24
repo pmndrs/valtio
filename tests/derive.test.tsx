@@ -300,7 +300,7 @@ it('basic underive', async () => {
   expect(callback).toBeCalledTimes(1)
 })
 
-describe('glich free', () => {
+describe('glitch free', () => {
   it('basic (#296)', async () => {
     const state = proxy({ value: 0 })
     const derived1 = derive({

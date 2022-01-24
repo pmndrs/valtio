@@ -26,7 +26,7 @@ const getSubscriptions = (proxyObject: object) => {
 // It's not expected to use this in production.
 export const unstable_getDeriveSubscriptions = getSubscriptions
 
-// to make derive glitch free
+// to make derive glitch free: https://github.com/pmndrs/valtio/pull/335
 const pendingCountMap = new WeakMap<object, number>()
 const markPending = (proxyObject: object) => {
   const count = pendingCountMap.get(proxyObject) || 0
