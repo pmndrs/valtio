@@ -218,7 +218,7 @@ function prepareDoc(doc: string) {
   const source = getSourceFromSlug(doc);
   const { data: frontmatter } = matter(source);
   const title = frontmatter.title ?? getTitle(doc);
-  console.log(frontmatter);
+  // console.log(frontmatter);
   return {
     title,
     href,

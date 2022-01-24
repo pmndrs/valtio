@@ -25,11 +25,17 @@ const walkDir = (fullPath: string) => {
 const pathJoinPrefix = (prefix: string) => (extraPath: string) =>
   path.join(prefix, extraPath);
 
+const filterMDX = (files: string[]) =>
+  files.filter(
+    (file) => path.extname(file) === ".mdx" || path.extname(file) === ".md"
+  );
+
 const getAllFilesRecursively: (folder: string) => string[] = (folder) =>
   pipe(
     fs.readdirSync,
     map(pipe(pathJoinPrefix(folder), walkDir)),
-    flattenArray
+    flattenArray,
+    filterMDX
   )(folder);
 
 const slugify = (str: string) => {
