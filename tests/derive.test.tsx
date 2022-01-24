@@ -211,7 +211,7 @@ it('nested emulation with derive', async () => {
     {
       doubled: (get) => computeDouble(get(state.math).count),
     },
-    { proxy: state.math }
+    { proxy: state.math, sync: true }
   )
 
   const callback = jest.fn()
@@ -430,5 +430,4 @@ describe('glich free', () => {
     await findByText('value: 1')
     expect(computeValue).toBeCalledTimes(2)
   })
-
 })
