@@ -81,7 +81,6 @@ function createCommonJSConfig(input, output) {
         },
       }),
       resolve({ extensions }),
-      typescript(),
       babelPlugin(getBabelOptions({ ie: 11 })),
     ],
   }
@@ -105,7 +104,6 @@ function createUMDConfig(input, output) {
         },
       }),
       resolve({ extensions }),
-      typescript(),
       babelPlugin(getBabelOptions({ ie: 11 })),
     ],
   }
@@ -128,7 +126,6 @@ function createSystemConfig(input, output) {
         },
       }),
       resolve({ extensions }),
-      typescript(),
       getEsbuild('node12'),
     ],
   }

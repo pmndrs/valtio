@@ -7,7 +7,7 @@ const HANDLER = Symbol()
 const PROMISE_RESULT = Symbol()
 const PROMISE_ERROR = Symbol()
 
-const enum AsRef {}
+type AsRef = { $$valtioRef: true }
 const refSet = new WeakSet()
 export const ref = <T extends object>(o: T): T & AsRef => {
   refSet.add(o)
@@ -247,6 +247,9 @@ export const subscribe = <T extends object>(
   }
 }
 
+/**
+ * @deprecated this will be removed in next versions
+ */
 export type DeepResolveType<T> = T extends (...args: any[]) => any
   ? T
   : T extends AsRef
@@ -259,9 +262,18 @@ export type DeepResolveType<T> = T extends (...args: any[]) => any
     }
   : T
 
-export const snapshot = <T extends object>(
-  proxyObject: T
-): DeepResolveType<T> => {
+type AnyFunction = (...args: any[]) => any
+type Snapshot<T> = T extends AnyFunction
+  ? T
+  : T extends AsRef
+  ? T
+  : T extends Promise<infer V>
+  ? Snapshot<V>
+  : {
+      readonly [K in keyof T]: Snapshot<T[K]>
+    }
+
+export const snapshot = <T extends object>(proxyObject: T): Snapshot<T> => {
   if (
     typeof process === 'object' &&
     process.env.NODE_ENV !== 'production' &&

@@ -14,7 +14,13 @@ import {
 } from 'proxy-compare'
 import { createMutableSource, useMutableSource } from './useMutableSource'
 import { getVersion, snapshot, subscribe } from './vanilla'
-import type { DeepResolveType } from './vanilla'
+
+class SnapshotWrapper<T extends object> {
+  fn(p: T) {
+    return snapshot(p)
+  }
+}
+type Snapshot<T extends object> = ReturnType<SnapshotWrapper<T>['fn']>
 
 const isSSR =
   typeof window === 'undefined' ||
@@ -127,12 +133,12 @@ type Options = {
 export const useSnapshot = <T extends object>(
   proxyObject: T,
   options?: Options
-): DeepResolveType<T> => {
+): Snapshot<T> => {
   const forceUpdate = useReducer((c) => c + 1, 0)[1]
   const affected = new WeakMap()
   const lastAffected = useRef<typeof affected>()
-  const prevSnapshot = useRef<DeepResolveType<T>>()
-  const lastSnapshot = useRef<DeepResolveType<T>>()
+  const prevSnapshot = useRef<Snapshot<T>>()
+  const lastSnapshot = useRef<Snapshot<T>>()
   useIsomorphicLayoutEffect(() => {
     lastSnapshot.current = prevSnapshot.current = snapshot(proxyObject)
   }, [proxyObject])
