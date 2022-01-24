@@ -44,5 +44,3 @@ export default function Doc({ doc, nav }: Props) {
     </>
   );
 }
-
-Doc.getLayout = (page: any) => <>{page}</>;

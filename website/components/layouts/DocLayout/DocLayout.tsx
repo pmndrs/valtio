@@ -2,8 +2,10 @@ import React, { forwardRef, useRef } from "react";
 import { Dialog } from "@headlessui/react";
 import Link from "next/link";
 import clsx from "clsx";
-import { useRouter } from "next/router";
+import { Router, useRouter } from "next/router";
 import { useIsomorphicLayoutEffect } from "~/hooks";
+import { Header } from "~/components/layouts";
+import { createContext, useEffect, useState } from "react";
 
 interface NavItemProps extends Partial<Navigation> {
   fallbackHref: string;
@@ -196,62 +198,100 @@ function Wrapper({
 interface Props {
   frontMatter: Dict;
   allowOverflow?: boolean;
-  navIsOpen?: boolean;
-  setNavIsOpen?: (isOpen: boolean) => void;
   fallbackHref?: string;
   nav: Record<string, Navigation[]>;
 }
+
+interface ContextProps {
+  setNavIsOpen: (isOpen: boolean) => void;
+  navIsOpen: boolean;
+  nav: Record<string, Navigation[]>;
+}
+
+export const DocLayoutContext = createContext<ContextProps>({
+  setNavIsOpen: () => {},
+  navIsOpen: false,
+  nav: {},
+});
 
 export default function DocLayout({
   nav,
   frontMatter,
   children,
   allowOverflow,
-  navIsOpen = false,
-  setNavIsOpen,
   fallbackHref = "#",
 }: React.PropsWithChildren<Props>) {
+  let [navIsOpen, setNavIsOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!navIsOpen) return;
+    function handleRouteChange() {
+      setNavIsOpen(false);
+    }
+    Router.events.on("routeChangeComplete", handleRouteChange);
+    return () => {
+      Router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, [navIsOpen]);
+  let section =
+    frontMatter.section ||
+    Object.entries(
+      // @ts-ignore
+      nav ?? {}
+    ).find(([, items]) =>
+      items.find(({ href }: { href: string }) => href === router.asPath)
+    )?.[0];
   return (
     <>
-      <Wrapper allowOverflow={allowOverflow}>
-        <div className="max-w-[90rem] mx-auto px-4 sm:px-6 md:px-8">
-          <div className="hidden lg:block fixed z-20 inset-0 top-[3.8125rem] left-[max(0px,calc(50%-45rem))] right-auto w-[19.5rem] pb-10 px-8 overflow-y-auto">
-            <Nav nav={nav} fallbackHref={fallbackHref}></Nav>
+      <DocLayoutContext.Provider value={{ nav, navIsOpen, setNavIsOpen }}>
+        <Header
+          hasNav={true}
+          navIsOpen={navIsOpen}
+          onNavToggle={(isOpen: boolean) => setNavIsOpen(isOpen)}
+          title={frontMatter.title}
+          section={frontMatter.section}
+        />
+        <Wrapper allowOverflow={allowOverflow}>
+          <div className="max-w-[90rem] mx-auto px-4 sm:px-6 md:px-8">
+            <div className="hidden lg:block fixed z-20 inset-0 top-[3.8125rem] left-[max(0px,calc(50%-45rem))] right-auto w-[19.5rem] pb-10 px-8 overflow-y-auto">
+              <Nav nav={nav} fallbackHref={fallbackHref}></Nav>
+            </div>
+            <div className="lg:pl-[19.5rem]">
+              <main className="prose max-w-3xl mx-auto relative z-20 pt-10 xl:max-w-none">
+                {children}
+              </main>
+            </div>
           </div>
-          <div className="lg:pl-[19.5rem]">
-            <main className="prose max-w-3xl mx-auto relative z-20 pt-10 xl:max-w-none">
-              {children}
-            </main>
+        </Wrapper>
+        <Dialog
+          as="div"
+          open={navIsOpen}
+          onClose={() => setNavIsOpen?.(false)}
+          className="fixed z-50 inset-0 overflow-y-auto lg:hidden"
+        >
+          <Dialog.Overlay className="fixed inset-0 bg-black/20 backdrop-blur-sm dark:bg-gray-900/80" />
+          <div className="relative bg-white w-80 max-w-[calc(100%-3rem)] p-6 dark:bg-gray-800">
+            <button
+              type="button"
+              onClick={() => setNavIsOpen?.(false)}
+              className="absolute z-10 top-5 right-5 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
+            >
+              <span className="sr-only">Close navigation</span>
+              <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 overflow-visible">
+                <path
+                  d="M0 0L10 10M10 0L0 10"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+            <Nav nav={nav} fallbackHref={fallbackHref} mobile={true}></Nav>
           </div>
-        </div>
-      </Wrapper>
-      <Dialog
-        as="div"
-        open={navIsOpen}
-        onClose={() => setNavIsOpen?.(false)}
-        className="fixed z-50 inset-0 overflow-y-auto lg:hidden"
-      >
-        <Dialog.Overlay className="fixed inset-0 bg-black/20 backdrop-blur-sm dark:bg-gray-900/80" />
-        <div className="relative bg-white w-80 max-w-[calc(100%-3rem)] p-6 dark:bg-gray-800">
-          <button
-            type="button"
-            onClick={() => setNavIsOpen?.(false)}
-            className="absolute z-10 top-5 right-5 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
-          >
-            <span className="sr-only">Close navigation</span>
-            <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 overflow-visible">
-              <path
-                d="M0 0L10 10M10 0L0 10"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-          <Nav nav={nav} fallbackHref={fallbackHref} mobile={true}></Nav>
-        </div>
-      </Dialog>
+        </Dialog>
+      </DocLayoutContext.Provider>
     </>
   );
 }
