@@ -1,5 +1,17 @@
 # proxy
 
-## Youtube embed demo
+```jsx
+import { proxy, useSnapshot } from 'valtio'
 
-https://www.youtube.com/watch?v=dQw4w9WgXcQ
+const state = proxy({ count: 0, text: 'hello' })
+```
+
+#### Mutate from anywhere
+
+You can make changes to it in the same way you would to a normal js-object.
+
+```jsx
+setInterval(() => {
+  ++state.count
+}, 1000)
+```

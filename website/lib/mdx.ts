@@ -225,7 +225,7 @@ export function getDocsMap(): Record<string, Navigation> {
 export function getDocsNav(): Record<string, Navigation[]> {
   const pages = getDocsMap();
   return {
-    Introduction: [pages["installation"], pages["getting-started"]],
+    Introduction: [pages["getting-started"]],
     Basic: [pages["useSnapshot"], pages["proxy"]],
     Advanced: [pages["ref"], pages["subscribe"], pages["snapshot"]],
     Utils: [
