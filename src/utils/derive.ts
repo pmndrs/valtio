@@ -31,13 +31,13 @@ const pendingCountMap = new WeakMap<object, number>()
 const markPending = (proxyObject: object) => {
   const count = pendingCountMap.get(proxyObject) || 0
   pendingCountMap.set(proxyObject, count + 1)
-  return () => {
-    const count = pendingCountMap.get(proxyObject) || 0
-    if (count > 1) {
-      pendingCountMap.set(proxyObject, count - 1)
-    } else {
-      pendingCountMap.delete(proxyObject)
-    }
+}
+const unmarkPending = (proxyObject: object) => {
+  const count = pendingCountMap.get(proxyObject) || 0
+  if (count > 1) {
+    pendingCountMap.set(proxyObject, count - 1)
+  } else {
+    pendingCountMap.delete(proxyObject)
   }
 }
 const isPending = (proxyObject: object) => {
@@ -103,14 +103,14 @@ export const derive = <T extends object, U extends object>(
             // already scheduled
             return
           }
-          const unmark = markPending(p)
+          markPending(p)
           if (notifyInSync) {
-            unmark()
+            unmarkPending(p)
             notify()
           } else {
             promise = Promise.resolve().then(() => {
               promise = undefined
-              unmark()
+              unmarkPending(p)
               notify()
             })
           }
