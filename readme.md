@@ -295,7 +295,7 @@ derive({
 #### `proxyWithComputed` util
 
 You can have computed values with dependency tracking with property access.
-Dependency tracking in `proxyWithComputed` conflicts with the work in `useSnapshot`.
+Dependency tracking in `proxyWithComputed` overlaps the work in `useSnapshot`.
 React users should prefer using `derive`.
 `proxyWithComputed` works well for some edge cases and for vanilla-js users.
 
