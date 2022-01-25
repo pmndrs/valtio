@@ -1,0 +1,34 @@
+---
+title: 'subscribe'
+section: 'Advanced'
+description: 'Subscribe to a current state/object'
+---
+
+# subscribe
+
+#### Subscribe from anywhere
+
+You can access state outside of your components and subscribe to changes.
+
+```jsx
+import { subscribe } from 'valtio'
+
+// Suscribe to all state changes
+const unsubscribe = subscribe(state, () =>
+  console.log('state has changed to', state)
+)
+// Unsubscribe by calling the result
+unsubscribe()
+```
+
+You can also subscribe to a portion of state.
+
+```jsx
+const state = proxy({ obj: { foo: 'bar' }, arr: ['hello'] })
+
+subscribe(state.obj, () => console.log('state.obj has changed to', state.obj))
+state.obj.foo = 'baz'
+
+subscribe(state.arr, () => console.log('state.arr has changed to', state.arr))
+state.arr.push('world')
+```

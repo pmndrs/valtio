@@ -1,0 +1,35 @@
+---
+title: 'derive'
+section: 'Utils'
+description: ''
+---
+
+# derive
+
+#### `derive` util
+
+You can subscribe to some proxies and create a derived proxy.
+
+```js
+import { derive } from 'valtio/utils'
+
+// create a base proxy
+const state = proxy({
+  count: 1,
+})
+
+// create a derived proxy
+const derived = derive({
+  doubled: (get) => get(state).count * 2,
+})
+
+// alternatively, attach derived properties to an existing proxy
+derive(
+  {
+    tripled: (get) => get(state).count * 3,
+  },
+  {
+    proxy: state,
+  }
+)
+```

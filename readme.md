@@ -295,7 +295,7 @@ derive({
 #### `proxyWithComputed` util
 
 You can have computed values with dependency tracking with property access.
-Dependency tracking in `proxyWithComputed` conflicts with the work in `useSnapshot`.
+Dependency tracking in `proxyWithComputed` overlaps the work in `useSnapshot`.
 React users should prefer using `derive`.
 `proxyWithComputed` works well for some edge cases and for vanilla-js users.
 
@@ -348,6 +348,41 @@ state.redo()
 console.log(state.value) // ---> { count: 1 }
 ```
 
+#### `proxySet` util
+
+This is to create a proxy which mimic the native Set behavior. The API is the same as Set API
+
+```js
+
+import { proxySet } from 'valtio/utils'
+ 
+const state = proxySet([1,2,3])
+//can be used inside a proxy as well
+//const state = proxy({
+//    count: 1,
+//    set: proxySet()
+//})
+
+state.add(4)
+state.delete(1)
+state.forEach(v => console.log(v)) // 2,3,4
+```
+
+#### `proxyMap` util
+
+This is to create a proxy which emulate the native Map behavior. The API is the same as Map API
+
+```js
+
+import { proxyMap } from 'valtio/utils'
+ 
+const state = proxyMap([["key", "value"], ["key2", "value2"]])
+state.set("key", "value")
+state.delete("key")
+state.get("key") // ---> value
+state.forEach((value, key) => console.log(key, value)) // ---> "key", "value", "key2", "value2"
+```
+
 #### Plugins
 
 - [eslint-plugin-valtio](https://github.com/pmndrs/eslint-plugin-valtio)
@@ -361,3 +396,23 @@ The community is working on recipes on wiki pages.
 - [How to persist states](https://github.com/pmndrs/valtio/wiki/How-to-persist-states)
 - [How to use with context](https://github.com/pmndrs/valtio/wiki/How-to-use-with-context)
 - [How to split and compose states](https://github.com/pmndrs/valtio/wiki/How-to-split-and-compose-states)
+
+----
+
+## How to contribute
+
+### Basic things to know before adding docs
+
+
+- Docs live in `docs/` folder.
+- Website lives in `website/` folder.
+- Docs are written in `mdx` format.
+- Docs filename shouldn't have spaces.
+- Website would generate title and other metadata from graymatter in the file.
+- You should be able to render condesandbox inside `mdx` files by simply adding the url for the same
+- Once you have a doc, you can add it to the sidebar section by adding it to the nav in `getDocsNav` function inside `website/lib/mdx.ts`
+
+
+-----
+
+
