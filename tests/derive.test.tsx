@@ -1,4 +1,5 @@
 import { StrictMode, Suspense } from 'react'
+
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { derive, underive } from 'valtio/utils'
@@ -303,24 +304,33 @@ it('basic underive', async () => {
 describe('glitch free', () => {
   it('basic (#296)', async () => {
     const state = proxy({ value: 0 })
-    const derived1 = derive({
-      value: (get) => get(state).value,
-    })
-    const derived2 = derive({
-      value: (get) => get(derived1).value,
-    })
+    const derived1 = derive(
+      { value: (get) => get(state).value },
+      { sync: false }
+    )
+    const derived2 = derive(
+      { value: (get) => get(derived1).value },
+      { sync: false }
+    )
     const computeValue = jest.fn((get) => {
       const v0 = get(state).value
       const v1 = get(derived1).value
       const v2 = get(derived2).value
-      return v0 + (v1 - v2)
+      return `v0: ${v0}, v1: ${v1}, v2: ${v2}`
     })
-    const derived3 = derive({
-      value: (get) => computeValue(get),
-    })
+    const derived3 = derive(
+      {
+        value: computeValue,
+      },
+      { sync: false }
+    )
 
+    let renderCount = 0
     const App = () => {
       const snap = useSnapshot(derived3)
+
+      renderCount++
+
       return (
         <div>
           value: {snap.value}
@@ -329,18 +339,17 @@ describe('glitch free', () => {
       )
     }
 
-    const { getByText, findByText } = render(
-      <StrictMode>
-        <App />
-      </StrictMode>
-    )
+    const { getByText, findByText } = render(<App />)
 
-    await findByText('value: 0')
+    await findByText('value: v0: 0, v1: 0, v2: 0')
     expect(computeValue).toBeCalledTimes(1)
+    expect(renderCount).toBe(1)
 
     fireEvent.click(getByText('button'))
-    await findByText('value: 1')
-    expect(computeValue).toBeCalledTimes(2)
+
+    await findByText('value: v0: 1, v1: 1, v2: 1')
+    expect(computeValue).toBeCalledTimes(3)
+    expect(renderCount).toBe(2)
   })
 
   it('same value', async () => {
