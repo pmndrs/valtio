@@ -1,0 +1,40 @@
+{
+  "name": "website",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.4.2",
+    "@heroicons/react": "^1.0.5",
+    "@remark-embedder/core": "^2.0.0",
+    "@remark-embedder/transformer-oembed": "^2.0.0",
+    "@tailwindcss/typography": "^0.5.0",
+    "clsx": "^1.1.1",
+    "esbuild": "^0.14.11",
+    "gray-matter": "^4.0.3",
+    "mdx-bundler": "^8.0.1",
+    "next": "12.0.7",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "rehype-autolink-headings": "^6.1.1",
+    "rehype-prism-plus": "^1.2.2",
+    "rehype-slug": "^5.0.1",
+    "remark-gfm": "^3.0.1",
+    "remark-mdx-images": "^1.0.3",
+    "unified": "^10.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "17.0.8",
+    "@types/react": "17.0.38",
+    "autoprefixer": "^10.4.2",
+    "eslint": "8.6.0",
+    "eslint-config-next": "12.0.7",
+    "postcss": "^8.4.5",
+    "tailwindcss": "^3.0.12",
+    "typescript": "4.5.4"
+  }
+}
