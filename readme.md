@@ -396,3 +396,23 @@ The community is working on recipes on wiki pages.
 - [How to persist states](https://github.com/pmndrs/valtio/wiki/How-to-persist-states)
 - [How to use with context](https://github.com/pmndrs/valtio/wiki/How-to-use-with-context)
 - [How to split and compose states](https://github.com/pmndrs/valtio/wiki/How-to-split-and-compose-states)
+
+----
+
+## How to contribute
+
+### Basic things to know before adding docs
+
+
+- Docs live in `docs/` folder.
+- Website lives in `website/` folder.
+- Docs are written in `mdx` format.
+- Docs filename shouldn't have spaces.
+- Website would generate title and other metadata from graymatter in the file.
+- You should be able to render condesandbox inside `mdx` files by simply adding the url for the same
+- Once you have a doc, you can add it to the sidebar section by adding it to the nav in `getDocsNav` function inside `website/lib/mdx.ts`
+
+
+-----
+
+

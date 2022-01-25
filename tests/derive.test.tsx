@@ -1,4 +1,4 @@
-import { StrictMode, Suspense } from 'react'
+import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { derive, underive } from 'valtio/utils'
@@ -303,43 +303,37 @@ it('basic underive', async () => {
 describe('glitch free', () => {
   it('basic (#296)', async () => {
     const state = proxy({ value: 0 })
-    const derived1 = derive({
-      value: (get) => get(state).value,
-    })
-    const derived2 = derive({
-      value: (get) => get(derived1).value,
-    })
+    const derived1 = derive({ value: (get) => get(state).value })
+    const derived2 = derive({ value: (get) => get(derived1).value })
     const computeValue = jest.fn((get) => {
       const v0 = get(state).value
       const v1 = get(derived1).value
       const v2 = get(derived2).value
-      return v0 + (v1 - v2)
+      return `v0: ${v0}, v1: ${v1}, v2: ${v2}`
     })
-    const derived3 = derive({
-      value: (get) => computeValue(get),
-    })
+    const derived3 = derive({ value: computeValue })
 
     const App = () => {
       const snap = useSnapshot(derived3)
+      const commitsRef = useRef(1)
+      useEffect(() => {
+        commitsRef.current += 1
+      })
       return (
         <div>
-          value: {snap.value}
+          value: {snap.value} (commits: {commitsRef.current})
           <button onClick={() => ++state.value}>button</button>
         </div>
       )
     }
 
-    const { getByText, findByText } = render(
-      <StrictMode>
-        <App />
-      </StrictMode>
-    )
+    const { getByText, findByText } = render(<App />)
 
-    await findByText('value: 0')
+    await findByText('value: v0: 0, v1: 0, v2: 0 (commits: 1)')
     expect(computeValue).toBeCalledTimes(1)
 
     fireEvent.click(getByText('button'))
-    await findByText('value: 1')
+    await findByText('value: v0: 1, v1: 1, v2: 1 (commits: 2)')
     expect(computeValue).toBeCalledTimes(2)
   })
 

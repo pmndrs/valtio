@@ -1,0 +1,23 @@
+---
+title: 'proxy'
+section: 'Basic'
+description: 'Create a proxy object.'
+---
+
+# proxy
+
+```jsx
+import { proxy, useSnapshot } from 'valtio'
+
+const state = proxy({ count: 0, text: 'hello' })
+```
+
+#### Mutate from anywhere
+
+You can make changes to it in the same way you would to a normal js-object.
+
+```jsx
+setInterval(() => {
+  ++state.count
+}, 1000)
+```
