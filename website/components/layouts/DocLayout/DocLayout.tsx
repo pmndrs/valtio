@@ -13,7 +13,10 @@ interface NavItemProps extends Partial<Navigation> {
 }
 
 const NavItem = forwardRef<HTMLElement, React.PropsWithChildren<NavItemProps>>(
-  ({ href, children, isActive, isPublished, fallbackHref }, ref) => {
+  function NavItem(
+    { href, children, isActive, isPublished, fallbackHref },
+    ref
+  ) {
     return (
       //@ts-ignore
       <li ref={ref}>
