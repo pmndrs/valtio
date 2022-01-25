@@ -41,7 +41,6 @@ const markPending = (sourceObject: object) => {
 const checkPending = (sourceObject: object, callback: () => void) => {
   const sourceObjectEntry = sourceObjectMap.get(sourceObject)
   if (sourceObjectEntry?.[2]) {
-    // pendingCount
     sourceObjectEntry[3].add(callback) // pendingCallbacks
     return true
   }
@@ -53,8 +52,7 @@ const unmarkPending = (sourceObject: object) => {
   if (sourceObjectEntry) {
     --sourceObjectEntry[2] // pendingCount
     if (!sourceObjectEntry[2]) {
-      // pendingCount
-      const pendingCallbacks = new Set(sourceObjectEntry[3]) // pendingCallbacks
+      const pendingCallbacks = new Set(sourceObjectEntry[3])
       sourceObjectEntry[3].clear() // pendingCallbacks
       pendingCallbacks.forEach((callback) => callback())
     }
@@ -237,12 +235,12 @@ export const derive = <T extends object, U extends object>(
             entry.s = lastSubscription
           } else {
             const subscription: Subscription = {
-              s: p,
-              d: proxyObject,
-              k: key,
-              c: evaluate,
+              s: p, // sourceObject
+              d: proxyObject, // derivedObject
+              k: key, // derived key
+              c: evaluate, // callback
               n: notifyInSync,
-              i: derivedKeys,
+              i: derivedKeys, // ignoringKeys
             }
             addSubscription(subscription)
             entry.s = subscription
