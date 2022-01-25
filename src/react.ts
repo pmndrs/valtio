@@ -138,7 +138,7 @@ export const useSnapshot = <T extends object>(
       [proxyObject, notifyInSync]
     ),
     useMemo(() => {
-      let prevSnapshot: DeepResolveType<T> | undefined
+      let prevSnapshot: Snapshot<T> | undefined
       return () => {
         const nextSnapshot = snapshot(proxyObject)
         try {
