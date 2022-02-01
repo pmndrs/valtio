@@ -97,15 +97,20 @@ function createCommonJSConfig(input, output) {
 }
 
 function createUMDConfig(input, output, env) {
+  const c = output.split('/').pop()
   return {
     input,
     output: {
       file: `${output}.${env}.js`,
       format: 'umd',
       exports: 'named',
-      name: 'valtio',
+      name:
+        c === 'index'
+          ? 'valtio'
+          : `valtio${c.slice(0, 1).toUpperCase()}${c.slice(1)}`,
       globals: {
         react: 'React',
+        'valtio/vanilla': 'valtioVanilla',
       },
     },
     external,
