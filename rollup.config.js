@@ -104,6 +104,9 @@ function createUMDConfig(input, output, env) {
       format: 'umd',
       exports: 'named',
       name: 'valtio',
+      globals: {
+        react: 'React',
+      },
     },
     external,
     plugins: [
