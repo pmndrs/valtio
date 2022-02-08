@@ -62,7 +62,7 @@ export const proxyWithHistory = <V>(initialValue: V, skipSubscribe = false) => {
     subscribe: () =>
       subscribe(proxyObject, (ops) => {
         if (
-          ops.some(
+          ops.every(
             (op) =>
               op[1][0] === 'value' &&
               (op[0] !== 'set' || op[2] !== proxyObject.history.wip)
