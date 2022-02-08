@@ -217,6 +217,7 @@ it('multiple redos at once (#323)', async () => {
   await findByText('count: 0')
 
   fireEvent.click(getByText('inc'))
+  await findByText('count: 1')
   fireEvent.click(getByText('inc'))
   await findByText('count: 2')
 
