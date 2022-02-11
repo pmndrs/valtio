@@ -146,10 +146,10 @@ type Options = {
  *   </div>
  * )
  */
-export const useSnapshot = <T extends object>(
+export function useSnapshot<T extends object>(
   proxyObject: T,
   options?: Options
-): Snapshot<T> => {
+): Snapshot<T> {
   const forceUpdate = useReducer((c) => c + 1, 0)[1]
   const affected = new WeakMap()
   const lastAffected = useRef<typeof affected>()

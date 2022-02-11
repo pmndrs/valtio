@@ -31,10 +31,10 @@ let currentCleanups: Set<() => void> | undefined
  * @returns A cleanup function that stops the callback from reevaluating and
  * also performs cleanups registered into `watch`.
  */
-export const watch = (
+export function watch(
   callback: WatchCallback,
   options?: WatchOptions
-): (() => void) => {
+): () => void {
   const cleanups = new Set<() => void>()
   const subscriptions = new Set<object>()
 
