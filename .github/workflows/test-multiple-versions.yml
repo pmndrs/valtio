@@ -31,7 +31,7 @@ jobs:
           - 16.9.0
           - 17.0.0
           - 18.0.0-rc.0
-          - 0.0.0-experimental-cd4eb116c-20220207
+          - 0.0.0-experimental-64223fed8-20220210
         env: [development, production]
         testing: [default, alpha]
         exclude:
@@ -40,9 +40,9 @@ jobs:
           - { react: 16.9.0, testing: alpha }
           - { react: 17.0.0, testing: alpha }
           - { react: 18.0.0-rc.0, testing: default } # suspense doesn't work?
-          - { react: 0.0.0-experimental-cd4eb116c-20220207, testing: default } # suspense doesn't work?
+          - { react: 0.0.0-experimental-64223fed8-20220210, testing: default } # suspense doesn't work?
           - { react: 18.0.0-rc.0, env: production } # act(...) is not supported in production builds of React.
-          - { react: 0.0.0-experimental-cd4eb116c-20220207, env: production } # act(...) is not supported in production builds of React.
+          - { react: 0.0.0-experimental-64223fed8-20220210, env: production } # act(...) is not supported in production builds of React.
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
