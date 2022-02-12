@@ -15,7 +15,7 @@ const DEVTOOLS = Symbol()
  * const state = proxy({ count: 0, text: 'hello' })
  * const unsub = devtools(state, 'state name')
  */
-export const devtools = <T extends object>(proxyObject: T, name?: string) => {
+export function devtools<T extends object>(proxyObject: T, name?: string) {
   let extension: any
   try {
     extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__

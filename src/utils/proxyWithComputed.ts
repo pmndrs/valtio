@@ -48,7 +48,7 @@ type Snapshot<T> = T extends AnyFunction
  *   }, // with optional setter
  * })
  */
-export const proxyWithComputed = <T extends object, U extends object>(
+export function proxyWithComputed<T extends object, U extends object>(
   initialObject: T,
   computedFns: {
     [K in keyof U]:
@@ -58,7 +58,7 @@ export const proxyWithComputed = <T extends object, U extends object>(
           set?: (state: T, newValue: U[K]) => void
         }
   }
-) => {
+) {
   ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
     if (Object.getOwnPropertyDescriptor(initialObject, key)) {
       throw new Error('object property already defined')

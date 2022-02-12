@@ -9,7 +9,7 @@ const PROMISE_ERROR = Symbol()
 
 type AsRef = { $$valtioRef: true }
 const refSet = new WeakSet()
-export const ref = <T extends object>(o: T): T & AsRef => {
+export function ref<T extends object>(o: T): T & AsRef {
   refSet.add(o)
   return o as T & AsRef
 }
@@ -47,7 +47,7 @@ const snapshotCache = new WeakMap<
   [version: number, snapshot: unknown]
 >()
 
-export const proxy = <T extends object>(initialObject: T = {} as T): T => {
+export function proxy<T extends object>(initialObject: T = {} as T): T {
   if (!isObject(initialObject)) {
     throw new Error('object required')
   }
@@ -211,14 +211,15 @@ export const proxy = <T extends object>(initialObject: T = {} as T): T => {
   return proxyObject
 }
 
-export const getVersion = (proxyObject: unknown): number | undefined =>
-  isObject(proxyObject) ? (proxyObject as any)[VERSION] : undefined
+export function getVersion(proxyObject: unknown): number | undefined {
+  return isObject(proxyObject) ? (proxyObject as any)[VERSION] : undefined
+}
 
-export const subscribe = <T extends object>(
+export function subscribe<T extends object>(
   proxyObject: T,
   callback: (ops: Op[]) => void,
   notifyInSync?: boolean
-) => {
+) {
   if (__DEV__ && !(proxyObject as any)?.[LISTENERS]) {
     console.warn('Please use proxy object')
   }
@@ -269,14 +270,14 @@ type Snapshot<T> = T extends AnyFunction
       readonly [K in keyof T]: Snapshot<T[K]>
     }
 
-export const snapshot = <T extends object>(proxyObject: T): Snapshot<T> => {
+export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
   if (__DEV__ && !(proxyObject as any)?.[SNAPSHOT]) {
     console.warn('Please use proxy object')
   }
   return (proxyObject as any)[SNAPSHOT]
 }
 
-export const getHandler = <T extends object>(proxyObject: T) => {
+export function getHandler<T extends object>(proxyObject: T) {
   if (__DEV__ && !(proxyObject as any)?.[HANDLER]) {
     console.warn('Please use proxy object')
   }
