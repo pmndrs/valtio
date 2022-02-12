@@ -244,21 +244,6 @@ export function subscribe<T extends object>(
   }
 }
 
-/**
- * @deprecated this will be removed in next versions
- */
-export type DeepResolveType<T> = T extends (...args: any[]) => any
-  ? T
-  : T extends AsRef
-  ? T
-  : T extends Promise<infer V>
-  ? DeepResolveType<V>
-  : T extends object
-  ? {
-      readonly [K in keyof T]: DeepResolveType<T[K]>
-    }
-  : T
-
 type AnyFunction = (...args: any[]) => any
 type Snapshot<T> = T extends AnyFunction
   ? T
