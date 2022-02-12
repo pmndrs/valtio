@@ -2,8 +2,10 @@ import path from 'path'
 import alias from '@rollup/plugin-alias'
 import babelPlugin from '@rollup/plugin-babel'
 import resolve from '@rollup/plugin-node-resolve'
+import replace from '@rollup/plugin-replace'
 import typescript from '@rollup/plugin-typescript'
 import esbuild from 'rollup-plugin-esbuild'
+import { terser } from 'rollup-plugin-terser'
 const createBabelConfig = require('./babel.config')
 
 const extensions = ['.js', '.ts', '.tsx']
@@ -22,9 +24,9 @@ function getBabelOptions(targets) {
   }
 }
 
-function getEsbuild(target) {
+function getEsbuild(target, env = 'development') {
   return esbuild({
-    minify: false,
+    minify: env === 'production',
     target,
     tsconfig: path.resolve('./tsconfig.json'),
   })
@@ -63,6 +65,10 @@ function createESMConfig(input, output) {
         },
       }),
       resolve({ extensions }),
+      replace({
+        __DEV__: '(import.meta.env&&import.meta.env.MODE)!=="production"',
+        preventAssignment: true,
+      }),
       getEsbuild('node12'),
     ],
   }
@@ -71,7 +77,7 @@ function createESMConfig(input, output) {
 function createCommonJSConfig(input, output) {
   return {
     input,
-    output: { file: output, format: 'cjs', exports: 'named' },
+    output: { file: `${output}.js`, format: 'cjs', exports: 'named' },
     external,
     plugins: [
       alias({
@@ -81,19 +87,31 @@ function createCommonJSConfig(input, output) {
         },
       }),
       resolve({ extensions }),
+      replace({
+        __DEV__: 'process.env.NODE_ENV!=="production"',
+        preventAssignment: true,
+      }),
       babelPlugin(getBabelOptions({ ie: 11 })),
     ],
   }
 }
 
-function createUMDConfig(input, output) {
+function createUMDConfig(input, output, env) {
+  const c = output.split('/').pop()
   return {
     input,
     output: {
-      file: output,
+      file: `${output}.${env}.js`,
       format: 'umd',
       exports: 'named',
-      name: 'valtio',
+      name:
+        c === 'index'
+          ? 'valtio'
+          : `valtio${c.slice(0, 1).toUpperCase()}${c.slice(1)}`,
+      globals: {
+        react: 'React',
+        'valtio/vanilla': 'valtioVanilla',
+      },
     },
     external,
     plugins: [
@@ -104,16 +122,21 @@ function createUMDConfig(input, output) {
         },
       }),
       resolve({ extensions }),
+      replace({
+        __DEV__: env !== 'production' ? 'true' : 'false',
+        preventAssignment: true,
+      }),
       babelPlugin(getBabelOptions({ ie: 11 })),
+      ...(env === 'production' ? [terser()] : []),
     ],
   }
 }
 
-function createSystemConfig(input, output) {
+function createSystemConfig(input, output, env) {
   return {
     input,
     output: {
-      file: output,
+      file: `${output}.${env}.js`,
       format: 'system',
       exports: 'named',
     },
@@ -126,7 +149,11 @@ function createSystemConfig(input, output) {
         },
       }),
       resolve({ extensions }),
-      getEsbuild('node12'),
+      replace({
+        __DEV__: env !== 'production' ? 'true' : 'false',
+        preventAssignment: true,
+      }),
+      getEsbuild('node12', env),
     ],
   }
 }
@@ -135,18 +162,16 @@ export default function (args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
   if (c) {
     c = c.slice('config-'.length).replace(/_/g, '/')
-    return [
-      createCommonJSConfig(`src/${c}.ts`, `dist/${c}.js`),
-      createESMConfig(`src/${c}.ts`, `dist/esm/${c}`),
-      createUMDConfig(`src/${c}.ts`, `dist/umd/${c}.js`),
-      createSystemConfig(`src/${c}.ts`, `dist/system/${c}.js`),
-    ]
+  } else {
+    c = 'index'
   }
   return [
-    createDeclarationConfig('src/index.ts', 'dist'),
-    createCommonJSConfig('src/index.ts', 'dist/index.js'),
-    createESMConfig('src/index.ts', 'dist/esm/index'),
-    createUMDConfig('src/index.ts', 'dist/umd/index.js'),
-    createSystemConfig('src/index.ts', 'dist/system/index.js'),
+    ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
+    createCommonJSConfig(`src/${c}.ts`, `dist/${c}`),
+    createESMConfig(`src/${c}.ts`, `dist/esm/${c}`),
+    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development'),
+    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production'),
+    createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'development'),
+    createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'production'),
   ]
 }

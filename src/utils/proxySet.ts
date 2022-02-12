@@ -1,4 +1,4 @@
-import { proxy } from 'valtio'
+import { proxy } from '../vanilla'
 
 // properies that we don't want to expose to the end-user
 type InternalProxySet<T> = Set<T> & {
