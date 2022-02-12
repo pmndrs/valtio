@@ -53,12 +53,11 @@ function Counter() {
 The `snap` variable returned by `useSnapshot` is a (deeply) read-only object.
 Its type has `readonly` attribute, which may be too strict for some use cases.
 
-To mitigate typing difficulties, you might want to consider creating a utility function like this:
+To mitigate typing difficulties, you might want to loosen the type definition:
 ```ts
-const useSnapshotLooselyTyped = <T extends object>(
-  proxyObject: T,
-  options: Parameters<typeof useSnapshot>[1],
-) => useSnapshot(proxyObject, options) as T
+declare module "valtio" {
+  function useSnapshot<T extends object>(p: T): T;
+}
 ```
 
 See [#327](https://github.com/pmndrs/valtio/issues/327) for more information.
