@@ -209,7 +209,7 @@ export const useSnapshot = <T extends object>(
     snapshot,
     sub
   )
-  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+  if (__DEV__) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useAffectedDebugValue(currSnapshot, affected)
   }

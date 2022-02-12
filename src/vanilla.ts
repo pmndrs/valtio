@@ -219,11 +219,7 @@ export const subscribe = <T extends object>(
   callback: (ops: Op[]) => void,
   notifyInSync?: boolean
 ) => {
-  if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production' &&
-    !(proxyObject as any)?.[LISTENERS]
-  ) {
+  if (__DEV__ && !(proxyObject as any)?.[LISTENERS]) {
     console.warn('Please use proxy object')
   }
   let promise: Promise<void> | undefined
@@ -274,22 +270,14 @@ type Snapshot<T> = T extends AnyFunction
     }
 
 export const snapshot = <T extends object>(proxyObject: T): Snapshot<T> => {
-  if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production' &&
-    !(proxyObject as any)?.[SNAPSHOT]
-  ) {
+  if (__DEV__ && !(proxyObject as any)?.[SNAPSHOT]) {
     console.warn('Please use proxy object')
   }
   return (proxyObject as any)[SNAPSHOT]
 }
 
 export const getHandler = <T extends object>(proxyObject: T) => {
-  if (
-    typeof process === 'object' &&
-    process.env.NODE_ENV !== 'production' &&
-    !(proxyObject as any)?.[HANDLER]
-  ) {
+  if (__DEV__ && !(proxyObject as any)?.[HANDLER]) {
     console.warn('Please use proxy object')
   }
   return (proxyObject as any)[HANDLER]
