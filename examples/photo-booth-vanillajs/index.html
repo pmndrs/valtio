@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Photo Booth</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css" />
+  </head>
+
+  <body>
+    <header><a href="https://github.com/pmndrs/valtio">Valtio 💊</a></header>
+    <main>
+      <h1>Photo Booth</h1>
+      <section id="video-container">
+        <video playsinline autoplay></video>
+      </section>
+      <controls>
+        <button id="take-pic-btn">Take picture</button>
+      </controls>
+      <canvas hidden></canvas>
+      <controls id="candidate-img-controls"> </controls>
+      <div id="images"></div>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

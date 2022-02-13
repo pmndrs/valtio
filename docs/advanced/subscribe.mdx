@@ -13,7 +13,7 @@ You can access state outside of your components and subscribe to changes.
 ```jsx
 import { subscribe } from 'valtio'
 
-// Suscribe to all state changes
+// Subscribe to all state changes
 const unsubscribe = subscribe(state, () =>
   console.log('state has changed to', state)
 )
@@ -32,3 +32,7 @@ state.obj.foo = 'baz'
 subscribe(state.arr, () => console.log('state.arr has changed to', state.arr))
 state.arr.push('world')
 ```
+
+## Codesandbox demo in VanillaJS
+
+https://codesandbox.io/s/valtio-photo-booth-demo-forked-xp8hs?file=/src/main.js
