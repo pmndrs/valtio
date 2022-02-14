@@ -6,4 +6,50 @@ description: ''
 
 # proxyMap
 
-TODO
+#### `proxyMap` util
+
+This utility create a proxy which mimic the native Map behavior. The API is the same as Map API.
+
+```js
+import { proxyMap } from "valtio/utils"
+
+const state = proxyMap()
+state.size // ---> 0
+
+state.set(1, "hello")
+state.size // ---> 1
+
+state.delete(1)
+state.size // ---> 0
+```
+
+In can be used inside a `proxy` as well.
+
+```js
+import { proxyMap } from 'valtio/utils'
+
+const state = proxy({
+   count: 1,
+   map: proxyMap()
+})
+```
+
+When using an object as a key, you can wrap it with `ref` so it's not proxied. this is useful if you want to preserve the key equality
+
+```js
+import { proxyMap } from 'valtio/utils'
+
+// with ref
+const key = ref({})
+state.set(key, "hello")
+state.get(key) //hello
+
+// without ref
+const key = {}
+state.set(key, "value")
+state.get(key) //undefined
+```
+
+## Codesandbox demo
+
+https://codesandbox.io/s/github/pmndrs/valtio/tree/main/examples/todo-with-proxyMap
