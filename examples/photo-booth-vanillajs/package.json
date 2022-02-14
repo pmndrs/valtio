@@ -1,0 +1,17 @@
+{
+  "name": "valtio-photo-booth-demo",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "start": "yarn run dev"
+  },
+  "dependencies": {
+    "lighterhtml": "4.2.0",
+    "localforage": "1.10.0",
+    "valtio": "1.3.0",
+    "vite": "2.8.1"
+  },
+  "keywords": [],
+  "description": ""
+}
