@@ -8,7 +8,7 @@ description: ''
 
 #### `proxyMap` util
 
-This utility create a proxy which mimic the native Map behavior. The API is the same as Map API.
+This utility creates a proxy which mimics the native Map behavior. The API is the same as the Map API.
 
 ```js
 import { proxyMap } from "valtio/utils"
@@ -23,7 +23,7 @@ state.delete(1)
 state.size // ---> 0
 ```
 
-In can be used inside a `proxy` as well.
+It can be used inside a `proxy` as well.
 
 ```js
 import { proxyMap } from 'valtio/utils'
@@ -34,7 +34,7 @@ const state = proxy({
 })
 ```
 
-When using an object as a key, you can wrap it with `ref` so it's not proxied. this is useful if you want to preserve the key equality
+When using an object as a key, you can wrap it with `ref` so it's not proxied. This is useful if you want to preserve the key equality
 
 ```js
 import { proxyMap } from 'valtio/utils'
