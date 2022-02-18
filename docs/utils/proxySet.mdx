@@ -8,7 +8,7 @@ description: ''
 
 #### `proxySet` util
 
-This utility create a proxy which mimic the native Set behavior. The API is the same as Set API
+This utility creates a proxy which mimics the native Set behavior. The API is the same as the native Set API.
 
 ```js
 import { proxySet } from 'valtio/utils'
@@ -20,7 +20,7 @@ state.delete(1)
 state.forEach(v => console.log(v)) // --->  2,3,4
 ```
 
-In can be used inside a `proxy` as well.
+It can be used inside a `proxy` as well.
 
 ```js
 import { proxySet } from 'valtio/utils'
