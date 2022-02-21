@@ -66,7 +66,8 @@ function createESMConfig(input, output) {
       }),
       resolve({ extensions }),
       replace({
-        __DEV__: '(import.meta.env&&import.meta.env.MODE)!=="production"',
+        __DEV__:
+          '(import.meta.env&&import.meta.env.MODE)!=="production"&&(import.meta.env&&import.meta.env.MODE)!=="test"',
         preventAssignment: true,
       }),
       getEsbuild('node12'),
@@ -88,7 +89,8 @@ function createCommonJSConfig(input, output) {
       }),
       resolve({ extensions }),
       replace({
-        __DEV__: 'process.env.NODE_ENV!=="production"',
+        __DEV__:
+          'process.env.NODE_ENV!=="production"&&process.env.NODE_ENV!=="test"',
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
@@ -123,7 +125,8 @@ function createUMDConfig(input, output, env) {
       }),
       resolve({ extensions }),
       replace({
-        __DEV__: env !== 'production' ? 'true' : 'false',
+        __DEV__:
+          env !== 'production' ? (env !== 'test' ? 'true' : 'false') : 'false',
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
@@ -150,7 +153,8 @@ function createSystemConfig(input, output, env) {
       }),
       resolve({ extensions }),
       replace({
-        __DEV__: env !== 'production' ? 'true' : 'false',
+        __DEV__:
+          env !== 'production' ? (env !== 'test' ? 'true' : 'false') : 'false',
         preventAssignment: true,
       }),
       getEsbuild('node12', env),
