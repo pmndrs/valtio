@@ -1,4 +1,4 @@
-import { snapshot, subscribe } from '../vanilla'
+import { snapshot, STACK, subscribe } from '../vanilla'
 
 type Message = { type: string; payload?: any; state?: any }
 
@@ -30,7 +30,17 @@ export function devtools<T extends object>(proxyObject: T, name?: string) {
   }
 
   let isTimeTraveling = false
-  const devtools = extension.connect({ name })
+  function trace(action: {
+    type: string
+    updatedAt: string
+    data: T & { [STACK]: string }
+  }) {
+    const stack = action.data[STACK]
+
+    return stack.split('\n').slice(2).join('\n')
+  }
+
+  const devtools = extension.connect({ name, trace })
   const unsub1 = subscribe(proxyObject, (ops) => {
     const action = ops
       .filter(([_, path]) => path[0] !== DEVTOOLS)
@@ -50,6 +60,7 @@ export function devtools<T extends object>(proxyObject: T, name?: string) {
         {
           type: action,
           updatedAt: new Date().toLocaleString(),
+          data: snapWithoutDevtools,
         },
         snapWithoutDevtools
       )

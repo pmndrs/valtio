@@ -6,6 +6,7 @@ const SNAPSHOT = Symbol()
 const HANDLER = Symbol()
 const PROMISE_RESULT = Symbol()
 const PROMISE_ERROR = Symbol()
+export const STACK = Symbol()
 
 type AsRef = { $$valtioRef: true }
 const refSet = new WeakSet()
@@ -156,7 +157,9 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
     is: Object.is,
     canProxy,
     set(target: T, prop: string | symbol, value: any, receiver: any) {
+      const stack = new Error().stack
       const prevValue = Reflect.get(target, prop, receiver)
+      Reflect.set(target, STACK, stack)
       if (this.is(prevValue, value)) {
         return true
       }
