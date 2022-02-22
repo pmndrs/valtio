@@ -358,6 +358,25 @@ it('circular object', async () => {
   await findByText('count: 1')
 })
 
+it('circular object with non-proxy object (#375)', async () => {
+  const initialObject = { count: 0 }
+  const state: any = proxy(initialObject)
+  state.obj = initialObject
+
+  const Counter = () => {
+    const snap = useSnapshot(state)
+    return <div>count: {snap.obj ? 1 : snap.count}</div>
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>
+  )
+
+  await findByText('count: 1')
+})
+
 it('render from outside', async () => {
   const obj = proxy({ count: 0, anotherCount: 0 })
 
