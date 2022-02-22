@@ -6,7 +6,7 @@ description: 'Create a proxy object.'
 
 # proxy
 
-The proxy tracks changes to the original object and all nested objects, notifying listeners when a new version of the object is created.
+The proxy tracks changes to the original object and all nested objects, notifying listeners when an object is modified.
 
 ```jsx
 import { proxy, useSnapshot } from 'valtio'
@@ -62,16 +62,22 @@ authState.user.name = 'Nina'
 
 #### Gotchas
 
-You cannot descructure the object from proxy and subscribe to a property.
+If you reassign the proxy to a entirely new object, it will stop working.
 
 ```jsx
-// don't
-const { user } = proxy({ user: { name: 'Timo' } })
-subscibe(user, () => {...})
+let state = proxy({ user: { name: 'Timo' } })
+subscribe(state, () => {
+  console.log(state.user.name) // not called
+})
+state = {user: {name: 'Nina'}}
 
 // do
-const state = proxy({ user: { name: 'Nina' } })
-subscibe(state.user, () => {...})
+let state = proxy({ user: { name: 'Timo' } })
+subscribe(state, () => {
+  console.log(state.user.name) // logs "Nina"
+})
+
+state.user.name = "Nina"
 ```
 
 Not everything can be proxied. Generally, you are safe if it is serializable. Classes can also be proxied. But avoid special objects. 
