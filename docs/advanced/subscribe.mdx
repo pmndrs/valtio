@@ -28,7 +28,6 @@ const state = proxy({ obj: { foo: 'bar' }, arr: ['hello'] })
 
 subscribe(state.obj, () => console.log('state.obj has changed to', state.obj))
 state.obj.foo = 'baz'
-
 subscribe(state.arr, () => console.log('state.arr has changed to', state.arr))
 state.arr.push('world')
 ```
