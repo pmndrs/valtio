@@ -10,7 +10,7 @@ description: 'Create a snapshot of current state'
   
 Immutability is achieved by deeply freezing the object. In sequential snapshot calls, when the values in the proxy have not changed, a pointer to the same object is returned. This allows for shallow comparison in render functions, preventing spurious renders. Snapshots also throw promises, making them work with React Suspense.
 
-```jsx
+```js
 import { proxy, snapshot } from 'valtio'
 
 const store = proxy({ name: "Mika" });
