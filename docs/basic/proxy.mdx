@@ -83,7 +83,8 @@ state.user.name = "Nina"
 Not everything can be proxied. Generally, you are safe if it is serializable. Classes can also be proxied. But avoid special objects. 
 
 ```jsx
-  // these won't work - changes to these objects causes updates
+  // these won't work - changes to these objects won't cause updates
+  // to store state that is unproxied see the docs on ref
   const state = proxy({
     chart: d3.select('#chart'),
     component: React.createElement('div'),
