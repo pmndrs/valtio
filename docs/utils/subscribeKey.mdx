@@ -8,7 +8,7 @@ description: ''
 
 To subscribe to a primitive value of state, consider `subscribeKey` in utils.
 
-```jsx
+```js
 import { subscribeKey } from 'valtio/utils'
 
 const state = proxy({ count: 0, text: 'hello' })
@@ -17,13 +17,3 @@ subscribeKey(state, 'count', (v) =>
 )
 ```
 
-There is another util `watch` which might be convenient in some cases.
-
-```jsx
-import { watch } from 'valtio/utils'
-
-const state = proxy({ count: 0 })
-const stop = watch((get) => {
-  console.log('state has changed to', get(state)) // auto-subscribe on use
-})
-```
