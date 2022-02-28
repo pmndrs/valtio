@@ -1,0 +1,132 @@
+main {
+  -moz-osx-font-smoothing: grayscale;
+  text-align: center;
+  color: #2c3e50;
+  margin-top: 60px;
+}
+
+video {
+  width: 100%;
+  max-height: calc(50vh - 16px);
+  background: var(--background-alt);
+  cursor: pointer;
+}
+
+controls {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.image-remove-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 8px;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.image-remove-btn.selected {
+  display: none;
+}
+
+canvas {
+  margin: 32px;
+}
+
+button {
+  margin-top: 18px;
+}
+
+#images {
+  display: flex;
+  flex-flow: wrap;
+  gap: 8px;
+}
+
+a:not(.selected) {
+  position: relative;
+  flex: 0 1 auto;
+  width: calc(33% - 4px);
+  padding-top: 2;
+  padding-right: 2;
+  padding-bottom: 0;
+  padding-left: 2;
+}
+
+a.selected {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  background: var(--background);
+  z-index: 10;
+}
+
+img {
+  border: 1px solid transparent;
+  transition: all 250ms cubic-bezier(0, 0.72, 0, 1.02);
+}
+
+img.selected {
+  display: block;
+  width: 90%;
+  border-radius: 8;
+  margin: 64px auto;
+}
+
+img:not(.selected) {
+  width: 100%;
+  border-radius: 4;
+}
+
+img:hover {
+  border: 1px solid var(--highlight);
+  transform-origin: center center;
+  z-index: 2;
+  cursor: pointer;
+}
+
+.animate-in img:hover {
+  border: 1px solid transparent;
+  transform: scale(1);
+}
+
+.animate-in {
+  animation: up-in;
+  animation-duration: 250ms;
+  animation-fill-mode: forwards;
+  animation-timing-function: cubic-bezier(0, 0.72, 0, 1.02);
+  will-change: transform;
+  transform: translate3d(0, -200px, 0);
+  opacity: 0.5;
+}
+
+.animate-in:after {
+  position: absolute;
+  top: 32px;
+  right: calc(5%);
+  content: 'Close';
+  color: var(--select-arrow);
+  font-size: 1rem;
+}
+
+.hidden {
+  display: none;
+}
+
+@keyframes up-in {
+  from {
+    transform: translate3d(0, -200px, 0);
+    opacity: 0.5;
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}

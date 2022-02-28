@@ -2,6 +2,7 @@ import type { NextPage } from "next";
 import type { AppProps } from "next/app";
 
 import "~/styles/tailwind.css";
+import "~/styles/prism-theme.css";
 
 type NextPageWithLayout = NextPage & {
   layoutProps: {

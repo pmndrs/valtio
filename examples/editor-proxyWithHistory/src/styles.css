@@ -1,0 +1,12 @@
+.App {
+  font-family: 'Helvetica Neue', sans-serif;
+  text-align: center;
+}
+
+.editor {
+  display: flex;
+  margin: 0 auto;
+  width: 80%;
+  flex-direction: column;
+  margin-bottom: 8px;
+}

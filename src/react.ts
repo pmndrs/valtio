@@ -117,10 +117,10 @@ type Options = {
  *   </div>
  * )
  */
-export const useSnapshot = <T extends object>(
+export function useSnapshot<T extends object>(
   proxyObject: T,
   options?: Options
-): Snapshot<T> => {
+): Snapshot<T> {
   const affected = new WeakMap()
   const lastAffected = useRef<typeof affected>()
   const lastCallback = useRef<() => void>()
@@ -177,7 +177,7 @@ export const useSnapshot = <T extends object>(
       }
     }
   })
-  if (typeof process === 'object' && process.env.NODE_ENV !== 'production') {
+  if (__DEV__) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useAffectedDebugValue(currSnapshot, affected)
   }

@@ -181,7 +181,7 @@ export const unstable_deriveSubscriptions = {
  *   proxy: state,
  * })
  */
-export const derive = <T extends object, U extends object>(
+export function derive<T extends object, U extends object>(
   derivedFns: {
     [K in keyof U]: (get: DeriveGet) => U[K]
   },
@@ -189,7 +189,7 @@ export const derive = <T extends object, U extends object>(
     proxy?: T
     sync?: boolean
   }
-) => {
+) {
   const proxyObject = (options?.proxy || proxy({})) as U
   const notifyInSync = !!options?.sync
   const derivedKeys = Object.keys(derivedFns)
@@ -287,13 +287,13 @@ export const derive = <T extends object, U extends object>(
  *
  * underive(derivedState)
  */
-export const underive = <T extends object, U extends object>(
+export function underive<T extends object, U extends object>(
   proxyObject: T & U,
   options?: {
     delete?: boolean
     keys?: (keyof U)[]
   }
-) => {
+) {
   const keysToDelete = options?.delete ? new Set<keyof U>() : null
   listSubscriptions(proxyObject).forEach((subscription) => {
     const { k: key } = subscription

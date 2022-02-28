@@ -23,7 +23,7 @@ import { proxy, ref, snapshot, subscribe } from '../vanilla'
  *   count: 1,
  * })
  */
-export const proxyWithHistory = <V>(initialValue: V, skipSubscribe = false) => {
+export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
   const proxyObject = proxy({
     value: initialValue,
     history: ref({

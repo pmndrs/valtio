@@ -1,4 +1,4 @@
-import { proxy } from 'valtio'
+import { proxy } from '../vanilla'
 
 // properies that we don't want to expose to the end-user
 type InternalProxySet<T> = Set<T> & {
@@ -21,7 +21,7 @@ type InternalProxySet<T> = Set<T> & {
  *   set: proxySet()
  * })
  */
-export const proxySet = <T>(initialValues?: Iterable<T> | null): Set<T> => {
+export function proxySet<T>(initialValues?: Iterable<T> | null): Set<T> {
   const set: InternalProxySet<T> = proxy({
     data: Array.from(new Set(initialValues)),
     has(value) {

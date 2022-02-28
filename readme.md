@@ -48,6 +48,22 @@ function Counter() {
 ```
 
 <details>
+<summary>Note for TypeScript users: Return type of useSnapshot can be too strict.</summary>
+
+The `snap` variable returned by `useSnapshot` is a (deeply) read-only object.
+Its type has `readonly` attribute, which may be too strict for some use cases.
+
+To mitigate typing difficulties, you might want to loosen the type definition:
+```ts
+declare module "valtio" {
+  function useSnapshot<T extends object>(p: T): T;
+}
+```
+
+See [#327](https://github.com/pmndrs/valtio/issues/327) for more information.
+</details>
+
+<details>
 <summary>Note: useSnapshot returns a new proxy for render optimization.</summary>
 
 Internally, `useSnapshot` calls `snapshot` in valtio/vanilla,
