@@ -134,7 +134,7 @@
   },
   "dependencies": {
     "proxy-compare": "2.0.3",
-    "use-sync-external-store": "1.0.0-rc.0"
+    "use-sync-external-store": "1.0.0-rc.1-next-629036a9c-20220224"
   },
   "devDependencies": {
     "@babel/core": "^7.17.5",
