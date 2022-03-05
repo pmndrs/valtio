@@ -83,4 +83,16 @@ describe('watch', () => {
     stop()
     expect(callback).toBeCalledTimes(1)
   })
+  it('should not loop infinitely with sync (#382)', () => {
+    const reference = proxy({ value: 'Example' })
+
+    watch(
+      (get) => {
+        get(reference)
+      },
+      { sync: true }
+    )
+
+    reference.value = 'Update'
+  })
 })
