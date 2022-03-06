@@ -150,6 +150,8 @@
     "@swc/core": "^1.2.146",
     "@swc/jest": "^0.2.20",
     "@testing-library/react": "^12.1.3",
+    "@typed-macro/core": "^1.0.0-alpha",
+    "@typed-macro/runtime": "^1.0.0-alpha",
     "@types/babel-plugin-macros": "^2.8.5",
     "@types/jest": "^27.4.1",
     "@types/react": "^17.0.39",
@@ -181,12 +183,16 @@
     "rollup-plugin-terser": "^7.0.2",
     "shx": "^0.3.4",
     "tslib": "^2.3.1",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "vite-plugin-macro": "^0.2.0"
   },
   "resolutions": {
     "date-fns": "2.27.0"
   },
   "peerDependencies": {
+    "vite-plugin-macro": "^0.2.0",
+    "@typed-macro/core": "^1.0.0-alpha",
+    "@typed-macro/runtime": "^1.0.0-alpha",
     "@babel/helper-module-imports": ">=7.12",
     "@babel/types": ">=7.13",
     "babel-plugin-macros": ">=3.0",
