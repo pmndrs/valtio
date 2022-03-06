@@ -22,66 +22,71 @@
   SOFTWARE.
 */
 
-import { FSWatcher, Plugin, WatchOptions } from "vite";
-import { MacroProvider } from "@typed-macro/core";
+import { EnvContext, MacroProvider, Modules } from '@typed-macro/core'
 import {
-  createRuntime,
   FilterOptions,
   Runtime,
   TransformerOptions,
-} from "@typed-macro/runtime";
-import { EnvContext } from "@typed-macro/core";
-import { getPackageManager, getProjectPath } from "@typed-macro/shared";
-import chokidar from "chokidar";
-
-import { Modules } from "@typed-macro/core";
-import { isString } from "@typed-macro/shared";
-import { ModuleNode, ViteDevServer } from "vite";
+  createRuntime,
+} from '@typed-macro/runtime'
+import {
+  getPackageManager,
+  getProjectPath,
+  isString,
+} from '@typed-macro/shared'
+import chokidar from 'chokidar'
+import {
+  FSWatcher,
+  ModuleNode,
+  Plugin,
+  ViteDevServer,
+  WatchOptions,
+} from 'vite'
 
 /** @internal */
 export type InternalModules = Modules & {
-  __setServer: (server: ViteDevServer) => void;
-};
+  __setServer: (server: ViteDevServer) => void
+}
 
 export function createModules(_server?: ViteDevServer): InternalModules {
-  const container: Map<string, string> = new Map();
+  const container: Map<string, string> = new Map()
   const queryByTag = (pattern: RegExp | string) => {
-    const result: string[] = [];
+    const result: string[] = []
     const checker = isString(pattern)
       ? (tag: string, id: string) => pattern === tag && result.push(id)
-      : (tag: string, id: string) => pattern.test(tag) && result.push(id);
-    container.forEach(checker);
-    return result;
-  };
+      : (tag: string, id: string) => pattern.test(tag) && result.push(id)
+    container.forEach(checker)
+    return result
+  }
   const invalidateByTag = (pattern: RegExp | string) => {
-    const invalidatedFiles: string[] = [];
-    const seen: Set<ModuleNode> = new Set();
+    const invalidatedFiles: string[] = []
+    const seen: Set<ModuleNode> = new Set()
     for (const file of queryByTag(pattern)) {
-      const module = _server?.moduleGraph.getModuleById(file);
+      const module = _server?.moduleGraph.getModuleById(file)
       if (module) {
-        invalidatedFiles.push(file);
-        _server?.moduleGraph.invalidateModule(module, seen);
+        invalidatedFiles.push(file)
+        _server?.moduleGraph.invalidateModule(module, seen)
       } else {
-        container.delete(file);
+        container.delete(file)
       }
     }
-    return invalidatedFiles;
-  };
+    return invalidatedFiles
+  }
 
   return {
     getTag(id) {
-      return container.get(id);
+      return container.get(id)
     },
     setTag(id, tag) {
-      container.set(id, tag);
+      container.set(id, tag)
     },
     unsetTag(id) {
-      container.delete(id);
+      container.delete(id)
     },
     queryByTag,
     invalidateByTag,
     __setServer: (server) => (_server = server),
-  };
+  }
 }
 
 export function createEnvContext(
@@ -89,12 +94,12 @@ export function createEnvContext(
   ssr: boolean,
   watcherOptions?: WatchOptions
 ): EnvContext {
-  const projectPath = getProjectPath();
+  const projectPath = getProjectPath()
   const packageManager =
     projectPath.length > 0
-      // @ts-ignore
-      ? getPackageManager(projectPath[0])
-      : /* istanbul ignore next */ "unknown";
+      ? // @ts-ignore
+        getPackageManager(projectPath[0])
+      : /* istanbul ignore next */ 'unknown'
 
   const watcher = dev
     ? (new chokidar.FSWatcher({
@@ -102,22 +107,22 @@ export function createEnvContext(
         ignorePermissionErrors: true,
         ...watcherOptions,
       }) as FSWatcher)
-    : undefined;
+    : undefined
 
-  const modules = dev ? createModules() : undefined;
+  const modules = dev ? createModules() : undefined
 
   // @ts-ignore
   return {
-    host: "vite",
+    host: 'vite',
     projectPath,
     packageManager,
     dev,
     ssr,
     watcher,
     modules,
-  };
+  }
 }
-import { join } from "path";
+import { join } from 'path'
 
 export type MacroPlugin = Plugin & {
   /**
@@ -132,8 +137,8 @@ export type MacroPlugin = Plugin & {
    *  > which means no need to add the plugin to Vite/Rollup 's plugins array again.
    * @param sources macro providers or plugins.
    */
-  use(...sources: MacroProvider[]): MacroPlugin;
-};
+  use(...sources: MacroProvider[]): MacroPlugin
+}
 
 export type MacroPluginOptions = FilterOptions &
   TransformerOptions & {
@@ -142,7 +147,7 @@ export type MacroPluginOptions = FilterOptions &
      *
      * @default '<projectDir>/macros.d.ts'
      */
-    typesPath?: string;
+    typesPath?: string
 
     /**
      * Is in dev mode.
@@ -150,7 +155,7 @@ export type MacroPluginOptions = FilterOptions &
      * @default mode !== 'production'
      * @see https://vitejs.dev/guide/env-and-mode.html#modes
      */
-    dev?: boolean;
+    dev?: boolean
 
     /**
      * Is in SSR mode.
@@ -158,15 +163,15 @@ export type MacroPluginOptions = FilterOptions &
      * @default whether there is an SSR configuration
      * @see https://vitejs.dev/guide/ssr.html
      */
-    ssr?: boolean;
+    ssr?: boolean
 
     /**
      * Configure chokidar FSWatcher.
      *
      * @see https://github.com/paulmillr/chokidar#api
      */
-    watcherOptions?: WatchOptions;
-  };
+    watcherOptions?: WatchOptions
+  }
 
 /**
  * Create macro plugin.
@@ -196,26 +201,26 @@ export function createMacroPlugin(
     ssr,
     watcherOptions,
     parserPlugins,
-  } = options;
+  } = options
 
-  const uninstantiatedProviders: MacroProvider[] = [];
+  const uninstantiatedProviders: MacroProvider[] = []
 
-  let runtime: Runtime | undefined;
+  let runtime: Runtime | undefined
 
   const plugin: MacroPlugin = {
     use(...sources) {
-      uninstantiatedProviders.push(...sources);
-      return plugin;
+      uninstantiatedProviders.push(...sources)
+      return plugin
     },
-    name: "vite-plugin-macro",
-    enforce: "pre",
+    name: 'vite-plugin-macro',
+    enforce: 'pre',
     configResolved: async (config) => {
       // create env
       const env = createEnvContext(
         dev ?? !config.isProduction,
         ssr ?? !!config.build.ssr,
         watcherOptions
-      );
+      )
 
       // init runtime
       runtime = createRuntime(env, {
@@ -223,37 +228,37 @@ export function createMacroPlugin(
         filter: { exclude, include },
         // @ts-ignore
         transformer: { maxTraversals, parserPlugins },
-      });
+      })
 
       // add providers
       uninstantiatedProviders.forEach((provider) => {
-        runtime!.appendProvider(provider);
-      });
+        runtime!.appendProvider(provider)
+      })
 
       // call onStart hook and render types
       await Promise.all([
         runtime!.start(),
         runtime!.renderTypes(
           /* @ts-ignore istanbul ignore next */
-          typesPath || join(env.projectPath[0], "macros.d.ts")
+          typesPath || join(env.projectPath[0], 'macros.d.ts')
         ),
-      ]);
+      ])
     },
     configureServer: async (server) => {
       // @ts-ignore
-      (runtime!.internal.env.modules as InternalModules).__setServer(server);
+      ;(runtime!.internal.env.modules as InternalModules).__setServer(server)
     },
     resolveId: (id) => runtime?.resolveId(id),
     load: (id) => runtime?.load(id),
     transform: async (code, id) => {
-      if (!(await runtime?.filter(id))) return;
-      const result = await runtime?.transform(code, id);
-      return result && { code: result, map: null };
+      if (!(await runtime?.filter(id))) return
+      const result = await runtime?.transform(code, id)
+      return result && { code: result, map: null }
     },
     buildEnd: async () => {
-      await runtime!.stop();
+      await runtime!.stop()
     },
-  };
+  }
 
-  return plugin;
+  return plugin
 }

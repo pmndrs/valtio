@@ -7,8 +7,12 @@
   "types": "./index.d.ts",
   "typesVersions": {
     "<4.0": {
-      "esm/*": ["ts3.4/*"],
-      "*": ["ts3.4/*"]
+      "esm/*": [
+        "ts3.4/*"
+      ],
+      "*": [
+        "ts3.4/*"
+      ]
     }
   },
   "exports": {
@@ -38,7 +42,9 @@
       "default": "./macro.js"
     }
   },
-  "files": ["**"],
+  "files": [
+    "**"
+  ],
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
@@ -70,7 +76,9 @@
     "printWidth": 80
   },
   "lint-staged": {
-    "*.{js,ts,tsx}": ["prettier --write"]
+    "*.{js,ts,tsx}": [
+      "prettier --write"
+    ]
   },
   "repository": {
     "type": "git",
@@ -96,7 +104,9 @@
     "rootDir": ".",
     "testEnvironment": "jsdom",
     "transform": {
-      "^.+\\.(t|j)sx?$": ["@swc/jest"]
+      "^.+\\.(t|j)sx?$": [
+        "@swc/jest"
+      ]
     },
     "globals": {
       "__DEV__": true
@@ -105,12 +115,22 @@
       "^valtio$": "<rootDir>/src/index.ts",
       "^valtio/(.*)$": "<rootDir>/src/$1.ts"
     },
-    "modulePathIgnorePatterns": ["dist"],
+    "modulePathIgnorePatterns": [
+      "dist"
+    ],
     "testRegex": "test.(js|ts|tsx)$",
     "coverageDirectory": "./coverage/",
     "collectCoverage": true,
-    "coverageReporters": ["json", "html", "text", "text-summary"],
-    "collectCoverageFrom": ["src/**/*.{js,ts,tsx}", "tests/**/*.{js,ts,tsx}"]
+    "coverageReporters": [
+      "json",
+      "html",
+      "text",
+      "text-summary"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.{js,ts,tsx}",
+      "tests/**/*.{js,ts,tsx}"
+    ]
   },
   "dependencies": {
     "proxy-compare": "2.0.3"

@@ -1,6 +1,6 @@
+import { EnvContext } from '@typed-macro/core'
 import { createTransformer } from '@typed-macro/runtime'
 import { valtioMacro } from 'valtio/macro/vite'
-import { EnvContext } from '@typed-macro/core'
 
 const env: EnvContext = {
   host: 'test',

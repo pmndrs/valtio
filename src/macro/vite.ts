@@ -1,8 +1,8 @@
+import { addNamed } from '@babel/helper-module-imports'
+import * as t from '@babel/types'
 import { defineMacro, defineMacroProvider } from '@typed-macro/core'
 // @ts-ignore
-import { addNamed } from '@babel/helper-module-imports'
 import { MacroError } from 'babel-plugin-macros'
-import * as t from '@babel/types'
 import { createMacroPlugin } from './_plugin'
 
 export const valtioMacro = defineMacro(`useProxy`)
