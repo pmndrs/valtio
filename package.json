@@ -40,6 +40,12 @@
       "module": "./esm/macro.js",
       "import": "./esm/macro.mjs",
       "default": "./macro.js"
+    },
+    "./macro/vite": {
+      "types": "./esm/macro/vite.d.ts",
+      "module": "./esm/macro/vite.js",
+      "import": "./esm/macro/vite.mjs",
+      "default": "./macro/vite.js"
     }
   },
   "files": [
