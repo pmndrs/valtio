@@ -1,14 +1,12 @@
-import {vitePluginMacro} from 'vite-plugin-macro'
 import { defineMacro, defineMacroProvider } from '@typed-macro/core'
 // @ts-ignore
 import { addNamed } from '@babel/helper-module-imports'
 import { MacroError } from 'babel-plugin-macros'
 import * as t from '@babel/types'
+import { createMacroPlugin } from './_plugin'
 
 export const valtioMacro = defineMacro(`useProxy`)
-  .withSignature(
-    `<T extends object>(proxyObject: T): void`,
-  )
+  .withSignature(`<T extends object>(proxyObject: T): void`)
   .withHandler((ctx) => {
     const { path, args } = ctx
     const hook = addNamed(path, 'useSnapshot', 'valtio')
@@ -56,7 +54,6 @@ export function provideValtioMacro() {
   })
 }
 
-// const plugin = vitePluginMacro().use(provideValtioMacro()).toPlugin()
+const macroPlugin = createMacroPlugin({}).use(provideValtioMacro())
 
-// export default plugin
-
+export default macroPlugin
