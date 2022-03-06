@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /*
   MIT License
 
@@ -22,6 +23,7 @@
   SOFTWARE.
 */
 
+import { join } from 'path'
 import { EnvContext, MacroProvider, Modules } from '@typed-macro/core'
 import {
   FilterOptions,
@@ -122,7 +124,6 @@ export function createEnvContext(
     modules,
   }
 }
-import { join } from 'path'
 
 export type MacroPlugin = Plugin & {
   /**

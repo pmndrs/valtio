@@ -1,7 +1,8 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import { addNamed } from '@babel/helper-module-imports'
 import * as t from '@babel/types'
 import { defineMacro, defineMacroProvider } from '@typed-macro/core'
-// @ts-ignore
 import { MacroError } from 'babel-plugin-macros'
 import { createMacroPlugin } from './_plugin'
 
