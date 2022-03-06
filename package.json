@@ -7,12 +7,8 @@
   "types": "./index.d.ts",
   "typesVersions": {
     "<4.0": {
-      "esm/*": [
-        "ts3.4/*"
-      ],
-      "*": [
-        "ts3.4/*"
-      ]
+      "esm/*": ["ts3.4/*"],
+      "*": ["ts3.4/*"]
     }
   },
   "exports": {
@@ -42,9 +38,7 @@
       "default": "./macro.js"
     }
   },
-  "files": [
-    "**"
-  ],
+  "files": ["**"],
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
@@ -76,9 +70,7 @@
     "printWidth": 80
   },
   "lint-staged": {
-    "*.{js,ts,tsx}": [
-      "prettier --write"
-    ]
+    "*.{js,ts,tsx}": ["prettier --write"]
   },
   "repository": {
     "type": "git",
@@ -104,9 +96,7 @@
     "rootDir": ".",
     "testEnvironment": "jsdom",
     "transform": {
-      "^.+\\.(t|j)sx?$": [
-        "@swc/jest"
-      ]
+      "^.+\\.(t|j)sx?$": ["@swc/jest"]
     },
     "globals": {
       "__DEV__": true
@@ -115,22 +105,12 @@
       "^valtio$": "<rootDir>/src/index.ts",
       "^valtio/(.*)$": "<rootDir>/src/$1.ts"
     },
-    "modulePathIgnorePatterns": [
-      "dist"
-    ],
+    "modulePathIgnorePatterns": ["dist"],
     "testRegex": "test.(js|ts|tsx)$",
     "coverageDirectory": "./coverage/",
     "collectCoverage": true,
-    "coverageReporters": [
-      "json",
-      "html",
-      "text",
-      "text-summary"
-    ],
-    "collectCoverageFrom": [
-      "src/**/*.{js,ts,tsx}",
-      "tests/**/*.{js,ts,tsx}"
-    ]
+    "coverageReporters": ["json", "html", "text", "text-summary"],
+    "collectCoverageFrom": ["src/**/*.{js,ts,tsx}", "tests/**/*.{js,ts,tsx}"]
   },
   "dependencies": {
     "proxy-compare": "2.0.3"
@@ -184,21 +164,32 @@
     "shx": "^0.3.4",
     "tslib": "^2.3.1",
     "typescript": "^4.5.5",
+    "vite": "^2.8.6",
     "vite-plugin-macro": "^0.2.0"
   },
   "resolutions": {
     "date-fns": "2.27.0"
   },
   "peerDependencies": {
-    "vite-plugin-macro": "^0.2.0",
-    "@typed-macro/core": "^1.0.0-alpha",
-    "@typed-macro/runtime": "^1.0.0-alpha",
+    "vite": "*",
     "@babel/helper-module-imports": ">=7.12",
     "@babel/types": ">=7.13",
+    "@typed-macro/core": "^1.0.0-alpha",
+    "@typed-macro/runtime": "^1.0.0-alpha",
     "babel-plugin-macros": ">=3.0",
-    "react": ">=16.8"
+    "react": ">=16.8",
+    "vite-plugin-macro": "^0.2.0"
   },
   "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    },
+    "@typed-macro/core": {
+      "optional": true
+    },
+    "@typed-macro/runtime": {
+      "optional": true
+    },
     "@babel/helper-module-imports": {
       "optional": true
     },
