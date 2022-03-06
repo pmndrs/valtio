@@ -1,33 +1,6 @@
 import { createTransformer } from '@typed-macro/runtime'
-import { createTestTransformer, Macro } from 'vite-plugin-macro'
 import { valtioMacro } from 'valtio/macro/vite'
 import { EnvContext } from '@typed-macro/core'
-
-declare type NamespacedMacros = {
-  [namespace: string]: Macro[]
-}
-//
-// export function createTestTransformer({
-//   maxTraversals,
-//   parserPlugins,
-//   macros,
-// }: TestTransformerOptions): TestTransformer {
-//   const transformer = createTransformer({ maxTraversals, parserPlugins })
-//   Object.keys(macros).forEach((moduleName) =>
-//     transformer.appendMacros(moduleName, macros[moduleName])
-//   )
-//   return (input) => {
-//     // normalized
-//     const {
-//       code,
-//       filepath = 'test.ts',
-//       env = createTestEnvContext(),
-//     } = isString(input) ? { code: input } : input
-//
-//     // prepare transformer
-//     return transformer.transform(code, filepath, env) || code
-//   }
-// }
 
 const env: EnvContext = {
   host: 'test',
