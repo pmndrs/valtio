@@ -425,3 +425,119 @@ describe('glitch free', () => {
     expect(computeValue).toBeCalledTimes(2)
   })
 })
+
+describe('two derived properties', () => {
+  type State = {
+    a: number
+    derived1?: any
+    dervied2?: any
+  }
+
+  it('two derived properties both returning non primitive values (#349)', (done) => {
+    const state: State = proxy({
+      a: 1,
+    })
+
+    let callCount = 0
+
+    derive(
+      {
+        derived1: (get) => {
+          get(state).a
+          callCount++
+          if (callCount > 10) {
+            expect(callCount).toBeLessThan(10)
+            return null
+          }
+          return {}
+        },
+      },
+      { proxy: state }
+    )
+
+    derive(
+      {
+        derived2: (get) => {
+          get(state).a
+          if (callCount > 10) {
+            return null
+          }
+          return {}
+        },
+      },
+      { proxy: state }
+    )
+
+    setTimeout(done, 100)
+  })
+
+  it('two derived properties both returning primitive values (#349)', (done) => {
+    const state: State = proxy({
+      a: 1,
+    })
+
+    let callCount = 0
+
+    derive(
+      {
+        derived1: (get) => {
+          get(state).a
+          callCount++
+          if (callCount > 10) {
+            expect(callCount).toBeLessThan(10)
+            return null
+          }
+          return 1
+        },
+      },
+      { proxy: state }
+    )
+
+    derive(
+      {
+        derived2: (get) => {
+          get(state).a
+          if (callCount > 10) {
+            return null
+          }
+          return 1
+        },
+      },
+      { proxy: state }
+    )
+
+    setTimeout(done, 100)
+  })
+
+  it('two derived properties both returning non primitive values, defined at the same time (#349)', (done) => {
+    const state: State = proxy({
+      a: 1,
+    })
+
+    let callCount = 0
+
+    derive(
+      {
+        derived1: (get) => {
+          get(state).a
+          callCount++
+          if (callCount > 10) {
+            expect(callCount).toBeLessThan(10)
+            return null
+          }
+          return 1
+        },
+        derived2: (get) => {
+          get(state).a
+          if (callCount > 10) {
+            return null
+          }
+          return 1
+        },
+      },
+      { proxy: state }
+    )
+
+    setTimeout(done, 100)
+  })
+})
