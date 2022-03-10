@@ -36,8 +36,7 @@ export function devtools<T extends object>(proxyObject: T, name = '') {
   }
 
   let isTimeTraveling = false
-  const devtools: ReturnType<NonNullable<typeof extension>['connect']> =
-    extension.connect({ name })
+  const devtools = extension.connect({ name })
   const unsub1 = subscribe(proxyObject, (ops) => {
     const action = ops
       .filter(([_, path]) => path[0] !== DEVTOOLS)
