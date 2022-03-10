@@ -68,7 +68,7 @@ export function devtools<T extends object>(proxyObject: T, name = '') {
         listener: (message: Message) => void
       ) => (() => void) | undefined
     }
-  ).subscribe((message: Message) => {
+  ).subscribe((message) => {
     if (message.type === 'ACTION' && message.payload) {
       try {
         Object.assign(proxyObject, JSON.parse(message.payload))
