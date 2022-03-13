@@ -157,14 +157,13 @@
     "@swc/core": "^1.2.146",
     "@swc/jest": "^0.2.20",
     "@testing-library/react": "^12.1.3",
-    "@typed-macro/core": "^1.0.0-alpha",
-    "@typed-macro/runtime": "^1.0.0-alpha",
     "@types/babel-plugin-macros": "^2.8.5",
     "@types/jest": "^27.4.1",
     "@types/react": "^17.0.39",
     "@types/react-dom": "^17.0.11",
     "@typescript-eslint/eslint-plugin": "^5.12.1",
     "@typescript-eslint/parser": "^5.12.1",
+    "aslemammad-vite-plugin-macro": "^1.0.0-alpha.1",
     "babel-plugin-macros": "^3.1.0",
     "babel-plugin-tester": "^10.1.0",
     "chokidar": "^3.5.3",
@@ -192,8 +191,7 @@
     "shx": "^0.3.4",
     "tslib": "^2.3.1",
     "typescript": "^4.5.5",
-    "vite": "^2.8.6",
-    "vite-plugin-macro": "^0.2.0"
+    "vite": "^2.8.6"
   },
   "resolutions": {
     "date-fns": "2.27.0"
@@ -201,21 +199,16 @@
   "peerDependencies": {
     "@babel/helper-module-imports": ">=7.12",
     "@babel/types": ">=7.13",
-    "@typed-macro/core": "^1.0.0-alpha",
-    "@typed-macro/runtime": "^1.0.0-alpha",
     "babel-plugin-macros": ">=3.0",
     "react": ">=16.8",
     "vite": "*",
-    "vite-plugin-macro": "^0.2.0"
+    "aslemammad-vite-plugin-macro": "*"
   },
   "peerDependenciesMeta": {
     "vite": {
       "optional": true
     },
-    "@typed-macro/core": {
-      "optional": true
-    },
-    "@typed-macro/runtime": {
+    "aslemammad-vite-plugin-macro": {
       "optional": true
     },
     "@babel/helper-module-imports": {

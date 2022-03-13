@@ -1416,6 +1416,38 @@
     "@types/babel__template" "^7.4.1"
     "@types/babel__traverse" "^7.14.2"
 
+"@typed-macro/core@1.0.0-alpha.1":
+  version "1.0.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/@typed-macro/core/-/core-1.0.0-alpha.1.tgz#a1e53bda569e48e0d4d640606b0cd3563fbd9178"
+  integrity sha512-Io7F9hZVuj5UXBrJBYlEdOThxV0/S3jweJqKs936a4nnXxmePa91EFkSFdtAPMXo76Eyl0748WUPIF131dfciQ==
+  dependencies:
+    "@babel/generator" "^7.15.8"
+    "@babel/parser" "^7.15.8"
+    "@babel/template" "^7.15.4"
+    "@babel/traverse" "^7.15.4"
+    "@babel/types" "^7.15.6"
+    "@typed-macro/shared" "1.0.0-alpha.1"
+    "@types/babel__generator" "^7.6.3"
+    "@types/babel__template" "^7.4.1"
+    "@types/babel__traverse" "^7.14.2"
+
+"@typed-macro/runtime@1.0.0-alpha.1":
+  version "1.0.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/@typed-macro/runtime/-/runtime-1.0.0-alpha.1.tgz#d5ba549be737c43e7c1a626798f938cdd5500ff6"
+  integrity sha512-u+4Wb909rzcTqGHWyisfmbkgDqGQr810hDt5WsIBHcLrEnJMw7CXlb70FQ41Ij2NJkGUzF4Ay25NLou6jYPlcg==
+  dependencies:
+    "@babel/generator" "^7.15.8"
+    "@babel/parser" "^7.15.8"
+    "@babel/template" "^7.15.4"
+    "@babel/traverse" "^7.15.4"
+    "@babel/types" "^7.15.6"
+    "@typed-macro/core" "1.0.0-alpha.1"
+    "@typed-macro/shared" "1.0.0-alpha.1"
+    "@types/babel__generator" "^7.6.3"
+    "@types/babel__template" "^7.4.1"
+    "@types/babel__traverse" "^7.14.2"
+    picomatch "^2.3.0"
+
 "@typed-macro/runtime@^1.0.0-alpha":
   version "1.0.0-alpha"
   resolved "https://registry.yarnpkg.com/@typed-macro/runtime/-/runtime-1.0.0-alpha.tgz#edbfc3ba2ffc4863a75f533cfcc307ef57b73f20"
@@ -1437,6 +1469,11 @@
   version "1.0.0-alpha"
   resolved "https://registry.yarnpkg.com/@typed-macro/shared/-/shared-1.0.0-alpha.tgz#5d305779d69fa061bf5d62b2fb7950d36390560c"
   integrity sha512-4kB0MtyKl+asBX7UJfb/rONAeq0/aL0z+Eaj/TTgkmJ9aYRqWL6RWAw34iqsQiOEWGrXyfcjvXB/ohj++WbRXw==
+
+"@typed-macro/shared@1.0.0-alpha.1":
+  version "1.0.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/@typed-macro/shared/-/shared-1.0.0-alpha.1.tgz#c00cdfd3c7dfd6365c6bccbad9b0c05c3aa47047"
+  integrity sha512-4qw1Dtfkzj/dkVut8oCkfRa5y0YZzmklK0GYMA3E6+JofqJSpZfX1SvM6+Iv40kiSZz74XgqUXet645vZh3X1A==
 
 "@types/aria-query@^4.2.0":
   version "4.2.2"
@@ -1843,6 +1880,16 @@ array.prototype.flatmap@^1.2.5:
     define-properties "^1.1.3"
     es-abstract "^1.19.0"
 
+aslemammad-vite-plugin-macro@^1.0.0-alpha.1:
+  version "1.0.0-alpha.1"
+  resolved "https://registry.yarnpkg.com/aslemammad-vite-plugin-macro/-/aslemammad-vite-plugin-macro-1.0.0-alpha.1.tgz#8302b0324e4e7c86bf24d74b6043f85cb3a03d83"
+  integrity sha512-KwM09MS2BlvsXA7d7RnArTzyeGfWKLKe3C00bu9k5qC+CKmI1x2gKELpFMgseW6lCeTRapUHHBoNLTzwYlqT5A==
+  dependencies:
+    "@typed-macro/core" "1.0.0-alpha.1"
+    "@typed-macro/runtime" "1.0.0-alpha.1"
+    "@typed-macro/shared" "1.0.0-alpha.1"
+    chokidar "^3.5.2"
+
 astral-regex@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/astral-regex/-/astral-regex-2.0.0.tgz#483143c567aeed4785759c0865786dc77d7d2e31"
@@ -2072,7 +2119,7 @@ char-regex@^1.0.2:
   resolved "https://registry.yarnpkg.com/char-regex/-/char-regex-1.0.2.tgz#d744358226217f981ed58f479b1d6bcc29545dcf"
   integrity sha512-kWWXztvZ5SBQV+eRgKFeh8q5sLuZY2+8WUIzlxWVTg+oGwY14qylx1KbKzHd8P6ZYkAg0xyIDU9JMHhyJMZ1jw==
 
-chokidar@^3.5.3:
+chokidar@^3.5.2, chokidar@^3.5.3:
   version "3.5.3"
   resolved "https://registry.yarnpkg.com/chokidar/-/chokidar-3.5.3.tgz#1cf37c8707b932bd1af1ae22c0432e2acd1903bd"
   integrity sha512-Dr3sfKRP6oTcjf2JmUmFJfeVMvXBdegxB0iVQ5eb2V10uFJUCAS8OByZdVAyVb8xXNz3GjjTgj9kLWsZTqE6kw==
