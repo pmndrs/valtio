@@ -2,12 +2,12 @@
 // @ts-ignore
 import { addNamed } from '@babel/helper-module-imports'
 import * as t from '@babel/types'
-import { MacroError } from 'babel-plugin-macros'
 import {
   createMacroPlugin,
   defineMacro,
   defineMacroProvider,
 } from 'aslemammad-vite-plugin-macro'
+import { MacroError } from 'babel-plugin-macros'
 
 export const valtioMacro = defineMacro(`useProxy`)
   .withSignature(`<T extends object>(proxyObject: T): void`)
