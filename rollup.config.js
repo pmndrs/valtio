@@ -162,13 +162,9 @@ export default function (args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
   if (c) {
     c = c.slice('config-'.length).replace(/_/g, '/')
-    if (c === 'macro-vite') {
-      c = 'macro/vite'
-    }
   } else {
     c = 'index'
   }
-
   return [
     ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
     createCommonJSConfig(`src/${c}.ts`, `dist/${c}`),
