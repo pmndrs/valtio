@@ -60,7 +60,7 @@
     "build:vanilla": "rollup -c --config-vanilla",
     "build:utils": "rollup -c --config-utils",
     "build:macro": "rollup -c --config-macro",
-    "build:macro-vite": "rollup -c --config-macro-vite",
+    "build:macro-vite": "rollup -c --config-macro_vite",
     "postbuild": "yarn copy",
     "eslint": "eslint --fix '*.{js,json}' '{src,tests}/**/*.{ts,tsx}'",
     "eslint:ci": "eslint '*.{js,json}' '{src,tests}/**/*.{ts,tsx}'",
