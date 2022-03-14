@@ -6,6 +6,7 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
     "exactOptionalPropertyTypes": true,
     "baseUrl": ".",
     "paths": {
