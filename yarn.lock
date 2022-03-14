@@ -4375,10 +4375,9 @@ prop-types@^15.8.1:
     object-assign "^4.1.1"
     react-is "^16.13.1"
 
-proxy-compare@2.0.3:
+"proxy-compare@https://pkg.csb.dev/dai-shi/proxy-compare/commit/57ba19aa/proxy-compare":
   version "2.0.3"
-  resolved "https://registry.yarnpkg.com/proxy-compare/-/proxy-compare-2.0.3.tgz#13fac7a72ca186a3f4a5e99bdff4863f2ced85c1"
-  integrity sha512-YEmiPmDvwSUwudfjt68DTRo0VaUC2WrDOfktTYEICInBDCIwveTsnn0cRxkWPSUvZBhzRIxtI0ZoYeUpXU870Q==
+  resolved "https://pkg.csb.dev/dai-shi/proxy-compare/commit/57ba19aa/proxy-compare#b34dacbe106cb7e043796e9335eead86b501bbf7"
 
 psl@^1.1.33:
   version "1.8.0"
