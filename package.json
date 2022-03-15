@@ -201,7 +201,7 @@
   "peerDependencies": {
     "@babel/helper-module-imports": ">=7.12",
     "@babel/types": ">=7.13",
-    "aslemammad-vite-plugin-macro": "*",
+    "aslemammad-vite-plugin-macro": ">=1.0.0-alpha.1",
     "babel-plugin-macros": ">=3.0",
     "react": ">=16.8",
     "vite": ">=2.8.6"
