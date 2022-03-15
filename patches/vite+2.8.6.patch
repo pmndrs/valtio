@@ -1,0 +1,13 @@
+diff --git a/node_modules/vite/dist/node/index.d.ts b/node_modules/vite/dist/node/index.d.ts
+index cb3a834..a253ff0 100644
+--- a/node_modules/vite/dist/node/index.d.ts
++++ b/node_modules/vite/dist/node/index.d.ts
+@@ -1175,7 +1175,7 @@ export declare interface PackageData {
+  * If a plugin should be applied only for server or build, a function format
+  * config file can be used to conditional determine the plugins to use.
+  */
+-export declare interface Plugin extends Plugin_2 {
++export declare interface Plugin {
+     /**
+      * Enforce plugin invocation tier similar to webpack loaders.
+      *
