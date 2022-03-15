@@ -2,6 +2,7 @@
 // @ts-ignore
 import { addNamed } from '@babel/helper-module-imports'
 import * as t from '@babel/types'
+// @ts-ignore
 import {
   createMacroPlugin,
   defineMacro,
