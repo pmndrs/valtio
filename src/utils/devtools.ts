@@ -1,6 +1,12 @@
 import { snapshot, subscribe } from '../vanilla'
+import type {} from '@redux-devtools/extension'
 
-type Message = { type: string; payload?: any; state?: any }
+// FIXME https://github.com/reduxjs/redux-devtools/issues/1097
+type Message = {
+  type: string
+  payload?: any
+  state?: any
+}
 
 const DEVTOOLS = Symbol()
 
@@ -15,10 +21,10 @@ const DEVTOOLS = Symbol()
  * const state = proxy({ count: 0, text: 'hello' })
  * const unsub = devtools(state, 'state name')
  */
-export function devtools<T extends object>(proxyObject: T, name?: string) {
-  let extension: any
+export function devtools<T extends object>(proxyObject: T, name = '') {
+  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__']
   try {
-    extension = (window as any).__REDUX_DEVTOOLS_EXTENSION__
+    extension = window.__REDUX_DEVTOOLS_EXTENSION__
   } catch {
     // ignored
   }
@@ -50,12 +56,19 @@ export function devtools<T extends object>(proxyObject: T, name?: string) {
         {
           type: action,
           updatedAt: new Date().toLocaleString(),
-        },
+        } as any,
         snapWithoutDevtools
       )
     }
   })
-  const unsub2 = devtools.subscribe((message: Message) => {
+  const unsub2 = (
+    devtools as unknown as {
+      // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
+      subscribe: (
+        listener: (message: Message) => void
+      ) => (() => void) | undefined
+    }
+  ).subscribe((message) => {
     if (message.type === 'ACTION' && message.payload) {
       try {
         Object.assign(proxyObject, JSON.parse(message.payload))
@@ -108,6 +121,6 @@ export function devtools<T extends object>(proxyObject: T, name?: string) {
   devtools.init(snapshot(proxyObject))
   return () => {
     unsub1()
-    unsub2()
+    unsub2?.()
   }
 }

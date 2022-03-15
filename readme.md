@@ -283,6 +283,21 @@ const Component = () => {
 }
 ```
 
+##### vite
+```
+npm i --save-dev aslemammad-vite-plugin-macro babel-plugin-macros 
+```
+
+And in your `vite.config.js`
+```js
+import { defineConfig } from "vite";
+import macro from 'valtio/macro/vite'
+
+export default defineConfig({
+  plugins: [macro],
+});
+```
+
 #### `derive` util
 
 You can subscribe to some proxies and create a derived proxy.
