@@ -191,7 +191,7 @@
     "shx": "^0.3.4",
     "tslib": "^2.3.1",
     "typescript": "^4.5.5",
-    "vite": "^2.8.6"
+    "vite": "*"
   },
   "resolutions": {
     "date-fns": "2.27.0"
