@@ -204,7 +204,7 @@
     "aslemammad-vite-plugin-macro": "*",
     "babel-plugin-macros": ">=3.0",
     "react": ">=16.8",
-    "vite": "*"
+    "vite": ">=2.8.6"
   },
   "peerDependenciesMeta": {
     "vite": {
