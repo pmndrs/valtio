@@ -45,7 +45,7 @@ const isSSR =
 
 const useIsomorphicLayoutEffect = isSSR ? useEffect : useLayoutEffect
 
-const useAffectedDebugValue = <State>(
+const useAffectedDebugValue = <State extends object>(
   state: State,
   affected: WeakMap<object, unknown>
 ) => {
