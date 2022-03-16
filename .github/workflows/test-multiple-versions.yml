@@ -30,8 +30,8 @@ jobs:
           - 16.8.0
           - 16.9.0
           - 17.0.0
-          - 18.0.0-rc.1-next-629036a9c-20220224
-          - 0.0.0-experimental-629036a9c-20220224
+          - 18.0.0-rc.2
+          - 0.0.0-experimental-2bf7c02f0-20220314
         env: [development, production]
         testing: [default, alpha]
         exclude:
@@ -39,10 +39,10 @@ jobs:
           - { react: 16.8.0, testing: alpha }
           - { react: 16.9.0, testing: alpha }
           - { react: 17.0.0, testing: alpha }
-          - { react: 18.0.0-rc.1-next-629036a9c-20220224, testing: default } # suspense doesn't work?
-          - { react: 0.0.0-experimental-629036a9c-20220224, testing: default } # suspense doesn't work?
-          - { react: 18.0.0-rc.1-next-629036a9c-20220224, env: production } # act(...) is not supported in production builds of React.
-          - { react: 0.0.0-experimental-629036a9c-20220224, env: production } # act(...) is not supported in production builds of React.
+          - { react: 18.0.0-rc.2, testing: default } # suspense doesn't work?
+          - { react: 0.0.0-experimental-2bf7c02f0-20220314, testing: default } # suspense doesn't work?
+          - { react: 18.0.0-rc.2, env: production } # act(...) is not supported in production builds of React.
+          - { react: 0.0.0-experimental-2bf7c02f0-20220314, env: production } # act(...) is not supported in production builds of React.
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -54,7 +54,7 @@ jobs:
       - run: yarn build
       - name: Install alpha testing-library
         if: ${{ matrix.testing == 'alpha' }}
-        run: yarn add -D @testing-library/react@13.0.0-alpha.5
+        run: yarn add -D @testing-library/react@13.0.0-alpha.6
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
