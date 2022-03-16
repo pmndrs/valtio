@@ -1,12 +1,13 @@
 import { subscribe } from '../vanilla'
 
-type WatchGet = <T extends object>(value: T) => T
-type WatchCallback = (get: WatchGet) => (() => void) | void | undefined
+type Cleanup = () => void
+type WatchGet = <T extends object>(proxyObject: T) => T
+type WatchCallback = (get: WatchGet) => Cleanup | void | undefined
 type WatchOptions = {
   sync?: boolean
 }
 
-let currentCleanups: Set<() => void> | undefined
+let currentCleanups: Set<Cleanup> | undefined
 
 /**
  * watch
@@ -34,28 +35,33 @@ let currentCleanups: Set<() => void> | undefined
 export function watch(
   callback: WatchCallback,
   options?: WatchOptions
-): () => void {
-  const cleanups = new Set<() => void>()
-  const subscriptions = new Set<object>()
-
+): Cleanup {
   let alive = true
+  const cleanups = new Set<Cleanup>()
+
+  type ProxyObject = object
+  type Unsubscribe = () => void
+  const subscriptions = new Map<ProxyObject, Unsubscribe>()
 
   const cleanup = () => {
-    // Cleanup subscriptions and other pushed callbacks
-    cleanups.forEach((clean) => {
-      clean()
-    })
-    // Clear cleanup set
-    cleanups.clear()
-    // Clear tracked proxies
-    subscriptions.clear()
+    if (alive) {
+      alive = false
+      cleanups.forEach((clean) => clean())
+      cleanups.clear()
+      subscriptions.forEach((unsubscribe) => unsubscribe())
+      subscriptions.clear()
+    }
   }
 
   const revalidate = () => {
     if (!alive) {
       return
     }
-    cleanup()
+    cleanups.forEach((clean) => clean())
+    cleanups.clear()
+
+    const proxiesToSubscribe = new Set<ProxyObject>()
+
     // Setup watch context, this allows us to automatically capture
     // watch cleanups if the watch callback itself has watch calls.
     const parent = currentCleanups
@@ -63,9 +69,9 @@ export function watch(
 
     // Ensures that the parent is reset if the callback throws an error.
     try {
-      const cleanupReturn = callback((proxy) => {
-        subscriptions.add(proxy)
-        return proxy
+      const cleanupReturn = callback((proxyObject) => {
+        proxiesToSubscribe.add(proxyObject)
+        return proxyObject
       })
 
       // If there's a cleanup, we add this to the cleanups set
@@ -76,28 +82,32 @@ export function watch(
       currentCleanups = parent
     }
 
-    // Subscribe to all collected proxies
-    subscriptions.forEach((proxy) => {
-      const clean = subscribe(proxy, revalidate, options?.sync)
-      cleanups.add(clean)
+    // Unsubscribe old subscriptions
+    subscriptions.forEach((unsubscribe, proxyObject) => {
+      if (proxiesToSubscribe.has(proxyObject)) {
+        // Already subscribed
+        proxiesToSubscribe.delete(proxyObject)
+      } else {
+        subscriptions.delete(proxyObject)
+        unsubscribe()
+      }
     })
-  }
 
-  const wrappedCleanup = () => {
-    if (alive) {
-      cleanup()
-      alive = false
-    }
+    // Subscribe to new proxies
+    proxiesToSubscribe.forEach((proxyObject) => {
+      const unsubscribe = subscribe(proxyObject, revalidate, options?.sync)
+      subscriptions.set(proxyObject, unsubscribe)
+    })
   }
 
   // If there's a parent watch call, we attach this watch's
   // cleanup to the parent.
   if (currentCleanups) {
-    currentCleanups.add(wrappedCleanup)
+    currentCleanups.add(cleanup)
   }
 
   // Invoke effect to create subscription list
   revalidate()
 
-  return wrappedCleanup
+  return cleanup
 }

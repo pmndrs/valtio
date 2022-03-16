@@ -1,0 +1,34 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`basic 1`] = `
+"import { useSnapshot as _useSnapshot } from \\"valtio\\";
+
+
+const Component = () => {const valtio_macro_snap_state = _useSnapshot(
+  state);
+  return (
+    <div>
+      {valtio_macro_snap_state.count}
+      <button onClick={() => ++state.count}>inc</button>
+    </div>);
+
+};"
+`;
+
+exports[`complex 1`] = `
+"import { useSnapshot as _useSnapshot } from \\"valtio\\";
+
+
+const Component = () => {const valtio_macro_snap_state = _useSnapshot(
+  state);
+  return (
+    <div>
+      <button onClick={() => {
+        ;(() => ++state.count)();
+        ++state.count;
+      }}>inc</button>
+      {valtio_macro_snap_state.count}
+    </div>);
+
+};"
+`;

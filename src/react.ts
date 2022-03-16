@@ -30,7 +30,7 @@ type Snapshot<T> = T extends AnyFunction
       readonly [K in keyof T]: Snapshot<T[K]>
     }
 
-const useAffectedDebugValue = <State>(
+const useAffectedDebugValue = <State extends object>(
   state: State,
   affected: WeakMap<object, unknown>
 ) => {
