@@ -4713,10 +4713,10 @@ prop-types@^15.8.1:
     object-assign "^4.1.1"
     react-is "^16.13.1"
 
-proxy-compare@2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/proxy-compare/-/proxy-compare-2.0.3.tgz#13fac7a72ca186a3f4a5e99bdff4863f2ced85c1"
-  integrity sha512-YEmiPmDvwSUwudfjt68DTRo0VaUC2WrDOfktTYEICInBDCIwveTsnn0cRxkWPSUvZBhzRIxtI0ZoYeUpXU870Q==
+proxy-compare@2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/proxy-compare/-/proxy-compare-2.1.0.tgz#5f99b3ed6a265135ce7ec145ce304e6f89b6511b"
+  integrity sha512-wapJ3h/w8fRSyPEG0y2WMV+tf9xwvj3nxM6aHVuPEOwKs/t5xLSKZb44ubNTiqq2T6lmEMHEWGMTaU2L6ddaFA==
 
 psl@^1.1.33:
   version "1.8.0"
