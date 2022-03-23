@@ -36,15 +36,15 @@ function handleEmbedderHtml(html: GottenHTML, info: TransformerInfo) {
     return makeEmbed(html, "youtube");
   }
   if (url.hostname.includes("codesandbox.io")) {
-    return makeEmbed(html, "codesandbox", "80%");
+    return makeEmbed(html, "codesandbox", "10%");
   }
   return html;
 }
 
-function makeEmbed(html: string, type: string, heightRatio = "56.25%") {
+function makeEmbed(html: string, type: string, heightRatio = "10%") {
   return `
   <div class="embed" data-embed-type="${type}">
-    <div style="padding-bottom: ${heightRatio}">
+    <div class="mb-8 overflow-hidden shadow-lg !dark:shadow-none rounded-md sm:rounded-lg border-b border-gray-200 dark:border-gray-800" style="margin-bottom: ${heightRatio}">
       ${html}
     </div>
   </div>

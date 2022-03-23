@@ -260,7 +260,7 @@ export default function DocLayout({
             <div className="hidden lg:block fixed z-20 inset-0 top-[3.8125rem] left-[max(0px,calc(50%-45rem))] right-auto w-[19.5rem] pb-10 px-8 overflow-y-auto">
               <Nav nav={nav} fallbackHref={fallbackHref}></Nav>
             </div>
-            <div className="lg:pl-[19.5rem]">
+            <div className="lg:pl-[19.5rem] p-6 mt-6">
               <main className="prose max-w-3xl mx-auto relative z-20 pt-10 xl:max-w-none">
                 {children}
               </main>
