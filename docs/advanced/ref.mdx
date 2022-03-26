@@ -5,3 +5,34 @@ description: 'Create a ref object'
 ---
 
 # ref
+
+#### A ref allows unproxied state in a Valtio proxy
+
+A `ref` is useful in the rare instances you to nest an object in a `proxy` that is not wrapped in an inner proxy and, therefore, is not tracked.
+
+```js
+const store = proxy({
+    users: [
+        { id: 1, name: 'Juho', uploads: ref([]) },
+    ]
+  })
+})
+```
+
+Once an object is wrapped in a ref, it should be mutated without resetting the object or rewrapping in a new ref. 
+
+```js
+// do mutate
+store.users[0].uploads.push({ id: 1, name: 'Juho' })
+// do reset
+store.users[0].uploads.splice(0)
+
+// don't
+store.users[0].uploads = []
+```
+
+A ref should also not be used as the only state in a proxy, making the proxy usage pointless.
+
+## Codesandbox demo
+
+https://codesandbox.io/s/valtio-file-load-demo-oo2yzn
