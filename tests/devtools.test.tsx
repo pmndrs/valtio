@@ -46,7 +46,7 @@ beforeEach(() => {
 
 it('connects to the extension by initialiing', () => {
   const obj = proxy({ count: 0 })
-  devtools(obj)
+  devtools(obj, { enabled: true })
 
   const Counter = () => {
     const snap = useSnapshot(obj)
@@ -122,7 +122,7 @@ describe('If there is no extension installed...', () => {
 
 it('updating state should call devtools.send', async () => {
   const obj = proxy({ count: 0 })
-  devtools(obj)
+  devtools(obj, { enabled: true })
 
   const Counter = () => {
     const snap = useSnapshot(obj)
@@ -149,7 +149,7 @@ it('updating state should call devtools.send', async () => {
 describe('when it receives an message of type...', () => {
   it('updating state with ACTION', async () => {
     const obj = proxy({ count: 0 })
-    devtools(obj)
+    devtools(obj, { enabled: true })
 
     const Counter = () => {
       const snap = useSnapshot(obj)
@@ -185,7 +185,7 @@ describe('when it receives an message of type...', () => {
   describe('DISPATCH and payload of type...', () => {
     it('dispatch & COMMIT', async () => {
       const obj = proxy({ count: 0 })
-      devtools(obj)
+      devtools(obj, { enabled: true })
 
       const Counter = () => {
         const snap = useSnapshot(obj)
@@ -218,7 +218,7 @@ describe('when it receives an message of type...', () => {
 
     it('dispatch & IMPORT_STATE', async () => {
       const obj = proxy({ count: 0 })
-      devtools(obj)
+      devtools(obj, { enabled: true })
 
       const Counter = () => {
         const snap = useSnapshot(obj)
@@ -257,7 +257,7 @@ describe('when it receives an message of type...', () => {
     describe('JUMP_TO_STATE | JUMP_TO_ACTION...', () => {
       it('time travelling', async () => {
         const obj = proxy({ count: 0 })
-        devtools(obj)
+        devtools(obj, { enabled: true })
 
         const Counter = () => {
           const snap = useSnapshot(obj)
