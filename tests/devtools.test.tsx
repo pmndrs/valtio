@@ -65,58 +65,87 @@ it('connects to the extension by initialiing', () => {
 
 describe('If there is no extension installed...', () => {
   let savedDEV: boolean
-  beforeAll(() => {
+  let consoleWarn: jest.SpyInstance<
+    void,
+    [message?: any, ...optionalParams: any[]]
+  >
+  beforeEach(() => {
+    consoleWarn = jest.spyOn(console, 'warn')
     savedDEV = __DEV__
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
-  afterAll(() => {
+  afterEach(() => {
+    consoleWarn.mockRestore()
     __DEV__ = savedDEV
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
   })
 
-  const obj = proxy({ count: 0 })
-  devtools(obj)
-
-  const Counter = () => {
-    const snap = useSnapshot(obj)
-    return (
-      <>
-        <div>count: {snap.count}</div>
-        <button onClick={() => ++obj.count}>button</button>
-      </>
-    )
-  }
-
   it('does not throw', () => {
-    __DEV__ = false
+    const obj = proxy({ count: 0 })
     devtools(obj)
+    const Counter = () => {
+      const snap = useSnapshot(obj)
+      return (
+        <>
+          <div>count: {snap.count}</div>
+          <button onClick={() => ++obj.count}>button</button>
+        </>
+      )
+    }
     expect(() => {
       render(<Counter />)
     }).not.toThrow()
   })
 
-  it('[DEV-ONLY] warns in dev env', () => {
-    __DEV__ = true
-    const originalConsoleWarn = console.warn
-    console.warn = jest.fn()
+  it('warns if enabled is true', () => {
+    const obj = proxy({ count: 0 })
     devtools(obj, { enabled: true })
-
+    const Counter = () => {
+      const snap = useSnapshot(obj)
+      return (
+        <>
+          <div>count: {snap.count}</div>
+          <button onClick={() => ++obj.count}>button</button>
+        </>
+      )
+    }
     render(<Counter />)
-    expect(console.warn).toHaveBeenLastCalledWith(
+    expect(consoleWarn).toHaveBeenLastCalledWith(
       '[Warning] Please install/enable Redux devtools extension'
     )
-
-    console.warn = originalConsoleWarn
   })
 
-  it('[PRD-ONLY] does not warn if not in dev env', () => {
-    __DEV__ = false
-    const consoleWarn = jest.spyOn(console, 'warn')
-
+  it('does not warn if enabled is undefined', () => {
+    const obj = proxy({ count: 0 })
+    devtools(obj)
+    const Counter = () => {
+      const snap = useSnapshot(obj)
+      return (
+        <>
+          <div>count: {snap.count}</div>
+          <button onClick={() => ++obj.count}>button</button>
+        </>
+      )
+    }
     render(<Counter />)
     expect(consoleWarn).not.toBeCalled()
+  })
 
-    consoleWarn.mockRestore()
+  it('[PRD-ONLY] does not warn even if enabled is true', () => {
+    __DEV__ = false
+    const obj = proxy({ count: 0 })
+    devtools(obj, { enabled: true })
+    const Counter = () => {
+      const snap = useSnapshot(obj)
+      return (
+        <>
+          <div>count: {snap.count}</div>
+          <button onClick={() => ++obj.count}>button</button>
+        </>
+      )
+    }
+    render(<Counter />)
+    expect(consoleWarn).not.toBeCalled()
   })
 })
 
