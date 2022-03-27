@@ -97,7 +97,24 @@ describe('If there is no extension installed...', () => {
     }).not.toThrow()
   })
 
-  it('warns if enabled is true', () => {
+  it('does not warn if enabled is undefined', () => {
+    const obj = proxy({ count: 0 })
+    devtools(obj)
+    const Counter = () => {
+      const snap = useSnapshot(obj)
+      return (
+        <>
+          <div>count: {snap.count}</div>
+          <button onClick={() => ++obj.count}>button</button>
+        </>
+      )
+    }
+    render(<Counter />)
+    expect(consoleWarn).not.toBeCalled()
+  })
+
+  it('[DEV-ONLY] warns if enabled is true', () => {
+    __DEV__ = true
     const obj = proxy({ count: 0 })
     devtools(obj, { enabled: true })
     const Counter = () => {
@@ -113,22 +130,6 @@ describe('If there is no extension installed...', () => {
     expect(consoleWarn).toHaveBeenLastCalledWith(
       '[Warning] Please install/enable Redux devtools extension'
     )
-  })
-
-  it('does not warn if enabled is undefined', () => {
-    const obj = proxy({ count: 0 })
-    devtools(obj)
-    const Counter = () => {
-      const snap = useSnapshot(obj)
-      return (
-        <>
-          <div>count: {snap.count}</div>
-          <button onClick={() => ++obj.count}>button</button>
-        </>
-      )
-    }
-    render(<Counter />)
-    expect(consoleWarn).not.toBeCalled()
   })
 
   it('[PRD-ONLY] does not warn even if enabled is true', () => {
