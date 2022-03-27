@@ -99,7 +99,7 @@ describe('If there is no extension installed...', () => {
     __DEV__ = true
     const originalConsoleWarn = console.warn
     console.warn = jest.fn()
-    devtools(obj)
+    devtools(obj, { enabled: true })
 
     render(<Counter />)
     expect(console.warn).toHaveBeenLastCalledWith(
