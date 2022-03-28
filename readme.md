@@ -198,7 +198,7 @@ function Foo() {
   const total = useRef(0)
   useEffect(() => subscribe(state.arr, () => {
     total.current = state.arr.reduce((p, c) => p + c)
-  }), [state.arr])
+  }), [])
   // ...
 ```
 
