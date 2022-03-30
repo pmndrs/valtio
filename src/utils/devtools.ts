@@ -10,6 +10,24 @@ type Message = {
 
 const DEVTOOLS = Symbol()
 
+type Options = {
+  enabled?: boolean
+  name?: string
+}
+
+export function devtools<T extends object>(
+  proxyObject: T,
+  options?: Options
+): (() => void) | undefined
+
+/**
+ * @deprecated Please use { name } option
+ */
+export function devtools<T extends object>(
+  proxyObject: T,
+  name?: string
+): (() => void) | undefined
+
 /**
  * devtools
  *
@@ -21,15 +39,26 @@ const DEVTOOLS = Symbol()
  * const state = proxy({ count: 0, text: 'hello' })
  * const unsub = devtools(state, 'state name')
  */
-export function devtools<T extends object>(proxyObject: T, name = '') {
-  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__']
+export function devtools<T extends object>(
+  proxyObject: T,
+  options?: Options | string
+) {
+  if (typeof options === 'string') {
+    console.warn('[Deprecated] Please use option object instead of name string')
+    options = { name: options }
+  }
+  const { enabled, name = '' } = options || {}
+
+  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
   try {
-    extension = window.__REDUX_DEVTOOLS_EXTENSION__
+    extension =
+      (typeof enabled === 'boolean' ? enabled : __DEV__) &&
+      window.__REDUX_DEVTOOLS_EXTENSION__
   } catch {
     // ignored
   }
   if (!extension) {
-    if (__DEV__ && typeof window !== 'undefined') {
+    if (__DEV__ && enabled) {
       console.warn('[Warning] Please install/enable Redux devtools extension')
     }
     return
