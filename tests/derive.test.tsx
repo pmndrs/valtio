@@ -425,3 +425,81 @@ describe('glitch free', () => {
     expect(computeValue).toBeCalledTimes(2)
   })
 })
+
+describe('two derived properties', () => {
+  type State = {
+    a: number
+    derived1?: unknown
+    derived2?: unknown
+  }
+
+  it('two derived properties both returning primitive values (#349)', async () => {
+    const state: State = proxy({ a: 1 })
+    derive(
+      {
+        derived1: (get) => {
+          get(state).a
+          return 1
+        },
+      },
+      { proxy: state }
+    )
+    derive(
+      {
+        derived2: (get) => {
+          get(state).a
+          return 1
+        },
+      },
+      { proxy: state }
+    )
+    await Promise.resolve()
+    expect(state.derived1).toBeDefined()
+    expect(state.derived2).toBeDefined()
+  })
+
+  it('two derived properties both returning non primitive values, defined at the same time (#349)', async () => {
+    const state: State = proxy({ a: 1 })
+    derive(
+      {
+        derived1: (get) => {
+          get(state).a
+          return {}
+        },
+        derived2: (get) => {
+          get(state).a
+          return {}
+        },
+      },
+      { proxy: state }
+    )
+    await Promise.resolve()
+    expect(state.derived1).toBeDefined()
+    expect(state.derived2).toBeDefined()
+  })
+
+  it('two derived properties both returning non primitive values (#349)', async () => {
+    const state: State = proxy({ a: 1 })
+    derive(
+      {
+        derived1: (get) => {
+          get(state).a
+          return {}
+        },
+      },
+      { proxy: state }
+    )
+    derive(
+      {
+        derived2: (get) => {
+          get(state).a
+          return {}
+        },
+      },
+      { proxy: state }
+    )
+    await Promise.resolve()
+    expect(state.derived1).toBeDefined()
+    expect(state.derived2).toBeDefined()
+  })
+})

@@ -24,7 +24,7 @@ type DerivedObjectEntry = [subscriptions: Set<Subscription>]
 const sourceObjectMap = new WeakMap<object, SourceObjectEntry>()
 const derivedObjectMap = new WeakMap<object, DerivedObjectEntry>()
 
-const markPending = (sourceObject: object) => {
+const markPending = (sourceObject: object, callback?: () => void) => {
   const sourceObjectEntry = sourceObjectMap.get(sourceObject)
   if (sourceObjectEntry) {
     sourceObjectEntry[0].forEach((subscription) => {
@@ -34,6 +34,9 @@ const markPending = (sourceObject: object) => {
       }
     })
     ++sourceObjectEntry[2] // pendingCount
+    if (callback) {
+      sourceObjectEntry[3].add(callback) // pendingCallbacks
+    }
   }
 }
 
@@ -52,9 +55,8 @@ const unmarkPending = (sourceObject: object) => {
   if (sourceObjectEntry) {
     --sourceObjectEntry[2] // pendingCount
     if (!sourceObjectEntry[2]) {
-      const pendingCallbacks = new Set(sourceObjectEntry[3])
+      sourceObjectEntry[3].forEach((callback) => callback())
       sourceObjectEntry[3].clear() // pendingCallbacks
-      pendingCallbacks.forEach((callback) => callback())
     }
     sourceObjectEntry[0].forEach((subscription) => {
       const { d: derivedObject } = subscription
@@ -100,14 +102,12 @@ const addSubscription = (subscription: Subscription) => {
             // already scheduled
             return
           }
-          markPending(sourceObject)
+          markPending(sourceObject, callback)
           if (notifyInSync) {
-            callback()
             unmarkPending(sourceObject)
           } else {
             subscription.p = Promise.resolve().then(() => {
               delete subscription.p // promise
-              callback()
               unmarkPending(sourceObject)
             })
           }
