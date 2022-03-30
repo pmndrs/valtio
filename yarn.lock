@@ -5411,10 +5411,10 @@ uri-js@^4.2.2:
   dependencies:
     punycode "^2.1.0"
 
-use-sync-external-store@1.0.0-rc.2:
-  version "1.0.0-rc.2"
-  resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.0.0-rc.2.tgz#3ed566efedde9c56c6993ad3278ad92602f1c36f"
-  integrity sha512-g61HtC2MT+xhN2t7azpNrpYy/GuZkbvLz2eiflyCpvTguUzRkvJG7YzRl16k6oyzRO/jQLddDqzIpSX3Rkn7IQ==
+use-sync-external-store@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.0.0.tgz#d98f4a9c2e73d0f958e7e2d2c2bfb5f618cbd8fd"
+  integrity sha512-AFVsxg5GkFg8GDcxnl+Z0lMAz9rE8DGJCc28qnBuQF7lac57B5smLcT37aXpXIIPz75rW4g3eXHPjhHwdGskOw==
 
 v8-compile-cache@^2.0.3:
   version "2.3.0"
