@@ -30,19 +30,15 @@ jobs:
           - 16.8.0
           - 16.9.0
           - 17.0.0
-          - 18.0.0-rc.2
-          - 0.0.0-experimental-2bf7c02f0-20220314
+          - 18.0.0
+          - 18.0.0-next-3e997fdba-20220329
+          - 0.0.0-experimental-e7d0053e6-20220325
         env: [development, production]
-        testing: [default, alpha]
         exclude:
           - { react: 16.8.0, env: production } # somehow fails
-          - { react: 16.8.0, testing: alpha }
-          - { react: 16.9.0, testing: alpha }
-          - { react: 17.0.0, testing: alpha }
-          - { react: 18.0.0-rc.2, testing: default } # suspense doesn't work?
-          - { react: 0.0.0-experimental-2bf7c02f0-20220314, testing: default } # suspense doesn't work?
-          - { react: 18.0.0-rc.2, env: production } # act(...) is not supported in production builds of React.
-          - { react: 0.0.0-experimental-2bf7c02f0-20220314, env: production } # act(...) is not supported in production builds of React.
+          - { react: 18.0.0, env: production } # act(...) is not supported in production builds of React.
+          - { react: 18.0.0-next-3e997fdba-20220329, env: production } # act(...) is not supported in production builds of React.
+          - { react: 0.0.0-experimental-e7d0053e6-20220325, env: production } # act(...) is not supported in production builds of React.
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -52,9 +48,9 @@ jobs:
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       - run: yarn install --frozen-lockfile --check-files
       - run: yarn build
-      - name: Install alpha testing-library
-        if: ${{ matrix.testing == 'alpha' }}
-        run: yarn add -D @testing-library/react@13.0.0-alpha.6
+      - name: Install legacy testing-library
+        if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
+        run: yarn add -D @testing-library/react@12.1.4
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |

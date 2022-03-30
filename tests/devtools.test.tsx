@@ -3,22 +3,6 @@ import { act, fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 import { devtools } from 'valtio/utils'
 
-const consoleError = console.error
-beforeEach(() => {
-  console.error = jest.fn((message) => {
-    if (
-      process.env.NODE_ENV === 'production' &&
-      message.startsWith('act(...) is not supported in production')
-    ) {
-      return
-    }
-    consoleError(message)
-  })
-})
-afterEach(() => {
-  console.error = consoleError
-})
-
 let extensionSubscriber: ((message: any) => void) | undefined
 
 const extension = {
@@ -64,18 +48,16 @@ it('connects to the extension by initialiing', () => {
 })
 
 describe('If there is no extension installed...', () => {
+  let savedConsoleWarn: any
   let savedDEV: boolean
-  let consoleWarn: jest.SpyInstance<
-    void,
-    [message?: any, ...optionalParams: any[]]
-  >
   beforeEach(() => {
-    consoleWarn = jest.spyOn(console, 'warn')
+    savedConsoleWarn = console.warn
+    console.warn = jest.fn()
     savedDEV = __DEV__
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
   afterEach(() => {
-    consoleWarn.mockRestore()
+    console.warn = savedConsoleWarn
     __DEV__ = savedDEV
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
   })
@@ -110,7 +92,7 @@ describe('If there is no extension installed...', () => {
       )
     }
     render(<Counter />)
-    expect(consoleWarn).not.toBeCalled()
+    expect(console.warn).not.toBeCalled()
   })
 
   it('[DEV-ONLY] warns if enabled is true', () => {
@@ -127,7 +109,7 @@ describe('If there is no extension installed...', () => {
       )
     }
     render(<Counter />)
-    expect(consoleWarn).toHaveBeenLastCalledWith(
+    expect(console.warn).toHaveBeenLastCalledWith(
       '[Warning] Please install/enable Redux devtools extension'
     )
   })
@@ -146,7 +128,7 @@ describe('If there is no extension installed...', () => {
       )
     }
     render(<Counter />)
-    expect(consoleWarn).not.toBeCalled()
+    expect(console.warn).not.toBeCalled()
   })
 })
 
