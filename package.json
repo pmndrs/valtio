@@ -159,7 +159,7 @@
     "@rollup/plugin-typescript": "^8.3.1",
     "@swc/core": "^1.2.161",
     "@swc/jest": "^0.2.20",
-    "@testing-library/react": "^12.1.4",
+    "@testing-library/react": "^13.0.0-alpha.6",
     "@types/babel-plugin-macros": "^2.8.5",
     "@types/jest": "^27.4.1",
     "@types/react": "^17.0.43",
