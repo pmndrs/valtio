@@ -3,22 +3,6 @@ import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { addComputed, proxyWithComputed } from 'valtio/utils'
 
-const consoleError = console.error
-beforeEach(() => {
-  console.error = jest.fn((message) => {
-    if (
-      process.env.NODE_ENV === 'production' &&
-      message.startsWith('act(...) is not supported in production')
-    ) {
-      return
-    }
-    consoleError(message)
-  })
-})
-afterEach(() => {
-  console.error = consoleError
-})
-
 const consoleWarn = console.warn
 beforeEach(() => {
   console.warn = jest.fn((message) => {

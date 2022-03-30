@@ -2,22 +2,6 @@ import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, ref, useSnapshot } from 'valtio'
 
-const consoleError = console.error
-beforeEach(() => {
-  console.error = jest.fn((message) => {
-    if (
-      process.env.NODE_ENV === 'production' &&
-      message.startsWith('act(...) is not supported in production')
-    ) {
-      return
-    }
-    consoleError(message)
-  })
-})
-afterEach(() => {
-  console.error = consoleError
-})
-
 it('should trigger re-render setting objects with ref wrapper', async () => {
   const obj = proxy({ nested: ref({ count: 0 }) })
 

@@ -2,22 +2,6 @@ import { StrictMode } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 
-const consoleError = console.error
-beforeEach(() => {
-  console.error = jest.fn((message) => {
-    if (
-      process.env.NODE_ENV === 'production' &&
-      message.startsWith('act(...) is not supported in production')
-    ) {
-      return
-    }
-    consoleError(message)
-  })
-})
-afterEach(() => {
-  console.error = consoleError
-})
-
 it('unsupported map', async () => {
   const obj = proxy({ map: new Map([['count', 0]]) })
 

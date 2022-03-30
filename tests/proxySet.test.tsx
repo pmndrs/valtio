@@ -3,23 +3,6 @@ import { fireEvent, render, waitFor } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 import { proxySet } from 'valtio/utils'
 
-const consoleError = console.error
-beforeEach(() => {
-  console.error = jest.fn((message) => {
-    if (
-      process.env.NODE_ENV === 'production' &&
-      message.startsWith('act(...) is not supported in production')
-    ) {
-      return
-    }
-
-    consoleError(message)
-  })
-})
-afterEach(() => {
-  console.error = consoleError
-})
-
 // used to initialize proxySet during tests
 const initialValues = [
   {
