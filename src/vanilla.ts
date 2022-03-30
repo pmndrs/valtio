@@ -57,13 +57,10 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
   }
   let version = globalVersion
   const listeners = new Set<Listener>()
-  const notifyUpdate = (op: Op, nextVersion?: number) => {
-    if (!nextVersion) {
-      nextVersion = ++globalVersion
-    }
+  const notifyUpdate = (op: Op, nextVersion = ++globalVersion) => {
     if (version !== nextVersion) {
       version = nextVersion
-      listeners.forEach((listener) => listener(op, nextVersion as number))
+      listeners.forEach((listener) => listener(op, nextVersion))
     }
   }
   const propListeners = new Map<string | symbol, Listener>()
