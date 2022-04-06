@@ -45,7 +45,11 @@ it('simple computed getters', async () => {
       count: 0,
     },
     {
-      doubled: { get: (snap) => computeDouble(snap.count) },
+      doubled: {
+        get() {
+          return computeDouble(this.count)
+        },
+      },
     }
   )
 
@@ -78,9 +82,11 @@ it('computed getters and setters', async () => {
     },
     {
       doubled: {
-        get: (snap) => computeDouble(snap.count),
-        set: (state, newValue: number) => {
-          state.count = newValue / 2
+        get() {
+          return computeDouble(this.count)
+        },
+        set(newValue: number) {
+          this.count = newValue / 2
         },
       },
     }
@@ -113,15 +119,19 @@ it('computed setters with object and array', async () => {
     },
     {
       object: {
-        get: (snap) => snap.obj,
-        set: (state, newValue: any) => {
-          state.obj = newValue
+        get() {
+          return this.obj
+        },
+        set(newValue: any) {
+          this.obj = newValue
         },
       },
       array: {
-        get: (snap) => snap.arr,
-        set: (state, newValue: any) => {
-          state.arr = newValue
+        get() {
+          return this.arr
+        },
+        set(newValue: any) {
+          this.arr = newValue
         },
       },
     }
@@ -274,5 +284,48 @@ it('addComputed with array.pop (#124)', async () => {
   expect(snapshot(state)).toMatchObject({
     arr: [{ n: 1 }, { n: 2 }],
     nums: [1, 2],
+  })
+})
+
+it('computed access computed', async () => {
+  const state = proxyWithComputed(
+    {
+      count: 1,
+    },
+    {
+      doubled() {
+        return this.count * 2
+      },
+      quadrupled: {
+        get() {
+          return this.doubled * 2
+        },
+        set(v: number) {
+          this.count = v >> 2
+        },
+      },
+    }
+  )
+
+  expect(snapshot(state)).toMatchObject({
+    count: 1,
+    doubled: 2,
+    quadrupled: 4,
+  })
+
+  state.count++
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({
+    count: 2,
+    doubled: 4,
+    quadrupled: 8,
+  })
+
+  state.quadrupled--
+  await Promise.resolve()
+  expect(snapshot(state)).toMatchObject({
+    count: 1,
+    doubled: 2,
+    quadrupled: 4,
   })
 })
