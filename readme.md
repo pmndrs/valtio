@@ -337,26 +337,32 @@ import { proxyWithComputed } from 'valtio/utils'
 const state = proxyWithComputed({
   count: 1,
 }, {
-  doubled: snap => snap.count * 2
+  doubled() {
+    return this.count * 2;
+  },
+  quadrupled: {
+    get() {
+      return this.doubled * 2;
+    },
+    set(v: number) {
+      this.count = v >> 2;
+    },
+  },
 })
 
 // Computed values accept custom setters too:
 const state2 = proxyWithComputed({
-  firstName: 'Alec',
-  lastName: 'Baldwin'
+    firstName: 'Alec',
+    lastName: 'Baldwin',
 }, {
   fullName: {
-    get: (snap) => snap.firstName + ' ' + snap.lastName,
-    set: (state, newValue) => { [state.firstName, state.lastName] = newValue.split(' ') },
+    get() {
+      return this.firstName + ' ' + snap.lastName
+    },
+    set(newValue) {
+      ;[state.firstName, state.lastName] = newValue.split(' ')
+    },
   }
-})
-
-// if you want a computed value to derive from another computed, you must declare the dependency first:
-const state = proxyWithComputed({
-  count: 1,
-}, {
-  doubled: snap => snap.count * 2,
-  quadrupled: snap => snap.doubled * 2
 })
 ```
 
