@@ -62,7 +62,7 @@ type GetCompleted<C> = {
  *   },
  * })
  */
-export function proxyWithComputed<T extends object, U>(
+export function proxyWithComputed<T extends object, U extends object>(
   initialObject: T,
   computedFns: U & ThisType<T & GetCompleted<U>>
 ): T & GetCompleted<U> {
