@@ -1,6 +1,28 @@
 import { createProxy as createProxyToCompare, isChanged } from 'proxy-compare'
 import { proxy, snapshot } from '../vanilla'
-import type { Snapshot } from '../vanilla'
+
+// Unfortunatly, this doesn't work with tsc.
+// Hope to find a solution to make this work.
+//
+//   class SnapshotWrapper<T extends object> {
+//     fn(p: T) {
+//       return snapshot(p)
+//     }
+//   }
+//   type Snapshot<T extends object> = ReturnType<SnapshotWrapper<T>['fn']>
+//
+// Using copy-paste types for now:
+type AsRef = { $$valtioRef: true }
+type AnyFunction = (...args: any[]) => any
+type Snapshot<T> = T extends AnyFunction
+  ? T
+  : T extends AsRef
+  ? T
+  : T extends Promise<infer V>
+  ? Snapshot<V>
+  : {
+      readonly [K in keyof T]: Snapshot<T[K]>
+    }
 
 type GetCompleted<C> = {
   [k in keyof C]: C[k] extends (...args: any[]) => infer R

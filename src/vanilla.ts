@@ -242,7 +242,7 @@ export function subscribe<T extends object>(
 }
 
 type AnyFunction = (...args: any[]) => any
-export type Snapshot<T> = T extends AnyFunction
+type Snapshot<T> = T extends AnyFunction
   ? T
   : T extends AsRef
   ? T
