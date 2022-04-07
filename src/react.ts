@@ -160,7 +160,8 @@ export function useSnapshot<T extends object>(
         }
         return (prevSnapshot = nextSnapshot)
       }
-    }, [proxyObject])
+    }, [proxyObject]),
+    useCallback(() => snapshot(proxyObject), [proxyObject])
   )
   const currVersion = getVersion(proxyObject)
   useEffect(() => {
