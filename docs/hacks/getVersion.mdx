@@ -5,3 +5,9 @@ description: ''
 ---
 
 # getVersion
+
+In Valtio, updates to proxied objects are tracked internally with a version number. Therefore `getVersion` helper can be used to check if a proxied object has been updated. This is not typically useful or recommended to use in application code.
+
+```js
+getVersion(proxyObject)
+```
