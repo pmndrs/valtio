@@ -31,14 +31,8 @@ jobs:
           - 16.9.0
           - 17.0.0
           - 18.0.0
-          - 18.0.0-next-3e997fdba-20220329
-          - 0.0.0-experimental-e7d0053e6-20220325
-        env: [development, production]
-        exclude:
-          - { react: 16.8.0, env: production } # somehow fails
-          - { react: 18.0.0, env: production } # act(...) is not supported in production builds of React.
-          - { react: 18.0.0-next-3e997fdba-20220329, env: production } # act(...) is not supported in production builds of React.
-          - { react: 0.0.0-experimental-e7d0053e6-20220325, env: production } # act(...) is not supported in production builds of React.
+          - 18.1.0-next-af730436c-20220405
+          - 0.0.0-experimental-af730436c-20220405
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -57,7 +51,7 @@ jobs:
           sed -i~ '1s/^/import React from "react";/' tests/*.tsx
           sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' package.json
           sed -i~ 's/automatic/classic/' .swcrc
-      - name: Test ${{ matrix.react }} ${{ matrix.env }}
+      - name: Test ${{ matrix.react }}
         run: |
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
-          env NODE_ENV=${{ matrix.env }} yarn test:ci
+          yarn test:ci
