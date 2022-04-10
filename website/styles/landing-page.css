@@ -1,0 +1,243 @@
+@keyframes float {
+  0% {
+    transform: translate3d(0, 0px, 0);
+  }
+  100% {
+    transform: translate3d(0, -20px, 0);
+  }
+}
+
+@keyframes float-mid {
+  0% {
+    transform: translate3d(0, 0px, 0);
+  }
+  100% {
+    transform: translate3d(0, -40px, 0);
+  }
+}
+
+@keyframes float-rotate-mid {
+  0% {
+    transform: translate3d(0, -50px, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate3d(0, 0px, 0) rotate(180deg);
+  }
+}
+
+@keyframes float-hi {
+  0% {
+    transform: translate3d(0, 0px, 0);
+  }
+  100% {
+    transform: translate3d(0, -60px, 0);
+  }
+}
+
+svg {
+  z-index: -1;
+}
+
+html {
+  --theme-blue: #b2ebf2;
+  --base-animation-duration: 4s;
+}
+
+.top-left {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+.top-right {
+  position: fixed;
+  top: 0;
+  right: 0;
+}
+
+.bottom-left {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+}
+
+.bottom-right {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+}
+
+.center {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@media (max-width: 1700px) {
+  .center {
+    left: 40%;
+  }
+}
+
+
+@media (max-width: 1300px) {
+  .center {
+    top: 20%;
+    left: 50%
+  }
+}
+
+.top-left .three-d-box > rect,
+.top-left .three-d-box > line {
+  animation: float-mid ease-in-out
+    clamp(0.5s, var(--base-animation-duration), 10s) infinite alternate;
+}
+
+.bottom-right .spinning-box {
+  transform-origin: 700px 800px;
+  animation: float-rotate-mid ease-in-out
+    clamp(0.5s, calc(var(--base-animation-duration) - 1s), 10s) infinite
+    alternate;
+}
+
+.valtio > path {
+  animation: float-mid ease-in-out
+    clamp(0.5s, calc(var(--base-animation-duration) + 1s), 10s) infinite
+    alternate;
+}
+
+.bottom-right .line-1 {
+  animation: float-mid ease-in-out
+    clamp(0.5s, calc(var(--base-animation-duration) + 0.25s), 10s) infinite
+    alternate;
+}
+
+.bottom-right .line-2 {
+  animation: float-mid ease-in-out
+    clamp(0.5s, calc(var(--base-animation-duration) + 0.5s), 10s) infinite
+    alternate;
+}
+
+.bottom-right .line-3 {
+  animation: float-mid ease-in-out
+    clamp(0.5s, calc(var(--base-animation-duration) + 0.75s), 10s) infinite
+    alternate;
+}
+
+.top-right .dot-grid > circle {
+  animation: float-hi ease-in-out
+    clamp(0.5s, calc(var(--base-animation-duration) - 1s), 10s) infinite
+    alternate;
+}
+
+.top-right .fast-circle {
+  animation: float-hi ease-in-out
+    clamp(0.5s, calc(var(--base-animation-duration) - 2s), 10s) infinite
+    alternate;
+}
+
+.top-left .donut {
+  animation: float-hi ease-in-out
+    clamp(0.5s, calc(var(--base-animation-duration) - 2.5s), 10s) infinite
+    alternate;
+}
+
+svg > g > path {
+  animation: float-mid ease-in-out
+    clamp(0.5s, calc(var(--base-animation-duration) + 1s), 10s) infinite
+    alternate;
+}
+
+.bottom-left .concentric-circles {
+  animation: float-hi ease-in-out
+    clamp(0.5s, calc(var(--base-animation-duration) - 1s), 10s) infinite
+    alternate;
+}
+
+.code-container {
+  position: absolute;
+  top: 35%;
+  right: 30px;
+  height: 300px;
+  z-index: 50;
+}
+
+@media (max-width: 1300px) {
+  .code-container {
+    left: 0;
+    right: 0;
+  }
+}
+
+.code-container-inner {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  z-index: 60;
+}
+
+.duration-changer {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  height: 100px;
+  top: -50px;
+  right: 20px;
+  z-index: 50;
+  background: #fff;
+  border: 8px solid var(--theme-blue);
+  border-radius: 3px;
+}
+
+button.counter {
+  cursor: pointer;
+  background: transparent;
+  border-radius: 0;
+  border: 3px solid #00caff;
+  color: #00caff;
+  font-size: 24px;
+  font-weight: 100;
+  margin: 0;
+  outline: none;
+  padding: 0 10px;
+  transition: background 0.3s;
+}
+button.counter + button.counter {
+  margin-left: 4px;
+}
+
+button.counter:hover,
+button.counter:active {
+  background: #00caff;
+  color: var(--theme-blue);
+}
+button.counter:active {
+  outline: 3px solid #00caff;
+}
+button.counter:disabled {
+  cursor: not-allowed;
+  background: lightgray;
+  color: #111;
+}
+
+.get-started.large-screen {
+  position: absolute;
+  display: grid;
+}
+
+.get-started.small-screen {
+  display: none;
+}
+
+@media (max-width: 1300px) {
+  .get-started.large-screen {
+    display: none;
+  }
+  .get-started.small-screen {
+    display: grid;
+  }
+}
