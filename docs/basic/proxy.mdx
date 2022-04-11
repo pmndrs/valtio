@@ -24,9 +24,7 @@ setInterval(() => {
 }, 1000)
 ```
 
-#### Optimizations
-
-Noop
+#### Optimizations: Noop and batching
 
 Updates that set the value of a property to the same value are ignored. Subscribers will not be informed of a version change.
 
@@ -35,8 +33,6 @@ const state = proxy({ count: 0 })
 
 state.count = 0 // has no effect
 ```
-
-Batching
 
 Multiple changes in the same event loop tick to will be batched together. Subscribers will be notified of a single version change.
 
@@ -49,13 +45,13 @@ state.text = 'world'
 
 #### Nested proxies
 
-Proxies and be nested in other proxy objects and updated as a whole.
+Proxies can be nested in other proxy objects and updated as a whole.
 
 ```jsx
 import { proxy, useSnapshot } from 'valtio'
 
-const personState = proxy({ name: 'Timo', role: "admin" })
-const authState = proxy({ status: "loggedIn", user: personState })
+const personState = proxy({ name: 'Timo', role: 'admin' })
+const authState = proxy({ status: 'loggedIn', user: personState })
 
 authState.user.name = 'Nina'
 ```
@@ -66,46 +62,49 @@ If you reassign the proxy to a entirely new object, it will stop working.
 
 ```jsx
 let state = proxy({ user: { name: 'Timo' } })
-subscribe(state, () => {
-  console.log(state.user.name) // not called
-})
-state = {user: {name: 'Nina'}}
 
-// do
+subscribe(state, () => {
+  console.log(state.user.name)
+})
+// will not notify subscribers
+state = { user: { name: 'Nina' } }
+
+// instead
 let state = proxy({ user: { name: 'Timo' } })
+
 subscribe(state, () => {
   console.log(state.user.name) // logs "Nina"
 })
-
-state.user.name = "Nina"
+// will notify subscribers
+state.user.name = 'Nina'
 ```
 
-Not everything can be proxied. Generally, you are safe if it is serializable. Classes can also be proxied. But avoid special objects. 
+Not everything can be proxied. Generally, you are safe if it is serializable. Classes can also be proxied. But avoid special objects.
 
 ```jsx
-  // these won't work - changes to these objects won't cause updates
-  // to store state that is unproxied see the docs on ref
-  const state = proxy({
-    chart: d3.select('#chart'),
-    component: React.createElement('div'),
-    map: new Map(), // see proxyMap
-    storage: localStorage
-  })
+// these won't work - changes to these objects won't cause updates
+// to store state that is unproxied see the docs on ref
+const state = proxy({
+  chart: d3.select('#chart'),
+  component: React.createElement('div'),
+  map: new Map(), // see proxyMap
+  storage: localStorage,
+})
 
-  // this will work
-  class User {
-    first = null
-    last = null
-    constructor(first, last) {
-      this.first = first
-      this.last = last
-    }
-    greet() {
-      return `Hi ${this.first}!`
-    }
-    get fullName() {
-      return `${this.first} ${this.last}`
-    }
+// this will work
+class User {
+  first = null
+  last = null
+  constructor(first, last) {
+    this.first = first
+    this.last = last
   }
-  const state = proxy(new User('Timo', 'Kivinen'))
+  greet() {
+    return `Hi ${this.first}!`
+  }
+  get fullName() {
+    return `${this.first} ${this.last}`
+  }
+}
+const state = proxy(new User('Timo', 'Kivinen'))
 ```

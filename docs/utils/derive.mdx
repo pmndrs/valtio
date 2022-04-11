@@ -1,14 +1,14 @@
 ---
 title: 'derive'
 section: 'Utils'
-description: ''
+description: 'create a new proxy derived from others'
 ---
 
 # derive
 
-#### `derive` util
+#### create a new proxy derived from others
 
-You can subscribe to some proxies and create a derived proxy.
+You can subscribe to some proxies using `get` to create snapshots used to compute new values.
 
 ```js
 import { derive } from 'valtio/utils'
@@ -34,6 +34,22 @@ derive(
 )
 ```
 
-#### `underive` util
+# underive
 
-TODO
+#### stop evaluating
+
+In some cases you may want to unsubscribe after deriving a proxy. To do so, use the `underive` util. You may also pass keys to indicate which properties you want to unsubscribe. If you specify `delete` option, it will delete the properties
+and you can attach new derived properties.
+
+```js
+import { derive, underive } from 'valtio/utils'
+const state = proxy({
+  count: 1,
+})
+
+const derivedState = derive({
+  doubled: (get) => get(state).count * 2,
+})
+
+underive(derivedState)
+```

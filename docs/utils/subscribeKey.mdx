@@ -6,7 +6,7 @@ description: ''
 
 # subscribeKey
 
-To subscribe to a primitive value of state, consider `subscribeKey` in utils.
+To subscribe to a primitive value in proxy state, consider `subscribeKey`.
 
 ```js
 import { subscribeKey } from 'valtio/utils'
@@ -16,4 +16,3 @@ subscribeKey(state, 'count', (v) =>
   console.log('state.count has changed to', v)
 )
 ```
-

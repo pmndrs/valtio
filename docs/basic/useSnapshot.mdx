@@ -7,74 +7,86 @@ description: 'Create a local snapshot taht catches changes.'
 # useSnapshot
 
 Create a local snapshot that catches changes. This hook actually returns a wrapped snapshot in a proxy for
-render optimization instead of a plain object compared to <a href="/docs/advanced/snapshot">`snapshot()`</a> method.
-Rule of thumb: read from snapshots, mutate the source.
-The component will only re-render when the parts of the state you access have changed, it is render-optimized.
+render optimization instead of a plain object compared to <a href="/docs/advanced/snapshot">`snapshot()`</a>.
+
+#### Rule of thumb: read from snapshots, mutate the source.
+
+The component will only re-render when the parts of the state you access have changed; it is render-optimized.
 
 ```jsx
 function Counter() {
-	const snap = useSnapshot(state)
-	return (
-		<div>
-			{snap.count}
-			<button onClick={() => ++state.count}>+1</button>
-		</div>
-	)
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      {snap.count}
+      <button onClick={() => ++state.count}>+1</button>
+    </div>
+  )
 }
 ```
 
-[Notes]
-Every object inside your proxy also becomes a proxy (if you don't use "ref"), so you can also use them to create
-the local snapshot as seen on example B.
+#### Read only what you need
+
+Every object inside your proxy also becomes a proxy (if you don't use <a href="/docs/advanced/ref">`ref()`</a>). So you can also use them to create
+a local snapshot.
 
 ```jsx
 function ProfileName() {
-	const snap = useSnapshot(state.profile)
-	return (
-		<div>{snap.name}</div>
-	)
+  const snap = useSnapshot(state.profile)
+  return <div>{snap.name}</div>
 }
 ```
 
-Beware that you still can replace the child proxy with something else so it will break your snapshot. You can see
-above what happens with the original proxy when you replace the child proxy.
+#### Gotchas
+
+Beware of replacing the child proxy with something else, breaking your snapshot. You can see
+here what happens with the original proxy when you replace the child proxy.
 
 ```js
 console.log(state)
-{ profile: { name: "valtio" } }
+{
+  profile: {
+    name: 'valtio'
+  }
+}
 childState = state.profile
 console.log(childState)
-{ name: "valtio" }
-state.profile.name = "react"
+{
+  name: 'valtio'
+}
+state.profile.name = 'react'
 console.log(childState)
-{ name: "react" }
-state.profile = { name: "new name" }
+{
+  name: 'react'
+}
+state.profile = { name: 'new name' }
 console.log(childState)
-{ name: "react" }
+{
+  name: 'react'
+}
 console.log(state)
-{ profile: { name: "new name" } }
+{
+  profile: {
+    name: 'new name'
+  }
+}
 ```
 
 `useSnapshot()` depends on the original reference of the child proxy so if you replace it with a new one, the component
 that is subscribed to the old proxy won't receive new updates because it is still subscribed to the old one.
 
-In this case we recommend the example C or D. On both examples you don't need to worry with re-render,
-because it is render-optimized.
+In this case, we recommend one of the approaches below. In neither example do you need to worry about re-renders because it is render-optimized.
 
 ```jsx
 const snap = useSnapshot(state)
 
-return (
-	<div>{snap.profile.name}</div>
-)
+return <div>{snap.profile.name}</div>
 ```
 
 ```jsx
 const { profile } = useSnapshot(state)
 
-return (
-	<div>{profile.name}</div>
-)
+return <div>{profile.name}</div>
 ```
 
 ## Codesandbox demo
