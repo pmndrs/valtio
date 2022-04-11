@@ -252,7 +252,6 @@ export function getDocsNav(): Record<string, Navigation[]> {
       pages["proxyMap"],
     ],
     Hacks: [pages["getVersion"], pages["unstable_getHandler"]],
-    Plugins: [],
-    "API Reference": [],
+    Resources: [pages["community"], pages["libraries"], pages["learn"]],
   };
 }
