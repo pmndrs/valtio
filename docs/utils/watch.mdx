@@ -6,11 +6,13 @@ description: 'watch for changes.'
 
 # watch
 
-This utility behaves similarly to `useEffect` in React. Proxy objects are tracking with a `get` function passed to the callback. Notice the callback will run eagerly as soon as a proxy is tracked, even if not yet mutated.
+#### subscription via a getter
+
+This utility provides a specialized from of subscription. Proxy objects are tracked with a `get` function passed to the callback. Notice the callback will run eagerly as soon as a proxy is tracked, even if not yet mutated.
 
 ```js
-import {proxy} from 'valtio'
-import {watch} from 'valtio/utils'
+import { proxy } from 'valtio'
+import { watch } from 'valtio/utils'
 
 const userState = proxy({ user: { name: 'Juuso' } })
 const sessionState = proxy({ expired: false })
@@ -44,13 +46,12 @@ watch((get) => {
 sessionState.expired = true
 // 'Juuso's session is expired'
 setTimeout(() => {
-  userState.user.name = "Anonymous"
+  userState.user.name = 'Anonymous'
 }, 200)
 // 200ms -> 'Anonymous's session is expired"
 // 'Cleaning up' logged
 ```
 
-#### Gotchas
+#### gotchas
 
-If you remove the setTimeout in the example above, 'Juuso's session is expired' will become 'Anonymous's session is expired', logged twice now. Valtio will batch updates by default. You may pass `{sync: true}` as a second argument to `watch` to disable batching. However, this is relatively untested and should be used with caution.
-
+If you remove the setTimeout in the example above, 'Juuso's session is expired' will become 'Anonymous's session is expired', logged twice. Valtio will batch updates by default. You may pass `{sync: true}` as a second argument to `watch` to disable batching.

@@ -6,19 +6,21 @@ description: ''
 
 # proxySet
 
-#### `proxySet` util
+#### use a js Set with Valtio
 
 This utility creates a proxy which mimics the native Set behavior. The API is the same as the native Set API.
 
 ```js
 import { proxySet } from 'valtio/utils'
 
-const state = proxySet([1,2,3])
+const state = proxySet([1, 2, 3])
 
 state.add(4)
 state.delete(1)
-state.forEach(v => console.log(v)) // --->  2,3,4
+state.forEach((v) => console.log(v)) // --->  2,3,4
 ```
+
+#### Nesting
 
 It can be used inside a `proxy` as well.
 
@@ -26,7 +28,7 @@ It can be used inside a `proxy` as well.
 import { proxySet } from 'valtio/utils'
 
 const state = proxy({
-   count: 1,
-   set: proxySet()
+  count: 1,
+  set: proxySet(),
 })
 ```

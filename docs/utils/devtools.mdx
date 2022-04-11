@@ -1,7 +1,7 @@
 ---
 title: 'devtools'
 section: 'Utils'
-description: ''
+description: 'Use the Redux DevTools extension with Valtio'
 ---
 
 # devtools
@@ -24,9 +24,11 @@ The screenshot below shows how to use Redux DevTools to manipulate state. First 
 <img width="564" alt="image" src="https://user-images.githubusercontent.com/6372489/141134955-26e9ffce-1e2a-4c8c-a9b3-d9da739610fe.png"/>
 </details>
 
-#### Use it vanilla
+#### Use it with vanilla JS
 
-Valtio is not tied to React, you can use it in vanilla-js.
+````jsx
+
+Valtio is not tied to React, you can use it in vanillaJS.
 
 ```jsx
 import { proxy, subscribe, snapshot } from 'valtio/vanilla'
@@ -37,4 +39,4 @@ subscribe(state, () => {
   console.log('state is mutated')
   const obj = snapshot(state) // A snapshot is an immutable object
 })
-```
+````

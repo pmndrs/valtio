@@ -6,22 +6,24 @@ description: ''
 
 # proxyMap
 
-#### `proxyMap` util
+#### use a js Map with Valtio
 
 This utility creates a proxy which mimics the native Map behavior. The API is the same as the Map API.
 
 ```js
-import { proxyMap } from "valtio/utils"
+import { proxyMap } from 'valtio/utils'
 
 const state = proxyMap()
 state.size // ---> 0
 
-state.set(1, "hello")
+state.set(1, 'hello')
 state.size // ---> 1
 
 state.delete(1)
 state.size // ---> 0
 ```
+
+#### Nesting
 
 It can be used inside a `proxy` as well.
 
@@ -29,8 +31,8 @@ It can be used inside a `proxy` as well.
 import { proxyMap } from 'valtio/utils'
 
 const state = proxy({
-   count: 1,
-   map: proxyMap()
+  count: 1,
+  map: proxyMap(),
 })
 ```
 
@@ -41,12 +43,12 @@ import { proxyMap } from 'valtio/utils'
 
 // with ref
 const key = ref({})
-state.set(key, "hello")
+state.set(key, 'hello')
 state.get(key) //hello
 
 // without ref
 const key = {}
-state.set(key, "value")
+state.set(key, 'value')
 state.get(key) //undefined
 ```
 

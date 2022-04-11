@@ -6,23 +6,24 @@ description: 'Create a snapshot of current state'
 
 # snapshot
 
-#### A snapshot takes a proxy and returns a immutable object, unwrapped from the proxy.   
-  
+#### A snapshot takes a proxy and returns a immutable object, unwrapped from the proxy.
+
 Immutability is achieved by deeply freezing the object. In sequential snapshot calls, when the values in the proxy have not changed, a pointer to the same object is returned. This allows for shallow comparison in render functions, preventing spurious renders. Snapshots also throw promises, making them work with React Suspense.
 
 ```js
 import { proxy, snapshot } from 'valtio'
 
-const store = proxy({ name: "Mika" });
-const unwrappedStore = snapshot(store); // unwrapped store is the original object, unproxied
-const anotherUnwrappedStore = snapshot(store);
-console.log(unwrappedStore === anotherUnwrappedStore); // true
-store.name = "Hanna";
-const yetAnotherUpwrappedStore = snapshot(store);
-console.log(unwrappedStore === yetAnotherUpwrappedStore); // false
+const store = proxy({ name: 'Mika' })
+const unwrappedStore = snapshot(store) // unwrapped store is the original object, unproxied
+const anotherUnwrappedStore = snapshot(store)
+console.log(unwrappedStore === anotherUnwrappedStore) // true
+store.name = 'Hanna'
+const yetAnotherUpwrappedStore = snapshot(store)
+console.log(unwrappedStore === yetAnotherUpwrappedStore) // false
 ```
+
+#### Vanilla javascript
 
 In VanillaJS, snapshot is not necessary to access proxied object values, inside or outside of subscribe. However, it is useful, for example, to keep a serializable list of unproxied objects or check if objects have changed.
 
 If you are using valtio outside without React, import proxy and snapshot from 'valtio/vanilla'.
-
