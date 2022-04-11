@@ -199,6 +199,9 @@
     "typescript": "^4.6.3",
     "vite": "2.8.6"
   },
+  "resolutions": {
+    "date-fns": "2.27.0"
+  },
   "peerDependencies": {
     "@babel/helper-module-imports": ">=7.12",
     "@babel/types": ">=7.13",
