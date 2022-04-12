@@ -1,12 +1,8 @@
 import { animated } from "react-spring";
 import { useFloatAnimation } from "./useFloatAnimation";
-import { useSnapshot } from "valtio";
-import { animationState } from "./animationState";
-import * as React from "react";
 
 const Box = () => {
   const style = useFloatAnimation("float-mid");
-
   return (
     <animated.svg
       viewBox="0 0 1920 1080"

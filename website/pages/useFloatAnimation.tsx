@@ -4,13 +4,11 @@ import { useSnapshot } from "valtio";
 import { animationState } from "./animationState";
 
 type AnimationName = "float" | "float-mid" | "float-rotate-mid" | "float-hi";
-const floatAnimations = new Map<
-  AnimationName,
-  {
-    from: { transform: string };
-    to: { transform: string };
-  }
->();
+type Animation = {
+  from: { transform: string };
+  to: { transform: string };
+};
+const floatAnimations = new Map<AnimationName, Animation>();
 
 floatAnimations.set("float", {
   from: { transform: "translate3d(0, 0px, 0)" },
@@ -37,16 +35,18 @@ export function useFloatAnimation(
   offset: number = 0
 ) {
   const snapshot = useSnapshot(animationState);
-  const [style] = useSpring(
-    () => ({
-      loop: { reverse: true },
-      config: {
-        duration: clamp(snapshot.duration * 1000 + offset, 500, 10000),
-        easing: easeQuadInOut,
-      },
-      ...floatAnimations.get(animation),
-    }),
-    [snapshot.duration]
-  );
-  return style;
+  const { from, to } = floatAnimations.get(animation) as Animation;
+  return useSpring({
+    config: {
+      duration: clamp(snapshot.duration * 1000 + offset, 500, 10000),
+      easing: easeQuadInOut,
+    },
+    from,
+    to: async (next) => {
+      while (true) {
+        await next(to);
+        await next(from);
+      }
+    },
+  });
 }
