@@ -3,28 +3,33 @@ import Highlight, { defaultProps } from "prism-react-renderer";
 import { GettingStarted } from "./GettingStarted";
 import { animationState, incDuration, decDuration } from "./animationState";
 
-const exampleCode = (duration: number) => `
+const exampleCode = (duration: number, count: number) => `
   const animationState = proxy({
-    duration: ${duration},
+    durationInSec: ${duration},
+    count: ${count}
   });
   const incDuration = () => {
-    ++animationState.duration;
+    ++animationState.durationInSec;
   };
   const decDuration = () => {
-    --animationState.duration;
+    --animationState.durationInSec;
   };
+
+  setInterval(() => {
+    ++animationState.count;
+  }, 100);
   
   <div>
     <h3>
-      {snapshot.baseDuration}
+      {snapshot.durationInSec}
     </h3>
     <button
-      disabled={snapshot.baseDuration <= 3}
+      disabled={snapshot.durationInSec <= 3}
       onClick={decDuration}>
       -
     </button>
     <button
-      disabled={snapshot.duration >= 6}
+      disabled={snapshot.durationInSec >= 6}
       onClick={incDuration}>
       +
     </button>
@@ -37,7 +42,10 @@ export const CodeExample = () => {
     <div className="code-container">
       <div className="code-container-inner">
         <div className="duration-changer">
-          <h3 className="text-xl font-bold">{snapshot.duration}</h3>
+          <h3 className="text-xl font-bold">
+            {snapshot.duration}
+            <small className="font-light">sec</small>
+          </h3>
           <div>
             <button
               className="counter"
@@ -57,7 +65,7 @@ export const CodeExample = () => {
         </div>
         <Highlight
           {...defaultProps}
-          code={exampleCode(snapshot.duration)}
+          code={exampleCode(snapshot.duration, snapshot.count)}
           language="jsx"
           theme={undefined}
         >

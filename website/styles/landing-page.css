@@ -121,8 +121,8 @@ html {
   align-items: center;
   width: 100px;
   height: 100px;
-  top: -50px;
-  right: 20px;
+  top: -75px;
+  right: 15px;
   z-index: 50;
   background: #fff;
   border: 8px solid var(--theme-blue);
@@ -134,9 +134,9 @@ button.counter {
   background: transparent;
   border-radius: 0;
   border: 3px solid #00caff;
-  color: #00caff;
+  color: black;
   font-size: 24px;
-  font-weight: 100;
+  font-weight: 400;
   margin: 0;
   outline: none;
   padding: 0 10px;
