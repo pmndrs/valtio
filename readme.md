@@ -32,7 +32,7 @@ setInterval(() => {
 
 #### React via useSnapshot
 
-Create a local snapshot that catches changes. Rule of thumb: read from snapshots, mutate the source. The component will only re-render when the parts of the state you access have changed, it is render-optimized.
+Create a local snapshot that catches changes. Rule of thumb: read from snapshots in render function, otherwise use the source. The component will only re-render when the parts of the state you access have changed, it is render-optimized.
 
 ```jsx
 // This will re-render on `state.count` change but not on `state.text` change
