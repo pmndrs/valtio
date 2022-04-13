@@ -1,6 +1,6 @@
-import { AnimatedShapes } from "./AnimatedShapes";
-import { GettingStarted } from "./GettingStarted";
-import { CodeExample } from "./CodeExample";
+import { AnimatedShapes } from "~/components/LandingPage/AnimatedShapes";
+import { GettingStarted } from "~/components/LandingPage/GettingStarted";
+import { CodeExample } from "~/components/LandingPage/CodeExample";
 
 const Home = () => {
   return (
