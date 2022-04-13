@@ -24,12 +24,12 @@ const exampleCode = (duration: number, count: number) => `
       {snapshot.durationInSec}
     </h3>
     <button
-      disabled={snapshot.durationInSec <= 3}
+      disabled={snapshot.durationInSec <= 1}
       onClick={decDuration}>
       -
     </button>
     <button
-      disabled={snapshot.durationInSec >= 6}
+      disabled={snapshot.durationInSec >= 10}
       onClick={incDuration}>
       +
     </button>
