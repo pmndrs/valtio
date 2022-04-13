@@ -15,23 +15,25 @@ const exampleCode = (duration: number, count: number) => `
     --state.duration;
   };
   const incrementCount = () => {
-    ++animationState.count;
+    ++state.count;
     setTimeout(incrementCount, 100 * state.duration);
   };
 
   incrementCount();
+
+  const snap = useSnapshot(state)
   
   <div>
     <h3>
-      {snapshot.duration}
+      {snap.duration}
     </h3>
     <button
-      disabled={snapshot.durationInSec <= 1}
+      disabled={snap.duration <= 1}
       onClick={decDuration}>
       -
     </button>
     <button
-      disabled={snapshot.durationInSec >= 10}
+      disabled={snapshot.duration >= 10}
       onClick={incDuration}>
       +
     </button>
