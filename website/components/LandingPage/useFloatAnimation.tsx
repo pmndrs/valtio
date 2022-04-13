@@ -34,11 +34,11 @@ export function useFloatAnimation(
   animation: AnimationName,
   offset: number = 0
 ) {
-  const snapshot = useSnapshot(state);
+  const snap = useSnapshot(state);
   const { from, to } = floatAnimations.get(animation) as Animation;
   return useSpring({
     config: {
-      duration: clamp(snapshot.duration * 1000 + offset, 500, 10000),
+      duration: clamp(snap.dur * 1000 + offset, 500, 10000),
       easing: easeQuadInOut,
     },
     from,

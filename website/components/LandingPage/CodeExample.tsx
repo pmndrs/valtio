@@ -3,9 +3,9 @@ import Highlight, { defaultProps } from "prism-react-renderer";
 import { GettingStarted } from "./GettingStarted";
 import { state, incDuration, decDuration } from "./state";
 
-const exampleCode = (duration: number, count: number) => `
+const exampleCode = (dur: number, count: number) => `
   const state = proxy({
-    dur: ${duration},
+    dur: ${dur},
     count: ${count}
   });
   const incDur = () => {++state.dur};
@@ -37,26 +37,26 @@ const exampleCode = (duration: number, count: number) => `
 `;
 
 export const CodeExample = () => {
-  const snapshot = useSnapshot(state);
+  const snap = useSnapshot(state);
   return (
     <div className="code-container">
       <div className="code-container-inner">
         <div className="duration-changer">
           <h3 className="text-xl font-bold">
-            {snapshot.duration}
+            {snap.dur}
             <small className="font-light"> sec</small>
           </h3>
           <div>
             <button
               className="counter"
-              disabled={snapshot.duration <= 1}
+              disabled={snap.dur <= 1}
               onClick={decDuration}
             >
               -
             </button>
             <button
               className="counter"
-              disabled={snapshot.duration >= 10}
+              disabled={snap.dur >= 10}
               onClick={incDuration}
             >
               +
@@ -65,7 +65,7 @@ export const CodeExample = () => {
         </div>
         <Highlight
           {...defaultProps}
-          code={exampleCode(snapshot.duration, snapshot.count)}
+          code={exampleCode(snap.dur, snap.count)}
           language="jsx"
           theme={undefined}
         >
