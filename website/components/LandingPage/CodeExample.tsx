@@ -1,62 +1,62 @@
 import { useSnapshot } from "valtio";
 import Highlight, { defaultProps } from "prism-react-renderer";
 import { GettingStarted } from "./GettingStarted";
-import { animationState, incDuration, decDuration } from "./animationState";
+import { state, incDuration, decDuration } from "./state";
 
-const exampleCode = (duration: number, count: number) => `
-  const animationState = proxy({
-    durationInSec: ${duration},
+const exampleCode = (dur: number, count: number) => `
+  const state = proxy({
+    dur: ${dur},
     count: ${count}
   });
-  const incDuration = () => {
-    ++animationState.durationInSec;
-  };
-  const decDuration = () => {
-    --animationState.durationInSec;
+  const incDur = () => {++state.dur};
+  const decDur = () => {--state.dur};
+  const incCount = () => {
+    ++state.count;
+    setTimeout(incCount, 100 * state.dur);
   };
 
-  setInterval(() => {
-    ++animationState.count;
-  }, 100);
+  incCount();
+
+  const snap = useSnapshot(state)
   
-  <div>
-    <h3>
-      {snapshot.durationInSec}
-    </h3>
-    <button
-      disabled={snapshot.durationInSec <= 1}
-      onClick={decDuration}>
-      -
-    </button>
-    <button
-      disabled={snapshot.durationInSec >= 10}
-      onClick={incDuration}>
-      +
-    </button>
-  </div>
+  return (
+    <div>
+      <h3>{snap.dur}</h3>
+      <button 
+        disabled={snap.dur <= 1}
+        onClick={decDur}>
+        -
+      </button>
+      <button
+        disabled={snap.dur >= 10}
+        onClick={incDur}>
+        +
+      </button>
+    </div>
+  );
 `;
 
 export const CodeExample = () => {
-  const snapshot = useSnapshot(animationState);
+  const snap = useSnapshot(state);
   return (
     <div className="code-container">
       <div className="code-container-inner">
         <div className="duration-changer">
           <h3 className="text-xl font-bold">
-            {snapshot.duration}
-            <small className="font-light">sec</small>
+            {snap.dur}
+            <small className="font-light"> sec</small>
           </h3>
           <div>
             <button
               className="counter"
-              disabled={snapshot.duration <= 1}
+              disabled={snap.dur <= 1}
               onClick={decDuration}
             >
               -
             </button>
             <button
               className="counter"
-              disabled={snapshot.duration >= 10}
+              disabled={snap.dur >= 10}
               onClick={incDuration}
             >
               +
@@ -65,7 +65,7 @@ export const CodeExample = () => {
         </div>
         <Highlight
           {...defaultProps}
-          code={exampleCode(snapshot.duration, snapshot.count)}
+          code={exampleCode(snap.dur, snap.count)}
           language="jsx"
           theme={undefined}
         >
