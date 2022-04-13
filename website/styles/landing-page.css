@@ -45,14 +45,14 @@ html {
 
 .top-left {
   position: fixed;
-  top: 0;
-  left: 0;
+  top: 20px;
+  left: 20px;
 }
 
 .top-right {
   position: fixed;
-  top: 0;
-  right: 0;
+  top: 20px;
+  right: 20px;
 }
 
 .bottom-left {
@@ -80,79 +80,15 @@ html {
   }
 }
 
-
 @media (max-width: 1300px) {
   .center {
     top: 20%;
-    left: 50%
+    left: 50%;
   }
 }
 
-.top-left .three-d-box > rect,
-.top-left .three-d-box > line {
-  animation: float-mid ease-in-out
-    clamp(0.5s, var(--base-animation-duration), 10s) infinite alternate;
-}
-
-.bottom-right .spinning-box {
+.bottom-right .spinning-square {
   transform-origin: 700px 800px;
-  animation: float-rotate-mid ease-in-out
-    clamp(0.5s, calc(var(--base-animation-duration) - 1s), 10s) infinite
-    alternate;
-}
-
-.valtio > path {
-  animation: float-mid ease-in-out
-    clamp(0.5s, calc(var(--base-animation-duration) + 1s), 10s) infinite
-    alternate;
-}
-
-.bottom-right .line-1 {
-  animation: float-mid ease-in-out
-    clamp(0.5s, calc(var(--base-animation-duration) + 0.25s), 10s) infinite
-    alternate;
-}
-
-.bottom-right .line-2 {
-  animation: float-mid ease-in-out
-    clamp(0.5s, calc(var(--base-animation-duration) + 0.5s), 10s) infinite
-    alternate;
-}
-
-.bottom-right .line-3 {
-  animation: float-mid ease-in-out
-    clamp(0.5s, calc(var(--base-animation-duration) + 0.75s), 10s) infinite
-    alternate;
-}
-
-.top-right .dot-grid > circle {
-  animation: float-hi ease-in-out
-    clamp(0.5s, calc(var(--base-animation-duration) - 1s), 10s) infinite
-    alternate;
-}
-
-.top-right .fast-circle {
-  animation: float-hi ease-in-out
-    clamp(0.5s, calc(var(--base-animation-duration) - 2s), 10s) infinite
-    alternate;
-}
-
-.top-left .donut {
-  animation: float-hi ease-in-out
-    clamp(0.5s, calc(var(--base-animation-duration) - 2.5s), 10s) infinite
-    alternate;
-}
-
-svg > g > path {
-  animation: float-mid ease-in-out
-    clamp(0.5s, calc(var(--base-animation-duration) + 1s), 10s) infinite
-    alternate;
-}
-
-.bottom-left .concentric-circles {
-  animation: float-hi ease-in-out
-    clamp(0.5s, calc(var(--base-animation-duration) - 1s), 10s) infinite
-    alternate;
 }
 
 .code-container {
@@ -185,8 +121,8 @@ svg > g > path {
   align-items: center;
   width: 100px;
   height: 100px;
-  top: -50px;
-  right: 20px;
+  top: -75px;
+  right: 15px;
   z-index: 50;
   background: #fff;
   border: 8px solid var(--theme-blue);
@@ -198,9 +134,9 @@ button.counter {
   background: transparent;
   border-radius: 0;
   border: 3px solid #00caff;
-  color: #00caff;
+  color: black;
   font-size: 24px;
-  font-weight: 100;
+  font-weight: 400;
   margin: 0;
   outline: none;
   padding: 0 10px;
