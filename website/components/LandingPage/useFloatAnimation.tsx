@@ -1,7 +1,7 @@
 import { useSpring } from "react-spring";
 import { easeQuadInOut } from "d3-ease";
 import { useSnapshot } from "valtio";
-import { animationState } from "./animationState";
+import { state } from "./state";
 
 type AnimationName = "float" | "float-mid" | "float-rotate-mid" | "float-hi";
 type Animation = {
@@ -34,7 +34,7 @@ export function useFloatAnimation(
   animation: AnimationName,
   offset: number = 0
 ) {
-  const snapshot = useSnapshot(animationState);
+  const snapshot = useSnapshot(state);
   const { from, to } = floatAnimations.get(animation) as Animation;
   return useSpring({
     config: {

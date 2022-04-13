@@ -1,27 +1,29 @@
 import { useSnapshot } from "valtio";
 import Highlight, { defaultProps } from "prism-react-renderer";
 import { GettingStarted } from "./GettingStarted";
-import { animationState, incDuration, decDuration } from "./animationState";
+import { state, incDuration, decDuration } from "./state";
 
 const exampleCode = (duration: number, count: number) => `
-  const animationState = proxy({
-    durationInSec: ${duration},
+  const state = proxy({
+    duration: ${duration},
     count: ${count}
   });
   const incDuration = () => {
-    ++animationState.durationInSec;
+    ++state.duration;
   };
   const decDuration = () => {
-    --animationState.durationInSec;
+    --state.duration;
+  };
+  const incrementCount = () => {
+    ++animationState.count;
+    setTimeout(incrementCount, 100 * state.duration);
   };
 
-  setInterval(() => {
-    ++animationState.count;
-  }, 100);
+  incrementCount();
   
   <div>
     <h3>
-      {snapshot.durationInSec}
+      {snapshot.duration}
     </h3>
     <button
       disabled={snapshot.durationInSec <= 1}
@@ -37,14 +39,14 @@ const exampleCode = (duration: number, count: number) => `
 `;
 
 export const CodeExample = () => {
-  const snapshot = useSnapshot(animationState);
+  const snapshot = useSnapshot(state);
   return (
     <div className="code-container">
       <div className="code-container-inner">
         <div className="duration-changer">
           <h3 className="text-xl font-bold">
             {snapshot.duration}
-            <small className="font-light">sec</small>
+            <small className="font-light"> sec</small>
           </h3>
           <div>
             <button
