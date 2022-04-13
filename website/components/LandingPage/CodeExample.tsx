@@ -5,39 +5,35 @@ import { state, incDuration, decDuration } from "./state";
 
 const exampleCode = (duration: number, count: number) => `
   const state = proxy({
-    duration: ${duration},
+    dur: ${duration},
     count: ${count}
   });
-  const incDuration = () => {
-    ++state.duration;
-  };
-  const decDuration = () => {
-    --state.duration;
-  };
-  const incrementCount = () => {
+  const incDur = () => {++state.dur};
+  const decDur = () => {--state.dur};
+  const incCount = () => {
     ++state.count;
-    setTimeout(incrementCount, 100 * state.duration);
+    setTimeout(incCount, 100 * state.dur);
   };
 
-  incrementCount();
+  incCount();
 
   const snap = useSnapshot(state)
   
-  <div>
-    <h3>
-      {snap.duration}
-    </h3>
-    <button
-      disabled={snap.duration <= 1}
-      onClick={decDuration}>
-      -
-    </button>
-    <button
-      disabled={snapshot.duration >= 10}
-      onClick={incDuration}>
-      +
-    </button>
-  </div>
+  return (
+    <div>
+      <h3>{snap.dur}</h3>
+      <button 
+        disabled={snap.dur <= 1}
+        onClick={decDur}>
+        -
+      </button>
+      <button
+        disabled={snap.dur >= 10}
+        onClick={incDur}>
+        +
+      </button>
+    </div>
+  );
 `;
 
 export const CodeExample = () => {
