@@ -1,5 +1,5 @@
 import { StrictMode, Suspense } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { addComputed, proxyWithComputed } from 'valtio/utils'
 
