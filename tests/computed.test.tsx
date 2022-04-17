@@ -1,5 +1,5 @@
 import { StrictMode, Suspense } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { addComputed, proxyWithComputed } from 'valtio/utils'
 
@@ -259,4 +259,40 @@ it('addComputed with array.pop (#124)', async () => {
     arr: [{ n: 1 }, { n: 2 }],
     nums: [1, 2],
   })
+})
+
+it('render computed getter with condition (#435)', async () => {
+  const state = proxyWithComputed(
+    {
+      texts: [] as string[],
+      filter: '',
+    },
+    {
+      filtered(snap) {
+        if (!snap.filter) return snap.texts
+        return snap.texts.filter((text) => !text.includes(snap.filter))
+      },
+    }
+  )
+
+  const Component = () => {
+    const snap = useSnapshot(state)
+    return (
+      <>
+        <div>filtered: [{snap.filtered.join(',')}]</div>
+        <button onClick={() => (state.texts = ['foo'])}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Component />
+    </StrictMode>
+  )
+
+  await findByText('filtered: []')
+
+  fireEvent.click(getByText('button'))
+  await findByText('filtered: [foo]')
 })
