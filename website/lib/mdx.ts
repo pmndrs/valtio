@@ -3,6 +3,7 @@ import fs from "fs";
 import matter from "gray-matter";
 import path from "path";
 import { getAllFilesRecursively, slugify } from "_utils/file_helpers";
+import { remarkCodeSandboxURLUpdater } from "./remarkCodeSandboxURLUpdater";
 
 // Remark packages
 import remarkGfm from "remark-gfm";
@@ -130,6 +131,7 @@ export async function getDocBySlug(slug: string) {
       // plugins in the future.
       options.remarkPlugins = [
         ...(options.remarkPlugins ?? []),
+        remarkCodeSandboxURLUpdater,
         rehypeSlug,
         [rehypeAutolinkHeadings, { behavior: "wrap" }],
         remarkGfm,
