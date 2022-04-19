@@ -18,3 +18,192 @@ The Valtio api is minimal, flexible, unopinionated and a touch magical. Valtio's
 ```bash
 npm i valtio
 ```
+
+#### The to-do app example
+
+#### 1. proxy
+
+Let's learn Valtio by coding a simple to-do app in React and Typescript. We'll start by creating some state using [`proxy`](/docs/basic/proxy).
+
+```ts
+import { proxy, useSnapshot } from 'valtio'
+
+type Status = 'pending' | 'completed'
+type Filter = Status | 'all'
+type Todo = {
+  description: string
+  status: Status
+  id: number
+}
+
+export const store = proxy<{ filter: Filter; todos: Todo[] }>({
+  filter: 'all',
+  todos: [],
+})
+```
+
+#### 2. useSnapshot
+
+To access the data in this store, we'll use [`useSnapshot`](/docs/basic/useSnapshot). The Todos component will rerender when the "todos" or "filter" propeties are updated. Any other data we add to the proxy will be ignored.
+
+```tsx
+const Todos = () => {
+  const snap = useSnapshot(store)
+  return (
+    <ul>
+      {snap.todos
+        .filter(({ status }) => status === snap.filter || snap.filter === 'all')
+        .map(({ description, status, id }) => {
+          return (
+            <li key={id}>
+              <span
+                data-status={status}
+                className="description"
+                {description}
+              </span>
+              <button className="remove">
+                x
+              </button>
+            </li>
+          )
+        })}
+    </ul>
+  )
+}
+```
+
+#### 3. actions
+
+Finally, we need to create, update, and delete our todos. To do so, we simply mutate properties on the store we created, not the snap. Commonly, these mutations are wrapped up in functions called actions.
+
+```ts
+const addTodo = (description: string) => {
+  store.todos.push({
+    description,
+    status: 'pending',
+    id: Date.now(),
+  })
+}
+
+const removeTodo = (index: number) => {
+  store.todos.splice(index, 1)
+}
+
+const toggleDone = (index: number, currentStatus: Status) => {
+  const nextStatus = currentStatus === 'pending' ? 'completed' : 'pending'
+  store.todos[index].status = nextStatus
+}
+
+const setFilter = (filter: Filter) => {
+  store.filter = filter
+}
+```
+
+Finally, we wire up these actions to our inputs and buttons - check the demo below for the full code.
+
+```tsx
+<button className="remove" onClick={() => removeTodo(index)}>
+  x
+</button>
+```
+
+## Codesandbox demo
+
+https://codesandbox.io/s/valtio-to-do-list-hm5kwz
+
+#### Mutating state outside of components
+
+In our first to-do app, Valtio enabled mutations without worrying about performance or "breaking" React. `useSnapshot` turned these mutations into immutable snapshots and optimized renders. But we could have easily used React's own state handling. Let's add a bit of complexity to our to-do app to see what else Valtio offers.
+
+We will add a "timeLeft" property to a todo. Now each todo will tick down to zero and become "overdue" if not completed in time.
+
+```ts
+type Todo = {
+  description: string
+  status: Status
+  id: number
+  timeLeft: number
+}
+```
+
+Among other changes, we will add a Countdown component to display the ticking time for each todo. This component will only rerender when the timeLeft on a single todo changes.
+
+```tsx
+import { useSnapshot } from 'valtio'
+import { formatTimeDelta, calcTimeDelta } from './utils'
+import { store } from './App'
+
+export const Countdown = ({ index }: { index: number }) => {
+  const snap = useSnapshot(store.todos[index])
+  const delta = calcTimeDelta(snap.timeLeft)
+  const { days, hours, minutes, seconds } = formatTimeDelta(delta)
+  return (
+    <span className="countdown-time">
+      {delta.total < 0 ? '-' : ''}
+      {days}
+      {days ? ':' : ''}
+      {hours}:{minutes}:{seconds}
+    </span>
+  )
+}
+```
+
+#### Mutate in module scope
+
+Instead of managing multiple timers inside of a React component, let's move these updates outside of React altogether by defining a recursive `countdown` function in module scope which will mutate the todos.
+
+```tsx
+const countdown = (index: number) => {
+  const todo = store.todos[index]
+  // user removed todo case
+  if (!todo) return
+  // todo done of overdue case
+  if (todo.status !== 'pending') {
+    return
+  }
+  // time over
+  if (todo.timeLeft < 1000) {
+    todo.timeLeft = 0
+    todo.status = 'overdue'
+    return
+  }
+  setTimeout(() => {
+    todo.timeLeft -= 1000
+    countdown(index)
+  }, 1000)
+}
+```
+
+We can start the recursive countdown from an enhanced `addTodo` action.
+
+```tsx
+const addTodo = (e: React.SyntheticEvent, reset: VoidFunction) => {
+  e.preventDefault()
+  const target = e.target as typeof e.target & {
+    deadline: { value: Date }
+    description: { value: string }
+  }
+  const deadline = target.deadline.value
+  const description = target.description.value
+  const now = Date.now()
+  store.todos.push({
+    description,
+    status: 'pending',
+    id: now,
+    timeLeft: new Date(deadline).getTime() - now,
+  })
+  // clear the form
+  reset()
+  countdown(store.todos.length - 1)
+}
+```
+
+Please see the rest of the changes in the demo below.
+
+#### Subscribe in module scope
+
+Being able to mutate state outside of components is a huge benefit. We can also [`subscribe`](/docs/basic/subscribe) to state changes in module scope. We will leave it to you to try this out. But you could easily persist your todos to local storage inside a `subscribe` defined in module scope as well.
+
+## Codesandbox demo
+
+https://codesandbox.io/s/valtio-countdown-to-do-list-xkgmri
