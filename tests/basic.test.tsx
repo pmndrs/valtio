@@ -426,3 +426,22 @@ it('counter with sync option', async () => {
   fireEvent.click(getByText('button'))
   await findByText('count: 2 (3)')
 })
+
+it('support undefined property (#439)', async () => {
+  const obj = proxy({ prop: undefined })
+
+  expect('prop' in obj).toBe(true)
+
+  const Component = () => {
+    const snap = useSnapshot(obj)
+    return <div>has prop: {JSON.stringify('prop' in snap)}</div>
+  }
+
+  const { findByText } = render(
+    <>
+      <Component />
+    </>
+  )
+
+  await findByText('has prop: true')
+})
