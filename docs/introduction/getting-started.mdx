@@ -126,7 +126,7 @@ type Todo = {
 }
 ```
 
-Among other changes, we will add a Countdown component to display the ticking time for each todo. This component will only rerender when the timeLeft on a single todo changes.
+Among other changes, we will add a Countdown component to display the ticking time for each todo. We are using an advanced technique of passing a nested proxy object to [`useSnapshot`](/docs/basic/useSnapshot). Alternatively, make this a dumb component by passing the todo's "timeLeft" as a prop.
 
 ```tsx
 import { useSnapshot } from 'valtio'
@@ -202,7 +202,7 @@ Please see the rest of the changes in the demo below.
 
 #### Subscribe in module scope
 
-Being able to mutate state outside of components is a huge benefit. We can also [`subscribe`](/docs/basic/subscribe) to state changes in module scope. We will leave it to you to try this out. But you could easily persist your todos to local storage inside a `subscribe` defined in module scope as well.
+Being able to mutate state outside of components is a huge benefit. We can also [`subscribe`](/docs/basic/subscribe) to state changes in module scope. We will leave it to you to try this out. You might, for instance, persist your todos to local storage as in [this example](https://github.com/pmndrs/valtio/wiki/How-to-persist-states#persist-with-localstorage).
 
 ## Codesandbox demo
 
