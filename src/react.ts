@@ -7,7 +7,7 @@ import {
 import { useSyncExternalStore } from 'use-sync-external-store/shim'
 import { getVersion, snapshot, subscribe } from './vanilla'
 
-// Unfortunatly, this doesn't work with tsc.
+// Unfortunately, this doesn't work with tsc.
 // Hope to find a solution to make this work.
 //
 //   class SnapshotWrapper<T extends object> {

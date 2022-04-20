@@ -160,7 +160,7 @@ export const unstable_deriveSubscriptions = {
 /**
  * derive
  *
- * This creates derived properties and attatches them
+ * This creates derived properties and attaches them
  * to a new proxy object or an existing proxy object.
  *
  * @example

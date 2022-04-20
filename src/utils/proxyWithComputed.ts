@@ -1,7 +1,7 @@
 import { createProxy as createProxyToCompare, isChanged } from 'proxy-compare'
 import { proxy, snapshot } from '../vanilla'
 
-// Unfortunatly, this doesn't work with tsc.
+// Unfortunately, this doesn't work with tsc.
 // Hope to find a solution to make this work.
 //
 //   class SnapshotWrapper<T extends object> {

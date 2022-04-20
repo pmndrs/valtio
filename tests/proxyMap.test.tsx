@@ -31,7 +31,7 @@ const initialValues = [
   },
   {
     name: 'object',
-    value: [[{}, { id: 'somehting', field: null }]],
+    value: [[{}, { id: 'something', field: null }]],
   },
   {
     name: 'null',
