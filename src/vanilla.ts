@@ -153,8 +153,9 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
     is: Object.is,
     canProxy,
     set(target: T, prop: string | symbol, value: any, receiver: any) {
+      const hasPrevValue = Reflect.has(target, prop)
       const prevValue = Reflect.get(target, prop, receiver)
-      if (this.is(prevValue, value)) {
+      if (hasPrevValue && this.is(prevValue, value)) {
         return true
       }
       const childListeners = prevValue?.[LISTENERS]
