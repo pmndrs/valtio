@@ -209,7 +209,6 @@
     "@babel/types": ">=7.13",
     "aslemammad-vite-plugin-macro": ">=1.0.0-alpha.1",
     "babel-plugin-macros": ">=3.0",
-    "proxy-memoize": ">=1.0.0",
     "react": ">=16.8",
     "vite": ">=2.8.6"
   },
@@ -227,9 +226,6 @@
       "optional": true
     },
     "babel-plugin-macros": {
-      "optional": true
-    },
-    "proxy-memoize": {
       "optional": true
     },
     "react": {

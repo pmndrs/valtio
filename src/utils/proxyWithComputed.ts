@@ -1,4 +1,3 @@
-import memoize from 'proxy-memoize'
 import { proxy, snapshot } from '../vanilla'
 
 // Unfortunatly, this doesn't work with tsc.
@@ -71,8 +70,7 @@ export function proxyWithComputed<T extends object, U extends object>(
       set?: (state: T, newValue: U[typeof key]) => void
     }
     const desc: PropertyDescriptor = {}
-    const memoizedGet = memoize(get)
-    desc.get = () => memoizedGet(snapshot(proxyObject))
+    desc.get = () => get(snapshot(proxyObject))
     if (set) {
       desc.set = (newValue) => set(proxyObject, newValue)
     }
