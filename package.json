@@ -121,7 +121,8 @@
     },
     "moduleNameMapper": {
       "^valtio$": "<rootDir>/src/index.ts",
-      "^valtio/(.*)$": "<rootDir>/src/$1.ts"
+      "^valtio/(.*)$": "<rootDir>/src/$1.ts",
+      "^proxy-memoize$": "<rootDir>/node_modules/proxy-memoize/dist/wrapper.cjs"
     },
     "modulePathIgnorePatterns": [
       "dist"
