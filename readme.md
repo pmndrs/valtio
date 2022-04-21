@@ -326,18 +326,23 @@ derive({
 
 #### `proxyWithComputed` util
 
-You can have computed values with dependency tracking with property access.
-Dependency tracking in `proxyWithComputed` overlaps the work in `useSnapshot`.
-React users should prefer using `derive`.
-`proxyWithComputed` works well for some edge cases and for vanilla-js users.
+You can define own computed properties within a proxy.
+By combining with a memoization library such as
+[proxy-memoize](https://github.com/dai-shi/proxy-memoize),
+optimizing function calls is possible.
+
+Be careful not to overuse `proxy-memoize`
+because `proxy-memoize` and `useSnapshot` do similar optimization
+and double optimization may lead to less performance.
 
 ```js
+import memoize from 'proxy-memoize'
 import { proxyWithComputed } from 'valtio/utils'
 
 const state = proxyWithComputed({
   count: 1,
 }, {
-  doubled: snap => snap.count * 2
+  doubled: memoize((snap) => snap.count * 2)
 })
 
 // Computed values accept custom setters too:
@@ -346,7 +351,7 @@ const state2 = proxyWithComputed({
   lastName: 'Baldwin'
 }, {
   fullName: {
-    get: (snap) => snap.firstName + ' ' + snap.lastName,
+    get: memoize((snap) => snap.firstName + ' ' + snap.lastName),
     set: (state, newValue) => { [state.firstName, state.lastName] = newValue.split(' ') },
   }
 })
@@ -355,8 +360,8 @@ const state2 = proxyWithComputed({
 const state = proxyWithComputed({
   count: 1,
 }, {
-  doubled: snap => snap.count * 2,
-  quadrupled: snap => snap.doubled * 2
+  doubled: memoize((snap) => snap.count * 2),
+  quadrupled: memoize((snap) => snap.doubled * 2)
 })
 ```
 

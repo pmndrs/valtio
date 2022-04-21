@@ -1,5 +1,6 @@
 import { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
+import memoize from 'proxy-memoize'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { addComputed, proxyWithComputed } from 'valtio/utils'
 
@@ -29,7 +30,7 @@ it('simple computed getters', async () => {
       count: 0,
     },
     {
-      doubled: { get: (snap) => computeDouble(snap.count) },
+      doubled: { get: memoize((snap) => computeDouble(snap.count)) },
     }
   )
 
@@ -62,7 +63,7 @@ it('computed getters and setters', async () => {
     },
     {
       doubled: {
-        get: (snap) => computeDouble(snap.count),
+        get: memoize((snap) => computeDouble(snap.count)),
         set: (state, newValue: number) => {
           state.count = newValue / 2
         },
@@ -97,7 +98,7 @@ it('computed setters with object and array', async () => {
     },
     {
       object: {
-        get: (snap) => snap.obj,
+        get: memoize((snap) => snap.obj),
         set: (state, newValue: any) => {
           state.obj = newValue
         },
@@ -259,4 +260,40 @@ it('addComputed with array.pop (#124)', async () => {
     arr: [{ n: 1 }, { n: 2 }],
     nums: [1, 2],
   })
+})
+
+it('render computed getter with condition (#435)', async () => {
+  const state = proxyWithComputed(
+    {
+      texts: [] as string[],
+      filter: '',
+    },
+    {
+      filtered: memoize((snap) => {
+        if (!snap.filter) return snap.texts
+        return snap.texts.filter((text) => !text.includes(snap.filter))
+      }),
+    }
+  )
+
+  const Component = () => {
+    const snap = useSnapshot(state)
+    return (
+      <>
+        <div>filtered: [{snap.filtered.join(',')}]</div>
+        <button onClick={() => (state.texts = ['foo'])}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Component />
+    </StrictMode>
+  )
+
+  await findByText('filtered: []')
+
+  fireEvent.click(getByText('button'))
+  await findByText('filtered: [foo]')
 })

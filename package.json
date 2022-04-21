@@ -121,7 +121,8 @@
     },
     "moduleNameMapper": {
       "^valtio$": "<rootDir>/src/index.ts",
-      "^valtio/(.*)$": "<rootDir>/src/$1.ts"
+      "^valtio/(.*)$": "<rootDir>/src/$1.ts",
+      "^proxy-memoize$": "<rootDir>/node_modules/proxy-memoize/dist/wrapper.cjs"
     },
     "modulePathIgnorePatterns": [
       "dist"
@@ -188,6 +189,7 @@
     "patch-package": "^6.4.7",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.6.2",
+    "proxy-memoize": "^1.0.0",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "redux": "^4.1.2",

@@ -1,4 +1,3 @@
-import { createProxy as createProxyToCompare, isChanged } from 'proxy-compare'
 import { proxy, snapshot } from '../vanilla'
 
 // Unfortunately, this doesn't work with tsc.
@@ -70,19 +69,8 @@ export function proxyWithComputed<T extends object, U extends object>(
       get: (snap: Snapshot<T>) => U[typeof key]
       set?: (state: T, newValue: U[typeof key]) => void
     }
-    let computedValue: U[typeof key]
-    let prevSnapshot: Snapshot<T> | undefined
-    let affected = new WeakMap()
     const desc: PropertyDescriptor = {}
-    desc.get = () => {
-      const nextSnapshot = snapshot(proxyObject)
-      if (!prevSnapshot || isChanged(prevSnapshot, nextSnapshot, affected)) {
-        affected = new WeakMap()
-        computedValue = get(createProxyToCompare(nextSnapshot, affected))
-        prevSnapshot = nextSnapshot
-      }
-      return computedValue
-    }
+    desc.get = () => get(snapshot(proxyObject))
     if (set) {
       desc.set = (newValue) => set(proxyObject, newValue)
     }
