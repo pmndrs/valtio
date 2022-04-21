@@ -1,11 +1,11 @@
 import { getUntracked, markToTrack } from 'proxy-compare'
 
-const VERSION = Symbol()
-const LISTENERS = Symbol()
-const SNAPSHOT = Symbol()
-const HANDLER = Symbol()
-const PROMISE_RESULT = Symbol()
-const PROMISE_ERROR = Symbol()
+const VERSION = __DEV__ ? Symbol('VERSION') : Symbol()
+const LISTENERS = __DEV__ ? Symbol('LISTENERS') : Symbol()
+const SNAPSHOT = __DEV__ ? Symbol('SNAPSHOT') : Symbol()
+const HANDLER = __DEV__ ? Symbol('HANDLER') : Symbol()
+const PROMISE_RESULT = __DEV__ ? Symbol('PROMISE_RESULT') : Symbol()
+const PROMISE_ERROR = __DEV__ ? Symbol('PROMISE_ERROR') : Symbol()
 
 type AsRef = { $$valtioRef: true }
 const refSet = new WeakSet()
