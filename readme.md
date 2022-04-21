@@ -327,9 +327,9 @@ derive({
 #### `proxyWithComputed` util
 
 You can define own computed properties within a proxy.
-Combining with a memoization library such as
+By combining with a memoization library such as
 [proxy-memoize](https://github.com/dai-shi/proxy-memoize),
-optimizing invocations of functions is possible.
+optimizing function calls is possible.
 
 Be careful not to overuse `proxy-memoize`
 because `proxy-memoize` and `useSnapshot` do similar optimization
