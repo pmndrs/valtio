@@ -1,17 +1,17 @@
 import { proxy, useSnapshot } from 'valtio'
 
 export interface Todo {
-  id: number
-  name: string
-  completed?: boolean
+  id: number;
+  name: string;
+  completed?: boolean;
 }
 
 export const filters: Filter[] = ['all', 'completed']
 type Filter = 'all' | 'completed'
 
 interface Store {
-  todos: Todo[]
-  filter: Filter
+  todos: Todo[];
+  filter: Filter;
 }
 
 export const store = proxy<Store>({
