@@ -37,7 +37,7 @@ export function devtools<T extends object>(
  * @example
  * import { devtools } from 'valtio/utils'
  * const state = proxy({ count: 0, text: 'hello' })
- * const unsub = devtools(state, 'state name')
+ * const unsub = devtools(state, { name: 'state name', enabled: true })
  */
 export function devtools<T extends object>(
   proxyObject: T,

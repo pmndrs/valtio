@@ -14,7 +14,7 @@ You can use [Redux DevTools Extension](https://github.com/zalmoxisus/redux-devto
 import { devtools } from 'valtio/utils'
 
 const state = proxy({ count: 0, text: 'hello' })
-const unsub = devtools(state, 'state name')
+const unsub = devtools(state, { name: 'state name', enabled: true })
 ```
 
 <details>
