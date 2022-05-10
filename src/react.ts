@@ -4,7 +4,7 @@ import {
   createProxy as createProxyToCompare,
   isChanged,
 } from 'proxy-compare'
-import { useSyncExternalStore } from 'use-sync-external-store/shim'
+import shim from 'use-sync-external-store/shim'
 import { getVersion, snapshot, subscribe } from './vanilla'
 
 // Unfortunately, this doesn't work with tsc.
@@ -125,7 +125,7 @@ export function useSnapshot<T extends object>(
   const lastAffected = useRef<typeof affected>()
   const lastCallback = useRef<() => void>()
   const notifyInSync = options?.sync
-  const currSnapshot = useSyncExternalStore(
+  const currSnapshot = shim.useSyncExternalStore(
     useCallback(
       (callback) => {
         lastCallback.current = callback
