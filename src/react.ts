@@ -4,8 +4,14 @@ import {
   createProxy as createProxyToCompare,
   isChanged,
 } from 'proxy-compare'
-import shim from 'use-sync-external-store/shim'
+// import { useSyncExternalStore } from 'use-sync-external-store/shim'
+// This doesn't work in ESM, because use-sync-external-store only exposes CJS.
+// See: https://github.com/pmndrs/valtio/issues/452
+// The following is a workaround until ESM is supported.
+import useSyncExternalStoreExports from 'use-sync-external-store/shim'
 import { getVersion, snapshot, subscribe } from './vanilla'
+
+const { useSyncExternalStore } = useSyncExternalStoreExports
 
 // Unfortunately, this doesn't work with tsc.
 // Hope to find a solution to make this work.
@@ -125,7 +131,7 @@ export function useSnapshot<T extends object>(
   const lastAffected = useRef<typeof affected>()
   const lastCallback = useRef<() => void>()
   const notifyInSync = options?.sync
-  const currSnapshot = shim.useSyncExternalStore(
+  const currSnapshot = useSyncExternalStore(
     useCallback(
       (callback) => {
         lastCallback.current = callback
