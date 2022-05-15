@@ -60,6 +60,8 @@ declare module "valtio" {
 }
 ```
 
+Note: this should go in a normal `.ts`/`.tsx` file and not in a `.d.ts` file.
+
 See [#327](https://github.com/pmndrs/valtio/issues/327) for more information.
 </details>
 
