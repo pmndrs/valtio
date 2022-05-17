@@ -222,6 +222,7 @@ export function subscribe<T extends object>(
     console.warn('Please use proxy object')
   }
   let promise: Promise<void> | undefined
+  let active = true;
   const ops: Op[] = []
   const listener: Listener = (op) => {
     ops.push(op)
@@ -232,12 +233,15 @@ export function subscribe<T extends object>(
     if (!promise) {
       promise = Promise.resolve().then(() => {
         promise = undefined
-        callback(ops.splice(0))
+        if (active) {
+          callback(ops.splice(0))
+        }
       })
     }
   }
   ;(proxyObject as any)[LISTENERS].add(listener)
   return () => {
+    active = false;
     ;(proxyObject as any)[LISTENERS].delete(listener)
   }
 }
