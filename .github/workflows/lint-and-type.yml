@@ -19,6 +19,8 @@ jobs:
       - run: yarn install --frozen-lockfile --check-files
       - run: yarn install --frozen-lockfile --check-files
         working-directory: ./website
+      - name: Prettier
+        run: yarn prettier:ci
       - name: Lint
         run: yarn eslint:ci
       - name: Type
