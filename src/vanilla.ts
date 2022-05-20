@@ -1,11 +1,11 @@
 import { getUntracked, markToTrack } from 'proxy-compare'
 
-const VERSION = Symbol()
-const LISTENERS = Symbol()
-const SNAPSHOT = Symbol()
-const HANDLER = Symbol()
-const PROMISE_RESULT = Symbol()
-const PROMISE_ERROR = Symbol()
+const VERSION = __DEV__ ? Symbol('VERSION') : Symbol()
+const LISTENERS = __DEV__ ? Symbol('LISTENERS') : Symbol()
+const SNAPSHOT = __DEV__ ? Symbol('SNAPSHOT') : Symbol()
+const HANDLER = __DEV__ ? Symbol('HANDLER') : Symbol()
+const PROMISE_RESULT = __DEV__ ? Symbol('PROMISE_RESULT') : Symbol()
+const PROMISE_ERROR = __DEV__ ? Symbol('PROMISE_ERROR') : Symbol()
 
 type AsRef = { $$valtioRef: true }
 const refSet = new WeakSet()
@@ -153,8 +153,9 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
     is: Object.is,
     canProxy,
     set(target: T, prop: string | symbol, value: any, receiver: any) {
+      const hasPrevValue = Reflect.has(target, prop)
       const prevValue = Reflect.get(target, prop, receiver)
-      if (this.is(prevValue, value)) {
+      if (hasPrevValue && this.is(prevValue, value)) {
         return true
       }
       const childListeners = prevValue?.[LISTENERS]

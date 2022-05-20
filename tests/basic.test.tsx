@@ -426,3 +426,68 @@ it('counter with sync option', async () => {
   fireEvent.click(getByText('button'))
   await findByText('count: 2 (3)')
 })
+
+it('support undefined property (#439)', async () => {
+  const obj = proxy({ prop: undefined })
+
+  expect('prop' in obj).toBe(true)
+
+  const Component = () => {
+    const snap = useSnapshot(obj)
+    return <div>has prop: {JSON.stringify('prop' in snap)}</div>
+  }
+
+  const { findByText } = render(
+    <>
+      <Component />
+    </>
+  )
+
+  await findByText('has prop: true')
+})
+
+it('sync snapshot between nested components (#460)', async () => {
+  const obj = proxy<{
+    id: 'prop1' | 'prop2'
+    prop1: string
+    prop2?: string
+  }>({ id: 'prop1', prop1: 'value1' })
+
+  const Child = ({ id }: { id: 'prop1' | 'prop2' }) => {
+    const snap = useSnapshot(obj)
+    return <div>Child: {snap[id]}</div>
+  }
+
+  const handleClick = () => {
+    obj.prop2 = 'value2'
+    obj.id = 'prop2'
+  }
+
+  const Parent = () => {
+    const snap = useSnapshot(obj)
+    return (
+      <>
+        <div>Parent: {snap[snap.id]}</div>
+        <Child id={snap.id} />
+        <button onClick={handleClick}>button</button>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <>
+      <Parent />
+    </>
+  )
+
+  await waitFor(() => {
+    getByText('Parent: value1')
+    getByText('Child: value1')
+  })
+
+  fireEvent.click(getByText('button'))
+  await waitFor(() => {
+    getByText('Parent: value2')
+    getByText('Child: value2')
+  })
+})
