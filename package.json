@@ -63,6 +63,8 @@
     "build:macro": "rollup -c --config-macro",
     "build:macro-vite": "rollup -c --config-macro_vite",
     "postbuild": "yarn copy",
+    "prettier": "prettier '*.{js,json,md}' '{src,tests,docs}/**/*.{ts,tsx,md,mdx}' --write",
+    "prettier:ci": "prettier '*.{js,json,md}' '{src,tests,docs}/**/*.{ts,tsx,md,mdx}' --list-different",
     "eslint": "eslint --fix '*.{js,json}' '{src,tests}/**/*.{ts,tsx}'",
     "eslint:ci": "eslint '*.{js,json}' '{src,tests}/**/*.{ts,tsx}'",
     "pretest": "tsc --noEmit",

@@ -54,13 +54,15 @@ The `snap` variable returned by `useSnapshot` is a (deeply) read-only object.
 Its type has `readonly` attribute, which may be too strict for some use cases.
 
 To mitigate typing difficulties, you might want to loosen the type definition:
+
 ```ts
-declare module "valtio" {
-  function useSnapshot<T extends object>(p: T): T;
+declare module 'valtio' {
+  function useSnapshot<T extends object>(p: T): T
 }
 ```
 
 See [#327](https://github.com/pmndrs/valtio/issues/327) for more information.
+
 </details>
 
 <details>
@@ -83,7 +85,12 @@ Valtio tries best to handle `this` behavior
 but it's hard to understand without familiarity.
 
 ```js
-const state = proxy({ count: 0, inc() { ++this.count } })
+const state = proxy({
+  count: 0,
+  inc() {
+    ++this.count
+  },
+})
 state.inc() // `this` points to `state` and it works fine
 const snap = useSnapshot(state)
 snap.inc() // `this` points to `snap` and it doesn't work because snapshot is frozen
@@ -92,7 +99,12 @@ snap.inc() // `this` points to `snap` and it doesn't work because snapshot is fr
 To avoid this pitfall, the recommended pattern is not to use `this` and prefer arrow function.
 
 ```js
-const state = proxy({ count: 0, inc: () => { ++state.count } })
+const state = proxy({
+  count: 0,
+  inc: () => {
+    ++state.count
+  },
+})
 ```
 
 </details>
@@ -108,7 +120,9 @@ You can access state outside of your components and subscribe to changes.
 import { subscribe } from 'valtio'
 
 // Suscribe to all state changes
-const unsubscribe = subscribe(state, () => console.log('state has changed to', state))
+const unsubscribe = subscribe(state, () =>
+  console.log('state has changed to', state)
+)
 // Unsubscribe by calling the result
 unsubscribe()
 ```
@@ -131,7 +145,9 @@ To subscribe to a primitive value of state, consider `subscribeKey` in utils.
 import { subscribeKey } from 'valtio/utils'
 
 const state = proxy({ count: 0, text: 'hello' })
-subscribeKey(state, 'count', (v) => console.log('state.count has changed to', v))
+subscribeKey(state, 'count', (v) =>
+  console.log('state.count has changed to', v)
+)
 ```
 
 There is another util `watch` which might be convenient in some cases.
@@ -211,7 +227,9 @@ The known use case of this is `<input>` [#270](https://github.com/pmndrs/valtio/
 ```jsx
 function TextBox() {
   const snap = useSnapshot(state, { sync: true })
-  return <input value={snap.text} onChange={(e) => (state.text = e.target.value)} />
+  return (
+    <input value={snap.text} onChange={(e) => (state.text = e.target.value)} />
+  )
 }
 ```
 
@@ -225,7 +243,6 @@ import { devtools } from 'valtio/utils'
 const state = proxy({ count: 0, text: 'hello' })
 const unsub = devtools(state, { name: 'state name', enabled: true })
 ```
-
 
 <details>
   <summary>Manipulating state with Redux DevTools</summary>
@@ -249,7 +266,6 @@ subscribe(state, () => {
   const obj = snapshot(state) // A snapshot is an immutable object
 })
 ```
-
 
 #### `useProxy` macro
 
@@ -285,18 +301,20 @@ const Component = () => {
 ```
 
 ##### vite
+
 ```
-npm i --save-dev aslemammad-vite-plugin-macro babel-plugin-macros 
+npm i --save-dev aslemammad-vite-plugin-macro babel-plugin-macros
 ```
 
 And in your `vite.config.js`
+
 ```js
-import { defineConfig } from "vite";
+import { defineConfig } from 'vite'
 import macro from 'valtio/macro/vite'
 
 export default defineConfig({
   plugins: [macro],
-});
+})
 ```
 
 #### `derive` util
@@ -317,11 +335,14 @@ const derived = derive({
 })
 
 // alternatively, attach derived properties to an existing proxy
-derive({
-  tripled: (get) => get(state).count * 3,
-}, {
-  proxy: state,
-})
+derive(
+  {
+    tripled: (get) => get(state).count * 3,
+  },
+  {
+    proxy: state,
+  }
+)
 ```
 
 #### `proxyWithComputed` util
@@ -339,30 +360,41 @@ and double optimization may lead to less performance.
 import memoize from 'proxy-memoize'
 import { proxyWithComputed } from 'valtio/utils'
 
-const state = proxyWithComputed({
-  count: 1,
-}, {
-  doubled: memoize((snap) => snap.count * 2)
-})
+const state = proxyWithComputed(
+  {
+    count: 1,
+  },
+  {
+    doubled: memoize((snap) => snap.count * 2),
+  }
+)
 
 // Computed values accept custom setters too:
-const state2 = proxyWithComputed({
-  firstName: 'Alec',
-  lastName: 'Baldwin'
-}, {
-  fullName: {
-    get: memoize((snap) => snap.firstName + ' ' + snap.lastName),
-    set: (state, newValue) => { [state.firstName, state.lastName] = newValue.split(' ') },
+const state2 = proxyWithComputed(
+  {
+    firstName: 'Alec',
+    lastName: 'Baldwin',
+  },
+  {
+    fullName: {
+      get: memoize((snap) => snap.firstName + ' ' + snap.lastName),
+      set: (state, newValue) => {
+        ;[state.firstName, state.lastName] = newValue.split(' ')
+      },
+    },
   }
-})
+)
 
 // if you want a computed value to derive from another computed, you must declare the dependency first:
-const state = proxyWithComputed({
-  count: 1,
-}, {
-  doubled: memoize((snap) => snap.count * 2),
-  quadrupled: memoize((snap) => snap.doubled * 2)
-})
+const state = proxyWithComputed(
+  {
+    count: 1,
+  },
+  {
+    doubled: memoize((snap) => snap.count * 2),
+    quadrupled: memoize((snap) => snap.doubled * 2),
+  }
+)
 ```
 
 The last use case fails to infer types in TypeScript
@@ -390,10 +422,9 @@ console.log(state.value) // ---> { count: 1 }
 This is to create a proxy which mimic the native Set behavior. The API is the same as Set API
 
 ```js
-
 import { proxySet } from 'valtio/utils'
- 
-const state = proxySet([1,2,3])
+
+const state = proxySet([1, 2, 3])
 //can be used inside a proxy as well
 //const state = proxy({
 //    count: 1,
@@ -402,7 +433,7 @@ const state = proxySet([1,2,3])
 
 state.add(4)
 state.delete(1)
-state.forEach(v => console.log(v)) // 2,3,4
+state.forEach((v) => console.log(v)) // 2,3,4
 ```
 
 #### `proxyMap` util
@@ -410,13 +441,15 @@ state.forEach(v => console.log(v)) // 2,3,4
 This is to create a proxy which emulate the native Map behavior. The API is the same as Map API
 
 ```js
-
 import { proxyMap } from 'valtio/utils'
- 
-const state = proxyMap([["key", "value"], ["key2", "value2"]])
-state.set("key", "value")
-state.delete("key")
-state.get("key") // ---> value
+
+const state = proxyMap([
+  ['key', 'value'],
+  ['key2', 'value2'],
+])
+state.set('key', 'value')
+state.delete('key')
+state.get('key') // ---> value
 state.forEach((value, key) => console.log(key, value)) // ---> "key", "value", "key2", "value2"
 ```
 
@@ -434,12 +467,11 @@ The community is working on recipes on wiki pages.
 - [How to use with context](https://github.com/pmndrs/valtio/wiki/How-to-use-with-context)
 - [How to split and compose states](https://github.com/pmndrs/valtio/wiki/How-to-split-and-compose-states)
 
-----
+---
 
 ## How to contribute
 
 ### Basic things to know before adding docs
-
 
 - Docs live in `docs/` folder.
 - Website lives in `website/` folder.
@@ -449,7 +481,4 @@ The community is working on recipes on wiki pages.
 - You should be able to render condesandbox inside `mdx` files by simply adding the url for the same
 - Once you have a doc, you can add it to the sidebar section by adding it to the nav in `getDocsNav` function inside `website/lib/mdx.ts`
 
-
------
-
-
+---
