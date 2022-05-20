@@ -5,7 +5,7 @@ import {
   isChanged,
 } from 'proxy-compare'
 import { useSyncExternalStore } from 'use-sync-external-store/shim'
-import { getVersion, snapshot, subscribe } from './vanilla'
+import { snapshot, subscribe } from './vanilla'
 
 // Unfortunately, this doesn't work with tsc.
 // Hope to find a solution to make this work.
@@ -30,8 +30,8 @@ type Snapshot<T> = T extends AnyFunction
       readonly [K in keyof T]: Snapshot<T[K]>
     }
 
-const useAffectedDebugValue = <State extends object>(
-  state: State,
+const useAffectedDebugValue = (
+  state: object,
   affected: WeakMap<object, unknown>
 ) => {
   const pathList = useRef<(string | number | symbol)[][]>()
@@ -121,67 +121,51 @@ export function useSnapshot<T extends object>(
   proxyObject: T,
   options?: Options
 ): Snapshot<T> {
-  const affected = new WeakMap()
-  const lastAffected = useRef<typeof affected>()
-  const lastCallback = useRef<() => void>()
   const notifyInSync = options?.sync
-  const currSnapshot = useSyncExternalStore(
+  const currAffected = new WeakMap()
+  const lastAffected = useRef<typeof currAffected>()
+  const currSnapshot = snapshot(proxyObject)
+  const lastSnapshot = useRef<typeof currSnapshot>()
+  useEffect(() => {
+    lastAffected.current = currAffected
+    lastSnapshot.current = currSnapshot
+  })
+  useSyncExternalStore(
     useCallback(
       (callback) => {
-        lastCallback.current = callback
         const unsub = subscribe(proxyObject, callback, notifyInSync)
-        return () => {
-          unsub()
-          lastCallback.current = undefined
-        }
+        callback() // Note: do we really need this?
+        return unsub
       },
       [proxyObject, notifyInSync]
     ),
-    useMemo(() => {
-      let prevSnapshot: Snapshot<T> | undefined
-      return () => {
-        const nextSnapshot = snapshot(proxyObject)
-        try {
-          if (
-            prevSnapshot &&
-            lastAffected.current &&
-            !isChanged(
-              prevSnapshot,
-              nextSnapshot,
-              lastAffected.current,
-              new WeakMap()
-            )
-          ) {
-            // not changed
-            return prevSnapshot
-          }
-        } catch (e) {
-          // ignore if a promise or something is thrown
+    useCallback(() => {
+      const nextSnapshot = snapshot(proxyObject)
+      try {
+        if (
+          lastSnapshot.current &&
+          lastAffected.current &&
+          !isChanged(
+            lastSnapshot.current,
+            nextSnapshot,
+            lastAffected.current,
+            new WeakMap()
+          )
+        ) {
+          // not changed
+          return lastSnapshot.current
         }
-        return (prevSnapshot = nextSnapshot)
+      } catch (e) {
+        // ignore if a promise or something is thrown
       }
+      return nextSnapshot
     }, [proxyObject]),
     useCallback(() => snapshot(proxyObject), [proxyObject])
   )
-  const currVersion = getVersion(proxyObject)
-  useEffect(() => {
-    lastAffected.current = affected
-    // check if state has changed between render and commit
-    if (currVersion !== getVersion(proxyObject)) {
-      if (lastCallback.current) {
-        lastCallback.current()
-      } else if (
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
-        console.warn('[Bug] last callback is undefined')
-      }
-    }
-  })
   if (__DEV__) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useAffectedDebugValue(currSnapshot, affected)
+    useAffectedDebugValue(currSnapshot, currAffected)
   }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
-  return createProxyToCompare(currSnapshot, affected, proxyCache)
+  return createProxyToCompare(currSnapshot, currAffected, proxyCache)
 }
