@@ -128,15 +128,10 @@ export function useSnapshot<T extends object>(
   options?: Options
 ): Snapshot<T> {
   const notifyInSync = options?.sync
-  const currAffected = new WeakMap()
-  const lastAffected = useRef<typeof currAffected>()
-  const currSnapshot = snapshot(proxyObject)
-  const lastSnapshot = useRef<typeof currSnapshot>()
-  useEffect(() => {
-    lastAffected.current = currAffected
-    lastSnapshot.current = currSnapshot
-  })
-  useSyncExternalStore(
+  const lastSnapshot = useRef<Snapshot<T>>()
+  const lastAffected = useRef<WeakMap<object, unknown>>()
+  let inRender = true
+  const currSnapshot = useSyncExternalStore(
     useCallback(
       (callback) => {
         const unsub = subscribe(proxyObject, callback, notifyInSync)
@@ -145,10 +140,11 @@ export function useSnapshot<T extends object>(
       },
       [proxyObject, notifyInSync]
     ),
-    useCallback(() => {
+    () => {
       const nextSnapshot = snapshot(proxyObject)
       try {
         if (
+          !inRender &&
           lastSnapshot.current &&
           lastAffected.current &&
           !isChanged(
@@ -165,9 +161,15 @@ export function useSnapshot<T extends object>(
         // ignore if a promise or something is thrown
       }
       return nextSnapshot
-    }, [proxyObject]),
-    useCallback(() => snapshot(proxyObject), [proxyObject])
+    },
+    () => snapshot(proxyObject)
   )
+  inRender = false
+  const currAffected = new WeakMap()
+  useEffect(() => {
+    lastSnapshot.current = currSnapshot
+    lastAffected.current = currAffected
+  })
   if (__DEV__) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useAffectedDebugValue(currSnapshot, currAffected)
