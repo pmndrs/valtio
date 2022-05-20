@@ -170,10 +170,7 @@ export function useSnapshot<T extends object>(
     if (currVersion !== getVersion(proxyObject)) {
       if (lastCallback.current) {
         lastCallback.current()
-      } else if (
-        typeof process === 'object' &&
-        process.env.NODE_ENV !== 'production'
-      ) {
+      } else if (__DEV__) {
         console.warn('[Bug] last callback is undefined')
       }
     }

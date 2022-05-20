@@ -446,7 +446,7 @@ it('support undefined property (#439)', async () => {
   await findByText('has prop: true')
 })
 
-it('can batch updates in nested components (#460)', async () => {
+it('sync snapshot between nested components (#460)', async () => {
   const obj = proxy<{
     id: 'prop1' | 'prop2'
     prop1: string
