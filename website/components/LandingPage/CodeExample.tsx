@@ -42,10 +42,7 @@ export const CodeExample = () => {
     <div className="code-container">
       <div className="code-container-inner">
         <div className="duration-changer">
-          <h3 className="text-xl font-bold">
-            {snap.dur}
-            <small className="font-light"> sec</small>
-          </h3>
+          <h3 className="text-xl font-bold">{snap.dur}</h3>
           <div>
             <button
               className="counter"
