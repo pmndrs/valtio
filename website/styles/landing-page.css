@@ -102,6 +102,10 @@ html {
   border-radius: 3px;
 }
 
+.button-container {
+  display: flex;
+}
+
 button.counter {
   cursor: pointer;
   background: transparent;
