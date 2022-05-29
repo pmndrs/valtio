@@ -68,6 +68,15 @@ html {
     left: 0;
     right: 0;
   }
+
+  .prism-code.language-jsx {
+    border-radius: 0;
+  }
+
+  /* center code when pre is full-screen*/
+  pre {
+    padding-left: calc(100% - 800px) !important;
+  }
 }
 
 .code-container-inner {
