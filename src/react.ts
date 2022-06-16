@@ -24,7 +24,9 @@ const { useSyncExternalStore } = useSyncExternalStoreExports
 //   type Snapshot<T extends object> = ReturnType<SnapshotWrapper<T>['fn']>
 //
 // Using copy-paste types for now:
-type AsRef = { $$valtioRef: true }
+interface AsRef {
+  $$valtioRef: true
+}
 type AnyFunction = (...args: any[]) => any
 type Snapshot<T> = T extends AnyFunction
   ? T
@@ -47,7 +49,7 @@ const useAffectedDebugValue = (
   useDebugValue(pathList.current)
 }
 
-type Options = {
+interface Options {
   sync?: boolean
 }
 
