@@ -7,7 +7,9 @@ const HANDLER = __DEV__ ? Symbol('HANDLER') : Symbol()
 const PROMISE_RESULT = __DEV__ ? Symbol('PROMISE_RESULT') : Symbol()
 const PROMISE_ERROR = __DEV__ ? Symbol('PROMISE_ERROR') : Symbol()
 
-type AsRef = { $$valtioRef: true }
+interface AsRef {
+  $$valtioRef: true
+}
 const refSet = new WeakSet()
 export function ref<T extends object>(o: T): T & AsRef {
   refSet.add(o)

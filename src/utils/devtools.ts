@@ -2,7 +2,7 @@ import { snapshot, subscribe } from '../vanilla'
 import type {} from '@redux-devtools/extension'
 
 // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
-type Message = {
+interface Message {
   type: string
   payload?: any
   state?: any
@@ -10,7 +10,7 @@ type Message = {
 
 const DEVTOOLS = Symbol()
 
-type Options = {
+interface Options {
   enabled?: boolean
   name?: string
 }
