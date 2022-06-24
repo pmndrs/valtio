@@ -44,7 +44,7 @@ export const store = proxy<{ filter: Filter; todos: Todo[] }>({
 
 #### 2. useSnapshot
 
-To access the data in this store, we'll use [`useSnapshot`](/docs/basic/useSnapshot). The Todos component will rerender when the "todos" or "filter" propeties are updated. Any other data we add to the proxy will be ignored.
+To access the data in this store, we'll use [`useSnapshot`](/docs/basic/useSnapshot). The Todos component will rerender when the "todos" or "filter" properties are updated. Any other data we add to the proxy will be ignored.
 
 ```tsx
 const Todos = () => {
