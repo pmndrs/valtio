@@ -119,7 +119,7 @@ You can access state outside of your components and subscribe to changes.
 ```jsx
 import { subscribe } from 'valtio'
 
-// Suscribe to all state changes
+// Subscribe to all state changes
 const unsubscribe = subscribe(state, () =>
   console.log('state has changed to', state)
 )
@@ -197,7 +197,7 @@ const state = proxy({
 })
 ```
 
-#### Update transiently (for often occuring state-changes)
+#### Update transiently (for often occurring state-changes)
 
 You can read state in a component without causing re-render.
 
