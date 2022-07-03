@@ -18,8 +18,8 @@ const unwrappedStore = snapshot(store) // unwrapped store is the original object
 const anotherUnwrappedStore = snapshot(store)
 console.log(unwrappedStore === anotherUnwrappedStore) // true
 store.name = 'Hanna'
-const yetAnotherUpwrappedStore = snapshot(store)
-console.log(unwrappedStore === yetAnotherUpwrappedStore) // false
+const yetAnotherUnwrappedStore = snapshot(store)
+console.log(unwrappedStore === yetAnotherUnwrappedStore) // false
 ```
 
 #### Vanilla javascript
