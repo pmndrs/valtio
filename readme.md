@@ -119,7 +119,7 @@ You can access state outside of your components and subscribe to changes.
 ```jsx
 import { subscribe } from 'valtio'
 
-// Suscribe to all state changes
+// Subscribe to all state changes
 const unsubscribe = subscribe(state, () =>
   console.log('state has changed to', state)
 )
