@@ -197,7 +197,7 @@ const state = proxy({
 })
 ```
 
-#### Update transiently (for often occuring state-changes)
+#### Update transiently (for often occurring state-changes)
 
 You can read state in a component without causing re-render.
 
