@@ -44,7 +44,9 @@ export function devtools<T extends object>(
   options?: Options | string
 ) {
   if (typeof options === 'string') {
-    console.warn('[Deprecated] Please use option object instead of name string')
+    console.warn(
+      'string name option is deprecated, use { name }. https://github.com/pmndrs/valtio/pull/400'
+    )
     options = { name: options }
   }
   const { enabled, name = '' } = options || {}
