@@ -1,4 +1,5 @@
 import { proxy, snapshot } from '../vanilla'
+import type { INTERNAL_AsRef } from '../vanilla'
 
 // Unfortunately, this doesn't work with tsc.
 // Hope to find a solution to make this work.
@@ -11,13 +12,10 @@ import { proxy, snapshot } from '../vanilla'
 //   type Snapshot<T extends object> = ReturnType<SnapshotWrapper<T>['fn']>
 //
 // Using copy-paste types for now:
-interface AsRef {
-  $$valtioRef: true
-}
 type AnyFunction = (...args: any[]) => any
 type Snapshot<T> = T extends AnyFunction
   ? T
-  : T extends AsRef
+  : T extends INTERNAL_AsRef
   ? T
   : T extends Promise<infer V>
   ? Snapshot<V>

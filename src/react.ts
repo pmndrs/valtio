@@ -10,6 +10,7 @@ import {
 // The following is a workaround until ESM is supported.
 import useSyncExternalStoreExports from 'use-sync-external-store/shim'
 import { snapshot, subscribe } from './vanilla'
+import type { INTERNAL_AsRef } from './vanilla'
 
 const { useSyncExternalStore } = useSyncExternalStoreExports
 
@@ -24,13 +25,10 @@ const { useSyncExternalStore } = useSyncExternalStoreExports
 //   type Snapshot<T extends object> = ReturnType<SnapshotWrapper<T>['fn']>
 //
 // Using copy-paste types for now:
-interface AsRef {
-  $$valtioRef: true
-}
 type AnyFunction = (...args: any[]) => any
 type Snapshot<T> = T extends AnyFunction
   ? T
-  : T extends AsRef
+  : T extends INTERNAL_AsRef
   ? T
   : T extends Promise<infer V>
   ? Snapshot<V>
