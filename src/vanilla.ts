@@ -7,13 +7,17 @@ const HANDLER = __DEV__ ? Symbol('HANDLER') : Symbol()
 const PROMISE_RESULT = __DEV__ ? Symbol('PROMISE_RESULT') : Symbol()
 const PROMISE_ERROR = __DEV__ ? Symbol('PROMISE_ERROR') : Symbol()
 
-interface AsRef {
+/**
+ * This not a public API.
+ * It can be changed without notice.
+ */
+export interface INTERNAL_AsRef {
   $$valtioRef: true
 }
 const refSet = new WeakSet()
-export function ref<T extends object>(o: T): T & AsRef {
+export function ref<T extends object>(o: T): T & INTERNAL_AsRef {
   refSet.add(o)
-  return o as T & AsRef
+  return o as T & INTERNAL_AsRef
 }
 
 const isObject = (x: unknown): x is object =>
@@ -247,7 +251,7 @@ export function subscribe<T extends object>(
 type AnyFunction = (...args: any[]) => any
 type Snapshot<T> = T extends AnyFunction
   ? T
-  : T extends AsRef
+  : T extends INTERNAL_AsRef
   ? T
   : T extends Promise<infer V>
   ? Snapshot<V>
