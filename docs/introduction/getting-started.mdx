@@ -56,14 +56,10 @@ const Todos = () => {
         .map(({ description, status, id }) => {
           return (
             <li key={id}>
-              <span
-                data-status={status}
-                className="description"
+              <span data-status={status} className="description">
                 {description}
               </span>
-              <button className="remove">
-                x
-              </button>
+              <button className="remove">x</button>
             </li>
           )
         })}
