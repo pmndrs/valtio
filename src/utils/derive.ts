@@ -2,7 +2,7 @@ import { getVersion, proxy, subscribe } from '../vanilla'
 
 type DeriveGet = <T extends object>(proxyObject: T) => T
 
-interface Subscription {
+type Subscription = {
   s: object // "s"ourceObject
   d: object // "d"erivedObject
   k: string // derived "k"ey
@@ -198,7 +198,7 @@ export function derive<T extends object, U extends object>(
       throw new Error('object property already defined')
     }
     const fn = derivedFns[key as keyof U]
-    interface DependencyEntry {
+    type DependencyEntry = {
       v: number // "v"ersion
       s?: Subscription // "s"ubscription
     }
