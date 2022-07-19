@@ -8,8 +8,11 @@ const Component = () => {const valtio_macro_snap_state = _useSnapshot(
   state);
   return (
     <div>
+      
       {valtio_macro_snap_state.count}
+      
       <button onClick={() => ++state.count}>inc</button>
+    
     </div>);
 
 };"
@@ -23,11 +26,14 @@ const Component = () => {const valtio_macro_snap_state = _useSnapshot(
   state);
   return (
     <div>
+      
       <button onClick={() => {
         ;(() => ++state.count)();
         ++state.count;
       }}>inc</button>
+      
       {valtio_macro_snap_state.count}
+    
     </div>);
 
 };"
