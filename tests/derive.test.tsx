@@ -411,7 +411,7 @@ describe('glitch free', () => {
 })
 
 describe('two derived properties', () => {
-  interface State {
+  type State = {
     a: number
     derived1?: unknown
     derived2?: unknown

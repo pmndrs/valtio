@@ -3,7 +3,7 @@ import { subscribe } from '../vanilla'
 type Cleanup = () => void
 type WatchGet = <T extends object>(proxyObject: T) => T
 type WatchCallback = (get: WatchGet) => Cleanup | void | undefined
-interface WatchOptions {
+type WatchOptions = {
   sync?: boolean
 }
 

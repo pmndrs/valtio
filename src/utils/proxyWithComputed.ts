@@ -1,27 +1,5 @@
 import { proxy, snapshot } from '../vanilla'
-import type { INTERNAL_AsRef } from '../vanilla'
-
-// Unfortunately, this doesn't work with tsc.
-// Hope to find a solution to make this work.
-//
-//   class SnapshotWrapper<T extends object> {
-//     fn(p: T) {
-//       return snapshot(p)
-//     }
-//   }
-//   type Snapshot<T extends object> = ReturnType<SnapshotWrapper<T>['fn']>
-//
-// Using copy-paste types for now:
-type AnyFunction = (...args: any[]) => any
-type Snapshot<T> = T extends AnyFunction
-  ? T
-  : T extends INTERNAL_AsRef
-  ? T
-  : T extends Promise<infer V>
-  ? Snapshot<V>
-  : {
-      readonly [K in keyof T]: Snapshot<T[K]>
-    }
+import type { INTERNAL_Snapshot } from '../vanilla'
 
 /**
  * proxyWithComputed
@@ -51,9 +29,9 @@ export function proxyWithComputed<T extends object, U extends object>(
   initialObject: T,
   computedFns: {
     [K in keyof U]:
-      | ((snap: Snapshot<T>) => U[K])
+      | ((snap: INTERNAL_Snapshot<T>) => U[K])
       | {
-          get: (snap: Snapshot<T>) => U[K]
+          get: (snap: INTERNAL_Snapshot<T>) => U[K]
           set?: (state: T, newValue: U[K]) => void
         }
   }
@@ -66,7 +44,7 @@ export function proxyWithComputed<T extends object, U extends object>(
     const { get, set } = (
       typeof computedFn === 'function' ? { get: computedFn } : computedFn
     ) as {
-      get: (snap: Snapshot<T>) => U[typeof key]
+      get: (snap: INTERNAL_Snapshot<T>) => U[typeof key]
       set?: (state: T, newValue: U[typeof key]) => void
     }
     const desc: PropertyDescriptor = {}
