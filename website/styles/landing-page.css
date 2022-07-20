@@ -74,7 +74,7 @@ html {
   }
 
   /* center code when pre is full-screen*/
-  pre {
+  .pre {
     padding-left: calc(100% - 800px) !important;
   }
 }
