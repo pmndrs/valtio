@@ -18,11 +18,11 @@ const exampleCode = (dur: number, count: number) => `
   incCount();
 
   const snap = useSnapshot(state)
-  
+
   return (
     <div>
       <h3>{snap.dur}</h3>
-      <button 
+      <button
         disabled={snap.dur <= 1}
         onClick={decDur}>
         -
@@ -67,7 +67,7 @@ export const CodeExample = () => {
           theme={undefined}
         >
           {({ className, style, tokens, getLineProps, getTokenProps }) => (
-            <pre className={className} style={style}>
+            <pre className={`${className} pre`} style={style}>
               {tokens.map((line, i) => (
                 <div key={i} {...getLineProps({ line, key: i })}>
                   {line.map((token, key) => (
