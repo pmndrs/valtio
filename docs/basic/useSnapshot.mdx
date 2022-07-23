@@ -9,7 +9,7 @@ description: 'Create a local snapshot that catches changes.'
 Create a local snapshot that catches changes. This hook actually returns a wrapped snapshot in a proxy for
 render optimization instead of a plain object compared to <a href="/docs/advanced/snapshot">`snapshot()`</a>.
 
-#### Rule of thumb: read from snapshots, mutate the source.
+#### Rule of thumb: read from snapshots in render function, otherwise use the source.
 
 The component will only re-render when the parts of the state you access have changed; it is render-optimized.
 
