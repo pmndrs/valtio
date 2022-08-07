@@ -16,7 +16,8 @@ export const valtioMacro = defineMacro(`useProxy`)
     const hook = babelModuleImports.addNamed(path, 'useSnapshot', 'valtio')
     const proxy = args[0]?.node
 
-    if (!t.isIdentifier(proxy)) throw new babelMacro.MacroError('no proxy object')
+    if (!t.isIdentifier(proxy))
+      throw new babelMacro.MacroError('no proxy object')
 
     const snap = t.identifier(`valtio_macro_snap_${proxy.name}`)
     path.parentPath?.replaceWith(
