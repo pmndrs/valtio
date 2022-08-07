@@ -1,13 +1,13 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import babelModuleImports from '@babel/helper-module-imports'
+import * as babelModuleImports from '@babel/helper-module-imports'
 import * as t from '@babel/types'
 import {
   createMacroPlugin,
   defineMacro,
   defineMacroProvider,
 } from 'aslemammad-vite-plugin-macro'
-import babelMacro from 'babel-plugin-macros'
+import * as babelMacro from 'babel-plugin-macros'
 
 export const valtioMacro = defineMacro(`useProxy`)
   .withSignature(`<T extends object>(proxyObject: T): void`)
