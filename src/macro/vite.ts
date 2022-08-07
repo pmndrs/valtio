@@ -1,22 +1,22 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { addNamed } from '@babel/helper-module-imports'
+import babelModuleImports from '@babel/helper-module-imports'
 import * as t from '@babel/types'
 import {
   createMacroPlugin,
   defineMacro,
   defineMacroProvider,
 } from 'aslemammad-vite-plugin-macro'
-import { MacroError } from 'babel-plugin-macros'
+import babelMacro from 'babel-plugin-macros'
 
 export const valtioMacro = defineMacro(`useProxy`)
   .withSignature(`<T extends object>(proxyObject: T): void`)
   .withHandler((ctx) => {
     const { path, args } = ctx
-    const hook = addNamed(path, 'useSnapshot', 'valtio')
+    const hook = babelModuleImports.addNamed(path, 'useSnapshot', 'valtio')
     const proxy = args[0]?.node
 
-    if (!t.isIdentifier(proxy)) throw new MacroError('no proxy object')
+    if (!t.isIdentifier(proxy)) throw new babelMacro.MacroError('no proxy object')
 
     const snap = t.identifier(`valtio_macro_snap_${proxy.name}`)
     path.parentPath?.replaceWith(
