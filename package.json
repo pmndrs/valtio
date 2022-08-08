@@ -181,7 +181,6 @@
     "jest": "^28.1.3",
     "jest-environment-jsdom": "^28.1.3",
     "json": "^11.0.0",
-    "patch-package": "^6.4.7",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.7.1",
     "proxy-memoize": "^1.1.0",
