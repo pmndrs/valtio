@@ -2,14 +2,11 @@
 // @ts-ignore
 import * as babelModuleImports from '@babel/helper-module-imports'
 import * as t from '@babel/types'
-import {
-  createMacroPlugin,
-  defineMacro,
-  defineMacroProvider,
-} from 'aslemammad-vite-plugin-macro'
+import * as plugin from 'aslemammad-vite-plugin-macro'
 import * as babelMacro from 'babel-plugin-macros'
 
-export const valtioMacro = defineMacro(`useProxy`)
+export const valtioMacro = plugin
+  .defineMacro(`useProxy`)
   .withSignature(`<T extends object>(proxyObject: T): void`)
   .withHandler((ctx) => {
     const { path, args } = ctx
@@ -50,7 +47,7 @@ export const valtioMacro = defineMacro(`useProxy`)
   })
 
 export function provideValtioMacro() {
-  return defineMacroProvider({
+  return plugin.defineMacroProvider({
     id: 'valtio/macro',
     exports: {
       'valtio/macro': {
@@ -60,6 +57,6 @@ export function provideValtioMacro() {
   })
 }
 
-const macroPlugin = createMacroPlugin({}).use(provideValtioMacro())
+const macroPlugin = plugin.createMacroPlugin({}).use(provideValtioMacro())
 
 export default macroPlugin
