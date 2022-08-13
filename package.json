@@ -139,7 +139,7 @@
     ]
   },
   "dependencies": {
-    "proxy-compare": "2.2.0",
+    "proxy-compare": "https://pkg.csb.dev/dai-shi/proxy-compare/commit/2af3c4b7/proxy-compare",
     "use-sync-external-store": "1.2.0"
   },
   "devDependencies": {
