@@ -5,7 +5,6 @@ import * as t from '@babel/types'
 import plugin from 'aslemammad-vite-plugin-macro'
 import * as babelMacro from 'babel-plugin-macros'
 
-console.log(babelModuleImports, t, plugin, babelMacro)
 export const valtioMacro = plugin
   .defineMacro(`useProxy`)
   .withSignature(`<T extends object>(proxyObject: T): void`)
