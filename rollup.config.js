@@ -66,7 +66,7 @@ function createESMConfig(input, output) {
       }),
       resolve({ extensions }),
       replace({
-        __DEV__: '(import.meta.env&&import.meta.env.MODE)!=="production"',
+        __DEV__: '(import.meta?.env?.MODE!=="production")',
         // a workround for #410
         'use-sync-external-store/shim': 'use-sync-external-store/shim/index.js',
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
@@ -91,7 +91,7 @@ function createCommonJSConfig(input, output) {
       }),
       resolve({ extensions }),
       replace({
-        __DEV__: 'process.env.NODE_ENV!=="production"',
+        __DEV__: '(process.env.NODE_ENV!=="production")',
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
