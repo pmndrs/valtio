@@ -101,146 +101,141 @@ const createProxy = <T extends object>(
   return [baseObject, proxyObject]
 }
 
-type CustomizableFunctions = readonly [
-  typeof Object.is,
-  typeof canProxy,
-  typeof createSnapshot,
-  typeof createProxy
-]
+const identity = <T>(x: T) => x
 
-type Options = {
-  unstable_customize?: (fns: CustomizableFunctions) => CustomizableFunctions
-}
-
-const defaultFunctions: CustomizableFunctions = [
-  Object.is,
-  canProxy,
-  createSnapshot,
-  createProxy,
-]
-
-export function proxy<T extends object>(
-  initialObject: T = {} as T,
-  options?: Options
-): T {
-  if (!isObject(initialObject)) {
-    throw new Error('object required')
-  }
-  const found = proxyCache.get(initialObject) as T | undefined
-  if (found) {
-    return found
-  }
-  const [is, canProxy, createSnapshot, createProxy] =
-    options?.unstable_customize
-      ? options.unstable_customize(defaultFunctions)
-      : defaultFunctions
-  let version = globalVersion
-  const listeners = new Set<Listener>()
-  const notifyUpdate = (op: Op, nextVersion = ++globalVersion) => {
-    if (version !== nextVersion) {
-      version = nextVersion
-      listeners.forEach((listener) => listener(op, nextVersion))
+export function buildProxyFunction(
+  customizeObjectIs: (fn: typeof Object.is) => typeof Object.is = identity,
+  customizeCanProxy: (fn: typeof canProxy) => typeof canProxy = identity,
+  customizeCreateSnapshot: (
+    fn: typeof createSnapshot
+  ) => typeof createSnapshot = identity,
+  customizeCreateProxy: (
+    fn: typeof createProxy
+  ) => typeof createProxy = identity
+) {
+  const customObjectIs = customizeObjectIs(Object.is)
+  const customCanProxy = customizeCanProxy(canProxy)
+  const customCreateSnapshot = customizeCreateSnapshot(createSnapshot)
+  const customCreateProxy = customizeCreateProxy(createProxy)
+  const proxy = <T extends object>(initialObject: T = {} as T): T => {
+    if (!isObject(initialObject)) {
+      throw new Error('object required')
     }
-  }
-  const propListeners = new Map<string | symbol, Listener>()
-  const getPropListener = (prop: string | symbol) => {
-    let propListener = propListeners.get(prop)
-    if (!propListener) {
-      propListener = (op, nextVersion) => {
-        const newOp: Op = [...op]
-        newOp[1] = [prop, ...(newOp[1] as Path)]
-        notifyUpdate(newOp, nextVersion)
-      }
-      propListeners.set(prop, propListener)
+    const found = proxyCache.get(initialObject) as T | undefined
+    if (found) {
+      return found
     }
-    return propListener
-  }
-  const popPropListener = (prop: string | symbol) => {
-    const propListener = propListeners.get(prop)
-    propListeners.delete(prop)
-    return propListener
-  }
-  const handler: ProxyHandler<T> = {
-    get(target: T, prop: string | symbol, receiver: any) {
-      if (prop === VERSION) {
-        return version
+    let version = globalVersion
+    const listeners = new Set<Listener>()
+    const notifyUpdate = (op: Op, nextVersion = ++globalVersion) => {
+      if (version !== nextVersion) {
+        version = nextVersion
+        listeners.forEach((listener) => listener(op, nextVersion))
       }
-      if (prop === LISTENERS) {
-        return listeners
+    }
+    const propListeners = new Map<string | symbol, Listener>()
+    const getPropListener = (prop: string | symbol) => {
+      let propListener = propListeners.get(prop)
+      if (!propListener) {
+        propListener = (op, nextVersion) => {
+          const newOp: Op = [...op]
+          newOp[1] = [prop, ...(newOp[1] as Path)]
+          notifyUpdate(newOp, nextVersion)
+        }
+        propListeners.set(prop, propListener)
       }
-      if (prop === SNAPSHOT) {
-        return createSnapshot(version, target, receiver)
-      }
-      return Reflect.get(target, prop, receiver)
-    },
-    deleteProperty(target: T, prop: string | symbol) {
-      const prevValue = Reflect.get(target, prop)
-      const childListeners = prevValue?.[LISTENERS]
-      if (childListeners) {
-        childListeners.delete(popPropListener(prop))
-      }
-      const deleted = Reflect.deleteProperty(target, prop)
-      if (deleted) {
-        notifyUpdate(['delete', [prop], prevValue])
-      }
-      return deleted
-    },
-    set(target: T, prop: string | symbol, value: any, receiver: any) {
-      const hasPrevValue = Reflect.has(target, prop)
-      const prevValue = Reflect.get(target, prop, receiver)
-      if (hasPrevValue && is(prevValue, value)) {
+      return propListener
+    }
+    const popPropListener = (prop: string | symbol) => {
+      const propListener = propListeners.get(prop)
+      propListeners.delete(prop)
+      return propListener
+    }
+    const handler: ProxyHandler<T> = {
+      get(target: T, prop: string | symbol, receiver: any) {
+        if (prop === VERSION) {
+          return version
+        }
+        if (prop === LISTENERS) {
+          return listeners
+        }
+        if (prop === SNAPSHOT) {
+          return customCreateSnapshot(version, target, receiver)
+        }
+        return Reflect.get(target, prop, receiver)
+      },
+      deleteProperty(target: T, prop: string | symbol) {
+        const prevValue = Reflect.get(target, prop)
+        const childListeners = prevValue?.[LISTENERS]
+        if (childListeners) {
+          childListeners.delete(popPropListener(prop))
+        }
+        const deleted = Reflect.deleteProperty(target, prop)
+        if (deleted) {
+          notifyUpdate(['delete', [prop], prevValue])
+        }
+        return deleted
+      },
+      set(target: T, prop: string | symbol, value: any, receiver: any) {
+        const hasPrevValue = Reflect.has(target, prop)
+        const prevValue = Reflect.get(target, prop, receiver)
+        if (hasPrevValue && customObjectIs(prevValue, value)) {
+          return true
+        }
+        const childListeners = prevValue?.[LISTENERS]
+        if (childListeners) {
+          childListeners.delete(popPropListener(prop))
+        }
+        if (isObject(value)) {
+          value = getUntracked(value) || value
+        }
+        let nextValue: any
+        if (Object.getOwnPropertyDescriptor(target, prop)?.set) {
+          nextValue = value
+        } else if (value instanceof Promise) {
+          nextValue = value
+            .then((v) => {
+              nextValue[PROMISE_RESULT] = v
+              notifyUpdate(['resolve', [prop], v])
+              return v
+            })
+            .catch((e) => {
+              nextValue[PROMISE_ERROR] = e
+              notifyUpdate(['reject', [prop], e])
+            })
+        } else if (value?.[LISTENERS]) {
+          nextValue = value
+          nextValue[LISTENERS].add(getPropListener(prop))
+        } else if (customCanProxy(value)) {
+          nextValue = proxy(value)
+          nextValue[LISTENERS].add(getPropListener(prop))
+        } else {
+          nextValue = value
+        }
+        Reflect.set(target, prop, nextValue, receiver)
+        notifyUpdate(['set', [prop], value, prevValue])
         return true
-      }
-      const childListeners = prevValue?.[LISTENERS]
-      if (childListeners) {
-        childListeners.delete(popPropListener(prop))
-      }
-      if (isObject(value)) {
-        value = getUntracked(value) || value
-      }
-      let nextValue: any
-      if (Object.getOwnPropertyDescriptor(target, prop)?.set) {
-        nextValue = value
-      } else if (value instanceof Promise) {
-        nextValue = value
-          .then((v) => {
-            nextValue[PROMISE_RESULT] = v
-            notifyUpdate(['resolve', [prop], v])
-            return v
-          })
-          .catch((e) => {
-            nextValue[PROMISE_ERROR] = e
-            notifyUpdate(['reject', [prop], e])
-          })
-      } else if (value?.[LISTENERS]) {
-        nextValue = value
-        nextValue[LISTENERS].add(getPropListener(prop))
-      } else if (canProxy(value)) {
-        nextValue = proxy(value, options)
-        nextValue[LISTENERS].add(getPropListener(prop))
-      } else {
-        nextValue = value
-      }
-      Reflect.set(target, prop, nextValue, receiver)
-      notifyUpdate(['set', [prop], value, prevValue])
-      return true
-    },
-  }
-  const [baseObject, proxyObject] = createProxy(initialObject, handler)
-  proxyCache.set(initialObject, proxyObject)
-  Reflect.ownKeys(initialObject).forEach((key) => {
-    const desc = Object.getOwnPropertyDescriptor(
-      initialObject,
-      key
-    ) as PropertyDescriptor
-    if (desc.get || desc.set) {
-      Object.defineProperty(baseObject, key, desc)
-    } else {
-      proxyObject[key as keyof T] = initialObject[key as keyof T]
+      },
     }
-  })
-  return proxyObject
+    const [baseObject, proxyObject] = customCreateProxy(initialObject, handler)
+    proxyCache.set(initialObject, proxyObject)
+    Reflect.ownKeys(initialObject).forEach((key) => {
+      const desc = Object.getOwnPropertyDescriptor(
+        initialObject,
+        key
+      ) as PropertyDescriptor
+      if (desc.get || desc.set) {
+        Object.defineProperty(baseObject, key, desc)
+      } else {
+        proxyObject[key as keyof T] = initialObject[key as keyof T]
+      }
+    })
+    return proxyObject
+  }
+  return proxy
 }
+
+export const proxy = buildProxyFunction()
 
 export function getVersion(proxyObject: unknown): number | undefined {
   return isObject(proxyObject) ? (proxyObject as any)[VERSION] : undefined
