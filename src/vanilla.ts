@@ -118,8 +118,7 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
         snapshot[key] = value
       }
     })
-    Object.freeze(snapshot)
-    return snapshot
+    return Object.freeze(snapshot)
   }
   const baseObject = Array.isArray(initialObject)
     ? []
