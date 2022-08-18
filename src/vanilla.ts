@@ -117,7 +117,7 @@ export function buildProxyFunction(
   const customCanProxy = customizeCanProxy(canProxy)
   const customCreateSnapshot = customizeCreateSnapshot(createSnapshot)
   const customCreateProxy = customizeCreateProxy(createProxy)
-  const proxy = <T extends object>(initialObject: T = {} as T): T => {
+  const proxyFunction = <T extends object>(initialObject: T = {} as T): T => {
     if (!isObject(initialObject)) {
       throw new Error('object required')
     }
@@ -207,7 +207,7 @@ export function buildProxyFunction(
           nextValue = value
           nextValue[LISTENERS].add(getPropListener(prop))
         } else if (customCanProxy(value)) {
-          nextValue = proxy(value)
+          nextValue = proxyFunction(value)
           nextValue[LISTENERS].add(getPropListener(prop))
         } else {
           nextValue = value
@@ -232,7 +232,7 @@ export function buildProxyFunction(
     })
     return proxyObject
   }
-  return proxy
+  return proxyFunction
 }
 
 export const proxy = buildProxyFunction()
