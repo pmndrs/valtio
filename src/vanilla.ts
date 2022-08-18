@@ -3,7 +3,6 @@ import { getUntracked, markToTrack } from 'proxy-compare'
 const VERSION = __DEV__ ? Symbol('VERSION') : Symbol()
 const LISTENERS = __DEV__ ? Symbol('LISTENERS') : Symbol()
 const SNAPSHOT = __DEV__ ? Symbol('SNAPSHOT') : Symbol()
-const HANDLER = __DEV__ ? Symbol('HANDLER') : Symbol()
 const PROMISE_RESULT = __DEV__ ? Symbol('PROMISE_RESULT') : Symbol()
 const PROMISE_ERROR = __DEV__ ? Symbol('PROMISE_ERROR') : Symbol()
 
@@ -49,7 +48,81 @@ const snapshotCache = new WeakMap<
   [version: number, snapshot: unknown]
 >()
 
-export function proxy<T extends object>(initialObject: T = {} as T): T {
+const createSnapshot = <T extends object>(
+  version: number,
+  target: T,
+  receiver: any
+): T => {
+  const cache = snapshotCache.get(receiver)
+  if (cache?.[0] === version) {
+    return cache[1] as T
+  }
+  const snapshot: any = Array.isArray(target)
+    ? []
+    : Object.create(Object.getPrototypeOf(target))
+  markToTrack(snapshot, true) // mark to track
+  snapshotCache.set(receiver, [version, snapshot])
+  Reflect.ownKeys(target).forEach((key) => {
+    const value = Reflect.get(target, key, receiver)
+    if (refSet.has(value)) {
+      markToTrack(value, false) // mark not to track
+      snapshot[key] = value
+    } else if (value instanceof Promise) {
+      if (PROMISE_RESULT in value) {
+        snapshot[key] = (value as any)[PROMISE_RESULT]
+      } else {
+        const errorOrPromise = (value as any)[PROMISE_ERROR] || value
+        Object.defineProperty(snapshot, key, {
+          get() {
+            if (PROMISE_RESULT in value) {
+              return (value as any)[PROMISE_RESULT]
+            }
+            throw errorOrPromise
+          },
+        })
+      }
+    } else if (value?.[LISTENERS]) {
+      snapshot[key] = value[SNAPSHOT]
+    } else {
+      snapshot[key] = value
+    }
+  })
+  return Object.freeze(snapshot)
+}
+
+const createProxy = <T extends object>(
+  initialObject: T,
+  handler: ProxyHandler<T>
+): readonly [T, T] => {
+  const baseObject = Array.isArray(initialObject)
+    ? []
+    : Object.create(Object.getPrototypeOf(initialObject))
+  const proxyObject = new Proxy(baseObject, handler)
+  return [baseObject, proxyObject]
+}
+
+type CustomizableFunctions = readonly [
+  typeof Object.is,
+  typeof canProxy,
+  typeof createSnapshot,
+  typeof createProxy
+]
+
+type Options = {
+  unstable_customize?: (fns: CustomizableFunctions) => CustomizableFunctions
+}
+
+const defaultFunctions: CustomizableFunctions = [
+  Object.is,
+  canProxy,
+  createSnapshot,
+  createProxy,
+]
+
+export function proxy<T extends object>(
+  initialObject: T = {} as T,
+  options?: Options
+): T {
   if (!isObject(initialObject)) {
     throw new Error('object required')
   }
@@ -57,6 +130,10 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
   if (found) {
     return found
   }
+  const [is, canProxy, createSnapshot, createProxy] =
+    options?.unstable_customize
+      ? options.unstable_customize(defaultFunctions)
+      : defaultFunctions
   let version = globalVersion
   const listeners = new Set<Listener>()
   const notifyUpdate = (op: Op, nextVersion = ++globalVersion) => {
@@ -83,47 +160,7 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
     propListeners.delete(prop)
     return propListener
   }
-  const createSnapshot = (target: T, receiver: any) => {
-    const cache = snapshotCache.get(receiver)
-    if (cache?.[0] === version) {
-      return cache[1]
-    }
-    const snapshot: any = Array.isArray(target)
-      ? []
-      : Object.create(Object.getPrototypeOf(target))
-    markToTrack(snapshot, true) // mark to track
-    snapshotCache.set(receiver, [version, snapshot])
-    Reflect.ownKeys(target).forEach((key) => {
-      const value = Reflect.get(target, key, receiver)
-      if (refSet.has(value)) {
-        markToTrack(value, false) // mark not to track
-        snapshot[key] = value
-      } else if (value instanceof Promise) {
-        if (PROMISE_RESULT in value) {
-          snapshot[key] = (value as any)[PROMISE_RESULT]
-        } else {
-          const errorOrPromise = (value as any)[PROMISE_ERROR] || value
-          Object.defineProperty(snapshot, key, {
-            get() {
-              if (PROMISE_RESULT in value) {
-                return (value as any)[PROMISE_RESULT]
-              }
-              throw errorOrPromise
-            },
-          })
-        }
-      } else if (value?.[LISTENERS]) {
-        snapshot[key] = value[SNAPSHOT]
-      } else {
-        snapshot[key] = value
-      }
-    })
-    return Object.freeze(snapshot)
-  }
-  const baseObject = Array.isArray(initialObject)
-    ? []
-    : Object.create(Object.getPrototypeOf(initialObject))
-  const handler = {
+  const handler: ProxyHandler<T> = {
     get(target: T, prop: string | symbol, receiver: any) {
       if (prop === VERSION) {
         return version
@@ -132,10 +169,7 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
         return listeners
       }
       if (prop === SNAPSHOT) {
-        return createSnapshot(target, receiver)
-      }
-      if (prop === HANDLER) {
-        return handler
+        return createSnapshot(version, target, receiver)
       }
       return Reflect.get(target, prop, receiver)
     },
@@ -151,12 +185,10 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
       }
       return deleted
     },
-    is: Object.is,
-    canProxy,
     set(target: T, prop: string | symbol, value: any, receiver: any) {
       const hasPrevValue = Reflect.has(target, prop)
       const prevValue = Reflect.get(target, prop, receiver)
-      if (hasPrevValue && this.is(prevValue, value)) {
+      if (hasPrevValue && is(prevValue, value)) {
         return true
       }
       const childListeners = prevValue?.[LISTENERS]
@@ -183,8 +215,8 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
       } else if (value?.[LISTENERS]) {
         nextValue = value
         nextValue[LISTENERS].add(getPropListener(prop))
-      } else if (this.canProxy(value)) {
-        nextValue = proxy(value)
+      } else if (canProxy(value)) {
+        nextValue = proxy(value, options)
         nextValue[LISTENERS].add(getPropListener(prop))
       } else {
         nextValue = value
@@ -194,7 +226,7 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
       return true
     },
   }
-  const proxyObject = new Proxy(baseObject, handler)
+  const [baseObject, proxyObject] = createProxy(initialObject, handler)
   proxyCache.set(initialObject, proxyObject)
   Reflect.ownKeys(initialObject).forEach((key) => {
     const desc = Object.getOwnPropertyDescriptor(
@@ -204,7 +236,7 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
     if (desc.get || desc.set) {
       Object.defineProperty(baseObject, key, desc)
     } else {
-      proxyObject[key] = initialObject[key as keyof T]
+      proxyObject[key as keyof T] = initialObject[key as keyof T]
     }
   })
   return proxyObject
@@ -266,11 +298,4 @@ export function snapshot<T extends object>(
     console.warn('Please use proxy object')
   }
   return (proxyObject as any)[SNAPSHOT]
-}
-
-export function getHandler<T extends object>(proxyObject: T) {
-  if (__DEV__ && !(proxyObject as any)?.[HANDLER]) {
-    console.warn('Please use proxy object')
-  }
-  return (proxyObject as any)[HANDLER]
 }
