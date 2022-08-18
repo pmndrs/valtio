@@ -103,7 +103,7 @@ const createProxy = <T extends object>(
 
 const identity = <T>(x: T) => x
 
-export function buildProxyFunction(
+const buildProxyFunction = (
   customizeObjectIs: (fn: typeof Object.is) => typeof Object.is = identity,
   customizeCanProxy: (fn: typeof canProxy) => typeof canProxy = identity,
   customizeCreateSnapshot: (
@@ -112,7 +112,7 @@ export function buildProxyFunction(
   customizeCreateProxy: (
     fn: typeof createProxy
   ) => typeof createProxy = identity
-) {
+) => {
   const customObjectIs = customizeObjectIs(Object.is)
   const customCanProxy = customizeCanProxy(canProxy)
   const customCreateSnapshot = customizeCreateSnapshot(createSnapshot)
@@ -294,3 +294,5 @@ export function snapshot<T extends object>(
   }
   return (proxyObject as any)[SNAPSHOT]
 }
+
+export const unstable_buildProxyFunction = buildProxyFunction
