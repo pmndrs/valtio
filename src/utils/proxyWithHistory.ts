@@ -1,4 +1,5 @@
 import { proxy, ref, snapshot, subscribe } from '../vanilla'
+import type { INTERNAL_Snapshot } from '../vanilla'
 
 /**
  * proxyWithHistory
@@ -28,18 +29,17 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
     value: initialValue,
     history: ref({
       wip: initialValue, // to avoid infinite loop
-      snapshots: [] as V[],
+      snapshots: [] as INTERNAL_Snapshot<V>[],
       index: -1,
-    }) as { wip: V; snapshots: V[]; index: number },
+    }),
     canUndo: () => proxyObject.history.index > 0,
     undo: () => {
       if (proxyObject.canUndo()) {
         proxyObject.value = proxyObject.history.wip = proxyObject.history
           .snapshots[--proxyObject.history.index] as V
         // refresh snapshot to use again
-        proxyObject.history.snapshots[proxyObject.history.index] = snapshot(
-          proxyObject
-        ).value as V
+        proxyObject.history.snapshots[proxyObject.history.index] =
+          snapshot(proxyObject).value
       }
     },
     canRedo: () =>
@@ -49,14 +49,13 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
         proxyObject.value = proxyObject.history.wip = proxyObject.history
           .snapshots[++proxyObject.history.index] as V
         // refresh snapshot to use again
-        proxyObject.history.snapshots[proxyObject.history.index] = snapshot(
-          proxyObject
-        ).value as V
+        proxyObject.history.snapshots[proxyObject.history.index] =
+          snapshot(proxyObject).value
       }
     },
     saveHistory: () => {
       proxyObject.history.snapshots.splice(proxyObject.history.index + 1)
-      proxyObject.history.snapshots.push(snapshot(proxyObject).value as V)
+      proxyObject.history.snapshots.push(snapshot(proxyObject).value)
       ++proxyObject.history.index
     },
     subscribe: () =>
