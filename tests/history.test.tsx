@@ -214,12 +214,14 @@ it('multiple redos at once (#323)', async () => {
 
 it('nested array (#516)', async () => {
   interface Level1Interface {
-    level1Values: number[];
+    level1Values: number[]
   }
   interface Level0Interface {
-    level0Values: Level1Interface[];
+    level0Values: Level1Interface[]
   }
-  const state = proxyWithHistory<Level0Interface>({ level0Values: [{ level1Values: [0, 1] }, { level1Values: [2, 3] }] });
+  const state = proxyWithHistory<Level0Interface>({
+    level0Values: [{ level1Values: [0, 1] }, { level1Values: [2, 3] }],
+  })
 
   const NestedArray = () => {
     const snap = useSnapshot(state)
@@ -227,32 +229,28 @@ it('nested array (#516)', async () => {
       <>
         <div>values: {JSON.stringify(snap.value)}</div>
         <button
-          onClick={() => 
-          {
+          onClick={() => {
             state.undo()
           }}>
           undo
         </button>
         <button
-          onClick={() => 
-          {
-            if(state.value.level0Values[1])
+          onClick={() => {
+            if (state.value.level0Values[1])
               state.value.level0Values[1].level1Values[0] = 10
           }}>
           change 2 to 10
         </button>
         <button
-          onClick={() => 
-          {
-            if(state.value.level0Values[1])
+          onClick={() => {
+            if (state.value.level0Values[1])
               state.value.level0Values[1].level1Values[0] = 11
           }}>
           change 10 to 11
         </button>
         <button
-          onClick={() => 
-          {
-            if(state.value.level0Values[0])
+          onClick={() => {
+            if (state.value.level0Values[0])
               state.value.level0Values[0].level1Values[0] = 12
           }}>
           change 0 to 12
@@ -267,23 +265,37 @@ it('nested array (#516)', async () => {
     </StrictMode>
   )
 
-  await findByText('values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[2,3]}]}')
+  await findByText(
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[2,3]}]}'
+  )
 
   fireEvent.click(getByText('change 2 to 10'))
-  await findByText('values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}')
+  await findByText(
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}'
+  )
 
   fireEvent.click(getByText('change 10 to 11'))
-  await findByText('values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[11,3]}]}')
+  await findByText(
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[11,3]}]}'
+  )
 
-  fireEvent.click(getByText('undo'))  // => 11 back to 10
-  await findByText('values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}')
+  fireEvent.click(getByText('undo')) // => 11 back to 10
+  await findByText(
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}'
+  )
 
   fireEvent.click(getByText('change 0 to 12'))
-  await findByText('values: {"level0Values":[{"level1Values":[12,1]},{"level1Values":[10,3]}]}')
+  await findByText(
+    'values: {"level0Values":[{"level1Values":[12,1]},{"level1Values":[10,3]}]}'
+  )
 
-  fireEvent.click(getByText('undo'))  // => 12 back to 0
-  await findByText('values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}')
+  fireEvent.click(getByText('undo')) // => 12 back to 0
+  await findByText(
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}'
+  )
 
-  fireEvent.click(getByText('undo'))  // => 10 back to 2
-  await findByText('values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[2,3]}]}')
+  fireEvent.click(getByText('undo')) // => 10 back to 2
+  await findByText(
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[2,3]}]}'
+  )
 })
