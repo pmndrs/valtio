@@ -1,6 +1,22 @@
 import { proxy, ref, snapshot, subscribe } from '../vanilla'
 import type { INTERNAL_Snapshot } from '../vanilla'
 
+const isObject = (x: unknown): x is object =>
+  typeof x === 'object' && x !== null
+
+const deepClone = <T>(obj: T): T => {
+  if (!isObject(obj)) {
+    return obj
+  }
+  const baseObject: T = Array.isArray(obj)
+    ? []
+    : Object.create(Object.getPrototypeOf(obj))
+  Reflect.ownKeys(obj).forEach((key) => {
+    baseObject[key as keyof T] = deepClone(obj[key as keyof T])
+  })
+  return baseObject
+}
+
 /**
  * proxyWithHistory
  *
@@ -35,22 +51,18 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
     canUndo: () => proxyObject.history.index > 0,
     undo: () => {
       if (proxyObject.canUndo()) {
-        proxyObject.value = (proxyObject.history.wip = proxyObject.history
-          .snapshots[--proxyObject.history.index] as INTERNAL_Snapshot<V>) as V
-        // refresh snapshot to use again
-        proxyObject.history.snapshots[proxyObject.history.index] =
-          snapshot(proxyObject).value
+        proxyObject.value = (proxyObject.history.wip = deepClone(
+          proxyObject.history.snapshots[--proxyObject.history.index]
+        ) as INTERNAL_Snapshot<V>) as V
       }
     },
     canRedo: () =>
       proxyObject.history.index < proxyObject.history.snapshots.length - 1,
     redo: () => {
       if (proxyObject.canRedo()) {
-        proxyObject.value = (proxyObject.history.wip = proxyObject.history
-          .snapshots[++proxyObject.history.index] as INTERNAL_Snapshot<V>) as V
-        // refresh snapshot to use again
-        proxyObject.history.snapshots[proxyObject.history.index] =
-          snapshot(proxyObject).value
+        proxyObject.value = (proxyObject.history.wip = deepClone(
+          proxyObject.history.snapshots[++proxyObject.history.index]
+        ) as INTERNAL_Snapshot<V>) as V
       }
     },
     saveHistory: () => {
