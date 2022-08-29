@@ -236,22 +236,25 @@ it('nested array (#516)', async () => {
         </button>
         <button
           onClick={() => {
-            if (state.value.level0Values[1])
+            if (state.value.level0Values[1]) {
               state.value.level0Values[1].level1Values[0] = 10
+            }
           }}>
           change 2 to 10
         </button>
         <button
           onClick={() => {
-            if (state.value.level0Values[1])
+            if (state.value.level0Values[1]) {
               state.value.level0Values[1].level1Values[0] = 11
+            }
           }}>
           change 10 to 11
         </button>
         <button
           onClick={() => {
-            if (state.value.level0Values[0])
+            if (state.value.level0Values[0]) {
               state.value.level0Values[0].level1Values[0] = 12
+            }
           }}>
           change 0 to 12
         </button>
