@@ -97,7 +97,7 @@ const buildFunctions = (
             },
           })
         }
-      } else if (value?.[SNAPSHOT]) {
+      } else if (value?.[LISTENERS]) {
         snapshot[key] = value[SNAPSHOT]
       } else {
         snapshot[key] = value
