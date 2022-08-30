@@ -31,7 +31,7 @@ export type INTERNAL_Snapshot<T> = T extends AnyFunction
       readonly [K in keyof T]: INTERNAL_Snapshot<T[K]>
     }
 
-const buildFunctions = (
+const buildProxyFunction = (
   objectIs = Object.is,
 
   newProxy = <T extends object>(target: T, handler: ProxyHandler<T>): T =>
@@ -106,7 +106,7 @@ const buildFunctions = (
 
   globalVersionHolder = [1] as [number],
 
-  proxy = <T extends object>(initialObject: T): T => {
+  proxyFunction = <T extends object>(initialObject: T): T => {
     if (!isObject(initialObject)) {
       throw new Error('object required')
     }
@@ -223,68 +223,20 @@ const buildFunctions = (
       }
     })
     return proxyObject
-  },
-
-  getVersion = (proxyObject: unknown): number | undefined => {
-    return isObject(proxyObject) ? (proxyObject as any)[VERSION] : undefined
-  },
-
-  subscribe = <T extends object>(
-    proxyObject: T,
-    callback: (ops: Op[]) => void,
-    notifyInSync?: boolean
-  ) => {
-    if (__DEV__ && !(proxyObject as any)?.[LISTENERS]) {
-      console.warn('Please use proxy object')
-    }
-    let promise: Promise<void> | undefined
-    const ops: Op[] = []
-    const listener: Listener = (op) => {
-      ops.push(op)
-      if (notifyInSync) {
-        callback(ops.splice(0))
-        return
-      }
-      if (!promise) {
-        promise = Promise.resolve().then(() => {
-          promise = undefined
-          callback(ops.splice(0))
-        })
-      }
-    }
-    ;(proxyObject as any)[LISTENERS].add(listener)
-    return () => {
-      ;(proxyObject as any)[LISTENERS].delete(listener)
-    }
-  },
-
-  snapshot = <T extends object>(proxyObject: T): INTERNAL_Snapshot<T> => {
-    if (__DEV__ && !(proxyObject as any)?.[SNAPSHOT]) {
-      console.warn('Please use proxy object')
-    }
-    return (proxyObject as any)[SNAPSHOT]
-  },
-
-  ref = <T extends object>(o: T): T & AsRef => {
-    refSet.add(o)
-    return o as T & AsRef
   }
 ) =>
   [
     // public functions
-    proxy,
-    getVersion,
-    subscribe,
-    snapshot,
-    ref,
-    // internal things
-    objectIs,
-    newProxy,
+    proxyFunction,
+    // shared state
     refSet,
-    canProxy,
     VERSION,
     LISTENERS,
     SNAPSHOT,
+    // internal things
+    objectIs,
+    newProxy,
+    canProxy,
     PROMISE_RESULT,
     PROMISE_ERROR,
     snapshotCache,
@@ -293,6 +245,58 @@ const buildFunctions = (
     globalVersionHolder,
   ] as const
 
-export const [proxy, getVersion, subscribe, snapshot, ref] = buildFunctions()
+const [proxyFunction, refSet, VERSION, LISTENERS, SNAPSHOT] =
+  buildProxyFunction()
 
-export const unstable_buildFunctions = buildFunctions
+export function proxy<T extends object>(initialObject: T = {} as T): T {
+  return proxyFunction(initialObject)
+}
+
+export function getVersion(proxyObject: unknown): number | undefined {
+  return isObject(proxyObject) ? (proxyObject as any)[VERSION] : undefined
+}
+
+export function subscribe<T extends object>(
+  proxyObject: T,
+  callback: (ops: Op[]) => void,
+  notifyInSync?: boolean
+) {
+  if (__DEV__ && !(proxyObject as any)?.[LISTENERS]) {
+    console.warn('Please use proxy object')
+  }
+  let promise: Promise<void> | undefined
+  const ops: Op[] = []
+  const listener: Listener = (op) => {
+    ops.push(op)
+    if (notifyInSync) {
+      callback(ops.splice(0))
+      return
+    }
+    if (!promise) {
+      promise = Promise.resolve().then(() => {
+        promise = undefined
+        callback(ops.splice(0))
+      })
+    }
+  }
+  ;(proxyObject as any)[LISTENERS].add(listener)
+  return () => {
+    ;(proxyObject as any)[LISTENERS].delete(listener)
+  }
+}
+
+export function snapshot<T extends object>(
+  proxyObject: T
+): INTERNAL_Snapshot<T> {
+  if (__DEV__ && !(proxyObject as any)?.[SNAPSHOT]) {
+    console.warn('Please use proxy object')
+  }
+  return (proxyObject as any)[SNAPSHOT]
+}
+
+export function ref<T extends object>(o: T): T & AsRef {
+  refSet.add(o)
+  return o as T & AsRef
+}
+
+export const unstable_buildProxyFunction = buildProxyFunction
