@@ -49,18 +49,11 @@ const buildFunctions = (
     !(x instanceof RegExp) &&
     !(x instanceof ArrayBuffer),
 
-  ref = <T extends object>(o: T): T & AsRef => {
-    refSet.add(o)
-    return o as T & AsRef
-  },
-
   VERSION = __DEV__ ? Symbol('VERSION') : Symbol(),
   LISTENERS = __DEV__ ? Symbol('LISTENERS') : Symbol(),
   SNAPSHOT = __DEV__ ? Symbol('SNAPSHOT') : Symbol(),
   PROMISE_RESULT = __DEV__ ? Symbol('PROMISE_RESULT') : Symbol(),
   PROMISE_ERROR = __DEV__ ? Symbol('PROMISE_ERROR') : Symbol(),
-
-  proxyCache = new WeakMap<object, ProxyObject>(),
 
   snapshotCache = new WeakMap<object, [version: number, snapshot: unknown]>(),
 
@@ -105,6 +98,8 @@ const buildFunctions = (
     })
     return Object.freeze(snapshot)
   },
+
+  proxyCache = new WeakMap<object, ProxyObject>(),
 
   globalVersionHolder = [1] as [number],
 
@@ -265,46 +260,35 @@ const buildFunctions = (
       console.warn('Please use proxy object')
     }
     return (proxyObject as any)[SNAPSHOT]
+  },
+
+  ref = <T extends object>(o: T): T & AsRef => {
+    refSet.add(o)
+    return o as T & AsRef
   }
 ) =>
   [
+    // public functions
+    proxy,
+    getVersion,
+    subscribe,
+    snapshot,
+    ref,
+    // internal things
     objectIs,
     refSet,
     canProxy,
-    ref,
     VERSION,
     LISTENERS,
     SNAPSHOT,
     PROMISE_RESULT,
     PROMISE_ERROR,
-    proxyCache,
     snapshotCache,
     createSnapshot,
+    proxyCache,
     globalVersionHolder,
-    proxy,
-    getVersion,
-    subscribe,
-    snapshot,
   ] as const
 
-export const [
-  ,
-  ,
-  ,
-  ref,
-  ,
-  ,
-  ,
-  ,
-  ,
-  ,
-  ,
-  ,
-  ,
-  proxy,
-  getVersion,
-  subscribe,
-  snapshot,
-] = buildFunctions()
+export const [proxy, getVersion, subscribe, snapshot, ref] = buildFunctions()
 
 export const unstable_buildFunctions = buildFunctions
