@@ -34,6 +34,9 @@ export type INTERNAL_Snapshot<T> = T extends AnyFunction
 const buildFunctions = (
   objectIs = Object.is,
 
+  newProxy = <T extends object>(target: T, handler: ProxyHandler<T>): T =>
+    new Proxy(target, handler),
+
   refSet = new WeakSet(),
 
   canProxy = (x: unknown) =>
@@ -206,7 +209,7 @@ const buildFunctions = (
         return true
       },
     }
-    const proxyObject = new Proxy(baseObject, handler)
+    const proxyObject = newProxy(baseObject, handler)
     proxyCache.set(initialObject, proxyObject)
     Reflect.ownKeys(initialObject).forEach((key) => {
       const desc = Object.getOwnPropertyDescriptor(
@@ -276,6 +279,7 @@ const buildFunctions = (
     ref,
     // internal things
     objectIs,
+    newProxy,
     refSet,
     canProxy,
     VERSION,
