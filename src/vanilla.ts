@@ -142,6 +142,9 @@ const buildFunctions = (
       propListeners.delete(prop)
       return propListener
     }
+    const baseObject = Array.isArray(initialObject)
+      ? []
+      : Object.create(Object.getPrototypeOf(initialObject))
     const handler: ProxyHandler<T> = {
       get(target: T, prop: string | symbol, receiver: any) {
         if (prop === VERSION) {
@@ -208,9 +211,6 @@ const buildFunctions = (
         return true
       },
     }
-    const baseObject = Array.isArray(initialObject)
-      ? []
-      : Object.create(Object.getPrototypeOf(initialObject))
     const proxyObject = new Proxy(baseObject, handler)
     proxyCache.set(initialObject, proxyObject)
     Reflect.ownKeys(initialObject).forEach((key) => {
