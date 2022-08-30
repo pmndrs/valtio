@@ -53,11 +53,13 @@ function Counter() {
 The `snap` variable returned by `useSnapshot` is a (deeply) read-only object.
 Its type has `readonly` attribute, which may be too strict for some use cases.
 
-To mitigate typing difficulties, you might want to loosen the type definition:
+To mitigate typing difficulties, you might want to create a custom hook with loose types:
 
 ```ts
-declare module 'valtio' {
-  function useSnapshot<T extends object>(p: T): T
+import { useSnapshot as useSnapshotOrig } from 'valtio'
+
+export function useSnapshot<T extends object>(p: T) {
+  return useSnapshotOrig(p) as T
 }
 ```
 

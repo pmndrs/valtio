@@ -253,7 +253,7 @@ export function getDocsNav(): Record<string, Navigation[]> {
       pages["proxySet"],
       pages["proxyMap"],
     ],
-    Hacks: [pages["getVersion"], pages["unstable_buildProxyFunction"]],
+    Hacks: [pages["getVersion"], pages["unstable_buildFunctions"]],
     Resources: [pages["community"], pages["libraries"], pages["learn"]],
   };
 }

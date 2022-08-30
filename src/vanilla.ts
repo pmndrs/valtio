@@ -1,36 +1,11 @@
 import { getUntracked, markToTrack } from 'proxy-compare'
 
-const GLOBAL_VERSION = __DEV__ ? Symbol('GLOBAL_VERSION') : Symbol()
-const GLOBAL_LISTENERS = __DEV__ ? Symbol('GLOBAL_LISTENERS') : Symbol()
-const GLOBAL_SNAPSHOT = __DEV__ ? Symbol('GLOBAL_SNAPSHOT') : Symbol()
-const PROMISE_RESULT = __DEV__ ? Symbol('PROMISE_RESULT') : Symbol()
-const PROMISE_ERROR = __DEV__ ? Symbol('PROMISE_ERROR') : Symbol()
-
-type AsRef = { $$valtioRef: true }
-const globalRefSet = new WeakSet()
-export function ref<T extends object>(o: T): T & AsRef {
-  globalRefSet.add(o)
-  return o as T & AsRef
-}
-
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
-const canProxy = (x: unknown) =>
-  isObject(x) &&
-  !globalRefSet.has(x) &&
-  (Array.isArray(x) || !(Symbol.iterator in x)) &&
-  !(x instanceof WeakMap) &&
-  !(x instanceof WeakSet) &&
-  !(x instanceof Error) &&
-  !(x instanceof Number) &&
-  !(x instanceof Date) &&
-  !(x instanceof String) &&
-  !(x instanceof RegExp) &&
-  !(x instanceof ArrayBuffer)
+type AsRef = { $$valtioRef: true }
 
 type ProxyObject = object
-const globalProxyCache = new WeakMap<object, ProxyObject>()
 
 type Path = (string | symbol)[]
 type Op =
@@ -40,69 +15,100 @@ type Op =
   | [op: 'reject', path: Path, error: unknown]
 type Listener = (op: Op, nextVersion: number) => void
 
-const globalSnapshotCache = new WeakMap<
-  object,
-  [version: number, snapshot: unknown]
->()
+type AnyFunction = (...args: any[]) => any
 
-const createSnapshot = <T extends object>(
-  SNAPSHOT: symbol,
-  refSet: typeof globalRefSet,
-  snapshotCache: typeof globalSnapshotCache,
-  version: number,
-  target: T,
-  receiver: any
-): T => {
-  const cache = snapshotCache.get(receiver)
-  if (cache?.[0] === version) {
-    return cache[1] as T
-  }
-  const snapshot: any = Array.isArray(target)
-    ? []
-    : Object.create(Object.getPrototypeOf(target))
-  markToTrack(snapshot, true) // mark to track
-  snapshotCache.set(receiver, [version, snapshot])
-  Reflect.ownKeys(target).forEach((key) => {
-    const value = Reflect.get(target, key, receiver)
-    if (refSet.has(value)) {
-      markToTrack(value, false) // mark not to track
-      snapshot[key] = value
-    } else if (value instanceof Promise) {
-      if (PROMISE_RESULT in value) {
-        snapshot[key] = (value as any)[PROMISE_RESULT]
-      } else {
-        const errorOrPromise = (value as any)[PROMISE_ERROR] || value
-        Object.defineProperty(snapshot, key, {
-          get() {
-            if (PROMISE_RESULT in value) {
-              return (value as any)[PROMISE_RESULT]
-            }
-            throw errorOrPromise
-          },
-        })
-      }
-    } else if (value?.[SNAPSHOT]) {
-      snapshot[key] = value[SNAPSHOT]
-    } else {
-      snapshot[key] = value
+/**
+ * This is not a public API.
+ * It can be changed without any notice.
+ */
+export type INTERNAL_Snapshot<T> = T extends AnyFunction
+  ? T
+  : T extends AsRef
+  ? T
+  : T extends Promise<infer V>
+  ? INTERNAL_Snapshot<V>
+  : {
+      readonly [K in keyof T]: INTERNAL_Snapshot<T[K]>
     }
-  })
-  return Object.freeze(snapshot)
-}
 
-const createProxyFunction = (
-  VERSION: symbol,
-  LISTENERS: symbol,
-  SNAPSHOT: symbol,
-  refSet: typeof globalRefSet,
-  proxyCache: typeof globalProxyCache,
-  snapshotCache: typeof globalSnapshotCache,
-  customObjectIs: typeof Object.is,
-  customCanProxy: typeof canProxy,
-  customCreateSnapshot: typeof createSnapshot
-) => {
-  let globalVersion = 1
-  const proxyFunction = <T extends object>(initialObject: T): T => {
+const buildFunctions = (
+  objectIs = Object.is,
+
+  refSet = new WeakSet(),
+
+  canProxy = (x: unknown) =>
+    isObject(x) &&
+    !refSet.has(x) &&
+    (Array.isArray(x) || !(Symbol.iterator in x)) &&
+    !(x instanceof WeakMap) &&
+    !(x instanceof WeakSet) &&
+    !(x instanceof Error) &&
+    !(x instanceof Number) &&
+    !(x instanceof Date) &&
+    !(x instanceof String) &&
+    !(x instanceof RegExp) &&
+    !(x instanceof ArrayBuffer),
+
+  ref = <T extends object>(o: T): T & AsRef => {
+    refSet.add(o)
+    return o as T & AsRef
+  },
+
+  VERSION = __DEV__ ? Symbol('VERSION') : Symbol(),
+  LISTENERS = __DEV__ ? Symbol('LISTENERS') : Symbol(),
+  SNAPSHOT = __DEV__ ? Symbol('SNAPSHOT') : Symbol(),
+  PROMISE_RESULT = __DEV__ ? Symbol('PROMISE_RESULT') : Symbol(),
+  PROMISE_ERROR = __DEV__ ? Symbol('PROMISE_ERROR') : Symbol(),
+
+  proxyCache = new WeakMap<object, ProxyObject>(),
+
+  snapshotCache = new WeakMap<object, [version: number, snapshot: unknown]>(),
+
+  createSnapshot = <T extends object>(
+    version: number,
+    target: T,
+    receiver: any
+  ): T => {
+    const cache = snapshotCache.get(receiver)
+    if (cache?.[0] === version) {
+      return cache[1] as T
+    }
+    const snapshot: any = Array.isArray(target)
+      ? []
+      : Object.create(Object.getPrototypeOf(target))
+    markToTrack(snapshot, true) // mark to track
+    snapshotCache.set(receiver, [version, snapshot])
+    Reflect.ownKeys(target).forEach((key) => {
+      const value = Reflect.get(target, key, receiver)
+      if (refSet.has(value)) {
+        markToTrack(value, false) // mark not to track
+        snapshot[key] = value
+      } else if (value instanceof Promise) {
+        if (PROMISE_RESULT in value) {
+          snapshot[key] = (value as any)[PROMISE_RESULT]
+        } else {
+          const errorOrPromise = (value as any)[PROMISE_ERROR] || value
+          Object.defineProperty(snapshot, key, {
+            get() {
+              if (PROMISE_RESULT in value) {
+                return (value as any)[PROMISE_RESULT]
+              }
+              throw errorOrPromise
+            },
+          })
+        }
+      } else if (value?.[SNAPSHOT]) {
+        snapshot[key] = value[SNAPSHOT]
+      } else {
+        snapshot[key] = value
+      }
+    })
+    return Object.freeze(snapshot)
+  },
+
+  globalVersionHolder = [1] as [number],
+
+  proxy = <T extends object>(initialObject: T): T => {
     if (!isObject(initialObject)) {
       throw new Error('object required')
     }
@@ -110,9 +116,9 @@ const createProxyFunction = (
     if (found) {
       return found
     }
-    let version = globalVersion
+    let version = globalVersionHolder[0]
     const listeners = new Set<Listener>()
-    const notifyUpdate = (op: Op, nextVersion = ++globalVersion) => {
+    const notifyUpdate = (op: Op, nextVersion = ++globalVersionHolder[0]) => {
       if (version !== nextVersion) {
         version = nextVersion
         listeners.forEach((listener) => listener(op, nextVersion))
@@ -145,14 +151,7 @@ const createProxyFunction = (
           return listeners
         }
         if (prop === SNAPSHOT) {
-          return customCreateSnapshot(
-            SNAPSHOT,
-            refSet,
-            snapshotCache,
-            version,
-            target,
-            receiver
-          )
+          return createSnapshot(version, target, receiver)
         }
         return Reflect.get(target, prop, receiver)
       },
@@ -171,7 +170,7 @@ const createProxyFunction = (
       set(target: T, prop: string | symbol, value: any, receiver: any) {
         const hasPrevValue = Reflect.has(target, prop)
         const prevValue = Reflect.get(target, prop, receiver)
-        if (hasPrevValue && customObjectIs(prevValue, value)) {
+        if (hasPrevValue && objectIs(prevValue, value)) {
           return true
         }
         const childListeners = prevValue?.[LISTENERS]
@@ -198,8 +197,8 @@ const createProxyFunction = (
         } else if (value?.[LISTENERS]) {
           nextValue = value
           nextValue[LISTENERS].add(getPropListener(prop))
-        } else if (customCanProxy(value)) {
-          nextValue = proxyFunction(value)
+        } else if (canProxy(value)) {
+          nextValue = proxy(value)
           nextValue[LISTENERS].add(getPropListener(prop))
         } else {
           nextValue = value
@@ -226,101 +225,86 @@ const createProxyFunction = (
       }
     })
     return proxyObject
-  }
-  return proxyFunction
-}
+  },
 
-const identity = <T>(x: T) => x
+  getVersion = (proxyObject: unknown): number | undefined => {
+    return isObject(proxyObject) ? (proxyObject as any)[VERSION] : undefined
+  },
 
-const buildProxyFunction = (
-  customizeObjectIs: (fn: typeof Object.is) => typeof Object.is = identity,
-  customizeCanProxy: (fn: typeof canProxy) => typeof canProxy = identity,
-  customizeCreateSnapshot: (
-    fn: typeof createSnapshot
-  ) => typeof createSnapshot = identity,
-  customizeCreateProxyFunction: (
-    fn: typeof createProxyFunction
-  ) => typeof createProxyFunction = identity
-) => {
-  const customObjectIs = customizeObjectIs(Object.is)
-  const customCanProxy = customizeCanProxy(canProxy)
-  const customCreateSnapshot = customizeCreateSnapshot(createSnapshot)
-  const customCreateProxyFunction =
-    customizeCreateProxyFunction(createProxyFunction)
-  const proxyFunction = customCreateProxyFunction(
-    GLOBAL_VERSION,
-    GLOBAL_LISTENERS,
-    GLOBAL_SNAPSHOT,
-    globalRefSet,
-    globalProxyCache,
-    globalSnapshotCache,
-    customObjectIs,
-    customCanProxy,
-    customCreateSnapshot
-  )
-  return proxyFunction
-}
-
-export const proxy = buildProxyFunction()
-
-export function getVersion(proxyObject: unknown): number | undefined {
-  return isObject(proxyObject)
-    ? (proxyObject as any)[GLOBAL_VERSION]
-    : undefined
-}
-
-export function subscribe<T extends object>(
-  proxyObject: T,
-  callback: (ops: Op[]) => void,
-  notifyInSync?: boolean
-) {
-  if (__DEV__ && !(proxyObject as any)?.[GLOBAL_LISTENERS]) {
-    console.warn('Please use proxy object')
-  }
-  let promise: Promise<void> | undefined
-  const ops: Op[] = []
-  const listener: Listener = (op) => {
-    ops.push(op)
-    if (notifyInSync) {
-      callback(ops.splice(0))
-      return
+  subscribe = <T extends object>(
+    proxyObject: T,
+    callback: (ops: Op[]) => void,
+    notifyInSync?: boolean
+  ) => {
+    if (__DEV__ && !(proxyObject as any)?.[LISTENERS]) {
+      console.warn('Please use proxy object')
     }
-    if (!promise) {
-      promise = Promise.resolve().then(() => {
-        promise = undefined
+    let promise: Promise<void> | undefined
+    const ops: Op[] = []
+    const listener: Listener = (op) => {
+      ops.push(op)
+      if (notifyInSync) {
         callback(ops.splice(0))
-      })
+        return
+      }
+      if (!promise) {
+        promise = Promise.resolve().then(() => {
+          promise = undefined
+          callback(ops.splice(0))
+        })
+      }
     }
-  }
-  ;(proxyObject as any)[GLOBAL_LISTENERS].add(listener)
-  return () => {
-    ;(proxyObject as any)[GLOBAL_LISTENERS].delete(listener)
-  }
-}
-
-type AnyFunction = (...args: any[]) => any
-
-/**
- * This is not a public API.
- * It can be changed without any notice.
- */
-export type INTERNAL_Snapshot<T> = T extends AnyFunction
-  ? T
-  : T extends AsRef
-  ? T
-  : T extends Promise<infer V>
-  ? INTERNAL_Snapshot<V>
-  : {
-      readonly [K in keyof T]: INTERNAL_Snapshot<T[K]>
+    ;(proxyObject as any)[LISTENERS].add(listener)
+    return () => {
+      ;(proxyObject as any)[LISTENERS].delete(listener)
     }
+  },
 
-export function snapshot<T extends object>(
-  proxyObject: T
-): INTERNAL_Snapshot<T> {
-  if (__DEV__ && !(proxyObject as any)?.[GLOBAL_SNAPSHOT]) {
-    console.warn('Please use proxy object')
+  snapshot = <T extends object>(proxyObject: T): INTERNAL_Snapshot<T> => {
+    if (__DEV__ && !(proxyObject as any)?.[SNAPSHOT]) {
+      console.warn('Please use proxy object')
+    }
+    return (proxyObject as any)[SNAPSHOT]
   }
-  return (proxyObject as any)[GLOBAL_SNAPSHOT]
-}
+) =>
+  [
+    objectIs,
+    refSet,
+    canProxy,
+    ref,
+    VERSION,
+    LISTENERS,
+    SNAPSHOT,
+    PROMISE_RESULT,
+    PROMISE_ERROR,
+    proxyCache,
+    snapshotCache,
+    createSnapshot,
+    globalVersionHolder,
+    proxy,
+    getVersion,
+    subscribe,
+    snapshot,
+  ] as const
 
-export const unstable_buildProxyFunction = buildProxyFunction
+export const [
+  ,
+  ,
+  ,
+  ref,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  ,
+  proxy,
+  getVersion,
+  subscribe,
+  snapshot,
+] = buildFunctions()
+
+export const unstable_buildFunctions = buildFunctions
