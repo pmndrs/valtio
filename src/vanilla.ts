@@ -294,9 +294,9 @@ export function snapshot<T extends object>(
   return (proxyObject as any)[SNAPSHOT]
 }
 
-export function ref<T extends object>(o: T): T & AsRef {
-  refSet.add(o)
-  return o as T & AsRef
+export function ref<T extends object>(obj: T): T & AsRef {
+  refSet.add(obj)
+  return obj as T & AsRef
 }
 
 export const unstable_buildProxyFunction = buildProxyFunction
