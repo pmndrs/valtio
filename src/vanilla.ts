@@ -94,8 +94,9 @@ const createProxyFunction = (
   VERSION: symbol,
   LISTENERS: symbol,
   SNAPSHOT: symbol,
-  proxyCache: typeof globalProxyCache,
   refSet: typeof globalRefSet,
+  proxyCache: typeof globalProxyCache,
+  snapshotCache: typeof globalSnapshotCache,
   customObjectIs: typeof Object.is,
   customCanProxy: typeof canProxy,
   customCreateSnapshot: typeof createSnapshot
@@ -147,7 +148,7 @@ const createProxyFunction = (
           return customCreateSnapshot(
             SNAPSHOT,
             refSet,
-            globalSnapshotCache,
+            snapshotCache,
             version,
             target,
             receiver
@@ -250,8 +251,9 @@ const buildProxyFunction = (
     GLOBAL_VERSION,
     GLOBAL_LISTENERS,
     GLOBAL_SNAPSHOT,
-    globalProxyCache,
     globalRefSet,
+    globalProxyCache,
+    globalSnapshotCache,
     customObjectIs,
     customCanProxy,
     customCreateSnapshot
