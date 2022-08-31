@@ -31,13 +31,19 @@ export type INTERNAL_Snapshot<T> = T extends AnyFunction
       readonly [K in keyof T]: INTERNAL_Snapshot<T[K]>
     }
 
+// shared state
+const globalRefSet = new WeakSet()
+const GLOBAL_VERSION = __DEV__ ? Symbol('GLOBAL_VERSION') : Symbol()
+const GLOBAL_LISTENERS = __DEV__ ? Symbol('GLOBAL_LISTENERS') : Symbol()
+const GLOBAL_SNAPSHOT = __DEV__ ? Symbol('GLOBAL_SNAPSHOT') : Symbol()
+
 const buildProxyFunction = (
   objectIs = Object.is,
 
   newProxy = <T extends object>(target: T, handler: ProxyHandler<T>): T =>
     new Proxy(target, handler),
 
-  refSet = new WeakSet(),
+  refSet = globalRefSet,
 
   canProxy = (x: unknown) =>
     isObject(x) &&
@@ -52,9 +58,9 @@ const buildProxyFunction = (
     !(x instanceof RegExp) &&
     !(x instanceof ArrayBuffer),
 
-  VERSION = __DEV__ ? Symbol('VERSION') : Symbol(),
-  LISTENERS = __DEV__ ? Symbol('LISTENERS') : Symbol(),
-  SNAPSHOT = __DEV__ ? Symbol('SNAPSHOT') : Symbol(),
+  VERSION = GLOBAL_VERSION,
+  LISTENERS = GLOBAL_LISTENERS,
+  SNAPSHOT = GLOBAL_SNAPSHOT,
   PROMISE_RESULT = __DEV__ ? Symbol('PROMISE_RESULT') : Symbol(),
   PROMISE_ERROR = __DEV__ ? Symbol('PROMISE_ERROR') : Symbol(),
 
@@ -104,7 +110,7 @@ const buildProxyFunction = (
 
   proxyCache = new WeakMap<object, ProxyObject>(),
 
-  globalVersionHolder = [1] as [number],
+  versionHolder = [1] as [number],
 
   proxyFunction = <T extends object>(initialObject: T): T => {
     if (!isObject(initialObject)) {
@@ -114,9 +120,9 @@ const buildProxyFunction = (
     if (found) {
       return found
     }
-    let version = globalVersionHolder[0]
+    let version = versionHolder[0]
     const listeners = new Set<Listener>()
-    const notifyUpdate = (op: Op, nextVersion = ++globalVersionHolder[0]) => {
+    const notifyUpdate = (op: Op, nextVersion = ++versionHolder[0]) => {
       if (version !== nextVersion) {
         version = nextVersion
         listeners.forEach((listener) => listener(op, nextVersion))
@@ -228,32 +234,32 @@ const buildProxyFunction = (
   [
     // public functions
     proxyFunction,
-    // shared state
-    refSet,
-    VERSION,
-    LISTENERS,
-    SNAPSHOT,
     // internal things
     objectIs,
     newProxy,
+    refSet,
     canProxy,
+    VERSION,
+    LISTENERS,
+    SNAPSHOT,
     PROMISE_RESULT,
     PROMISE_ERROR,
     snapshotCache,
     createSnapshot,
     proxyCache,
-    globalVersionHolder,
+    versionHolder,
   ] as const
 
-const [proxyFunction, refSet, VERSION, LISTENERS, SNAPSHOT] =
-  buildProxyFunction()
+const [proxyFunction] = buildProxyFunction()
 
 export function proxy<T extends object>(initialObject: T = {} as T): T {
   return proxyFunction(initialObject)
 }
 
 export function getVersion(proxyObject: unknown): number | undefined {
-  return isObject(proxyObject) ? (proxyObject as any)[VERSION] : undefined
+  return isObject(proxyObject)
+    ? (proxyObject as any)[GLOBAL_VERSION]
+    : undefined
 }
 
 export function subscribe<T extends object>(
@@ -261,7 +267,7 @@ export function subscribe<T extends object>(
   callback: (ops: Op[]) => void,
   notifyInSync?: boolean
 ) {
-  if (__DEV__ && !(proxyObject as any)?.[LISTENERS]) {
+  if (__DEV__ && !(proxyObject as any)?.[GLOBAL_LISTENERS]) {
     console.warn('Please use proxy object')
   }
   let promise: Promise<void> | undefined
@@ -279,23 +285,23 @@ export function subscribe<T extends object>(
       })
     }
   }
-  ;(proxyObject as any)[LISTENERS].add(listener)
+  ;(proxyObject as any)[GLOBAL_LISTENERS].add(listener)
   return () => {
-    ;(proxyObject as any)[LISTENERS].delete(listener)
+    ;(proxyObject as any)[GLOBAL_LISTENERS].delete(listener)
   }
 }
 
 export function snapshot<T extends object>(
   proxyObject: T
 ): INTERNAL_Snapshot<T> {
-  if (__DEV__ && !(proxyObject as any)?.[SNAPSHOT]) {
+  if (__DEV__ && !(proxyObject as any)?.[GLOBAL_SNAPSHOT]) {
     console.warn('Please use proxy object')
   }
-  return (proxyObject as any)[SNAPSHOT]
+  return (proxyObject as any)[GLOBAL_SNAPSHOT]
 }
 
 export function ref<T extends object>(obj: T): T & AsRef {
-  refSet.add(obj)
+  globalRefSet.add(obj)
   return obj as T & AsRef
 }
 
