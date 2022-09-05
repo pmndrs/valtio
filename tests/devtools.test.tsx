@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 import { devtools } from 'valtio/utils'
@@ -42,7 +42,11 @@ it('connects to the extension by initialiing', () => {
     )
   }
 
-  render(<Counter />)
+  render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>
+  )
 
   expect(extension.init).toHaveBeenLastCalledWith({ count: 0 })
 })
@@ -75,7 +79,11 @@ describe('If there is no extension installed...', () => {
       )
     }
     expect(() => {
-      render(<Counter />)
+      render(
+        <StrictMode>
+          <Counter />
+        </StrictMode>
+      )
     }).not.toThrow()
   })
 
@@ -91,7 +99,11 @@ describe('If there is no extension installed...', () => {
         </>
       )
     }
-    render(<Counter />)
+    render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>
+    )
     expect(console.warn).not.toBeCalled()
   })
 
@@ -108,7 +120,11 @@ describe('If there is no extension installed...', () => {
         </>
       )
     }
-    render(<Counter />)
+    render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>
+    )
     expect(console.warn).toHaveBeenLastCalledWith(
       '[Warning] Please install/enable Redux devtools extension'
     )
@@ -127,7 +143,11 @@ describe('If there is no extension installed...', () => {
         </>
       )
     }
-    render(<Counter />)
+    render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>
+    )
     expect(console.warn).not.toBeCalled()
   })
 })
@@ -147,7 +167,11 @@ it('updating state should call devtools.send', async () => {
   }
 
   extension.send.mockClear()
-  const { getByText, findByText } = render(<Counter />)
+  const { getByText, findByText } = render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>
+  )
 
   expect(extension.send).toBeCalledTimes(0)
   fireEvent.click(getByText('button'))
@@ -175,9 +199,11 @@ describe('when it receives an message of type...', () => {
 
     extension.send.mockClear()
     const { getByText, findByText } = render(
-      <Suspense fallback={'loading'}>
-        <Counter />
-      </Suspense>
+      <StrictMode>
+        <Suspense fallback={'loading'}>
+          <Counter />
+        </Suspense>
+      </StrictMode>
     )
 
     expect(extension.send).toBeCalledTimes(0)
@@ -210,7 +236,11 @@ describe('when it receives an message of type...', () => {
       }
 
       extension.send.mockClear()
-      const { getByText, findByText } = render(<Counter />)
+      const { getByText, findByText } = render(
+        <StrictMode>
+          <Counter />
+        </StrictMode>
+      )
 
       expect(extension.send).toBeCalledTimes(0)
       fireEvent.click(getByText('button'))
@@ -243,7 +273,11 @@ describe('when it receives an message of type...', () => {
       }
 
       extension.send.mockClear()
-      const { getByText, findByText } = render(<Counter />)
+      const { getByText, findByText } = render(
+        <StrictMode>
+          <Counter />
+        </StrictMode>
+      )
 
       const nextLiftedState = {
         actionsById: ['5', '6'],
@@ -282,7 +316,11 @@ describe('when it receives an message of type...', () => {
         }
 
         extension.send.mockClear()
-        const { getByText, findByText } = render(<Counter />)
+        const { getByText, findByText } = render(
+          <StrictMode>
+            <Counter />
+          </StrictMode>
+        )
 
         expect(extension.send).toBeCalledTimes(0)
         fireEvent.click(getByText('button'))

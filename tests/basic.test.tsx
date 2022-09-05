@@ -438,9 +438,9 @@ it('support undefined property (#439)', async () => {
   }
 
   const { findByText } = render(
-    <>
+    <StrictMode>
       <Component />
-    </>
+    </StrictMode>
   )
 
   await findByText('has prop: true')
@@ -475,9 +475,9 @@ it('sync snapshot between nested components (#460)', async () => {
   }
 
   const { getByText } = render(
-    <>
+    <StrictMode>
       <Parent />
-    </>
+    </StrictMode>
   )
 
   await waitFor(() => {
