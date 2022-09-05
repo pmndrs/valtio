@@ -311,7 +311,11 @@ describe('glitch free', () => {
       )
     }
 
-    const { getByText, findByText } = render(<App />)
+    const { getByText, findByText } = render(
+      <>
+        <App />
+      </>
+    )
 
     await findByText('value: v0: 0, v1: 0, v2: 0 (commits: 1)')
     expect(computeValue).toBeCalledTimes(1)
