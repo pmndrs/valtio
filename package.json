@@ -154,7 +154,7 @@
     "@rollup/plugin-node-resolve": "^13.3.0",
     "@rollup/plugin-replace": "^4.0.0",
     "@rollup/plugin-typescript": "^8.4.0",
-    "@swc/core": "1.2.239",
+    "@swc/core": "1.2.242",
     "@swc/jest": "^0.2.22",
     "@testing-library/react": "^13.4.0",
     "@types/babel-plugin-macros": "^2.8.5",
