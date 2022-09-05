@@ -5,5 +5,5 @@ export {
   getVersion,
   subscribe,
   snapshot,
-  getHandler as unstable_getHandler,
+  unstable_buildProxyFunction,
 } from './vanilla'
