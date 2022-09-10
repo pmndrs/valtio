@@ -8,9 +8,10 @@ description: 'Working with promises and Suspense'
 
 #### Promises
 
-You may assign a promise to a value in a proxied object. This promise will be resolved in `snapshot`.
+Promises may be values in a proxied object. They will be resolved in calls to `snapshot`.
 
 ```jsx
+// vanillajs example
 const countDiv: HTMLElement | null = document.getElementById('count')
 if (countDiv) countDiv.innerText = '0'
 
@@ -47,6 +48,10 @@ function App() {
   )
 }
 ```
+
+## Codesandbox Pokemon fetch demo
+
+https://codesandbox.io/s/valtio-pokemon-fetch-x1lkbj?file=/src/App.tsx
 
 ## Codesandbox auth demo
 
