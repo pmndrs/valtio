@@ -117,7 +117,7 @@ const buildProxyFunction = (
           },
         })
       } else if (value?.[PROXY_STATE]) {
-        snap[key] = snapshot(value)
+        snap[key] = snapshot(value, use)
       } else {
         snap[key] = value
       }
