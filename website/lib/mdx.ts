@@ -242,7 +242,12 @@ export function getDocsNav(): Record<string, Navigation[]> {
   return {
     Introduction: [pages["getting-started"]],
     Basic: [pages["proxy"], pages["useSnapshot"]],
-    Advanced: [pages["ref"], pages["subscribe"], pages["snapshot"]],
+    Advanced: [
+      pages["ref"],
+      pages["subscribe"],
+      pages["snapshot"],
+      pages["async"],
+    ],
     Utils: [
       pages["subscribeKey"],
       pages["watch"],
