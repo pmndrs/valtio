@@ -29,7 +29,7 @@ const useAffectedDebugValue = (
 ) => {
   const pathList = useRef<(string | number | symbol)[][]>()
   useEffect(() => {
-    pathList.current = affectedToPathList(state, affected)
+    // pathList.current = affectedToPathList(state, affected)
   })
   useDebugValue(pathList.current)
 }
