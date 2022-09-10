@@ -38,8 +38,8 @@ type CreateSnapshot = <T extends object>(
   use?: <V>(promise: Promise<V>) => V
 ) => T
 
-type ProxyState<T extends object> = [
-  target: T,
+type ProxyState = [
+  target: object,
   receiver: object,
   version: number,
   createSnapshot: CreateSnapshot,
@@ -169,7 +169,7 @@ const buildProxyFunction = (
     const handler: ProxyHandler<T> = {
       get(target: T, prop: string | symbol, receiver: object) {
         if (prop === PROXY_STATE) {
-          const state: ProxyState<T> = [
+          const state: ProxyState = [
             target,
             receiver,
             version,
@@ -183,7 +183,7 @@ const buildProxyFunction = (
       deleteProperty(target: T, prop: string | symbol) {
         const prevValue = Reflect.get(target, prop)
         const childListeners = (
-          (prevValue as any)?.[PROXY_STATE] as ProxyState<object> | undefined
+          (prevValue as any)?.[PROXY_STATE] as ProxyState | undefined
         )?.[4]
         if (childListeners) {
           childListeners.delete(popPropListener(prop) as Listener)
@@ -201,7 +201,7 @@ const buildProxyFunction = (
           return true
         }
         const childListeners = (
-          (prevValue as any)?.[PROXY_STATE] as ProxyState<object> | undefined
+          (prevValue as any)?.[PROXY_STATE] as ProxyState | undefined
         )?.[4]
         if (childListeners) {
           childListeners.delete(popPropListener(prop) as Listener)
@@ -224,14 +224,10 @@ const buildProxyFunction = (
             })
         } else if (value?.[PROXY_STATE]) {
           nextValue = value
-          ;(nextValue[PROXY_STATE] as ProxyState<object>)[4].add(
-            getPropListener(prop)
-          )
+          ;(nextValue[PROXY_STATE] as ProxyState)[4].add(getPropListener(prop))
         } else if (canProxy(value)) {
           nextValue = proxy(value)
-          ;(nextValue[PROXY_STATE] as ProxyState<object>)[4].add(
-            getPropListener(prop)
-          )
+          ;(nextValue[PROXY_STATE] as ProxyState)[4].add(getPropListener(prop))
         } else {
           nextValue = value
         }
@@ -280,9 +276,7 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
 }
 
 export function getVersion(proxyObject: unknown): number | undefined {
-  const state: ProxyState<object> | undefined = (proxyObject as any)?.[
-    PROXY_STATE
-  ]
+  const state: ProxyState | undefined = (proxyObject as any)?.[PROXY_STATE]
   return state?.[2]
 }
 
@@ -309,7 +303,7 @@ export function subscribe<T extends object>(
       })
     }
   }
-  const listeners = ((proxyObject as any)[PROXY_STATE] as ProxyState<T>)[4]
+  const listeners = ((proxyObject as any)[PROXY_STATE] as ProxyState)[4]
   listeners.add(listener)
   return () => listeners.delete(listener)
 }
@@ -323,7 +317,7 @@ export function snapshot<T extends object>(
   }
   const [target, receiver, version, createSnapshot] = (proxyObject as any)[
     PROXY_STATE
-  ] as ProxyState<T>
+  ] as ProxyState
   return createSnapshot(target, receiver, version, use) as INTERNAL_Snapshot<T>
 }
 
