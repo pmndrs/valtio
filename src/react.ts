@@ -1,7 +1,7 @@
 import {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  experimental_use,
+  experimental_use as use,
   useCallback,
   useDebugValue,
   useEffect,
@@ -118,6 +118,12 @@ export function useSnapshot<T extends object>(
   const lastSnapshot = useRef<INTERNAL_Snapshot<T>>()
   const lastAffected = useRef<WeakMap<object, unknown>>()
   let inRender = true
+  const useInRender = <V>(p: Promise<V>, fallback: (p: Promise<V>) => V) => {
+    if (inRender) {
+      return use(p) as V
+    }
+    return fallback(p)
+  }
   const currSnapshot = useSyncExternalStore(
     useCallback(
       (callback) => {
@@ -128,7 +134,7 @@ export function useSnapshot<T extends object>(
       [proxyObject, notifyInSync]
     ),
     () => {
-      const nextSnapshot = snapshot(proxyObject, experimental_use)
+      const nextSnapshot = snapshot(proxyObject, useInRender)
       try {
         if (
           !inRender &&
@@ -149,7 +155,7 @@ export function useSnapshot<T extends object>(
       }
       return nextSnapshot
     },
-    () => snapshot(proxyObject, experimental_use)
+    () => snapshot(proxyObject, useInRender)
   )
   inRender = false
   const currAffected = new WeakMap()

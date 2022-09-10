@@ -35,7 +35,7 @@ type CreateSnapshot = <T extends object>(
   target: T,
   receiver: object,
   version: number,
-  use?: <V>(promise: Promise<V>) => V
+  use?: <V>(promise: Promise<V>, fallback: (p: Promise<V>) => V) => V
 ) => T
 
 type ProxyState = [
@@ -69,7 +69,7 @@ const buildProxyFunction = (
     !(x instanceof RegExp) &&
     !(x instanceof ArrayBuffer),
 
-  defaultUse = (() => {
+  fallbackUse = (() => {
     type PromiseState = { v?: unknown; e?: unknown }
     const PROMISE_STATE = Symbol()
     return <V>(promise: Promise<V>): V => {
@@ -94,7 +94,8 @@ const buildProxyFunction = (
     target: T,
     receiver: object,
     version: number,
-    use = defaultUse
+    use = <V>(promise: Promise<V>, fallback: (p: Promise<V>) => V) =>
+      fallback(promise)
   ): T => {
     const cache = snapCache.get(receiver)
     if (cache?.[0] === version) {
@@ -113,11 +114,11 @@ const buildProxyFunction = (
       } else if (value instanceof Promise) {
         Object.defineProperty(snap, key, {
           get() {
-            return use(value)
+            return use(value, fallbackUse)
           },
         })
       } else if (value?.[PROXY_STATE]) {
-        snap[key] = snapshot(value)
+        snap[key] = snapshot(value, use)
       } else {
         snap[key] = value
       }
@@ -262,7 +263,7 @@ const buildProxyFunction = (
     objectIs,
     newProxy,
     canProxy,
-    defaultUse,
+    fallbackUse,
     snapCache,
     createSnapshot,
     proxyCache,
@@ -310,7 +311,7 @@ export function subscribe<T extends object>(
 
 export function snapshot<T extends object>(
   proxyObject: T,
-  use?: <V>(promise: Promise<V>) => V
+  use?: <V>(promise: Promise<V>, fallback: (p: Promise<V>) => V) => V
 ): INTERNAL_Snapshot<T> {
   if (__DEV__ && !(proxyObject as any)?.[PROXY_STATE]) {
     console.warn('Please use proxy object')
