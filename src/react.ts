@@ -1,4 +1,13 @@
-import { useCallback, useDebugValue, useEffect, useMemo, useRef } from 'react'
+import {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  experimental_use,
+  useCallback,
+  useDebugValue,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react'
 import {
   affectedToPathList,
   createProxy as createProxyToCompare,
@@ -119,7 +128,7 @@ export function useSnapshot<T extends object>(
       [proxyObject, notifyInSync]
     ),
     () => {
-      const nextSnapshot = snapshot(proxyObject)
+      const nextSnapshot = snapshot(proxyObject, experimental_use)
       try {
         if (
           !inRender &&
@@ -140,7 +149,7 @@ export function useSnapshot<T extends object>(
       }
       return nextSnapshot
     },
-    () => snapshot(proxyObject)
+    () => snapshot(proxyObject, experimental_use)
   )
   inRender = false
   const currAffected = new WeakMap()
