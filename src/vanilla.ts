@@ -78,14 +78,8 @@ const buildProxyFunction = (
         state = {}
         ;(promise as any)[PROMISE_STATE] = state
         promise
-          .then((v) => {
-            ;(state as PromiseState).v = v
-            return v
-          })
-          .catch((e) => {
-            ;(state as PromiseState).e = e
-            throw e
-          })
+          .then((v) => ((state as PromiseState).v = v))
+          .catch((e) => ((state as PromiseState).e = e))
       }
       if ('v' in state) {
         return state.v as V
