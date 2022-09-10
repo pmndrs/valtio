@@ -35,7 +35,7 @@ type CreateSnapshot = <T extends object>(
   target: T,
   receiver: object,
   version: number,
-  use?: (promise: Promise<unknown>) => void
+  use?: <V>(promise: Promise<V>) => V
 ) => T
 
 type ProxyState<T extends object> = [
@@ -69,14 +69,30 @@ const buildProxyFunction = (
     !(x instanceof RegExp) &&
     !(x instanceof ArrayBuffer),
 
-  PROMISE_RESULT = __DEV__ ? Symbol('PROMISE_RESULT') : Symbol(),
-  PROMISE_ERROR = __DEV__ ? Symbol('PROMISE_ERROR') : Symbol(),
-  defaultUse = (promise: Promise<unknown>) => {
-    if (PROMISE_RESULT in promise) {
-      return (promise as any)[PROMISE_RESULT]
+  defaultUse = (() => {
+    type PromiseState = { v?: unknown; e?: unknown }
+    const PROMISE_STATE = Symbol()
+    return <V>(promise: Promise<V>): V => {
+      let state: PromiseState | undefined = (promise as any)[PROMISE_STATE]
+      if (!state) {
+        state = {}
+        ;(promise as any)[PROMISE_STATE] = state
+        promise
+          .then((v) => {
+            ;(state as PromiseState).v = v
+            return v
+          })
+          .catch((e) => {
+            ;(state as PromiseState).e = e
+            throw e
+          })
+      }
+      if ('v' in state) {
+        return state.v as V
+      }
+      throw 'e' in state ? state.e : promise
     }
-    throw (promise as any)[PROMISE_ERROR] || promise
-  },
+  })(),
 
   snapCache = new WeakMap<object, [version: number, snap: unknown]>(),
 
@@ -205,13 +221,12 @@ const buildProxyFunction = (
         } else if (value instanceof Promise) {
           nextValue = value
             .then((v) => {
-              nextValue[PROMISE_RESULT] = v
               notifyUpdate(['resolve', [prop], v])
               return v
             })
             .catch((e) => {
-              nextValue[PROMISE_ERROR] = e
               notifyUpdate(['reject', [prop], e])
+              throw e
             })
         } else if (value?.[PROXY_STATE]) {
           nextValue = value
@@ -257,8 +272,6 @@ const buildProxyFunction = (
     objectIs,
     newProxy,
     canProxy,
-    PROMISE_RESULT,
-    PROMISE_ERROR,
     defaultUse,
     snapCache,
     createSnapshot,
@@ -309,7 +322,7 @@ export function subscribe<T extends object>(
 
 export function snapshot<T extends object>(
   proxyObject: T,
-  use?: (promise: Promise<unknown>) => void
+  use?: <V>(promise: Promise<V>) => V
 ): INTERNAL_Snapshot<T> {
   if (__DEV__ && !(proxyObject as any)?.[PROXY_STATE]) {
     console.warn('Please use proxy object')
