@@ -1,0 +1,58 @@
+---
+title: 'Async'
+section: 'Advanced'
+description: 'Working with promises and Suspense'
+---
+
+# async
+
+#### Promises
+
+Promises may be values in a proxied object. They will be resolved in calls to `snapshot`.
+
+```jsx
+// vanillajs example
+const countDiv: HTMLElement | null = document.getElementById('count')
+if (countDiv) countDiv.innerText = '0'
+
+const store = proxy({
+  count: new Promise((r) => setTimeout(() => r(1), 1000)),
+})
+
+subscribe(store, () => {
+  const value = snapshot(store).count
+  if (countDiv && typeof value === 'number') {
+    countDiv.innerText = String(value)
+    store.count = new Promise((r) => setTimeout(() => r(value + 1), 1000))
+  }
+})
+```
+
+#### Suspend your React components
+
+Valtio supports React Suspense and will throw promises that you access within a components render function. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
+
+```jsx
+const state = proxy({ post: fetch(url).then((res) => res.json()) })
+
+function Post() {
+  const snap = useSnapshot(state)
+  return <div>{snap.post.title}</div>
+}
+
+function App() {
+  return (
+    <Suspense fallback="Loading...">
+      <Post />
+    </Suspense>
+  )
+}
+```
+
+## Codesandbox Pokemon fetch demo
+
+https://codesandbox.io/s/valtio-pokemon-fetch-x1lkbj?file=/src/App.tsx
+
+## Codesandbox auth demo
+
+https://codesandbox.io/s/valtio-async-1pstl1?file=/src/App.tsx

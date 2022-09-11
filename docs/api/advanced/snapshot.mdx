@@ -1,6 +1,7 @@
 ---
 title: 'snapshot'
-section: 'Advanced'
+section: 'API'
+subSection: 'Advanced'
 description: 'Create a snapshot of current state'
 ---
 
@@ -24,6 +25,6 @@ console.log(unwrappedStore === yetAnotherUnwrappedStore) // false
 
 #### Vanilla javascript
 
-In VanillaJS, snapshot is not necessary to access proxied object values, inside or outside of subscribe. However, it is useful, for example, to keep a serializable list of unproxied objects or check if objects have changed.
+In VanillaJS, `snapshot` is not necessary to access proxied object values, inside or outside of subscribe. However, it is useful, for example, to keep a serializable list of unproxied objects or check if objects have changed. It also resolves promises.
 
 If you are using valtio outside without React, import proxy and snapshot from 'valtio/vanilla'.

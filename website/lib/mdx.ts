@@ -220,13 +220,16 @@ function prepareDoc(doc: string) {
   const source = getSourceFromSlug(doc);
   const { data: frontmatter } = matter(source);
   const title = frontmatter.title ?? getTitle(doc);
-  // console.log(frontmatter);
   return {
     title,
     href,
     slug: slugs[slugs.length - 1],
   };
 }
+
+type PageNavigation = Record<string, Navigation[]>;
+
+type NavigationTree = Record<string, Navigation[] | PageNavigation>;
 
 export function getDocsMap(): Record<string, Navigation> {
   const docs = getAllDocs();
@@ -237,23 +240,26 @@ export function getDocsMap(): Record<string, Navigation> {
   }, {});
 }
 
-export function getDocsNav(): Record<string, Navigation[]> {
+export function getDocsNav(): NavigationTree {
   const pages = getDocsMap();
   return {
     Introduction: [pages["getting-started"]],
-    Basic: [pages["proxy"], pages["useSnapshot"]],
-    Advanced: [pages["ref"], pages["subscribe"], pages["snapshot"]],
-    Utils: [
-      pages["subscribeKey"],
-      pages["watch"],
-      pages["devtools"],
-      pages["derive"],
-      pages["proxyWithComputed"],
-      pages["proxyWithHistory"],
-      pages["proxySet"],
-      pages["proxyMap"],
-    ],
-    Hacks: [pages["getVersion"], pages["unstable_buildProxyFunction"]],
+    Guides: [pages["async"]],
+    API: {
+      Basic: [pages["proxy"], pages["useSnapshot"]],
+      Advanced: [pages["ref"], pages["subscribe"], pages["snapshot"]],
+      Utils: [
+        pages["subscribeKey"],
+        pages["watch"],
+        pages["devtools"],
+        pages["derive"],
+        pages["proxyWithComputed"],
+        pages["proxyWithHistory"],
+        pages["proxySet"],
+        pages["proxyMap"],
+      ],
+      Hacks: [pages["getVersion"], pages["unstable_buildProxyFunction"]],
+    },
     Resources: [pages["community"], pages["libraries"], pages["learn"]],
   };
 }

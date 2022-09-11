@@ -1,6 +1,7 @@
 ---
 title: 'proxy'
-section: 'Basic'
+section: 'API'
+subSection: 'Basic'
 description: 'Create a proxy object.'
 ---
 
@@ -34,7 +35,7 @@ const state = proxy({ count: 0 })
 state.count = 0 // has no effect
 ```
 
-Multiple changes in the same event loop tick to will be batched together. Subscribers will be notified of a single version change.
+Multiple changes in the same event loop tick will be batched together. Subscribers will be notified of a single version change.
 
 ```js
 const state = proxy({ count: 0, text: 'hello' })
@@ -54,6 +55,18 @@ const personState = proxy({ name: 'Timo', role: 'admin' })
 const authState = proxy({ status: 'loggedIn', user: personState })
 
 authState.user.name = 'Nina'
+```
+
+#### Promises in proxies
+
+See [`async`](/docs/advanced/async) for more details.
+
+```jsx
+import { proxy } from 'valtio'
+
+const bombState = proxy({
+  explosion: new Promise((resolve) => setTimeout(() => resolve('Boom!'), 3000)),
+})
 ```
 
 #### Gotchas
