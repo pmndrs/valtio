@@ -209,22 +209,22 @@ const buildProxyFunction = (
         if (isObject(value)) {
           value = getUntracked(value) || value
         }
-        let nextValue: any
+        let nextValue = value
         if (Object.getOwnPropertyDescriptor(target, prop)?.set) {
-          nextValue = value
+          // do nothing
         } else if (value instanceof Promise) {
           value
             .then((v) => notifyUpdate(['resolve', [prop], v]))
             .catch((e) => notifyUpdate(['reject', [prop], e]))
-          nextValue = value
-        } else if (value?.[PROXY_STATE]) {
-          nextValue = value
-          ;(nextValue[PROXY_STATE] as ProxyState)[4].add(getPropListener(prop))
-        } else if (canProxy(value)) {
-          nextValue = proxy(value)
-          ;(nextValue[PROXY_STATE] as ProxyState)[4].add(getPropListener(prop))
         } else {
-          nextValue = value
+          if (!value?.[PROXY_STATE] && canProxy(value)) {
+            nextValue = proxy(value)
+          }
+          if (nextValue?.[PROXY_STATE]) {
+            ;(nextValue[PROXY_STATE] as ProxyState)[4].add(
+              getPropListener(prop)
+            )
+          }
         }
         Reflect.set(target, prop, nextValue, receiver)
         notifyUpdate(['set', [prop], value, prevValue])
