@@ -22,8 +22,8 @@ const NavItem = forwardRef<HTMLElement, React.PropsWithChildren<NavItemProps>>(
       <li ref={ref}>
         <Link href={isPublished ? href! : fallbackHref}>
           <a
-            className={clsx("block border-l pl-4 -ml-px", {
-              "text-sky-500 border-current font-semibold dark:text-sky-400":
+            className={clsx("block border-l pl-4 -ml-px font-normal text-md", {
+              "text-sky-500 border-current dark:text-sky-400 font-semibold":
                 isActive,
               "border-transparent hover:border-gray-400 dark:hover:border-gray-500":
                 !isActive,
@@ -77,6 +77,9 @@ function nearestScrollableContainer(el?: Element) {
 
   return el;
 }
+
+const isNavigationRecord = (obj: object): obj is Record<string, Navigation[]> =>
+  typeof obj === "object" && obj !== null && !Array.isArray(obj);
 
 interface NavProps {
   nav: Record<string, Navigation[]>;
@@ -133,14 +136,86 @@ function Nav({
         {nav &&
           Object.keys(nav)
             .map((category) => {
-              let publishedItems = nav[category].filter(
+              const items = nav[category];
+              const nestedMenu = isNavigationRecord(items);
+              if (nestedMenu) {
+                return (
+                  <li key={category} className="mt-12 lg:mt-8">
+                    <h5 className="mb-8 lg:mb-3 font-medium text-gray-900 dark:text-gray-200 uppercase">
+                      {category}
+                    </h5>
+                    <ul
+                      className={clsx(
+                        "block border-l pl-4 -ml-px",
+                        "space-y-6 lg:space-y-2 border-l border-gray-100",
+                        mobile ? "dark:border-gray-700" : "dark:border-gray-800"
+                      )}
+                    >
+                      {Object.keys(items).map((subcategory) => {
+                        const publishedSubItems = items[subcategory].filter(
+                          (item) => item.published !== false
+                        );
+                        if (publishedSubItems.length === 0 && !fallbackHref)
+                          return null;
+                        return (
+                          <li key={subcategory} className="mt-12 lg:mt-4">
+                            <h6
+                              className={clsx(
+                                "mb-8 lg:mb-3 font-semibold uppercase",
+                                {
+                                  "text-gray-350 dark:text-gray-200":
+                                    publishedSubItems.length > 0,
+                                  "text-gray-400":
+                                    publishedSubItems.length === 0,
+                                }
+                              )}
+                            >
+                              {subcategory}
+                            </h6>
+                            <ul
+                              className={clsx(
+                                "space-y-6 lg:space-y-2 border-l border-gray-100",
+                                mobile
+                                  ? "dark:border-gray-700"
+                                  : "dark:border-gray-800"
+                              )}
+                            >
+                              {(fallbackHref
+                                ? items[subcategory]
+                                : publishedSubItems
+                              ).map((item, i) => {
+                                let isActive = item.match
+                                  ? item.match.test(router.asPath)
+                                  : item.href === router.asPath;
+                                return (
+                                  <NavItem
+                                    key={i}
+                                    href={item.href!}
+                                    isActive={isActive}
+                                    ref={isActive ? activeItemRef : undefined}
+                                    isPublished={item.published !== false}
+                                    fallbackHref={fallbackHref}
+                                  >
+                                    {item.title}
+                                  </NavItem>
+                                );
+                              })}
+                            </ul>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </li>
+                );
+              }
+              let publishedItems = items.filter(
                 (item) => item.published !== false
               );
               if (publishedItems.length === 0 && !fallbackHref) return null;
               return (
                 <li key={category} className="mt-12 lg:mt-8">
                   <h5
-                    className={clsx("mb-8 lg:mb-3 font-semibold", {
+                    className={clsx("mb-8 lg:mb-3 font-medium", {
                       "text-gray-900 dark:text-gray-200":
                         publishedItems.length > 0,
                       "text-gray-400": publishedItems.length === 0,
@@ -242,9 +317,16 @@ export default function DocLayout({
     Object.entries(
       // @ts-ignore
       nav ?? {}
-    ).find(([, items]) =>
-      items.find(({ href }: { href: string }) => href === router.asPath)
-    )?.[0];
+    ).find(([, items]) => {
+      if (isNavigationRecord(items)) {
+        return Object.entries(items).find(([_, subItems]) =>
+          subItems.some((item) => item.href === router.asPath)
+        );
+      }
+      return (items ?? []).find(
+        ({ href }: { href: string }) => href === router.asPath
+      );
+    })?.[0];
   return (
     <>
       <DocLayoutContext.Provider value={{ nav, navIsOpen, setNavIsOpen }}>
