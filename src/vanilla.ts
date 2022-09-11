@@ -213,15 +213,10 @@ const buildProxyFunction = (
         if (Object.getOwnPropertyDescriptor(target, prop)?.set) {
           nextValue = value
         } else if (value instanceof Promise) {
+          value
+            .then((v) => notifyUpdate(['resolve', [prop], v]))
+            .catch((e) => notifyUpdate(['reject', [prop], e]))
           nextValue = value
-            .then((v) => {
-              notifyUpdate(['resolve', [prop], v])
-              return v
-            })
-            .catch((e) => {
-              notifyUpdate(['reject', [prop], e])
-              throw e
-            })
         } else if (value?.[PROXY_STATE]) {
           nextValue = value
           ;(nextValue[PROXY_STATE] as ProxyState)[4].add(getPropListener(prop))
