@@ -79,7 +79,7 @@ Two kinds of proxies are used for different purposes:
 </details>
 
 <details>
-<summary>Use of `this` is for expert users.</summary>
+<summary>Use of <code>this</code> is for expert users.</summary>
 
 Valtio tries best to handle `this` behavior
 but it's hard to understand without familiarity.
