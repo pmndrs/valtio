@@ -1,0 +1,38 @@
+---
+title: 'Component state'
+section: 'Advanced'
+description: 'Isolate component state with useRef'
+---
+
+# Component state
+
+To isolate component state for reusability, Valtio must live in the React lifecycle. You can wrap a `proxy` in a ref, passing it with props or context.
+
+```jsx
+import { createContext, useContext } from 'react'
+import { proxy, useSnapshot } from 'valtio'
+
+const MyContext = createContext()
+
+const MyProvider = ({ children }) => {
+  const state = useRef(proxy({ count: 0 })).current
+  return <MyContext.Provider value={state}>{children}</MyContext.Provider>
+}
+
+const MyCounter = () => {
+  const state = useContext(MyContext)
+  const snap = useSnapshot(state)
+  return (
+    <>
+      {snap.count} <button onClick={() => ++state.count}>+1</button>
+    </>
+  )
+}
+```
+
+If you are not happy with useRef usage, consider [use-constant](https://www.npmjs.com/package/use-constant) instead.
+You may also create custom hooks wrapping useContext and optionally useSnapshot.
+
+## Codesandbox example
+
+https://codesandbox.io/s/valtio-component-ye5tbg?file=/src/App.tsx
