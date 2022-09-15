@@ -95,7 +95,7 @@ export function NavItems() {
   return (
     <>
       <li>
-        <Link href="/docs/basic/proxy">
+        <Link href="/docs/introduction/getting-started">
           <a className="hover:text-sky-500 dark:hover:text-sky-400">Docs</a>
         </Link>
       </li>
