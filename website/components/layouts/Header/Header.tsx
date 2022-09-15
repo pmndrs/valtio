@@ -3,6 +3,7 @@ import Router from "next/router";
 import { Dialog } from "@headlessui/react";
 import React, { useEffect, useState } from "react";
 import clsx from "clsx";
+import SEO from "~/components/SEO";
 // import { ThemeSelect, ThemeToggle } from "./ThemeToggle";
 // import ToggleTheme from "~/components/ToggleTheme";
 
@@ -139,6 +140,7 @@ export default function Header({
 
   return (
     <>
+    <SEO title={title} />
       <div
         className={clsx(
           "sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-gray-900/10 dark:border-gray-50/[0.06]",
