@@ -2,7 +2,7 @@ import { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import memoize from 'proxy-memoize'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
-import { addComputed, proxyWithComputed } from 'valtio/utils'
+import { addComputed, proxyWithComputed, subscribeKey } from 'valtio/utils'
 
 const consoleWarn = console.warn
 beforeEach(() => {
@@ -296,4 +296,22 @@ it('render computed getter with condition (#435)', async () => {
 
   fireEvent.click(getByText('button'))
   await findByText('filtered: [foo]')
+})
+
+describe('proxyWithComputed and subscribeKey', () => {
+  it('should call subscribeKey subscription when computed value changes?', async () => {
+    const state = proxyWithComputed(
+      {
+        count: 1,
+      },
+      {
+        doubled: (snap) => snap.count * 2,
+      }
+    )
+    const handler = jest.fn()
+    subscribeKey(state, 'doubled', handler)
+    state.count = 2
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(1)
+  })
 })
