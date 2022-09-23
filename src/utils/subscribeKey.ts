@@ -17,11 +17,13 @@ export function subscribeKey<T extends object, K extends keyof T>(
   callback: (value: T[K]) => void,
   notifyInSync?: boolean
 ) {
+  let prevValue = proxyObject[key]
   return subscribe(
     proxyObject,
-    (ops) => {
-      if (ops.some((op) => op[1][0] === key)) {
-        callback(proxyObject[key])
+    () => {
+      const nextValue = proxyObject[key]
+      if (!Object.is(prevValue, nextValue)) {
+        callback((prevValue = nextValue))
       }
     },
     notifyInSync
