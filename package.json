@@ -159,7 +159,7 @@
     "@testing-library/react": "^13.4.0",
     "@types/babel-plugin-macros": "^2.8.5",
     "@types/jest": "^29.0.0",
-    "@types/react": "^18.0.18",
+    "@types/react": "^18.0.21",
     "@types/react-dom": "^18.0.6",
     "@types/use-sync-external-store": "^0.0.3",
     "@typescript-eslint/eslint-plugin": "^5.36.1",

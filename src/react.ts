@@ -1,6 +1,6 @@
+/// <reference types="react/experimental" />
+
 import {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
   experimental_use,
   useCallback,
   useDebugValue,
