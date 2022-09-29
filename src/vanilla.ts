@@ -275,7 +275,9 @@ export function subscribe<T extends object>(
     if (!promise) {
       promise = Promise.resolve().then(() => {
         promise = undefined
-        callback(ops.splice(0))
+        if ((proxyObject as any)[LISTENERS].has(listener)) {
+          callback(ops.splice(0))
+        }
       })
     }
   }
