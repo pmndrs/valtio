@@ -17,19 +17,21 @@ type Listener = (op: Op, nextVersion: number) => void
 
 type AnyFunction = (...args: any[]) => any
 
-/**
- * This is not a public API.
- * It can be changed without any notice.
- */
-export type INTERNAL_Snapshot<T> = T extends AnyFunction
+type Snapshot<T> = T extends AnyFunction
   ? T
   : T extends AsRef
   ? T
   : T extends Promise<infer V>
-  ? INTERNAL_Snapshot<V>
+  ? Snapshot<V>
   : {
-      readonly [K in keyof T]: INTERNAL_Snapshot<T[K]>
+      readonly [K in keyof T]: Snapshot<T[K]>
     }
+
+/**
+ * This is not a public API.
+ * It can be changed without any notice.
+ */
+export type INTERNAL_Snapshot<T> = Snapshot<T>
 
 // shared state
 const refSet = new WeakSet()
@@ -287,9 +289,7 @@ export function subscribe<T extends object>(
   }
 }
 
-export function snapshot<T extends object>(
-  proxyObject: T
-): INTERNAL_Snapshot<T> {
+export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
   if (__DEV__ && !(proxyObject as any)?.[SNAPSHOT]) {
     console.warn('Please use proxy object')
   }
