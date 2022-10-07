@@ -44,7 +44,7 @@ describe('subscribe', () => {
     const obj = proxy({ count: 0 })
     const handler = jest.fn()
 
-    const unsubscribeA = subscribe(obj, () => {
+    const _unsubscribeA = subscribe(obj, () => {
       unsubscribeB()
     })
 
