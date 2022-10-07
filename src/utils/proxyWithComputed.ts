@@ -1,5 +1,5 @@
 import { proxy, snapshot } from '../vanilla'
-import type { INTERNAL_Snapshot } from '../vanilla'
+import type { INTERNAL_Snapshot as Snapshot } from '../vanilla'
 
 /**
  * proxyWithComputed
@@ -29,9 +29,9 @@ export function proxyWithComputed<T extends object, U extends object>(
   initialObject: T,
   computedFns: {
     [K in keyof U]:
-      | ((snap: INTERNAL_Snapshot<T>) => U[K])
+      | ((snap: Snapshot<T>) => U[K])
       | {
-          get: (snap: INTERNAL_Snapshot<T>) => U[K]
+          get: (snap: Snapshot<T>) => U[K]
           set?: (state: T, newValue: U[K]) => void
         }
   }
@@ -44,7 +44,7 @@ export function proxyWithComputed<T extends object, U extends object>(
     const { get, set } = (
       typeof computedFn === 'function' ? { get: computedFn } : computedFn
     ) as {
-      get: (snap: INTERNAL_Snapshot<T>) => U[typeof key]
+      get: (snap: Snapshot<T>) => U[typeof key]
       set?: (state: T, newValue: U[typeof key]) => void
     }
     const desc: PropertyDescriptor = {}

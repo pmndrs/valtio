@@ -10,7 +10,7 @@ import {
 // The following is a workaround until ESM is supported.
 import useSyncExternalStoreExports from 'use-sync-external-store/shim'
 import { snapshot, subscribe } from './vanilla'
-import type { INTERNAL_Snapshot } from './vanilla'
+import type { INTERNAL_Snapshot as Snapshot } from './vanilla'
 
 const { useSyncExternalStore } = useSyncExternalStoreExports
 
@@ -104,9 +104,9 @@ type Options = {
 export function useSnapshot<T extends object>(
   proxyObject: T,
   options?: Options
-): INTERNAL_Snapshot<T> {
+): Snapshot<T> {
   const notifyInSync = options?.sync
-  const lastSnapshot = useRef<INTERNAL_Snapshot<T>>()
+  const lastSnapshot = useRef<Snapshot<T>>()
   const lastAffected = useRef<WeakMap<object, unknown>>()
   let inRender = true
   const currSnapshot = useSyncExternalStore(
