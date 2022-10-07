@@ -17,19 +17,21 @@ type Listener = (op: Op, nextVersion: number) => void
 
 type AnyFunction = (...args: any[]) => any
 
-/**
- * This is not a public API.
- * It can be changed without any notice.
- */
-export type INTERNAL_Snapshot<T> = T extends AnyFunction
+type Snapshot<T> = T extends AnyFunction
   ? T
   : T extends AsRef
   ? T
   : T extends Promise<infer V>
-  ? INTERNAL_Snapshot<V>
+  ? Snapshot<V>
   : {
-      readonly [K in keyof T]: INTERNAL_Snapshot<T[K]>
+      readonly [K in keyof T]: Snapshot<T[K]>
     }
+
+/**
+ * This is not a public API.
+ * It can be changed without any notice.
+ */
+export type INTERNAL_Snapshot<T> = Snapshot<T>
 
 type CreateSnapshot = <T extends object>(
   target: T,
@@ -285,6 +287,7 @@ export function subscribe<T extends object>(
   }
   let promise: Promise<void> | undefined
   const ops: Op[] = []
+  const listeners = ((proxyObject as any)[PROXY_STATE] as ProxyState)[4]
   const listener: Listener = (op) => {
     ops.push(op)
     if (notifyInSync) {
@@ -294,11 +297,12 @@ export function subscribe<T extends object>(
     if (!promise) {
       promise = Promise.resolve().then(() => {
         promise = undefined
-        callback(ops.splice(0))
+        if (listeners.has(listener)) {
+          callback(ops.splice(0))
+        }
       })
     }
   }
-  const listeners = ((proxyObject as any)[PROXY_STATE] as ProxyState)[4]
   listeners.add(listener)
   return () => listeners.delete(listener)
 }
@@ -306,14 +310,14 @@ export function subscribe<T extends object>(
 export function snapshot<T extends object>(
   proxyObject: T,
   use?: <V>(promise: Promise<V>) => V
-): INTERNAL_Snapshot<T> {
+): Snapshot<T> {
   if (__DEV__ && !(proxyObject as any)?.[PROXY_STATE]) {
     console.warn('Please use proxy object')
   }
   const [target, receiver, version, createSnapshot] = (proxyObject as any)[
     PROXY_STATE
   ] as ProxyState
-  return createSnapshot(target, receiver, version, use) as INTERNAL_Snapshot<T>
+  return createSnapshot(target, receiver, version, use) as Snapshot<T>
 }
 
 export function ref<T extends object>(obj: T): T & AsRef {

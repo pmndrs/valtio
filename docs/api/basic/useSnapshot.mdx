@@ -1,13 +1,14 @@
 ---
 title: 'useSnapshot'
-section: 'Basic'
+section: 'API'
+subSection: 'Basic'
 description: 'Create a local snapshot that catches changes.'
 ---
 
 # useSnapshot
 
 Create a local snapshot that catches changes. This hook actually returns a wrapped snapshot in a proxy for
-render optimization instead of a plain object compared to <a href="/docs/advanced/snapshot">`snapshot()`</a>.
+render optimization instead of a plain object, which is what <a href="/docs/advanced/snapshot">`snapshot()`</a> returns.
 
 #### Rule of thumb: read from snapshots in render function, otherwise use the source.
 

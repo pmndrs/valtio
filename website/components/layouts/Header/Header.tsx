@@ -3,6 +3,7 @@ import Router from "next/router";
 import { Dialog } from "@headlessui/react";
 import React, { useEffect, useState } from "react";
 import clsx from "clsx";
+import SEO from "~/components/SEO";
 // import { ThemeSelect, ThemeToggle } from "./ThemeToggle";
 // import ToggleTheme from "~/components/ToggleTheme";
 
@@ -94,7 +95,7 @@ export function NavItems() {
   return (
     <>
       <li>
-        <Link href="/docs/basic/proxy">
+        <Link href="/docs/introduction/getting-started">
           <a className="hover:text-sky-500 dark:hover:text-sky-400">Docs</a>
         </Link>
       </li>
@@ -108,6 +109,7 @@ interface HeaderProps {
   onNavToggle?: (isOpen: boolean) => void;
   title?: string;
   section?: string;
+  subSection?: string;
 }
 
 export default function Header({
@@ -116,6 +118,7 @@ export default function Header({
   onNavToggle,
   title,
   section,
+  subSection,
 }: HeaderProps) {
   let [isOpaque, setIsOpaque] = useState(false);
 
@@ -137,6 +140,7 @@ export default function Header({
 
   return (
     <>
+    <SEO title={title} />
       <div
         className={clsx(
           "sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-gray-900/10 dark:border-gray-50/[0.06]",
@@ -215,6 +219,25 @@ export default function Header({
                   {section && (
                     <li className="flex items-center">
                       {section}
+                      <svg
+                        width="3"
+                        height="6"
+                        aria-hidden="true"
+                        className="mx-3 overflow-visible text-gray-400"
+                      >
+                        <path
+                          d="M0 0L3 3L0 6"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </li>
+                  )}
+                  {subSection && (
+                    <li className="flex items-center">
+                      {subSection}
                       <svg
                         width="3"
                         height="6"

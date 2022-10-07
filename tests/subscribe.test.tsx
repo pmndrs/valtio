@@ -40,6 +40,22 @@ describe('subscribe', () => {
     expect(handler).toBeCalledTimes(0)
   })
 
+  it('should be able to unsubscribe from a subscriber', async () => {
+    const obj = proxy({ count: 0 })
+    const handler = jest.fn()
+
+    const _unsubscribeA = subscribe(obj, () => {
+      unsubscribeB()
+    })
+
+    const unsubscribeB = subscribe(obj, handler)
+
+    obj.count += 1
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(0)
+  })
+
   it('should call subscription of object property', async () => {
     const obj = proxy({ nested: { count: 0 } })
     const handler = jest.fn()

@@ -1,5 +1,5 @@
 import { proxy, ref, snapshot, subscribe } from '../vanilla'
-import type { INTERNAL_Snapshot } from '../vanilla'
+import type { INTERNAL_Snapshot as Snapshot } from '../vanilla'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -44,8 +44,8 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
   const proxyObject = proxy({
     value: initialValue,
     history: ref({
-      wip: undefined as INTERNAL_Snapshot<V> | undefined, // to avoid infinite loop
-      snapshots: [] as INTERNAL_Snapshot<V>[],
+      wip: undefined as Snapshot<V> | undefined, // to avoid infinite loop
+      snapshots: [] as Snapshot<V>[],
       index: -1,
     }),
     canUndo: () => proxyObject.history.index > 0,
@@ -53,7 +53,7 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
       if (proxyObject.canUndo()) {
         proxyObject.value = (proxyObject.history.wip = deepClone(
           proxyObject.history.snapshots[--proxyObject.history.index]
-        ) as INTERNAL_Snapshot<V>) as V
+        ) as Snapshot<V>) as V
       }
     },
     canRedo: () =>
@@ -62,7 +62,7 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
       if (proxyObject.canRedo()) {
         proxyObject.value = (proxyObject.history.wip = deepClone(
           proxyObject.history.snapshots[++proxyObject.history.index]
-        ) as INTERNAL_Snapshot<V>) as V
+        ) as Snapshot<V>) as V
       }
     },
     saveHistory: () => {
