@@ -54,5 +54,5 @@ jobs:
       - name: Test ${{ matrix.typescript }}
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
-          rm -fr node_modules/@types/jsdom node_modules/parse5 node_modules/@types/babel-plugin-tester/node_modules/@types/prettier
+          rm -fr node_modules/@types/jsdom node_modules/parse5 node_modules/@types/babel-plugin-tester/node_modules/@types/prettier node_modules/@testing-library/dom/node_modules/pretty-format node_modules/@types/jest/node_modules/jest-diff
           yarn tsc --noEmit
