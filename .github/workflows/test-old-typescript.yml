@@ -38,17 +38,20 @@ jobs:
       - run: yarn build
       - name: Patch for Old TS
         run: |
-          sed -i~ '1s/^/import React from "react";/' tests/*.tsx
           sed -i~ "s/\/\/ @ts-expect-error.*\[LATEST-TS-ONLY\]//" tests/*.tsx
-          sed -i~ "s/\"jsx\": \"react-jsx\",/\"jsx\": \"react\",/" tsconfig.json
-          sed -i~ "s/\"noUncheckedIndexedAccess\": true,//" tsconfig.json
           sed -i~ "s/\"exactOptionalPropertyTypes\": true,//" tsconfig.json
           sed -i~ "s/\"valtio\": \[\".\/src\/index.ts\"\],/\"valtio\": [\".\/dist\/ts3.4\/index.d.ts\"],/" tsconfig.json
           sed -i~ "s/\"valtio\/\*\": \[\".\/src\/\*.ts\"\]/\"valtio\/*\": [\".\/dist\/ts3.4\/*.d.ts\"]/" tsconfig.json
           sed -i~ "s/\"include\": .*/\"include\": [\"src\/types.d.ts\", \"dist\/**\/*\", \"tests\/**\/*\"],/" tsconfig.json
+      - name: Patch for Older TS
+        if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
+        run: |
+          sed -i~ '1s/^/import React from "react";/' tests/*.tsx
+          sed -i~ "s/\"jsx\": \"react-jsx\",/\"jsx\": \"react\",/" tsconfig.json
+          sed -i~ "s/\"noUncheckedIndexedAccess\": true,//" tsconfig.json
+          yarn add -D @types/jest@27.4.1
       - name: Test ${{ matrix.typescript }}
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
-          yarn add -D @types/jest@27.4.1
           rm -r node_modules/@types/jsdom node_modules/parse5 node_modules/@types/prettier
           yarn tsc --noEmit
