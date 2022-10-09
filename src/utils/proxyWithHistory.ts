@@ -1,6 +1,9 @@
 import { proxy, ref, snapshot, subscribe } from '../vanilla'
 import type { INTERNAL_Snapshot as Snapshot } from '../vanilla'
 
+type SnapshotOrUndefined<T> = Snapshot<T> | undefined
+type Snapshots<T> = Snapshot<T>[]
+
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
@@ -44,8 +47,8 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
   const proxyObject = proxy({
     value: initialValue,
     history: ref({
-      wip: undefined as Snapshot<V> | undefined, // to avoid infinite loop
-      snapshots: [] as Snapshot<V>[],
+      wip: undefined as SnapshotOrUndefined<V>, // to avoid infinite loop
+      snapshots: [] as Snapshots<V>,
       index: -1,
     }),
     canUndo: () => proxyObject.history.index > 0,
