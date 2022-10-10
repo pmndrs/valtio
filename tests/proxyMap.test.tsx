@@ -103,12 +103,6 @@ const inputValues = [
 
 describe('features parity with native Map', () => {
   initialValues.forEach(({ name, value }) => {
-    it(`is an instance of Map`, () => {
-      const map = proxyMap(value as any)
-
-      expect(map).toBeInstanceOf(Map)
-    })
-
     it(`Support Map operations on ${name}`, () => {
       const map = proxyMap(value as any)
       const nativeMap = new Map(value as any)

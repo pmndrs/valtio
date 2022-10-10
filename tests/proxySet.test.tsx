@@ -106,12 +106,6 @@ const inputValues = [
 
 describe('features parity with native Set', () => {
   initialValues.forEach(({ name, value }) => {
-    it(`is an instance of Set`, () => {
-      const set = proxySet<unknown>(value)
-
-      expect(set).toBeInstanceOf(Set)
-    })
-
     it(`support Set operations on ${name}`, () => {
       const set = proxySet<unknown>(value)
       const nativeSet = new Set<unknown>(value)
