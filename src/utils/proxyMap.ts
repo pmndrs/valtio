@@ -92,6 +92,7 @@ export function proxyMap<K, V>(
     [Symbol.iterator]() {
       return this.entries()
     },
+    __proto__: Map.prototype,
   })
 
   Object.defineProperties(map, {

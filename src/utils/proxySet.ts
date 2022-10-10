@@ -76,6 +76,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null): Set<T> {
       // array.entries returns [index, value] while Set [value, value]
       return new Set(this.data).entries()
     },
+    __proto__: Set.prototype,
   })
 
   Object.defineProperties(set, {
