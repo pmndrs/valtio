@@ -21,8 +21,8 @@ type Snapshot<T> = T extends AnyFunction
   ? T
   : T extends AsRef
   ? T
-  : T extends Promise<infer V>
-  ? Snapshot<V>
+  : T extends Promise<any>
+  ? Awaited<T>
   : {
       readonly [K in keyof T]: Snapshot<T[K]>
     }
@@ -37,7 +37,7 @@ type CreateSnapshot = <T extends object>(
   target: T,
   receiver: object,
   version: number,
-  use?: <V>(promise: Promise<V>) => V
+  handlePromise?: <P extends Promise<any>>(promise: P) => Awaited<P>
 ) => T
 
 type ProxyState = [
@@ -71,24 +71,22 @@ const buildProxyFunction = (
     !(x instanceof RegExp) &&
     !(x instanceof ArrayBuffer),
 
-  defaultUse = (() => {
-    type PromiseState = { v?: unknown; e?: unknown }
-    const PROMISE_STATE = Symbol()
-    return <V>(promise: Promise<V>): V => {
-      let state: PromiseState | undefined = (promise as any)[PROMISE_STATE]
-      if (!state) {
-        state = {}
-        ;(promise as any)[PROMISE_STATE] = state
-        promise
-          .then((v) => ((state as PromiseState).v = v))
-          .catch((e) => ((state as PromiseState).e = e))
-      }
-      if ('v' in state) {
-        return state.v as V
-      }
-      throw 'e' in state ? state.e : promise
+  defaultHandlePromise = <P extends Promise<any>>(
+    promise: P & {
+      status?: 'pending' | 'fulfilled' | 'rejected'
+      value?: Awaited<P>
+      reason?: unknown
     }
-  })(),
+  ): Awaited<P> => {
+    switch (promise.status) {
+      case 'fulfilled':
+        return promise.value as Awaited<P>
+      case 'rejected':
+        throw promise.reason
+      default:
+        throw promise
+    }
+  },
 
   snapCache = new WeakMap<object, [version: number, snap: unknown]>(),
 
@@ -96,7 +94,9 @@ const buildProxyFunction = (
     target: T,
     receiver: object,
     version: number,
-    use = defaultUse
+    handlePromise: <P extends Promise<any>>(
+      promise: P
+    ) => Awaited<P> = defaultHandlePromise
   ): T => {
     const cache = snapCache.get(receiver)
     if (cache?.[0] === version) {
@@ -115,11 +115,11 @@ const buildProxyFunction = (
       } else if (value instanceof Promise) {
         Object.defineProperty(snap, key, {
           get() {
-            return use(value)
+            return handlePromise(value)
           },
         })
       } else if (value?.[PROXY_STATE]) {
-        snap[key] = snapshot(value, use)
+        snap[key] = snapshot(value, handlePromise)
       } else {
         snap[key] = value
       }
@@ -216,8 +216,16 @@ const buildProxyFunction = (
           // do nothing
         } else if (value instanceof Promise) {
           value
-            .then((v) => notifyUpdate(['resolve', [prop], v]))
-            .catch((e) => notifyUpdate(['reject', [prop], e]))
+            .then((v) => {
+              value.status = 'fulfilled'
+              value.value = v
+              notifyUpdate(['resolve', [prop], v])
+            })
+            .catch((e) => {
+              value.status = 'rejected'
+              value.reason = e
+              notifyUpdate(['reject', [prop], e])
+            })
         } else {
           if (!value?.[PROXY_STATE] && canProxy(value)) {
             nextValue = proxy(value)
@@ -259,7 +267,7 @@ const buildProxyFunction = (
     objectIs,
     newProxy,
     canProxy,
-    defaultUse,
+    defaultHandlePromise,
     snapCache,
     createSnapshot,
     proxyCache,
@@ -309,7 +317,7 @@ export function subscribe<T extends object>(
 
 export function snapshot<T extends object>(
   proxyObject: T,
-  use?: <V>(promise: Promise<V>) => V
+  handlePromise?: <P extends Promise<any>>(promise: P) => Awaited<P>
 ): Snapshot<T> {
   if (__DEV__ && !(proxyObject as any)?.[PROXY_STATE]) {
     console.warn('Please use proxy object')
@@ -317,7 +325,7 @@ export function snapshot<T extends object>(
   const [target, receiver, version, createSnapshot] = (proxyObject as any)[
     PROXY_STATE
   ] as ProxyState
-  return createSnapshot(target, receiver, version, use) as Snapshot<T>
+  return createSnapshot(target, receiver, version, handlePromise) as Snapshot<T>
 }
 
 export function ref<T extends object>(obj: T): T & AsRef {

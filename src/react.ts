@@ -1,7 +1,7 @@
 /// <reference types="react/experimental" />
 
 import {
-  experimental_use,
+  experimental_use as use,
   useCallback,
   useDebugValue,
   useEffect,
@@ -161,7 +161,7 @@ export function useSnapshot<T extends object>(
       [proxyObject, notifyInSync]
     ),
     () => {
-      const nextSnapshot = snapshot(proxyObject, experimental_use)
+      const nextSnapshot = snapshot(proxyObject, use)
       try {
         if (
           !inRender &&
@@ -182,7 +182,7 @@ export function useSnapshot<T extends object>(
       }
       return nextSnapshot
     },
-    () => snapshot(proxyObject, experimental_use)
+    () => snapshot(proxyObject, use)
   )
   inRender = false
   const currAffected = new WeakMap()
