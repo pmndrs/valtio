@@ -123,6 +123,12 @@ describe('features parity with native Map', () => {
         )
         expect(JSON.stringify(map)).toStrictEqual(JSON.stringify(nativeMap))
 
+        JSON.stringify(map, (_, mapV) => {
+          JSON.stringify(nativeMap, (_, nativeMapV) => {
+            expect(mapV).toStrictEqual(nativeMapV)
+          })
+        })
+
         // cover loops
         const handleForEach = jest.fn()
         const handleForOf = jest.fn()

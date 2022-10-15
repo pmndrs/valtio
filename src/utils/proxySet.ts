@@ -60,7 +60,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null): Set<T> {
       return 'Set'
     },
     toJSON() {
-      return {}
+      return new Set(this.data)
     },
     [Symbol.iterator]() {
       return this.data[Symbol.iterator]()

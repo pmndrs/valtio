@@ -126,6 +126,12 @@ describe('features parity with native Set', () => {
         )
         expect(JSON.stringify(set)).toStrictEqual(JSON.stringify(nativeSet))
 
+        JSON.stringify(set, (_, setV) => {
+          JSON.stringify(nativeSet, (_, nativeSetV) => {
+            expect(setV).toStrictEqual(nativeSetV)
+          })
+        })
+
         // cover loops
         const handleForEach = jest.fn()
         const handleForOf = jest.fn()

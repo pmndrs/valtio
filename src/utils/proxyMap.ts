@@ -70,7 +70,7 @@ export function proxyMap<K, V>(
       return this.data.length
     },
     toJSON() {
-      return {}
+      return new Map(this.data)
     },
     forEach(cb) {
       this.data.forEach((p) => {
