@@ -1,7 +1,6 @@
 /// <reference types="react/experimental" />
 
-import {
-  experimental_use as use,
+import ReactExports, {
   useCallback,
   useDebugValue,
   useEffect,
@@ -23,6 +22,7 @@ import { snapshot, subscribe } from './vanilla'
 import type { INTERNAL_Snapshot as Snapshot } from './vanilla'
 
 const { useSyncExternalStore } = useSyncExternalStoreExports
+const use = ReactExports.experimental_use
 
 // customized version of affectedToPathList
 // we need to avoid invoking getters
