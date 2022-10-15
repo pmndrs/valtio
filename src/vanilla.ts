@@ -33,14 +33,16 @@ type Snapshot<T> = T extends AnyFunction
  */
 export type INTERNAL_Snapshot<T> = Snapshot<T>
 
+type HandlePromise = <P extends Promise<any>>(promise: P) => Awaited<P>
+
 type CreateSnapshot = <T extends object>(
   target: T,
   receiver: object,
   version: number,
-  handlePromise?: <P extends Promise<any>>(promise: P) => Awaited<P>
+  handlePromise?: HandlePromise
 ) => T
 
-type ProxyState = [
+type ProxyState = readonly [
   target: object,
   receiver: object,
   version: number,
@@ -49,7 +51,7 @@ type ProxyState = [
 ]
 
 // shared state
-const PROXY_STATE = __DEV__ ? Symbol('PROXY_STATE') : Symbol()
+const PROXY_STATE = Symbol()
 const refSet = new WeakSet()
 
 const buildProxyFunction = (
@@ -77,7 +79,7 @@ const buildProxyFunction = (
       value?: Awaited<P>
       reason?: unknown
     }
-  ): Awaited<P> => {
+  ) => {
     switch (promise.status) {
       case 'fulfilled':
         return promise.value as Awaited<P>
@@ -94,9 +96,7 @@ const buildProxyFunction = (
     target: T,
     receiver: object,
     version: number,
-    handlePromise: <P extends Promise<any>>(
-      promise: P
-    ) => Awaited<P> = defaultHandlePromise
+    handlePromise: HandlePromise = defaultHandlePromise
   ): T => {
     const cache = snapCache.get(receiver)
     if (cache?.[0] === version) {
@@ -281,7 +281,7 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
 }
 
 export function getVersion(proxyObject: unknown): number | undefined {
-  const state: ProxyState | undefined = (proxyObject as any)?.[PROXY_STATE]
+  const state = (proxyObject as any)?.[PROXY_STATE] as ProxyState | undefined
   return state?.[2]
 }
 
@@ -317,7 +317,7 @@ export function subscribe<T extends object>(
 
 export function snapshot<T extends object>(
   proxyObject: T,
-  handlePromise?: <P extends Promise<any>>(promise: P) => Awaited<P>
+  handlePromise?: HandlePromise
 ): Snapshot<T> {
   if (__DEV__ && !(proxyObject as any)?.[PROXY_STATE]) {
     console.warn('Please use proxy object')
