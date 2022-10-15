@@ -1,7 +1,17 @@
-import { useCallback, useDebugValue, useEffect, useMemo, useRef } from 'react'
+/// <reference types="react/experimental" />
+
 import {
-  affectedToPathList,
+  experimental_use as use,
+  useCallback,
+  useDebugValue,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react'
+import {
+  // affectedToPathList,
   createProxy as createProxyToCompare,
+  getUntracked,
   isChanged,
 } from 'proxy-compare'
 // import { useSyncExternalStore } from 'use-sync-external-store/shim'
@@ -13,6 +23,38 @@ import { snapshot, subscribe } from './vanilla'
 import type { INTERNAL_Snapshot as Snapshot } from './vanilla'
 
 const { useSyncExternalStore } = useSyncExternalStoreExports
+
+// customized version of affectedToPathList
+// we need to avoid invoking getters
+const affectedToPathList = (
+  obj: unknown,
+  affected: WeakMap<object, unknown>
+) => {
+  const list: (string | symbol)[][] = []
+  const seen = new WeakSet()
+  const walk = (x: unknown, path?: (string | symbol)[]) => {
+    if (seen.has(x as object)) {
+      // for object with cycles
+      return
+    }
+    let used: Set<string | symbol> | undefined
+    if (typeof x === 'object' && x !== null) {
+      seen.add(x)
+      used = affected.get(getUntracked(x) || x) as any
+    }
+    if (used) {
+      used.forEach((key) => {
+        if ('value' in (Object.getOwnPropertyDescriptor(x, key) || {})) {
+          walk((x as any)[key], path ? [...path, key] : [key])
+        }
+      })
+    } else if (path) {
+      list.push(path)
+    }
+  }
+  walk(obj)
+  return list
+}
 
 const useAffectedDebugValue = (
   state: object,
@@ -119,7 +161,7 @@ export function useSnapshot<T extends object>(
       [proxyObject, notifyInSync]
     ),
     () => {
-      const nextSnapshot = snapshot(proxyObject)
+      const nextSnapshot = snapshot(proxyObject, use)
       try {
         if (
           !inRender &&
@@ -140,7 +182,7 @@ export function useSnapshot<T extends object>(
       }
       return nextSnapshot
     },
-    () => snapshot(proxyObject)
+    () => snapshot(proxyObject, use)
   )
   inRender = false
   const currAffected = new WeakMap()
