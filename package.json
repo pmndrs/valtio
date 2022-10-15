@@ -6,7 +6,7 @@
   "main": "./index.js",
   "types": "./index.d.ts",
   "typesVersions": {
-    "<4.0": {
+    "<4.5": {
       "esm/*": [
         "ts3.4/*"
       ],
@@ -73,7 +73,7 @@
     "test:coverage:watch": "jest --watch",
     "copy": "shx cp -r dist/src/* dist/esm && shx mv dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined;\"",
     "patch-macro-vite": "shx cp dist/esm/macro/vite.d.ts dist/macro/ && shx mkdir dist/ts3.4/macro && shx cp dist/ts3.4/esm/macro/vite.d.ts dist/ts3.4/macro/",
-    "patch-ts3.4": "shx sed -i 's/^declare type Snapshot<T> =/declare type Snapshot<T> = T extends AnyFunction ? T : T extends AsRef ? T : T extends Promise<infer V> ? Snapshot2<V> : { readonly [K in keyof T]: Snapshot2<T[K]> }; type Snapshot2<T> = T extends AnyFunction ? T : T extends AsRef ? T : T extends Promise<infer V> ? V : { readonly [K in keyof T]: T[K] };declare type _Snapshot<T> =/' 'dist/ts3.4/**/*.d.ts'"
+    "patch-ts3.4": "node -e \"require('shelljs').find('dist/ts3.4/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"; shx sed -i 's/^declare type Snapshot<T> =/declare type Snapshot<T> = T extends AnyFunction ? T : T extends AsRef ? T : T extends Promise<any> ? Awaited<T> : { readonly [K in keyof T]: Snapshot2<T[K]> }; type Snapshot2<T> = T extends AnyFunction ? T : T extends AsRef ? T : T extends Promise<any> ? Awaited<T> : { readonly [K in keyof T]: T[K] };declare type _Snapshot<T> =/' 'dist/ts3.4/**/*.d.ts'"
   },
   "engines": {
     "node": ">=12.7.0"
