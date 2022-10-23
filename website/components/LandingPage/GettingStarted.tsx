@@ -12,7 +12,7 @@ export const GettingStarted = ({ className }: { className: string }) => (
       </Link>
     </div>
     <div>
-      <p className="text-gray-700 font-medium">Proxy state made simple</p>
+      <p className="text-gray-700 font-medium pb-8">Proxy state made simple</p>
     </div>
   </div>
 );
