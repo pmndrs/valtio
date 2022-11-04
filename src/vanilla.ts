@@ -289,7 +289,7 @@ export function subscribe<T extends object>(
   proxyObject: T,
   callback: (ops: Op[]) => void,
   notifyInSync?: boolean
-) {
+): () => void {
   if (__DEV__ && !(proxyObject as any)?.[PROXY_STATE]) {
     console.warn('Please use proxy object')
   }
