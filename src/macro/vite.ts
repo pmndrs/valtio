@@ -5,10 +5,10 @@ import * as t from '@babel/types'
 import * as plugin from 'aslemammad-vite-plugin-macro'
 import * as babelMacro from 'babel-plugin-macros'
 
-const { defineMacro, defineMacroProvider, createMacroPlugin }: typeof plugin =
+const { defineMacro, defineMacroProvider, createMacroPlugin } =
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  'default' in plugin ? plugin.default : plugin
+  ('default' in plugin ? plugin.default : plugin) as typeof plugin
 
 // const {} = plugin.default as typeof import('aslemammad-vite-plugin-macro')
 export const valtioMacro = defineMacro(`useProxy`)
