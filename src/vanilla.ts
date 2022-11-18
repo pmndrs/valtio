@@ -109,8 +109,8 @@ const buildProxyFunction = (
     snapCache.set(receiver, [version, snap])
     Reflect.ownKeys(target).forEach((key) => {
       const value = Reflect.get(target, key, receiver)
-      if (refSet.has(value)) {
-        markToTrack(value, false) // mark not to track
+      if (refSet.has(value as object)) {
+        markToTrack(value as object, false) // mark not to track
         snap[key] = value
       } else if (value instanceof Promise) {
         Object.defineProperty(snap, key, {
@@ -118,8 +118,8 @@ const buildProxyFunction = (
             return handlePromise(value)
           },
         })
-      } else if (value?.[PROXY_STATE]) {
-        snap[key] = snapshot(value, handlePromise)
+      } else if ((value as any)?.[PROXY_STATE]) {
+        snap[key] = snapshot(value as object, handlePromise)
       } else {
         snap[key] = value
       }
