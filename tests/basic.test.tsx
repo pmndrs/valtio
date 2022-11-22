@@ -1,5 +1,6 @@
 import { StrictMode, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { act } from 'react-dom/test-utils'
 import { proxy, useSnapshot } from 'valtio'
 
 it('simple counter', async () => {
@@ -85,6 +86,37 @@ it('no extra re-renders (commits)', async () => {
     getByText('count: 1 (2)')
     getByText('count2: 1 (2)')
   })
+})
+
+it('no extra re-renders when changing unused field (render func calls in non strict mode)', async () => {
+  const state = proxy({ count: 0, text: 'hello world' })
+
+  const renderFn = jest.fn()
+  const App = () => {
+    const _snap = useSnapshot(state)
+    renderFn()
+    return (
+      <>
+        <button
+          onClick={() => {
+            state.text = Math.random().toString(36)
+          }}>
+          set text
+        </button>
+      </>
+    )
+  }
+
+  const { getByText } = render(
+    <>
+      <App />
+    </>
+  )
+  const button = await getByText('set text')
+
+  expect(renderFn).toBeCalledTimes(1)
+  await act(() => fireEvent.click(button))
+  expect(renderFn).toBeCalledTimes(1)
 })
 
 it('no extra re-renders (render func calls in non strict mode)', async () => {
