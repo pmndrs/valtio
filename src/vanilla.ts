@@ -341,7 +341,7 @@ export function subscribe<T extends object>(
   let promise: Promise<void> | undefined
   const ops: Op[] = []
   const addListener = ((proxyObject as any)[PROXY_STATE] as ProxyState)[4]
-  let listenerAdded = false
+  let isListenerActive = false
   const listener: Listener = (op) => {
     ops.push(op)
     if (notifyInSync) {
@@ -351,16 +351,16 @@ export function subscribe<T extends object>(
     if (!promise) {
       promise = Promise.resolve().then(() => {
         promise = undefined
-        if (listenerAdded) {
+        if (isListenerActive) {
           callback(ops.splice(0))
         }
       })
     }
   }
   const removeListener = addListener(listener)
-  listenerAdded = true
+  isListenerActive = true
   return () => {
-    listenerAdded = false
+    isListenerActive = false
     removeListener()
   }
 }
