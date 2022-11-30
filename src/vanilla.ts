@@ -172,7 +172,7 @@ const buildProxyFunction = (
       }
     const propProxyStates = new Map<
       string | symbol,
-      [ProxyState, RemoveListener?]
+      readonly [ProxyState, RemoveListener?]
     >()
     const addPropListener = (
       prop: string | symbol,
