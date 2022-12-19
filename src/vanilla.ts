@@ -54,6 +54,25 @@ type ProxyState = readonly [
 const PROXY_STATE = Symbol()
 const refSet = new WeakSet()
 
+// used for reaction tracking of proxy access
+const tracking = new Set<object>()
+
+// flag used to indicate if we should track during a callback
+let track = false
+
+export function startTracking() {
+  track = true
+  tracking.clear()
+}
+
+export function stopTracking() {
+  track = false
+}
+
+export function getTrackedProxies(): Readonly<Set<object>> {
+  return tracking
+}
+
 const buildProxyFunction = (
   objectIs = Object.is,
 
@@ -179,6 +198,8 @@ const buildProxyFunction = (
             listeners,
           ]
           return state
+        } else if (track) {
+          tracking.add(receiver)
         }
         return Reflect.get(target, prop, receiver)
       },
