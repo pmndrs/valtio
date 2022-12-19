@@ -42,16 +42,52 @@ type CreateSnapshot = <T extends object>(
   handlePromise?: HandlePromise
 ) => T
 
+class ListenerSet<T = Listener> extends Set<T> {
+  public constructor(
+    private onBecomeObserved?: () => void,
+    private onBecomeUnobserved?: () => void
+  ) {
+    super()
+  }
+
+  public add(listener: T) {
+    super.add(listener)
+    if (this.onBecomeObserved) {
+      const realListeners = [...this].filter((listener) => {
+        return !(listener as any)[PROP_LISTENER]
+      })
+      if (realListeners.length === 1) {
+        this.onBecomeObserved()
+      }
+    }
+    return this
+  }
+
+  public delete(listener: T) {
+    const wasRemoved = super.delete(listener)
+    if (wasRemoved && this.onBecomeUnobserved) {
+      const realListeners = [...this].filter((listener) => {
+        return !(listener as any)[PROP_LISTENER]
+      })
+      if (realListeners.length === 0) {
+        this.onBecomeUnobserved()
+      }
+    }
+    return wasRemoved
+  }
+}
+
 type ProxyState = readonly [
   target: object,
   receiver: object,
   version: number,
   createSnapshot: CreateSnapshot,
-  listeners: Set<Listener>
+  listeners: ListenerSet
 ]
 
 // shared state
 const PROXY_STATE = Symbol()
+const PROP_LISTENER = Symbol()
 const refSet = new WeakSet()
 
 const buildProxyFunction = (
@@ -131,7 +167,11 @@ const buildProxyFunction = (
 
   versionHolder = [1] as [number],
 
-  proxyFunction = <T extends object>(initialObject: T): T => {
+  proxyFunction = <T extends object>(
+    initialObject: T,
+    onBecomeObserved?: () => void,
+    onBecomeUnobserved?: () => void
+  ): T => {
     if (!isObject(initialObject)) {
       throw new Error('object required')
     }
@@ -140,7 +180,8 @@ const buildProxyFunction = (
       return found
     }
     let version = versionHolder[0]
-    const listeners = new Set<Listener>()
+    const listeners = new ListenerSet(onBecomeObserved, onBecomeUnobserved)
+
     const notifyUpdate = (op: Op, nextVersion = ++versionHolder[0]) => {
       if (version !== nextVersion) {
         version = nextVersion
@@ -156,6 +197,9 @@ const buildProxyFunction = (
           newOp[1] = [prop, ...(newOp[1] as Path)]
           notifyUpdate(newOp, nextVersion)
         }
+        // tag the prop listeners with the symbol so we can ignore them
+        // in the listener set for lazy observables
+        ;(propListener as any)[PROP_LISTENER] = true
         propListeners.set(prop, propListener)
       }
       return propListener
@@ -276,8 +320,12 @@ const buildProxyFunction = (
 
 const [proxyFunction] = buildProxyFunction()
 
-export function proxy<T extends object>(initialObject: T = {} as T): T {
-  return proxyFunction(initialObject)
+export function proxy<T extends object>(
+  initialObject: T = {} as T,
+  onBecomeObserved?: () => void,
+  onBecomeUnobserved?: () => void
+): T {
+  return proxyFunction(initialObject, onBecomeObserved, onBecomeUnobserved)
 }
 
 export function getVersion(proxyObject: unknown): number | undefined {
