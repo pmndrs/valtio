@@ -5,7 +5,7 @@ const isObject = (x: unknown): x is object =>
 
 type AsRef = { $$valtioRef: true }
 
-type ProxyObject = object
+export type ProxyObject = object
 
 type Path = (string | symbol)[]
 type Op =
@@ -51,11 +51,12 @@ type ProxyState = readonly [
 ]
 
 // shared state
-const PROXY_STATE = Symbol()
+export const PROXY_STATE = Symbol()
+export const PROXY_IDENTITY = Symbol()
 const refSet = new WeakSet()
 
 // used for reaction tracking of proxy access
-const tracking = new Set<object>()
+const tracking = new Set<[ProxyObject, string | symbol]>()
 
 // flag used to indicate if we should track during a callback
 let track = false
@@ -69,7 +70,9 @@ export function stopTracking() {
   track = false
 }
 
-export function getTrackedProxies(): Readonly<Set<object>> {
+export function getTrackedProxies(): Readonly<
+  Set<[ProxyObject, string | symbol]>
+> {
   return tracking
 }
 
@@ -189,6 +192,9 @@ const buildProxyFunction = (
       : Object.create(Object.getPrototypeOf(initialObject))
     const handler: ProxyHandler<T> = {
       get(target: T, prop: string | symbol, receiver: object) {
+        if (prop === PROXY_IDENTITY) {
+          return target
+        }
         if (prop === PROXY_STATE) {
           const state: ProxyState = [
             target,
@@ -199,7 +205,7 @@ const buildProxyFunction = (
           ]
           return state
         } else if (track) {
-          tracking.add(receiver)
+          tracking.add([receiver, prop])
         }
         return Reflect.get(target, prop, receiver)
       },

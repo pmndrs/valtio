@@ -1,5 +1,6 @@
 export { subscribeKey } from './utils/subscribeKey'
 export { watch } from './utils/watch'
+export { reaction } from './utils/reaction'
 export { devtools } from './utils/devtools'
 export { derive, underive, unstable_deriveSubscriptions } from './utils/derive'
 export { addComputed_DEPRECATED as addComputed } from './utils/addComputed'
