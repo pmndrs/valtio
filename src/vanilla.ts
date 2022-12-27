@@ -37,7 +37,6 @@ type HandlePromise = <P extends Promise<any>>(promise: P) => Awaited<P>
 
 type CreateSnapshot = <T extends object>(
   target: T,
-  receiver: object,
   version: number,
   handlePromise?: HandlePromise
 ) => T
@@ -47,14 +46,13 @@ type AddListener = (listener: Listener) => RemoveListener
 
 type ProxyState = readonly [
   target: object,
-  receiver: object,
   ensureVersion: (nextCheckVersion?: number) => number,
   createSnapshot: CreateSnapshot,
   addListener: AddListener
 ]
 
 // shared state
-const PROXY_STATE = Symbol()
+const proxyStateMap = new WeakMap<ProxyObject, ProxyState>()
 const refSet = new WeakSet()
 
 const buildProxyFunction = (
@@ -97,11 +95,10 @@ const buildProxyFunction = (
 
   createSnapshot: CreateSnapshot = <T extends object>(
     target: T,
-    receiver: object,
     version: number,
     handlePromise: HandlePromise = defaultHandlePromise
   ): T => {
-    const cache = snapCache.get(receiver)
+    const cache = snapCache.get(target)
     if (cache?.[0] === version) {
       return cache[1] as T
     }
@@ -109,9 +106,9 @@ const buildProxyFunction = (
       ? []
       : Object.create(Object.getPrototypeOf(target))
     markToTrack(snap, true) // mark to track
-    snapCache.set(receiver, [version, snap])
+    snapCache.set(target, [version, snap])
     Reflect.ownKeys(target).forEach((key) => {
-      const value = Reflect.get(target, key, receiver)
+      const value = Reflect.get(target, key)
       if (refSet.has(value as object)) {
         markToTrack(value as object, false) // mark not to track
         snap[key] = value
@@ -121,7 +118,7 @@ const buildProxyFunction = (
             return handlePromise(value)
           },
         })
-      } else if ((value as any)?.[PROXY_STATE]) {
+      } else if (proxyStateMap.has(value as object)) {
         snap[key] = snapshot(value as object, handlePromise)
       } else {
         snap[key] = value
@@ -155,7 +152,7 @@ const buildProxyFunction = (
       if (checkVersion !== nextCheckVersion && !listeners.size) {
         checkVersion = nextCheckVersion
         propProxyStates.forEach(([propProxyState]) => {
-          const propVersion = propProxyState[2](nextCheckVersion)
+          const propVersion = propProxyState[1](nextCheckVersion)
           if (propVersion > version) {
             version = propVersion
           }
@@ -182,7 +179,7 @@ const buildProxyFunction = (
         throw new Error('prop listener already exists')
       }
       if (listeners.size) {
-        const remove = propProxyState[4](createPropListener(prop))
+        const remove = propProxyState[3](createPropListener(prop))
         propProxyStates.set(prop, [propProxyState, remove])
       } else {
         propProxyStates.set(prop, [propProxyState])
@@ -202,7 +199,7 @@ const buildProxyFunction = (
           if (__DEV__ && prevRemove) {
             throw new Error('remove already exists')
           }
-          const remove = propProxyState[4](createPropListener(prop))
+          const remove = propProxyState[3](createPropListener(prop))
           propProxyStates.set(prop, [propProxyState, remove])
         })
       }
@@ -223,19 +220,6 @@ const buildProxyFunction = (
       ? []
       : Object.create(Object.getPrototypeOf(initialObject))
     const handler: ProxyHandler<T> = {
-      get(target: T, prop: string | symbol, receiver: object) {
-        if (prop === PROXY_STATE) {
-          const state: ProxyState = [
-            target,
-            receiver,
-            ensureVersion,
-            createSnapshot,
-            addListener,
-          ]
-          return state
-        }
-        return Reflect.get(target, prop, receiver)
-      },
       deleteProperty(target: T, prop: string | symbol) {
         const prevValue = Reflect.get(target, prop)
         removePropListener(prop)
@@ -271,12 +255,10 @@ const buildProxyFunction = (
               notifyUpdate(['reject', [prop], e])
             })
         } else {
-          if (!value?.[PROXY_STATE] && canProxy(value)) {
+          if (!proxyStateMap.has(value) && canProxy(value)) {
             nextValue = proxy(value)
           }
-          const childProxyState = nextValue?.[PROXY_STATE] as
-            | ProxyState
-            | undefined
+          const childProxyState = proxyStateMap.get(nextValue)
           if (childProxyState) {
             addPropListener(prop, childProxyState)
           }
@@ -288,6 +270,13 @@ const buildProxyFunction = (
     }
     const proxyObject = newProxy(baseObject, handler)
     proxyCache.set(initialObject, proxyObject)
+    const proxyState: ProxyState = [
+      baseObject,
+      ensureVersion,
+      createSnapshot,
+      addListener,
+    ]
+    proxyStateMap.set(proxyObject, proxyState)
     Reflect.ownKeys(initialObject).forEach((key) => {
       const desc = Object.getOwnPropertyDescriptor(
         initialObject,
@@ -306,7 +295,7 @@ const buildProxyFunction = (
     // public functions
     proxyFunction,
     // shared state
-    PROXY_STATE,
+    proxyStateMap,
     refSet,
     // internal things
     objectIs,
@@ -326,8 +315,8 @@ export function proxy<T extends object>(initialObject: T = {} as T): T {
 }
 
 export function getVersion(proxyObject: unknown): number | undefined {
-  const state = (proxyObject as any)?.[PROXY_STATE] as ProxyState | undefined
-  return state?.[2]()
+  const proxyState = proxyStateMap.get(proxyObject as object)
+  return proxyState?.[1]()
 }
 
 export function subscribe<T extends object>(
@@ -335,12 +324,13 @@ export function subscribe<T extends object>(
   callback: (ops: Op[]) => void,
   notifyInSync?: boolean
 ): () => void {
-  if (__DEV__ && !(proxyObject as any)?.[PROXY_STATE]) {
+  const proxyState = proxyStateMap.get(proxyObject as object)
+  if (__DEV__ && !proxyState) {
     console.warn('Please use proxy object')
   }
   let promise: Promise<void> | undefined
   const ops: Op[] = []
-  const addListener = ((proxyObject as any)[PROXY_STATE] as ProxyState)[4]
+  const addListener = (proxyState as ProxyState)[3]
   let isListenerActive = false
   const listener: Listener = (op) => {
     ops.push(op)
@@ -369,18 +359,12 @@ export function snapshot<T extends object>(
   proxyObject: T,
   handlePromise?: HandlePromise
 ): Snapshot<T> {
-  if (__DEV__ && !(proxyObject as any)?.[PROXY_STATE]) {
+  const proxyState = proxyStateMap.get(proxyObject as object)
+  if (__DEV__ && !proxyState) {
     console.warn('Please use proxy object')
   }
-  const [target, receiver, ensureVersion, createSnapshot] = (
-    proxyObject as any
-  )[PROXY_STATE] as ProxyState
-  return createSnapshot(
-    target,
-    receiver,
-    ensureVersion(),
-    handlePromise
-  ) as Snapshot<T>
+  const [target, ensureVersion, createSnapshot] = proxyState as ProxyState
+  return createSnapshot(target, ensureVersion(), handlePromise) as Snapshot<T>
 }
 
 export function ref<T extends object>(obj: T): T & AsRef {
