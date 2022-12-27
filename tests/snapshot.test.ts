@@ -21,3 +21,13 @@ it('getter returns value after promise is resolved', async () => {
       expect(snap.status).toBe('done')
     })
 })
+
+it('should return correct snapshots without subscribe', async () => {
+  const child = proxy({ count: 0 })
+  const state = proxy({ child })
+
+  expect(snapshot(state)).toEqual({ child: { count: 0 } })
+
+  ++child.count
+  expect(snapshot(state)).toEqual({ child: { count: 1 } })
+})
