@@ -357,7 +357,7 @@ because `proxy-memoize` and `useSnapshot` do similar optimization
 and double optimization may lead to less performance.
 
 ```js
-import memoize from 'proxy-memoize'
+import { memoize } from 'proxy-memoize'
 import { proxyWithComputed } from 'valtio/utils'
 
 const state = proxyWithComputed(
