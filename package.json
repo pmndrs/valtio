@@ -217,29 +217,9 @@
     "date-fns": "2.27.0"
   },
   "peerDependencies": {
-    "@babel/helper-module-imports": ">=7.12",
-    "@babel/types": ">=7.13",
-    "aslemammad-vite-plugin-macro": ">=1.0.0-alpha.1",
-    "babel-plugin-macros": ">=3.0",
-    "react": ">=16.8",
-    "vite": ">=2.8.6"
+    "react": ">=16.8"
   },
   "peerDependenciesMeta": {
-    "vite": {
-      "optional": true
-    },
-    "aslemammad-vite-plugin-macro": {
-      "optional": true
-    },
-    "@babel/helper-module-imports": {
-      "optional": true
-    },
-    "@babel/types": {
-      "optional": true
-    },
-    "babel-plugin-macros": {
-      "optional": true
-    },
     "react": {
       "optional": true
     }
