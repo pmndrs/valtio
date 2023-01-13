@@ -139,7 +139,7 @@ export default function Header({
 
   return (
     <>
-    <SEO title={title} />
+      <SEO title={title} />
       <div
         className={clsx(
           "sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-gray-900/10 dark:border-gray-50/[0.06]",
@@ -175,7 +175,7 @@ export default function Header({
                   </ul>
                 </nav>
                 <div className="flex items-center border-l border-gray-200 ml-6 pl-6 dark:border-gray-800">
-                  <ToggleTheme  />
+                  <ToggleTheme />
                   <a
                     href="https://github.com/pmndrs/valtio"
                     className="ml-6 block text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
@@ -216,7 +216,7 @@ export default function Header({
               {title && (
                 <ol className="ml-4 flex text-sm leading-6 whitespace-nowrap min-w-0">
                   {section && (
-                    <li className="flex items-center">
+                    <li className="flex items-center text-gray-900 dark:text-gray-200">
                       {section}
                       <svg
                         width="3"
