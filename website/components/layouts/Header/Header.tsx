@@ -4,8 +4,7 @@ import { Dialog } from "@headlessui/react";
 import React, { useEffect, useState } from "react";
 import clsx from "clsx";
 import SEO from "~/components/SEO";
-// import { ThemeSelect, ThemeToggle } from "./ThemeToggle";
-// import ToggleTheme from "~/components/ToggleTheme";
+import ToggleTheme from "~/components/ToggleTheme";
 
 export function NavPopover({
   display = "md:hidden",
@@ -83,7 +82,7 @@ export function NavPopover({
             </li>
           </ul>
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-200/10">
-            {/* <ToggleTheme /> */}
+            <ToggleTheme />
           </div>
         </div>
       </Dialog>
@@ -176,7 +175,7 @@ export default function Header({
                   </ul>
                 </nav>
                 <div className="flex items-center border-l border-gray-200 ml-6 pl-6 dark:border-gray-800">
-                  {/* <ThemeToggle panelClassName="mt-8" /> */}
+                  <ToggleTheme  />
                   <a
                     href="https://github.com/pmndrs/valtio"
                     className="ml-6 block text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
