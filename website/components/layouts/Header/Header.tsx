@@ -4,8 +4,7 @@ import { Dialog } from "@headlessui/react";
 import React, { useEffect, useState } from "react";
 import clsx from "clsx";
 import SEO from "~/components/SEO";
-// import { ThemeSelect, ThemeToggle } from "./ThemeToggle";
-// import ToggleTheme from "~/components/ToggleTheme";
+import ToggleTheme from "~/components/ToggleTheme";
 
 export function NavPopover({
   display = "md:hidden",
@@ -83,7 +82,7 @@ export function NavPopover({
             </li>
           </ul>
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-200/10">
-            {/* <ToggleTheme /> */}
+            <ToggleTheme />
           </div>
         </div>
       </Dialog>
@@ -140,7 +139,7 @@ export default function Header({
 
   return (
     <>
-    <SEO title={title} />
+      <SEO title={title} />
       <div
         className={clsx(
           "sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-gray-900/10 dark:border-gray-50/[0.06]",
@@ -159,7 +158,7 @@ export default function Header({
             <div className="relative flex items-center">
               <Link href="/">
                 <a
-                  className="mr-3 flex-none overflow-hidden md:w-auto"
+                  className="mr-3 flex-none overflow-hidden md:w-auto text-gray-900 dark:text-gray-50"
                   onContextMenu={(e) => {
                     e.preventDefault();
                     Router.push("/");
@@ -176,7 +175,7 @@ export default function Header({
                   </ul>
                 </nav>
                 <div className="flex items-center border-l border-gray-200 ml-6 pl-6 dark:border-gray-800">
-                  {/* <ThemeToggle panelClassName="mt-8" /> */}
+                  <ToggleTheme />
                   <a
                     href="https://github.com/pmndrs/valtio"
                     className="ml-6 block text-gray-400 hover:text-gray-500 dark:hover:text-gray-300"
@@ -217,7 +216,7 @@ export default function Header({
               {title && (
                 <ol className="ml-4 flex text-sm leading-6 whitespace-nowrap min-w-0">
                   {section && (
-                    <li className="flex items-center">
+                    <li className="flex items-center text-gray-900 dark:text-gray-200">
                       {section}
                       <svg
                         width="3"

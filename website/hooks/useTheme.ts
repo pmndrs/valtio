@@ -1,76 +1,75 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
+import { themeState } from "~/state";
 
-type themeType = "light" | "dark";
+export const useTheme = () => {
+  const updateMode = useCallback(() => {
+    let darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    let isSystemDarkMode = darkModeMediaQuery.matches;
+    let isDarkMode =
+      window.localStorage.isDarkMode === "true" ||
+      (!("isDarkMode" in window.localStorage) && isSystemDarkMode);
 
-export default function useTheme() {
-  const [theme, setTheme] = useState<themeType | null>(null);
-
-  const setCurrentTheme = useCallback(
-    (theme: themeType = "light") => {
-      // On page load or when changing themes, best to add inline in `head` to avoid FOUC
-      if (
-        localStorage.theme === "dark" ||
-        (!("theme" in localStorage) &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches)
-      ) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-      setTheme(theme);
-    },
-    [theme, setTheme]
-  );
-
-  const toggleTheme = useCallback(
-    () =>
-      theme === "light" ? setCurrentTheme("dark") : setCurrentTheme("light"),
-    [theme, setCurrentTheme]
-  );
-
-  useEffect(() => {
-    const currentTheme = localStorage.getItem("preferredTheme") as themeType;
-    if (currentTheme) {
-      setCurrentTheme(currentTheme);
+    themeState.isDarkMode = isDarkMode;
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
     } else {
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        setCurrentTheme("dark");
-      } else {
-        setCurrentTheme("light");
-      }
+      document.documentElement.classList.remove("dark");
+    }
+
+    if (isDarkMode === isSystemDarkMode) {
+      delete window.localStorage.isDarkMode;
     }
   }, []);
 
-  // const hasDarkMode = useCallback(() => {
-  //   return document.documentElement.classList.contains("dark");
-  // }, []);
+  const disableTransitionsTemporarily = useCallback(() => {
+    document.documentElement.classList.add("[&_*]:!transition-none");
+    window.setTimeout(() => {
+      document.documentElement.classList.remove("[&_*]:!transition-none");
+    }, 0);
+  }, []);
 
-  // const setCurrentTheme = useCallback(
-  //   (theme: themeType = "light") => {
-  //     if (theme === "light") nightwind.enable(false);
-  //     else nightwind.enable(true);
-  //     setTheme(theme);
-  //   },
-  //   [theme, setTheme]
-  // );
+  const updateModeWithoutTransitions = useCallback(() => {
+    disableTransitionsTemporarily();
+    updateMode();
+  }, [updateMode, disableTransitionsTemporarily]);
 
-  // const toggleTheme = useCallback(
-  //   () =>
-  //     theme === "light" ? setCurrentTheme("dark") : setCurrentTheme("light"),
-  //   [theme, setCurrentTheme]
-  // );
+  const toggleMode = useCallback(() => {
+    disableTransitionsTemporarily();
 
-  // useEffect(() => {
-  //   if (hasDarkMode()) {
-  //     setTheme("dark");
-  //   } else {
-  //     setTheme("light");
-  //   }
-  // });
+    let darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    let isSystemDarkMode = darkModeMediaQuery.matches;
+    let isDarkMode = document.documentElement.classList.toggle("dark");
 
+    themeState.isDarkMode = isDarkMode;
+    if (isDarkMode === isSystemDarkMode) {
+      delete window.localStorage.isDarkMode;
+    } else {
+      window.localStorage.isDarkMode = isDarkMode;
+    }
+  }, [disableTransitionsTemporarily]);
+
+  useEffect(() => {
+    let darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    updateMode();
+    darkModeMediaQuery.addEventListener(
+      "change",
+      updateModeWithoutTransitions,
+      { passive: true }
+    );
+    window.addEventListener("storage", updateModeWithoutTransitions, {
+      passive: true,
+    });
+
+    return () => {
+      darkModeMediaQuery.removeEventListener(
+        "change",
+        updateModeWithoutTransitions
+      );
+      window.removeEventListener("storage", updateModeWithoutTransitions);
+    };
+  }, []);
   return {
-    theme,
-    toggleTheme,
-    setCurrentTheme,
-  } as const;
-}
+    toggleMode,
+  };
+};
