@@ -158,7 +158,7 @@ export default function Header({
             <div className="relative flex items-center">
               <Link href="/">
                 <a
-                  className="mr-3 flex-none overflow-hidden md:w-auto"
+                  className="mr-3 flex-none overflow-hidden md:w-auto text-gray-900 dark:text-gray-50"
                   onContextMenu={(e) => {
                     e.preventDefault();
                     Router.push("/");
