@@ -3,7 +3,7 @@ import { Dialog } from "@headlessui/react";
 import Link from "next/link";
 import clsx from "clsx";
 import { Router, useRouter } from "next/router";
-import { useIsomorphicLayoutEffect, useCodesandboxTheme } from "~/hooks";
+import { useIsomorphicLayoutEffect } from "~/hooks";
 import { Header } from "~/components/layouts";
 import { createContext, useEffect, useState } from "react";
 
@@ -301,7 +301,6 @@ export default function DocLayout({
 }: React.PropsWithChildren<Props>) {
   let [navIsOpen, setNavIsOpen] = useState(false);
   const router = useRouter();
-  useCodesandboxTheme();
 
   useEffect(() => {
     if (!navIsOpen) return;

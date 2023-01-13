@@ -1,14 +1,9 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { subscribe, snapshot } from "valtio";
 import { themeState } from "~/state";
 
-export const useCodesandboxTheme = () => {
-  useEffect(() => {
-    updateCodesandboxEmbeds();
-    return subscribe(themeState, updateCodesandboxEmbeds);
-  }, []);
-
-  const updateCodesandboxEmbeds = () => {
+export const useCodesandboxTheme = (mdxSource: string) => {
+  const updateCodesandboxEmbeds = useCallback(() => {
     const isDarkMode = snapshot(themeState).isDarkMode;
     const codesandboxEmbeds = document.querySelectorAll(
       '[src*="codesandbox.io/embed"]'
@@ -22,5 +17,9 @@ export const useCodesandboxTheme = () => {
       url.searchParams.set("theme", newCodesandboxTheme);
       frame.src = url.toString();
     });
-  };
+  }, []);
+  useEffect(() => {
+    updateCodesandboxEmbeds();
+    return subscribe(themeState, updateCodesandboxEmbeds);
+  }, [mdxSource, updateCodesandboxEmbeds]);
 };

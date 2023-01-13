@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { themeState } from "~/state";
 
 export const useTheme = () => {
-  function updateMode() {
+  const updateMode = useCallback(() => {
     let darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     let isSystemDarkMode = darkModeMediaQuery.matches;
     let isDarkMode =
@@ -19,21 +19,21 @@ export const useTheme = () => {
     if (isDarkMode === isSystemDarkMode) {
       delete window.localStorage.isDarkMode;
     }
-  }
+  }, []);
 
-  function disableTransitionsTemporarily() {
+  const disableTransitionsTemporarily = useCallback(() => {
     document.documentElement.classList.add("[&_*]:!transition-none");
     window.setTimeout(() => {
       document.documentElement.classList.remove("[&_*]:!transition-none");
     }, 0);
-  }
+  }, []);
 
-  function updateModeWithoutTransitions() {
+  const updateModeWithoutTransitions = useCallback(() => {
     disableTransitionsTemporarily();
     updateMode();
-  }
+  }, [updateMode, disableTransitionsTemporarily]);
 
-  function toggleMode() {
+  const toggleMode = useCallback(() => {
     disableTransitionsTemporarily();
 
     let darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -46,7 +46,7 @@ export const useTheme = () => {
     } else {
       window.localStorage.isDarkMode = isDarkMode;
     }
-  }
+  }, [disableTransitionsTemporarily]);
 
   useEffect(() => {
     let darkModeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
