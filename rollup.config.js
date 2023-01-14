@@ -59,6 +59,7 @@ function createESMConfig(input, output) {
         entries: {
           './vanilla': 'valtio/vanilla',
           '../vanilla': 'valtio/vanilla',
+          '../index': 'valtio',
         },
       }),
       resolve({ extensions }),
@@ -86,6 +87,7 @@ function createCommonJSConfig(input, output) {
         entries: {
           './vanilla': 'valtio/vanilla',
           '../vanilla': 'valtio/vanilla',
+          '../index': 'valtio',
         },
       }),
       resolve({ extensions }),

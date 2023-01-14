@@ -1,5 +1,5 @@
-import { useSnapshot } from '../react'
 import { useLayoutEffect } from 'react'
+import { useSnapshot } from '../index'
 
 /**
  * useProxy
@@ -20,18 +20,20 @@ import { useLayoutEffect } from 'react'
  * @param proxy
  * @returns A new proxy which you can use in the render as well as in callbacks.
  */
-export const useProxy = <T extends object>(proxy: T) => {
-  const snapshot = useSnapshot(proxy)
+export function useProxy<T extends object>(proxy: T): T {
+  const snapshot = useSnapshot(proxy) as T
 
   let isRendering = true
 
   useLayoutEffect(() => {
+    // This is an intentional hack
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     isRendering = false
   })
 
-  return new Proxy<T>(proxy, {
-    get: function (target, prop) {
-      return isRendering ? snapshot[prop] : target[prop]
+  return new Proxy(proxy, {
+    get(target, prop) {
+      return isRendering ? snapshot[prop as keyof T] : target[prop as keyof T]
     },
   })
 }

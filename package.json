@@ -26,41 +26,14 @@
       "module": "./esm/index.js",
       "default": "./index.js"
     },
-    "./vanilla": {
+    "./*": {
       "import": {
-        "types": "./esm/vanilla.d.mts",
-        "default": "./esm/vanilla.mjs"
+        "types": "./esm/*.d.mts",
+        "default": "./esm/*.mjs"
       },
-      "types": "./vanilla.d.ts",
-      "module": "./esm/vanilla.js",
-      "default": "./vanilla.js"
-    },
-    "./utils": {
-      "import": {
-        "types": "./esm/utils.d.mts",
-        "default": "./esm/utils.mjs"
-      },
-      "types": "./utils.d.ts",
-      "module": "./esm/utils.js",
-      "default": "./utils.js"
-    },
-    "./macro": {
-      "import": {
-        "types": "./esm/macro.d.mts",
-        "default": "./esm/macro.mjs"
-      },
-      "types": "./macro.d.ts",
-      "module": "./esm/macro.js",
-      "default": "./macro.js"
-    },
-    "./macro/vite": {
-      "import": {
-        "types": "./esm/macro/vite.d.mts",
-        "default": "./esm/macro/vite.mjs"
-      },
-      "types": "./esm/macro/vite.d.ts",
-      "module": "./esm/macro/vite.js",
-      "default": "./macro/vite.js"
+      "types": "./*.d.ts",
+      "module": "./esm/*.js",
+      "default": "./*.js"
     }
   },
   "files": [
@@ -74,6 +47,7 @@
     "build:base": "rollup -c",
     "build:vanilla": "rollup -c --config-vanilla",
     "build:utils": "rollup -c --config-utils",
+    "build:react-utils": "rollup -c --config-react-utils",
     "build:macro": "rollup -c --config-macro",
     "build:macro-vite": "rollup -c --config-macro_vite",
     "postbuild": "yarn copy && yarn patch-macro-vite && yarn patch-ts3.4 && yarn patch-esm-ts",
@@ -92,7 +66,7 @@
     "patch-esm-ts": "node -e \"require('shelljs').find('dist/esm/**/*.d.ts').forEach(f=>require('fs').copyFileSync(f,f.replace(/\\.ts$/,'.mts')))\"; shx sed -i \"s/ from '(\\..*)';$/ from '\\$1.mjs';/\" 'dist/esm/**/*.d.mts'; shx sed -i \"s/^declare module '(\\..*)'/declare module '\\$1.mjs'/\" 'dist/esm/**/*.d.mts'"
   },
   "engines": {
-    "node": ">=12.7.0"
+    "node": ">=12.20.0"
   },
   "prettier": {
     "semi": false,
