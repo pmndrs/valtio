@@ -32,6 +32,6 @@ export const useProxy = <T extends object>(proxy: T) => {
   return new Proxy<T>(proxy, {
     get: function (target, prop) {
       return isRendering ? snapshot[prop] : target[prop]
-    }
+    },
   })
 }
