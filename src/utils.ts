@@ -1,2 +1,2 @@
-export * from './vanilla/utils'
-export * from './react/utils'
+export * from 'valtio/vanilla/utils'
+export * from 'valtio/react/utils'

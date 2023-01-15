@@ -1,4 +1,4 @@
-import { subscribe } from '../../vanilla'
+import { subscribe } from 'valtio/vanilla'
 
 /**
  * subscribeKey

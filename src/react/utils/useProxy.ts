@@ -1,5 +1,5 @@
 import { useLayoutEffect } from 'react'
-import { useSnapshot } from '../../react'
+import { useSnapshot } from 'valtio/react'
 
 /**
  * useProxy

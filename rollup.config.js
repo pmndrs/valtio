@@ -1,23 +1,14 @@
 const path = require('path')
-const alias = require('@rollup/plugin-alias')
 const babelPlugin = require('@rollup/plugin-babel')
 const resolve = require('@rollup/plugin-node-resolve')
 const replace = require('@rollup/plugin-replace')
+const terser = require('@rollup/plugin-terser')
 const typescript = require('@rollup/plugin-typescript')
 const { default: esbuild } = require('rollup-plugin-esbuild')
-const { terser } = require('rollup-plugin-terser')
 const createBabelConfig = require('./babel.config')
 
 const extensions = ['.js', '.ts', '.tsx']
 const { root } = path.parse(process.cwd())
-const entries = {
-  './vanilla': 'valtio/vanilla',
-  './react': 'valtio/react',
-  './vanilla/utils': 'valtio/vanilla/utils',
-  './react/utils': 'valtio/react/utils',
-  '../../vanilla': 'valtio/vanilla',
-  '../../react': 'valtio/react',
-}
 
 function external(id) {
   return !id.startsWith('.') && !id.startsWith(root)
@@ -63,7 +54,6 @@ function createESMConfig(input, output) {
     output: { file: output, format: 'esm' },
     external,
     plugins: [
-      alias({ entries }),
       resolve({ extensions }),
       replace({
         __DEV__: output.endsWith('.mjs')
@@ -85,7 +75,6 @@ function createCommonJSConfig(input, output) {
     output: { file: `${output}.js`, format: 'cjs' },
     external,
     plugins: [
-      alias({ entries }),
       resolve({ extensions }),
       replace({
         __DEV__: '(process.env.NODE_ENV!=="production")',
@@ -127,7 +116,6 @@ function createUMDConfig(input, output, env) {
     },
     external,
     plugins: [
-      alias({ entries }),
       resolve({ extensions }),
       replace({
         __DEV__: env !== 'production' ? 'true' : 'false',
@@ -148,16 +136,6 @@ function createSystemConfig(input, output, env) {
     },
     external,
     plugins: [
-      alias({
-        entries: {
-          './vanilla': 'valtio/vanilla',
-          './react': 'valtio/react',
-          './vanilla/utils': 'valtio/vanilla/utils',
-          './react/utils': 'valtio/react/utils',
-          '../../vanilla': 'valtio/vanilla',
-          '../../react': 'valtio/react',
-        },
-      }),
       resolve({ extensions }),
       replace({
         __DEV__: env !== 'production' ? 'true' : 'false',
