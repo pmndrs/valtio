@@ -258,6 +258,7 @@ Valtio is not tied to React, you can use it in vanilla-js.
 
 ```jsx
 import { proxy, subscribe, snapshot } from 'valtio/vanilla'
+// import { ... } from 'valtio/vanilla/utils'
 
 const state = proxy({ count: 0, text: 'hello' })
 
@@ -267,16 +268,19 @@ subscribe(state, () => {
 })
 ```
 
-#### `useProxy` macro
+#### `useProxy` util
 
-We have a convenient macro with
-[babel-plugin-macros](https://www.npmjs.com/package/babel-plugin-macros).
+While the separation of proxy state and its snapshot is important,
+it's confusing for beginners.
+We have a convenient util to improve developer experience.
 
 ```js
-import { useProxy } from 'valtio/macro'
+import { useProxy } from 'valtio/utils'
+
+const state = proxy({ count: 1 })
 
 const Component = () => {
-  useProxy(state)
+  const state = useProxy(state) // the local state variable is combined with proxy state and its snapshot
   return (
     <div>
       {state.count}
@@ -284,37 +288,6 @@ const Component = () => {
     </div>
   )
 }
-
-// the code above becomes the code below.
-
-import { useSnapshot } from 'valtio'
-
-const Component = () => {
-  const snap = useSnapshot(state)
-  return (
-    <div>
-      {snap.count}
-      <button onClick={() => ++state.count}>+1</button>
-    </div>
-  )
-}
-```
-
-##### vite
-
-```
-npm i --save-dev aslemammad-vite-plugin-macro babel-plugin-macros
-```
-
-And in your `vite.config.js`
-
-```js
-import { defineConfig } from 'vite'
-import macro from 'valtio/macro/vite'
-
-export default defineConfig({
-  plugins: [macro],
-})
 ```
 
 #### `derive` util
