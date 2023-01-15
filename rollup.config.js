@@ -58,8 +58,11 @@ function createESMConfig(input, output) {
       alias({
         entries: {
           './vanilla': 'valtio/vanilla',
-          '../vanilla': 'valtio/vanilla',
-          '../index': 'valtio',
+          './react': 'valtio/react',
+          './vanilla/utils': 'valtio/vanilla/utils',
+          './react/utils': 'valtio/react/utils',
+          '../../vanilla': 'valtio/vanilla',
+          '../../react': 'valtio/react',
         },
       }),
       resolve({ extensions }),
@@ -86,8 +89,11 @@ function createCommonJSConfig(input, output) {
       alias({
         entries: {
           './vanilla': 'valtio/vanilla',
-          '../vanilla': 'valtio/vanilla',
-          '../index': 'valtio',
+          './react': 'valtio/react',
+          './vanilla/utils': 'valtio/vanilla/utils',
+          './react/utils': 'valtio/react/utils',
+          '../../vanilla': 'valtio/vanilla',
+          '../../react': 'valtio/react',
         },
       }),
       resolve({ extensions }),
