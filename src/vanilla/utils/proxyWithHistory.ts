@@ -1,5 +1,5 @@
-import { proxy, ref, snapshot, subscribe } from '../vanilla'
-import type { INTERNAL_Snapshot as Snapshot } from '../vanilla'
+import { proxy, ref, snapshot, subscribe } from '../../vanilla'
+import type { INTERNAL_Snapshot as Snapshot } from '../../vanilla'
 
 type SnapshotOrUndefined<T> = Snapshot<T> | undefined
 type Snapshots<T> = Snapshot<T>[]

@@ -1,4 +1,4 @@
-import { proxy } from '../vanilla'
+import { proxy } from '../../vanilla'
 
 // properties that we don't want to expose to the end-user
 type InternalProxySet<T> = Set<T> & {

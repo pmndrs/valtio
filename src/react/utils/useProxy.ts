@@ -1,5 +1,5 @@
 import { useLayoutEffect } from 'react'
-import { useSnapshot } from '../index'
+import { useSnapshot } from '../../react'
 
 /**
  * useProxy

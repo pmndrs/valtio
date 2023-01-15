@@ -1,4 +1,4 @@
-import { proxy } from '../vanilla'
+import { proxy } from '../../vanilla'
 
 type KeyValRecord<K, V> = [key: K, value: V]
 
