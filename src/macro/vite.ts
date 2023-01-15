@@ -52,6 +52,9 @@ export const valtioMacro = defineMacro(`useProxy`)
   })
 
 export function provideValtioMacro() {
+  if (__DEV__) {
+    console.warn('[DEPRECATED] Use useProxy hook instead.')
+  }
   return defineMacroProvider({
     id: 'valtio/macro',
     exports: {
@@ -62,6 +65,9 @@ export function provideValtioMacro() {
   })
 }
 
+/**
+ * @deprecated Use useProxy hook instead.
+ */
 const macroPlugin = createMacroPlugin({}).use(provideValtioMacro())
 
 export default macroPlugin
