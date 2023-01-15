@@ -51,7 +51,7 @@ export function devtools<T extends object>(
   }
   const { enabled, name = '' } = options || {}
 
-  let extension: typeof window['__REDUX_DEVTOOLS_EXTENSION__'] | false
+  let extension: (typeof window)['__REDUX_DEVTOOLS_EXTENSION__'] | false
   try {
     extension = (enabled ?? __DEV__) && window.__REDUX_DEVTOOLS_EXTENSION__
   } catch {
