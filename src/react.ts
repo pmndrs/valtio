@@ -17,8 +17,8 @@ import {
 // See: https://github.com/pmndrs/valtio/issues/452
 // The following is a workaround until ESM is supported.
 import useSyncExternalStoreExports from 'use-sync-external-store/shim'
-import { snapshot, subscribe } from './vanilla'
-import type { INTERNAL_Snapshot as Snapshot } from './vanilla'
+import { snapshot, subscribe } from 'valtio/vanilla'
+import type { INTERNAL_Snapshot as Snapshot } from 'valtio/vanilla'
 
 const { use } = ReactExports
 const { useSyncExternalStore } = useSyncExternalStoreExports

@@ -1,5 +1,5 @@
-import { proxy, snapshot } from '../../vanilla'
-import type { INTERNAL_Snapshot as Snapshot } from '../../vanilla'
+import { proxy, snapshot } from 'valtio/vanilla'
+import type { INTERNAL_Snapshot as Snapshot } from 'valtio/vanilla'
 
 /**
  * proxyWithComputed
