@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { proxy, ref, useSnapshot } from 'valtio'
+import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
 
 it('should trigger re-render setting objects with ref wrapper', async () => {
   const obj = proxy({ nested: ref({ count: 0 }) })
@@ -83,4 +83,19 @@ it('should not trigger re-render when mutating object wrapped in ref', async () 
 
   fireEvent.click(getByText('button'))
   await findByText('count: 0')
+})
+
+it('should not update snapshot or notify subscription when mutating proxy wrapped in ref', async () => {
+  const obj = proxy({ nested: ref(proxy({ count: 0 })) })
+
+  const snap1 = snapshot(obj)
+  ++obj.nested.count
+  const snap2 = snapshot(obj)
+  expect(snap2).toBe(snap1)
+
+  const callback = jest.fn()
+  subscribe(obj, callback)
+  ++obj.nested.count
+  await Promise.resolve()
+  expect(callback).not.toBeCalled()
 })

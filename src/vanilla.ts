@@ -258,7 +258,8 @@ const buildProxyFunction = (
           if (!proxyStateMap.has(value) && canProxy(value)) {
             nextValue = proxy(value)
           }
-          const childProxyState = proxyStateMap.get(nextValue)
+          const childProxyState =
+            !refSet.has(nextValue) && proxyStateMap.get(nextValue)
           if (childProxyState) {
             addPropListener(prop, childProxyState)
           }
