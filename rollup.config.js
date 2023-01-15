@@ -107,19 +107,32 @@ function createCommonJSConfig(input, output) {
 }
 
 function createUMDConfig(input, output, env) {
-  const c = output.split('/').pop()
+  const c = output.replace(/^dist\/umd\//, '').split('/')
+  let name
+  if (c.length === 1) {
+    name = 'valtio'
+  } else if (c.length === 2) {
+    name = `valtio${c[1].slice(0, 1).toUpperCase()}${c[1].slice(1)}`
+  } else if (c.length === 3) {
+    name = `valtio${c[1].slice(0, 1).toUpperCase()}${c[1].slice(1)}${c[2]
+      .slice(0, 1)
+      .toUpperCase()}${c[2].slice(1)}`
+  } else {
+    throw new Error('unexpected output format: ' + output)
+  }
   return {
     input,
     output: {
       file: `${output}.${env}.js`,
       format: 'umd',
-      name:
-        c === 'index'
-          ? 'valtio'
-          : `valtio${c.slice(0, 1).toUpperCase()}${c.slice(1)}`,
+      name,
       globals: {
         react: 'React',
         'valtio/vanilla': 'valtioVanilla',
+        'valtio/utils': 'valtioUtils',
+        'valtio/react': 'valtioReact',
+        'valtio/vanilla/utils': 'valtioVanillaUtils',
+        'valtio/react/utils': 'valtioReactUtils',
       },
     },
     external,
@@ -127,7 +140,11 @@ function createUMDConfig(input, output, env) {
       alias({
         entries: {
           './vanilla': 'valtio/vanilla',
-          '../vanilla': 'valtio/vanilla',
+          './react': 'valtio/react',
+          './vanilla/utils': 'valtio/vanilla/utils',
+          './react/utils': 'valtio/react/utils',
+          '../../vanilla': 'valtio/vanilla',
+          '../../react': 'valtio/react',
         },
       }),
       resolve({ extensions }),
@@ -153,7 +170,11 @@ function createSystemConfig(input, output, env) {
       alias({
         entries: {
           './vanilla': 'valtio/vanilla',
-          '../vanilla': 'valtio/vanilla',
+          './react': 'valtio/react',
+          './vanilla/utils': 'valtio/vanilla/utils',
+          './react/utils': 'valtio/react/utils',
+          '../../vanilla': 'valtio/vanilla',
+          '../../react': 'valtio/react',
         },
       }),
       resolve({ extensions }),
