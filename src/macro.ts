@@ -6,6 +6,9 @@ import * as t from '@babel/types'
 import { MacroError, createMacro } from 'babel-plugin-macros'
 
 const macro = ({ references }: any) => {
+  if (__DEV__) {
+    console.warn('[DEPRECATED] Use useProxy hook instead.')
+  }
   references.useProxy?.forEach((path: NodePath) => {
     const hook = addNamed(path, 'useSnapshot', 'valtio')
     const proxy = (path.parentPath?.get('arguments.0') as any)?.node
@@ -39,6 +42,9 @@ const macro = ({ references }: any) => {
   })
 }
 
+/**
+ * @deprecated Use useProxy hook instead.
+ */
 export declare function useProxy<T extends object>(proxyObject: T): void
 
 export default createMacro(macro, { configName: 'valtio' })
