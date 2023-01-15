@@ -280,11 +280,11 @@ import { useProxy } from 'valtio/utils'
 const state = proxy({ count: 1 })
 
 const Component = () => {
-  const state = useProxy(state) // the local state variable is combined with proxy state and its snapshot
+  const combined = useProxy(state) // combined with proxy state and its snapshot
   return (
     <div>
-      {state.count}
-      <button onClick={() => ++state.count}>+1</button>
+      {combined.count}
+      <button onClick={() => ++combined.count}>+1</button>
     </div>
   )
 }
