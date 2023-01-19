@@ -232,7 +232,12 @@ const buildProxyFunction = (
       set(target: T, prop: string | symbol, value: any, receiver: object) {
         const hasPrevValue = Reflect.has(target, prop)
         const prevValue = Reflect.get(target, prop, receiver)
-        if (hasPrevValue && objectIs(prevValue, value)) {
+        if (
+          hasPrevValue &&
+          (objectIs(prevValue, value) ||
+            (proxyCache.has(value) &&
+              objectIs(prevValue, proxyCache.get(value))))
+        ) {
           return true
         }
         removePropListener(prop)
