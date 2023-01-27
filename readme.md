@@ -272,7 +272,7 @@ subscribe(state, () => {
 
 While the separation of proxy state and its snapshot is important,
 it's confusing for beginners.
-We have a convenient util to improve developer experience.
+We have a convenient util to improve developer experience. useProxy returns shallow proxy state and its snapshot, meaning you can only mutate on root level.
 
 ```js
 import { useProxy } from 'valtio/utils'
