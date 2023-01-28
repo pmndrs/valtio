@@ -1,0 +1,87 @@
+---
+title: 'How to easily access the state from anywhere in the application'
+---
+
+# How to easily access the state from anywhere in the application
+
+When working with large applications organizing code in separate files and directories is the go-to way and the Valtio **state** is no exception. In some ways you may want to put the state object in its own file. After being separated in its own file we need a way to access it easily from anywhere in our application.
+
+## Access the state using Path Aliases
+
+Imagine that the state is put in `/src/state.js` and you are working with a file in `/src/really/deep/nested/file/myfile.js` the importing of the state will be something like this:
+`import state from '../../../../state';` which can cause too much brain calculation specially if it is used in different places inside the application.
+
+A solution to that is using **Path Aliases** which maps path to a simpler string and the import will look like something similar to that throughout the whole application:
+
+`import { state } from '@state';`
+
+## Using JS Config and Babel Config
+
+1. Create the file `/src/state` and put the Valtio **state** into it:
+
+```js
+import { proxy, useSnapshot, subscribe } from 'valtio'
+const state = proxy({
+  foos: [],
+  bar: { ... },
+  boo: false
+})
+export { state, useSnapshot, subscribe }
+```
+
+2. Create the file `/jsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "@state/*": ["./state/*"],
+      "@mypath/*": ["./my/deep/path*"],
+      "@anotherpath/*": ["./my/another/deep/path*"]
+    }
+  },
+  "exclude": ["node_modules"]
+}
+```
+
+3. Add the **Module Resolver** plugin the plugins in your `babel.config.js`:
+
+```js
+module.exports = {
+  // ...
+  plugins: [
+    // The other existing plugins
+    [
+      'module-resolver',
+      {
+        root: ['./src'],
+        extensions: ['.js', '.jsx', '.json', '.svg', '.png'],
+        alias: {
+          '@state': './src/state',
+        },
+      },
+    ],
+    // ...
+  ],
+}
+```
+
+4. Install the the Babel Plugin Module Resolver:
+
+- Using NPM: `npm install babel-plugin-module-resolver`
+- Using Yarn: `yarn add babel-plugin-module-resolver`
+
+5. Restart the application server
+   <br />
+   That's it you will now be able to do `import {
+     (state, useSnapshot, subscribe)
+   } from '@state';` from anywhere inside your application.
+
+## Using a third party library
+
+You can use a third party library to create aliases and achieve the same result.
+
+Example of libraries:
+
+- [Module Alias](https://www.npmjs.com/package/module-alias)
