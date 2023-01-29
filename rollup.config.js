@@ -58,12 +58,12 @@ function createESMConfig(input, output) {
       replace({
         ...(output.endsWith('.js')
           ? {
-              'import.meta?.env.MODE': 'process.env.NODE_ENV',
+              'import.meta.env?.MODE': 'process.env.NODE_ENV',
             }
           : {}),
         // a workround for #410
         'use-sync-external-store/shim': 'use-sync-external-store/shim/index.js',
-        delimiters: ['\\b', '\\b(?!(\\.|/))'],
+        delimiters: ['', ''],
         preventAssignment: true,
       }),
       getEsbuild('node12'),
@@ -79,7 +79,8 @@ function createCommonJSConfig(input, output) {
     plugins: [
       resolve({ extensions }),
       replace({
-        'import.meta?.env.MODE': 'process.env.NODE_ENV',
+        'import.meta.env?.MODE': 'process.env.NODE_ENV',
+        delimiters: ['', ''],
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
@@ -120,7 +121,8 @@ function createUMDConfig(input, output, env) {
     plugins: [
       resolve({ extensions }),
       replace({
-        'import.meta?.env.MODE': `"${env}"`,
+        'import.meta.env?.MODE': `"${env}"`,
+        delimiters: ['', ''],
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
@@ -140,7 +142,8 @@ function createSystemConfig(input, output, env) {
     plugins: [
       resolve({ extensions }),
       replace({
-        'import.meta?.env.MODE': `"${env}"`,
+        'import.meta.env?.MODE': `"${env}"`,
+        delimiters: ['', ''],
         preventAssignment: true,
       }),
       getEsbuild('node12', env),
