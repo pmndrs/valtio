@@ -9,7 +9,11 @@ description: 'watch for changes.'
 
 #### subscription via a getter
 
-This utility provides a specialized from of subscription. Proxy objects are tracked with a `get` function passed to the callback. Notice the callback will run eagerly as soon as a proxy is tracked, even if not yet mutated.
+This utility supports subscribing to multiple proxy objects (unlike `subscribe` which listens to only a single proxy). Proxy objects are tracked with a `sub` function passed to the callback.
+
+The callback will rerun anytime a `sub`-d proxy (or child proxy of that proxy) has any of its keys mutated, regardless of the keys accessed within the `callback`'s code (i.e. `watch` does not implement the usage tracking of `useSnapshot`, and the return value of `sub` is the same proxy passed in, and not a snapshot).
+
+Also note the callback will run once immediately when `watch` is called, even if not yet mutated, to establish the initial proxy subscriptions.
 
 ```js
 import { proxy } from 'valtio'
@@ -18,9 +22,12 @@ import { watch } from 'valtio/utils'
 const userState = proxy({ user: { name: 'Juuso' } })
 const sessionState = proxy({ expired: false })
 
-watch((get) => {
-  const expired = get(sessionState).expired
-  const name = get(userState).user.name
+watch((sub) => {
+  // Call sub to subscribe
+  sub(sessionState);
+  const expired = sessionState.expired
+  // Or call it inline
+  const name = sub(userState).user.name
   console.log(`${name}'s session is ${expired ? 'expired' : 'valid'}`)
 })
 // 'Juuso's session is valid'
@@ -33,9 +40,9 @@ sessionState.expired = true
 You may return a callback function that runs after watch has evaluated its dependencies.
 
 ```js
-watch((get) => {
-  const expired = get(sessionState).expired
-  const name = get(userState).user.name
+watch((sub) => {
+  const expired = sub(sessionState).expired
+  const name = sub(userState).user.name
   console.log(`${name}'s session is ${expired ? 'expired' : 'valid'}`)
   return () => {
     if (expired) {
