@@ -121,7 +121,7 @@ function createUMDConfig(input, output, env) {
     plugins: [
       resolve({ extensions }),
       replace({
-        'import.meta.env?.MODE': `"${env}"`,
+        'import.meta.env?.MODE': JSON.stringify(env),
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
@@ -142,7 +142,7 @@ function createSystemConfig(input, output, env) {
     plugins: [
       resolve({ extensions }),
       replace({
-        'import.meta.env?.MODE': `"${env}"`,
+        'import.meta.env?.MODE': JSON.stringify(env),
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
