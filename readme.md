@@ -280,11 +280,13 @@ import { useProxy } from 'valtio/utils'
 const state = proxy({ count: 1 })
 
 const Component = () => {
-  const combined = useProxy(state) // combined with proxy state and its snapshot
+  // useProxy returns a special proxy that can be used both in render and callbacks
+  // The special proxy has to be used directly in a function scope. You can't destructure it outside the scope.
+  const $state = useProxy(state)
   return (
     <div>
-      {combined.count}
-      <button onClick={() => ++combined.count}>+1</button>
+      {$state.count}
+      <button onClick={() => ++$state.count}>+1</button>
     </div>
   )
 }
