@@ -107,7 +107,7 @@
       ]
     },
     "globals": {
-      "__DEV__": true
+      "import.meta.env.NODE": "development"
     },
     "moduleNameMapper": {
       "^valtio$": "<rootDir>/src/index.ts",

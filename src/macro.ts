@@ -6,7 +6,7 @@ import * as t from '@babel/types'
 import { MacroError, createMacro } from 'babel-plugin-macros'
 
 const macro = ({ references }: any) => {
-  if (__DEV__) {
+  if (import.meta.env?.MODE !== 'production') {
     console.warn('[DEPRECATED] Use useProxy hook instead.')
   }
   references.useProxy?.forEach((path: NodePath) => {
