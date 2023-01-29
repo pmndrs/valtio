@@ -1,1 +1,1 @@
-export { useProxy } from './utils/useProxy'
+export { useProxy } from './utils/useProxy.ts'
