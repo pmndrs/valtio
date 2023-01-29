@@ -24,7 +24,7 @@ const sessionState = proxy({ expired: false })
 
 watch((sub) => {
   // Call sub to subscribe
-  sub(sessionState);
+  sub(sessionState)
   const expired = sessionState.expired
   // Or call it inline
   const name = sub(userState).user.name
