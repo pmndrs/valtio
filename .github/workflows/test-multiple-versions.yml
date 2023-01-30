@@ -51,7 +51,7 @@ jobs:
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
           sed -i~ '1s/^/import React from "react";/' tests/*.tsx
-          sed -i~ 's/import\\.meta\\.env\\?\\.MODE/"development"/' src/*.ts src/*/*.ts src/*/*/*.ts
+          sed -i~ 's/import\.meta\.env\\?\.MODE/"development"/' src/*.ts src/*/*.ts src/*/*/*.ts
           sed -i~ 's/"test:ci":.*,$/"test:ci": "jest",/' package.json
           sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' package.json
           sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' tsconfig.json
