@@ -58,10 +58,10 @@
     "eslint": "eslint --fix '*.{js,json}' '{src,tests}/**/*.{ts,tsx}'",
     "eslint:ci": "eslint '*.{js,json}' '{src,tests}/**/*.{ts,tsx}'",
     "pretest": "tsc --noEmit",
-    "test": "jest",
-    "test:ci": "jest",
-    "test:dev": "jest --watch --no-coverage",
-    "test:coverage:watch": "jest --watch",
+    "test": "vitest",
+    "test:ci": "vitest",
+    "test:dev": "vitest --no-coverage",
+    "test:coverage:watch": "jest --coverage --watch",
     "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/{src,tests} && downlevel-dts dist dist/ts3.4 && shx cp package.json readme.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined; this.jest=undefined;\"",
     "patch-macro-vite": "shx cp dist/esm/macro/vite.d.ts dist/macro/ && shx cp dist/ts3.4/esm/macro/vite.d.ts dist/ts3.4/macro/",
     "patch-ts3.4": "node -e \"require('shelljs').find('dist/ts3.4/**/*.d.ts').forEach(f=>require('fs').appendFileSync(f,'declare type Awaited<T> = T extends Promise<infer V> ? V : T;'))\"; shx sed -i 's/^declare type Snapshot<T> =/declare type Snapshot<T> = T extends AnyFunction ? T : T extends AsRef ? T : T extends Promise<any> ? Awaited<T> : { readonly [K in keyof T]: Snapshot2<T[K]> }; type Snapshot2<T> = T extends AnyFunction ? T : T extends AsRef ? T : T extends Promise<any> ? Awaited<T> : { readonly [K in keyof T]: T[K] };declare type _Snapshot<T> =/' 'dist/ts3.4/**/*.d.ts'",
@@ -98,38 +98,6 @@
     "url": "https://github.com/pmndrs/valtio/issues"
   },
   "homepage": "https://github.com/pmndrs/valtio",
-  "jest": {
-    "rootDir": ".",
-    "testEnvironment": "jsdom",
-    "transform": {
-      "^.+\\.(t|j)sx?$": [
-        "@swc/jest"
-      ]
-    },
-    "globals": {
-      "__DEV__": true
-    },
-    "moduleNameMapper": {
-      "^valtio$": "<rootDir>/src/index.ts",
-      "^valtio/(.*)$": "<rootDir>/src/$1.ts"
-    },
-    "modulePathIgnorePatterns": [
-      "dist"
-    ],
-    "testRegex": "test.(js|ts|tsx)$",
-    "coverageDirectory": "./coverage/",
-    "collectCoverage": true,
-    "coverageReporters": [
-      "json",
-      "html",
-      "text",
-      "text-summary"
-    ],
-    "collectCoverageFrom": [
-      "src/**/*.{js,ts,tsx}",
-      "tests/**/*.{js,ts,tsx}"
-    ]
-  },
   "dependencies": {
     "proxy-compare": "2.4.0",
     "use-sync-external-store": "1.2.0"
@@ -185,7 +153,8 @@
     "shx": "^0.3.4",
     "tslib": "^2.4.1",
     "typescript": "^4.9.4",
-    "vite": "^4.0.4"
+    "vite": "^4.0.4",
+    "vitest": "^0.28.3"
   },
   "peerDependencies": {
     "react": ">=16.8"
