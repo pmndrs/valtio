@@ -1,7 +1,7 @@
 import plugin from 'babel-plugin-macros'
 import BabelPluginTester from 'babel-plugin-tester'
 
-const pluginTester = (BabelPluginTester as any).default
+const pluginTester = (BabelPluginTester as any).default || BabelPluginTester
 
 pluginTester({
   pluginName: 'valtio/macro',
