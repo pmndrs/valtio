@@ -1,0 +1,36 @@
+---
+title: 'How to reset state'
+---
+
+# How to reset state
+
+In some cases, you might want to reset the state in your proxy instance to its initial values. For example, you are storing form values or some other ephemeral UI state that you want to reset. It turns out this is quite simple to do!
+
+```javascript
+const initialObj = {
+  text: 'hello',
+  arr: [1, 2, 3],
+  obj: { a: 'b' },
+}
+
+const state = proxy(initialObj)
+
+const reset = () => {
+  const resetObj = _.cloneDeep(initialObj)
+  Object.keys(resetObj).forEach((key) => {
+    state[key] = resetObj[key]
+  })
+}
+```
+
+Note that we're using the [cloneDeep](https://lodash.com/docs/4.17.15#cloneDeep) utility function from `lodash` to copy the initial object in the `reset` function. This allows Valtio to update correctly when the value of a key is an object. If you prefer `underscore` or some similar JS utility library, feel free to use that instead.
+
+Alternatively, you can store the object in another object, which make the reset logic easier:
+
+```js
+const state = proxy({ obj: initialObj })
+
+const reset = () => {
+  state.obj = _.cloneDeep(initialObj)
+}
+```

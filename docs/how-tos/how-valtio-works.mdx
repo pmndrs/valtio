@@ -1,0 +1,119 @@
+---
+title: 'How valtio works'
+---
+
+# How valtio works
+
+Ref: https://github.com/pmndrs/valtio/issues/171
+
+This is to describe the high level abstraction of valtio.
+
+## Articles
+
+- [How Valtio Proxy State Works (Vanilla Part)](https://blog.axlight.com/posts/how-valtio-proxy-state-works-vanilla-part/)
+- [How Valtio Proxy State Works (React Part)](https://blog.axlight.com/posts/how-valtio-proxy-state-works-react-part/)
+
+## By examples
+
+### `proxy()` by examples
+
+```js
+import { proxy, subscribe } from 'valtio'
+
+const s1 = proxy({})
+subscribe(s1, () => { console.log('s1 is changed!') })
+s1.a = 1 // s1 is changed!
+++s1.a // s1 is changed!
+delete s1.a // s1 is changed!
+s1.b = 2 // s1 is changed!
+s1.b = 2 // (not changed)
+s1.obj = {} // s1 is changed!
+s1.obj.c = 3 // s1 is changed!
+const s2 = s1.obj
+subscribe(s2 () => { console.log('s2 is changed!') })
+s1.obj.d = 4 // s1 is changed! and s2 is changed!
+s2.d = 5 // s1 is changed! and s2 is changed!
+const s3 = proxy({})
+subscribe(s3 () => { console.log('s3 is changed!') })
+s1.o = s3
+s3.p = 'hello' // s1 is changed! and s3 is changed!
+s2.q = s3
+s3.p = 'hi' // s1 is changed! s2 is changed! and s3 is changed!
+s1.x = s1
+s1.a += 1 // s1 is changed!
+```
+
+### `snapshot()` by examples
+
+```js
+import { proxy, snapshot } from 'valtio'
+
+const p = proxy({})
+const s1 = snapshot(p) // is {} but not wrapped by a proxy
+const s2 = snapshot(p)
+s1 === s2 // is true because p wasn't changed
+p.a = 1 // mutate the proxy
+const s3 = snapshot(p) // is { a: 1 }
+p.a = 1 // mutation bails out and proxy is not updated
+const s4 = snapshot(p)
+s3 === s4 // is still true
+p.a = 2 // mutate it
+const s5 = snapshot(p) // is { a: 2 }
+p.a = 1 // mutate it back
+const s6 = snapshot(p) // creates a new snapshot
+s3 !== s6 // is true (different snapshots, even though they are deep equal)
+p.obj = { b: 2 } // attaching a new object, which will be wrapped by a proxy
+const s7 = snapshot(p) // is { a: 1, obj: { b: 2 } }
+p.a = 2 // mutating p
+const s8 = snapshot(p) // is { a: 2, obj: { b: 2 } }
+s7 !== s8 // is true because a is different
+s7.obj === s8.obj // is true because obj is not changed
+```
+
+### `useSnapshot()` by examples
+
+## Unorganized Notes
+
+### two kinds of proxies
+
+valtio has two kinds of proxies, for write and read. We intentionally separate them for hooks and concurrent react.
+
+`proxy()` creates a proxy object to detect mutation, "proxy for write"
+`snapshot()` creates an immutable object from the proxy object
+`useSnapshot()` wraps the snapshot object again with another proxy (with `proxy-compare`) to detect property access, "proxy for read"
+
+### snapshot creation is optimized
+
+```js
+const state = proxy({ a: { aa: 1 }, b: { bb: 2 } })
+const snap1 = snapshot(state)
+console.log(snap1) // ---> { a: { aa: 1 }, b: { bb: 2 } }
+++state.a.aa
+const snap2 = snapshot(state)
+console.log(snap2) // ---> { a: { aa: 2 }, b: { bb: 2 } }
+snap1.b === snap2.b // this is `true`, it doesn't create a new snapshot because no properties are changed.
+```
+
+### Some notes about valtio implementation in deep
+
+valtio's proxy has only one goal: create an immutable snapshot object
+
+some design principles:
+
+1. snapshot is created on demand
+2. changes are tracked only with version number
+3. subscription is used for notifying update (version)
+4. version number is hidden as implementation detail
+5. proxies are basically used only for version and subscription
+6. snapshot creation is optimized with version number
+
+some notes about the implementation:
+
+1. proxy can be nested (created at the initialization)
+2. proxy can have circular structure (globalVersion to detect it)
+
+some notes about promise handling:
+
+1. proxy can have a promise but does nothing
+2. when creating a snapshot, it will store the resolved value
+3. if it's not resolved, a special object will throw a promise/error

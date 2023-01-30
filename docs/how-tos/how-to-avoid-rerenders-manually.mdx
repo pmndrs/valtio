@@ -1,0 +1,68 @@
+---
+title: 'How to avoid rerenders manually'
+---
+
+# How to avoid rerenders manually
+
+## `useSnapshot` optimizes re-renders automatically
+
+This is the basic usage.
+
+```jsx
+const Component = () => {
+  const { count } = useSnapshot(state) // this is reactive
+  return <>{count}</>
+}
+```
+
+## Reading state is valid but not recommended for general use cases
+
+```jsx
+const Component = () => {
+  const { count } = state // this is not reactive
+  return <>{count}</>
+}
+```
+
+This will not trigger re-render, but it doesn't follow the react rule like with any other global variables.
+
+## Subscribe and set local state conditionally
+
+```jsx
+const Component = () => {
+  const [count, setCount] = useState(state.count)
+  useEffect(
+    () =>
+      subscribe(state, () => {
+        if (state.count % 2 === 0) {
+          // conditionally update local state
+          setCount(state.count)
+        }
+      }),
+    []
+  )
+  return <>{count}</>
+}
+```
+
+This should work mostly.
+
+Theoretically, state can be changed before the subscription. A fix would be the following.
+
+```jsx
+const Component = () => {
+  const [count, setCount] = useState(state.count)
+  useEffect(() => {
+    const callback = () => {
+      if (state.count % 2 === 0) {
+        // conditionally update local state
+        setCount(state.count)
+      }
+    }
+    const unsubscribe = subscribe(state, callback)
+    callback()
+    return unsubscribe
+  }), [])
+  return <>{count}</>
+}
+```

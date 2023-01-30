@@ -1,0 +1,96 @@
+---
+title: 'How to organize actions'
+---
+
+# How to organize actions
+
+Valtio is unopinionated about organizing actions.
+Here's some recipes to show various patterns are possible.
+
+## Action functions defined in module
+
+**_Note_ This way is preferred as it is better for code splitting.**
+
+```js
+import { proxy } from 'valtio'
+
+export const state = proxy({
+  count: 0,
+  name: 'foo',
+})
+
+export const inc = () => {
+  ++state.count
+}
+
+export const setName = (name) => {
+  state.name = name
+}
+```
+
+## Action object defined in module
+
+```js
+import { proxy } from 'valtio'
+
+export const state = proxy({
+  count: 0,
+  name: 'foo',
+})
+
+export const actions = {
+  inc: () => {
+    ++state.count
+  },
+  setName: (name) => {
+    state.name = name
+  },
+}
+```
+
+## Action methods defined in state
+
+```js
+export const state = proxy({
+  count: 0,
+  name: 'foo',
+  inc: () => {
+    ++state.count
+  },
+  setName: (name) => {
+    state.name = name
+  },
+})
+```
+
+## Action methods using `this`
+
+```js
+export const state = proxy({
+  count: 0,
+  name: 'foo',
+  inc() {
+    ++this.count
+  },
+  setName(name) {
+    this.name = name
+  },
+})
+```
+
+## Using class
+
+```js
+class State {
+  count = 0
+  name = 'foo'
+  inc() {
+    ++this.count
+  }
+  setName(name) {
+    this.name = name
+  }
+}
+
+export const state = proxy(new State())
+```

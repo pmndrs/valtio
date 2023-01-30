@@ -1,0 +1,142 @@
+---
+title: 'Some gotchas'
+---
+
+# Some gotchas
+
+## `useSnapshot(state)` without property access will always trigger re-render
+
+https://github.com/pmndrs/valtio/issues/209#issuecomment-896859395
+
+Suppose we have this state (or store).
+
+```js
+const state = proxy({
+  obj: {
+    count: 0,
+    text: 'hello',
+  },
+})
+```
+
+If using the snapshot with accessing count,
+
+```js
+const snap = useSnapshot(state)
+snap.obj.count
+```
+
+it will re-render only if `count` changes.
+
+If the property access is obj,
+
+```js
+const snap = useSnapshot(state)
+snap.obj
+```
+
+then, it will re-render if `obj` changes. This includes `count` changes and `text` changes.
+
+Now, we can subscribe to the portion of the state.
+
+```js
+const snapObj = useSnapshot(state.obj)
+snapObj
+```
+
+This is technically same as the previous one. It doesn't touch the property of `snapObj`, so it will re-render if `obj` changes.
+
+In summary, if a snapshot object (nested or not) is not accessed with any properties, it assumes the entire object is accessed, so any change inside the object will trigger re-render.
+
+## Using `React.memo` with object props may result in unexpected behavior
+
+The `snap` variable returned by `useSnapshot(state)` is tracked for render optimization.
+If you pass the `snap` or some objects in `snap` to a component with `React.memo`,
+it may not work as expected because `React.memo` can skip touching object properties.
+
+Side note: [react-tracked](https://react-tracked.js.org) has a special `memo` exported as a workaround.
+
+We have some options:
+
+a. Do not use `React.memo`.
+
+b. Do not pass objects to components with `React.memo` (pass primitive values instead).
+
+c. Pass in the proxy of that element, and then `useSnapshot` on that proxy.
+
+### Example of (b)
+
+```jsx
+const ChildComponent = React.memo(
+  ({
+    title, // string or any primitive values are fine.
+    description, // string or any primitive values are fine.
+    // obj, // objects should be avoided.
+  }) => (
+    <div>
+      {title} - {description}
+    </div>
+  )
+)
+
+const ParentComponent = () => {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      <ChildComponent
+        title={snap.obj.title}
+        description={snap.obj.description}
+      />
+    </div>
+  )
+}
+```
+
+### Example of (c)
+
+```jsx
+const state = proxy({
+  objects: [
+    { id: 1, label: 'foo' },
+    { id: 2, label: 'bar' },
+  ],
+})
+
+const ObjectList = React.memo(() => {
+  const stateSnap = useSnapshot(state)
+
+  return stateSnap.objects.map((object, index) => (
+    <Object key={object.id} objectProxy={state.objects[index]} />
+  ))
+})
+
+const Object = React.memo(({ objectProxy }) => {
+  const objectSnap = useSnapshot(objectProxy)
+
+  return objectSnap.bar
+})
+```
+
+## When to use `state` and when to use `snap` in functional components
+
+- snap should be used in render function, every other cases state.
+- callback functions are not in the render body and therefore state must be used.
+
+```javascript
+const Component = () => {
+  // this is in render body
+  const handleClick = () => {
+    // this is NOT in render body
+  }
+  return <button onClick={handleClick}>button</button>
+}
+```
+
+- deps in useEffect should be used extracting primitive values from snap. For example: `const { num, string, bool } = snap.watchObj`.
+- changing a state value based on other state values (without involving values like props in a component), should preferably done outside react.
+
+```javascript
+subscribe(state.subscribeData, async () => {
+  state.results = await load(state.someData)
+})
+```

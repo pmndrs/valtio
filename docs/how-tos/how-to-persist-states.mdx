@@ -1,0 +1,26 @@
+---
+title: 'How to persist states'
+---
+
+# How to persist states
+
+## persist with localStorage
+
+If your state is JSON serializable, it should be pretty straightforward.
+
+```js
+const state = proxy(
+  JSON.parse(localStorage.getItem('foo')) || {
+    count: 0,
+    text: 'hello',
+  }
+)
+
+subscribe(state, () => {
+  localStorage.setItem('foo', JSON.stringify(state))
+})
+```
+
+If you have non serializable values, attach them after deserialization and exclude them for serialization.
+
+**_[valtio-persist](https://github.com/Noitidart/valtio-persist) is a library that can help with this._**
