@@ -52,7 +52,6 @@ jobs:
         run: |
           sed -i~ '1s/^/import React from "react";/' tests/*.tsx
           sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' package.json
-          sed -i~ 's/automatic/classic/' .swcrc
       - name: Test ${{ matrix.react }}
         run: |
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
