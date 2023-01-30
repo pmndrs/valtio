@@ -22,12 +22,12 @@ import { watch } from 'valtio/utils'
 const userState = proxy({ user: { name: 'Juuso' } })
 const sessionState = proxy({ expired: false })
 
-watch((add) => {
-  // add sessionState to this callback's watched proxies
-  add(sessionState)
+watch((get) => {
+  // `get` adds `sessionState` to this callback's watched proxies
+  get(sessionState)
   const expired = sessionState.expired
   // Or call it inline
-  const name = add(userState).user.name
+  const name = get(userState).user.name
   console.log(`${name}'s session is ${expired ? 'expired' : 'valid'}`)
 })
 // 'Juuso's session is valid'
@@ -43,9 +43,9 @@ You may return a cleanup function that runs both:
 - When the `watch` itself is stopped (by calling the cleanup function returned by `watch`)
 
 ```js
-watch((add) => {
-  const expired = add(sessionState).expired
-  const name = add(userState).user.name
+watch((get) => {
+  const expired = get(sessionState).expired
+  const name = get(userState).user.name
   console.log(`${name}'s session is ${expired ? 'expired' : 'valid'}`)
   return () => {
     if (expired) {
