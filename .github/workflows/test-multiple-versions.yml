@@ -52,9 +52,9 @@ jobs:
         run: |
           sed -i~ '1s/^/import React from "react";/' tests/*.tsx
           sed -i~ "s/import \({.*}\) from 'react'/const \1 = React/" tests/*.tsx
+          sed -i~ 's/"test:ci":.*,$/"test:ci": "jest",/' package.json
           sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' package.json
           sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' tsconfig.json
-          cat tests/derive.test.tsx
       - name: Test ${{ matrix.react }}
         run: |
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
