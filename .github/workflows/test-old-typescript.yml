@@ -56,5 +56,4 @@ jobs:
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
           rm -r node_modules/@types/jsdom node_modules/parse5 node_modules/@types/babel__core/node_modules
-          sed -i~ "s/^import type /import /" node_modules/@jest/globals/build/*
           yarn tsc --noEmit
