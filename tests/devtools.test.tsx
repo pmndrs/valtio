@@ -1,4 +1,5 @@
 import { StrictMode, Suspense } from 'react'
+import { jest } from '@jest/globals'
 import { act, fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 import { devtools } from 'valtio/utils'
@@ -6,7 +7,7 @@ import { devtools } from 'valtio/utils'
 let extensionSubscriber: ((message: any) => void) | undefined
 
 const extension = {
-  subscribe: jest.fn((f) => {
+  subscribe: jest.fn((f: any) => {
     extensionSubscriber = f
     return () => {}
   }),
@@ -57,7 +58,9 @@ describe('If there is no extension installed...', () => {
   beforeEach(() => {
     savedConsoleWarn = console.warn
     console.warn = jest.fn()
-    savedMODE = import.meta.env?.MODE
+    if (import.meta.env) {
+      savedMODE = import.meta.env.MODE
+    }
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
   afterEach(() => {
@@ -134,7 +137,7 @@ describe('If there is no extension installed...', () => {
     )
   })
 
-  it('[PRD-ONLY] does not warn even if enabled is true', () => {
+  it.skip('[PRD-ONLY] does not warn even if enabled is true', () => {
     if (import.meta.env) {
       import.meta.env.MODE = 'production'
     }

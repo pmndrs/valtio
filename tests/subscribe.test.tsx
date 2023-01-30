@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals'
 import { proxy, ref, subscribe } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 

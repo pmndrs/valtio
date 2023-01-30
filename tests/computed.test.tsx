@@ -1,4 +1,5 @@
 import { StrictMode, Suspense } from 'react'
+import { jest } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
 import { memoize } from 'proxy-memoize'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
@@ -6,7 +7,7 @@ import { addComputed, proxyWithComputed, subscribeKey } from 'valtio/utils'
 
 const consoleWarn = console.warn
 beforeEach(() => {
-  console.warn = jest.fn((message) => {
+  console.warn = jest.fn((message: any) => {
     if (message.startsWith('addComputed is deprecated.')) {
       return
     }
@@ -24,7 +25,7 @@ const sleep = (ms: number) =>
 
 describe('proxyWithComputed', () => {
   it('simple computed getters', async () => {
-    const computeDouble = jest.fn((x) => x * 2)
+    const computeDouble = jest.fn((x: number) => x * 2)
     const state = proxyWithComputed(
       {
         text: '',
@@ -56,7 +57,7 @@ describe('proxyWithComputed', () => {
   })
 
   it('computed getters and setters', async () => {
-    const computeDouble = jest.fn((x) => x * 2)
+    const computeDouble = jest.fn((x: number) => x * 2)
     const state = proxyWithComputed(
       {
         text: '',
@@ -170,7 +171,7 @@ describe('proxyWithComputed', () => {
 
 describe('DEPRECATED addComputed', () => {
   it('simple addComputed', async () => {
-    const computeDouble = jest.fn((x) => x * 2)
+    const computeDouble = jest.fn((x: number) => x * 2)
     const state = proxy({
       text: '',
       count: 0,
@@ -240,7 +241,7 @@ describe('DEPRECATED addComputed', () => {
   })
 
   it('nested emulation with addComputed', async () => {
-    const computeDouble = jest.fn((x) => x * 2)
+    const computeDouble = jest.fn((x: number) => x * 2)
     const state = proxy({ text: '', math: { count: 0 } })
     addComputed(
       state,
