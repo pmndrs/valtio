@@ -54,20 +54,13 @@ it('connects to the extension by initialiing', () => {
 
 describe('If there is no extension installed...', () => {
   let savedConsoleWarn: any
-  let savedMODE: string | undefined
   beforeEach(() => {
     savedConsoleWarn = console.warn
     console.warn = jest.fn()
-    if (import.meta.env) {
-      savedMODE = import.meta.env.MODE
-    }
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
   afterEach(() => {
     console.warn = savedConsoleWarn
-    if (import.meta.env && savedMODE) {
-      import.meta.env.MODE = savedMODE
-    }
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
   })
 
@@ -113,9 +106,6 @@ describe('If there is no extension installed...', () => {
   })
 
   it('[DEV-ONLY] warns if enabled is true', () => {
-    if (import.meta.env) {
-      import.meta.env.MODE = 'development'
-    }
     const obj = proxy({ count: 0 })
     devtools(obj, { enabled: true })
     const Counter = () => {
@@ -138,9 +128,6 @@ describe('If there is no extension installed...', () => {
   })
 
   it.skip('[PRD-ONLY] does not warn even if enabled is true', () => {
-    if (import.meta.env) {
-      import.meta.env.MODE = 'production'
-    }
     const obj = proxy({ count: 0 })
     devtools(obj, { enabled: true })
     const Counter = () => {
