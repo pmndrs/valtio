@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
@@ -6,16 +7,16 @@ import { devtools } from 'valtio/utils'
 let extensionSubscriber: ((message: any) => void) | undefined
 
 const extension = {
-  subscribe: jest.fn((f) => {
+  subscribe: vi.fn((f) => {
     extensionSubscriber = f
     return () => {}
   }),
-  unsubscribe: jest.fn(),
-  send: jest.fn(),
-  init: jest.fn(),
-  error: jest.fn(),
+  unsubscribe: vi.fn(),
+  send: vi.fn(),
+  init: vi.fn(),
+  error: vi.fn(),
 }
-const extensionConnector = { connect: jest.fn(() => extension) }
+const extensionConnector = { connect: vi.fn(() => extension) }
 ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
 
 beforeEach(() => {
@@ -56,7 +57,7 @@ describe('If there is no extension installed...', () => {
   let savedDEV: boolean
   beforeEach(() => {
     savedConsoleWarn = console.warn
-    console.warn = jest.fn()
+    console.warn = vi.fn()
     savedDEV = __DEV__
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })

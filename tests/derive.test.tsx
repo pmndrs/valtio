@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
@@ -9,7 +10,7 @@ const sleep = (ms: number) =>
   })
 
 it('basic derive', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = vi.fn((x) => x * 2)
   const state = proxy({
     text: '',
     count: 0,
@@ -18,7 +19,7 @@ it('basic derive', async () => {
     doubled: (get) => computeDouble(get(state).count),
   })
 
-  const callback = jest.fn()
+  const callback = vi.fn()
   subscribe(derived, callback)
 
   expect(snapshot(derived)).toMatchObject({ doubled: 0 })
@@ -41,7 +42,7 @@ it('basic derive', async () => {
 })
 
 it('derive another proxy', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = vi.fn((x) => x * 2)
   const state = proxy({
     text: '',
     count: 0,
@@ -56,7 +57,7 @@ it('derive another proxy', async () => {
     }
   )
 
-  const callback = jest.fn()
+  const callback = vi.fn()
   subscribe(anotherState, callback)
 
   expect(snapshot(anotherState)).toMatchObject({ doubled: 0 })
@@ -79,7 +80,7 @@ it('derive another proxy', async () => {
 })
 
 it('derive with self', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = vi.fn((x) => x * 2)
   const state = proxy({
     text: '',
     count: 0,
@@ -93,7 +94,7 @@ it('derive with self', async () => {
     }
   )
 
-  const callback = jest.fn()
+  const callback = vi.fn()
   subscribe(state, callback)
 
   expect(snapshot(state)).toMatchObject({ text: '', count: 0, doubled: 0 })
@@ -116,14 +117,14 @@ it('derive with self', async () => {
 })
 
 it('derive with two dependencies', async () => {
-  const computeSum = jest.fn((x, y) => x + y)
+  const computeSum = vi.fn((x, y) => x + y)
   const state1 = proxy({ count: 1 })
   const state2 = proxy({ count: 10 })
   const derived = derive({
     sum: (get) => computeSum(get(state1).count, get(state2).count),
   })
 
-  const callback = jest.fn()
+  const callback = vi.fn()
   subscribe(derived, callback)
 
   expect(snapshot(derived)).toMatchObject({ sum: 11 })
@@ -189,7 +190,7 @@ it('async derive', async () => {
 })
 
 it('nested emulation with derive', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = vi.fn((x) => x * 2)
   const state = proxy({ text: '', math: { count: 0 } })
   derive(
     {
@@ -198,7 +199,7 @@ it('nested emulation with derive', async () => {
     { proxy: state.math, sync: true }
   )
 
-  const callback = jest.fn()
+  const callback = vi.fn()
   subscribe(state, callback)
 
   expect(snapshot(state)).toMatchObject({
@@ -254,13 +255,13 @@ it('derive with array.pop', async () => {
 })
 
 it('basic underive', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = vi.fn((x) => x * 2)
   const state = proxy({ count: 0 })
   const derived = derive({
     doubled: (get) => computeDouble(get(state).count),
   })
 
-  const callback = jest.fn()
+  const callback = vi.fn()
   subscribe(derived, callback)
 
   expect(snapshot(derived)).toMatchObject({ doubled: 0 })
@@ -289,7 +290,7 @@ describe('glitch free', () => {
     const state = proxy({ value: 0 })
     const derived1 = derive({ value: (get) => get(state).value })
     const derived2 = derive({ value: (get) => get(derived1).value })
-    const computeValue = jest.fn((get) => {
+    const computeValue = vi.fn((get) => {
       const v0 = get(state).value
       const v1 = get(derived1).value
       const v2 = get(derived2).value
@@ -333,7 +334,7 @@ describe('glitch free', () => {
     const derived2 = derive({
       value: (get) => get(derived1).value * 0,
     })
-    const computeValue = jest.fn((get) => {
+    const computeValue = vi.fn((get) => {
       const v0 = get(state).value
       const v1 = get(derived1).value
       const v2 = get(derived2).value
@@ -378,7 +379,7 @@ describe('glitch free', () => {
     const derived3 = derive({
       value: (get) => get(derived2).value,
     })
-    const computeValue = jest.fn((get) => {
+    const computeValue = vi.fn((get) => {
       const v0 = get(state).value
       const v1 = get(derived1).value
       const v2 = get(derived2).value

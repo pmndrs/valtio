@@ -1,11 +1,12 @@
 import { watch } from 'valtio/utils'
 import { proxy } from 'valtio/vanilla'
+import { vi } from 'vitest'
 
 describe('watch', () => {
   it('should re-run for individual proxy updates', async () => {
     const reference = proxy({ value: 'Example' })
 
-    const callback = jest.fn()
+    const callback = vi.fn()
 
     watch((get) => {
       get(reference)
@@ -21,7 +22,7 @@ describe('watch', () => {
     const A = proxy({ value: 'A' })
     const B = proxy({ value: 'B' })
 
-    const callback = jest.fn()
+    const callback = vi.fn()
 
     watch((get) => {
       get(A)
@@ -40,7 +41,7 @@ describe('watch', () => {
   it('should cleanup when state updates', async () => {
     const reference = proxy({ value: 'Example' })
 
-    const callback = jest.fn()
+    const callback = vi.fn()
 
     watch((get) => {
       get(reference)
@@ -56,7 +57,7 @@ describe('watch', () => {
     expect(callback).toBeCalledTimes(1)
   })
   it('should cleanup when stopped', () => {
-    const callback = jest.fn()
+    const callback = vi.fn()
 
     const stop = watch(() => callback)
 
@@ -65,7 +66,7 @@ describe('watch', () => {
     expect(callback).toBeCalledTimes(1)
   })
   it('should cleanup internal effects when stopped', () => {
-    const callback = jest.fn()
+    const callback = vi.fn()
 
     const stop = watch(() => {
       watch(() => {

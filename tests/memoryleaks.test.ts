@@ -16,9 +16,11 @@ describe('no memory leaks with proxy', () => {
     `
     const output = await new Promise((resolve) => {
       exec(`node --expose-gc --eval '${testCode}'`, (err, stdout) => {
+        console.log('here', err, stdout)
         resolve(err || stdout)
       })
     })
+    console.log('success', output)
     expect(output).toMatch('state is garbage collected')
   }
 

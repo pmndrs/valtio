@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { StrictMode, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
@@ -90,7 +91,7 @@ it('no extra re-renders (commits)', async () => {
 it('no extra re-renders (render func calls in non strict mode)', async () => {
   const obj = proxy({ count: 0, count2: 0 })
 
-  const renderFn = jest.fn()
+  const renderFn = vi.fn()
   const Counter = () => {
     const snap = useSnapshot(obj)
     renderFn(snap.count)
@@ -102,7 +103,7 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
     )
   }
 
-  const renderFn2 = jest.fn()
+  const renderFn2 = vi.fn()
   const Counter2 = () => {
     const snap = useSnapshot(obj)
     renderFn2(snap.count2)

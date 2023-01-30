@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
@@ -93,7 +94,7 @@ it('should not update snapshot or notify subscription when mutating proxy wrappe
   const snap2 = snapshot(obj)
   expect(snap2).toBe(snap1)
 
-  const callback = jest.fn()
+  const callback = vi.fn()
   subscribe(obj, callback)
   ++obj.nested.count
   await Promise.resolve()

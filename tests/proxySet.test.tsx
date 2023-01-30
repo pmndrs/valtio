@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
@@ -133,8 +134,8 @@ describe('features parity with native Set', () => {
         })
 
         // cover loops
-        const handleForEach = jest.fn()
-        const handleForOf = jest.fn()
+        const handleForEach = vi.fn()
+        const handleForOf = vi.fn()
 
         set.forEach(handleForEach)
         expect(handleForEach).toHaveBeenCalledTimes(set.size)
