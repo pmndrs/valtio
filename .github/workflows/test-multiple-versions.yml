@@ -55,6 +55,7 @@ jobs:
           sed -i~ 's/"test:ci":.*,$/"test:ci": "jest",/' package.json
           sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' package.json
           sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' tsconfig.json
+          cat src/react.ts
       - name: Test ${{ matrix.react }}
         run: |
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
