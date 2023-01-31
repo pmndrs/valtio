@@ -18,7 +18,7 @@ const state = proxy({ count: 0 })
 
 // Subscribe to all changes to the state proxy (and its child proxies)
 const unsubscribe = subscribe(state, () =>
-  console.log('state.count has changed to', state.count)
+  console.log('state has changed to', state)
 )
 // Unsubscribe by calling the result
 unsubscribe()
