@@ -9,7 +9,7 @@ description: 'watch for changes.'
 
 #### subscription via a getter
 
-This utility supports subscribing to multiple proxy objects (unlike `subscribe` which listens to only a single proxy). Proxy objects are subscribed with a `sub` function passed to the callback.
+This utility supports subscribing to multiple proxy objects (unlike `subscribe` which listens to only a single proxy). Proxy objects are subscribed with a `get` function passed to the callback.
 
 Any changes to the proxy object (or its child proxies) will rerun the callback.
 
