@@ -86,7 +86,9 @@ console.log(snap instanceof Author) // true
 
 state.firstName = 'f2'
 
-// Invocations use the snapshot's state, still 'f'
+// Invocations use the snapshot's state, e.g. this is still 'f' because
+// inside `fullName`, `this` will be the frozen snapshot instance and not
+// the mutable state proxy
 console.log(snap.fullName()) // 'f l'
 ```
 
