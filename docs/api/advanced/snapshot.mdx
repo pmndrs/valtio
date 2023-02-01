@@ -92,6 +92,10 @@ state.firstName = 'f2'
 console.log(snap.fullName()) // 'f l'
 ```
 
+Note that the results of getters and methods are not cached, and are re-evaluated on every call.
+
+This should be fine, because the expectation is that they execute very quickly (faster than the overhead of caching them would be worth) and are also deterministic, so the return value is based only on the already-frozen snapshot state. That said, if you do need to cache a getter's particularly expensive calculation, you can use <a href="/docs/api/utils/proxyWithComputed">`proxyWithComputed`</a>.
+
 #### Vanilla javascript
 
 In VanillaJS, `snapshot` is not necessary to access proxied object values, inside or outside of subscribe. However, it is useful, for example, to keep a serializable list of unproxied objects or check if objects have changed. It also resolves promises.
