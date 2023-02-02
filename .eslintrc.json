@@ -36,7 +36,6 @@
     "prefer-const": "error",
     "curly": ["warn", "multi-line", "consistent"],
     "no-console": "off",
-    "import/extensions": "off",
     "import/no-unresolved": ["error", { "commonjs": true, "amd": true }],
     "import/export": "error",
     "@typescript-eslint/no-duplicate-imports": ["error"],
@@ -89,6 +88,7 @@
     "react": {
       "version": "detect"
     },
+    "import/extensions": [".js", ".jsx", ".ts", ".tsx"],
     "import/parsers": {
       "@typescript-eslint/parser": [".js", ".jsx", ".ts", ".tsx"]
     },
