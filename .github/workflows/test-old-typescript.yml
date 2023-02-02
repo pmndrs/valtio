@@ -39,6 +39,7 @@ jobs:
         run: |
           sed -i~ "s/\/\/ @ts-expect-error.*\[LATEST-TS-ONLY\]//" tests/*.tsx
           sed -i~ "s/\"exactOptionalPropertyTypes\": true,//" tsconfig.json
+          sed -i~ "s/\"allowImportingTsExtensions\": true,//" tsconfig.json
           sed -i~ "s/\"valtio\": \[\".\/src\/index.ts\"\],/\"valtio\": [\".\/dist\/ts3.4\/index.d.ts\"],/" tsconfig.json
           sed -i~ "s/\"valtio\/\*\": \[\".\/src\/\*.ts\"\]/\"valtio\/*\": [\".\/dist\/ts3.4\/*.d.ts\"]/" tsconfig.json
           sed -i~ "s/\"include\": .*/\"include\": [\"src\/types.d.ts\", \"dist\/**\/*\", \"tests\/**\/*\"],/" tsconfig.json
