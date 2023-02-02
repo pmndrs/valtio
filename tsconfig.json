@@ -12,8 +12,7 @@
     "paths": {
       "valtio": ["./src/index.ts"],
       "valtio/*": ["./src/*.ts"]
-    },
-    "noEmit": true
+    }
   },
   "include": ["src/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
