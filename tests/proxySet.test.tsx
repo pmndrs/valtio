@@ -198,7 +198,7 @@ describe('unsupported initial values', () => {
 
   unsupportedInputTestCases.forEach(({ name, value }) => {
     it(`throw type error when using ${name} as initial value`, () => {
-      expect(() => proxySet(value as any)).toThrow(TypeError)
+      expect(() => proxySet(value as any)).toThrow(/not iterable/)
     })
   })
 })
