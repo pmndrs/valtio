@@ -1,3 +1,4 @@
+import { expect, it } from '@jest/globals'
 import { proxy, snapshot } from 'valtio'
 
 const sleep = (ms: number) =>

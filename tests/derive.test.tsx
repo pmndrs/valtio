@@ -1,5 +1,5 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
-import { jest } from '@jest/globals'
+import { describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { derive, underive } from 'valtio/utils'

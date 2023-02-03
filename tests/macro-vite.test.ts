@@ -1,3 +1,4 @@
+import { expect, it } from '@jest/globals'
 import { EnvContext } from '@typed-macro/core'
 import { createTransformer } from '@typed-macro/runtime'
 import { valtioMacro } from 'valtio/macro/vite'
