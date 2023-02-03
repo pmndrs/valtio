@@ -3,7 +3,6 @@
     "target": "esnext",
     "strict": true,
     "jsx": "react-jsx",
-    "allowJs": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "node",
@@ -13,8 +12,7 @@
     "paths": {
       "valtio": ["./src/index.ts"],
       "valtio/*": ["./src/*.ts"]
-    },
-    "skipLibCheck": true
+    }
   },
   "include": ["src/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
