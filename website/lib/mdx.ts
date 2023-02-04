@@ -244,7 +244,11 @@ export function getDocsNav(): NavigationTree {
   const pages = getDocsMap();
   return {
     Introduction: [pages["getting-started"]],
-    Guides: [pages["async"], pages["component-state"]],
+    Guides: [
+      pages["async"],
+      pages["component-state"],
+      pages["computed-properties"],
+    ],
     API: {
       Basic: [pages["proxy"], pages["useSnapshot"]],
       Advanced: [pages["ref"], pages["subscribe"], pages["snapshot"]],
@@ -253,7 +257,6 @@ export function getDocsNav(): NavigationTree {
         pages["watch"],
         pages["devtools"],
         pages["derive"],
-        pages["proxyWithComputed"],
         pages["proxyWithHistory"],
         pages["proxySet"],
         pages["proxyMap"],

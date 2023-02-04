@@ -2,30 +2,14 @@ import { proxy, snapshot } from 'valtio/vanilla'
 import type { INTERNAL_Snapshot as Snapshot } from 'valtio/vanilla'
 
 /**
- * proxyWithComputed
+ * proxyWithComputed (DEPRECATED)
  *
- * This is to create a proxy with initial object and additional object,
- * which specifies getters for computed values with dependency tracking.
- * It also accepts optional setters for computed values.
- *
- * [Notes]
- * This comes with a cost and overlaps with useSnapshot.
- * Do not try to optimize too early. It can worsen the performance.
- * Measurement and comparison will be very important.
- *
- * @example
- * import { proxyWithComputed } from 'valtio/utils'
- * const state = proxyWithComputed({
- *   count: 1,
- * }, {
- *   doubled: snap => snap.count * 2, // getter only
- *   tripled: {
- *     get: snap => snap.count * 3,
- *     set: (state, newValue) => { state.count = newValue / 3 }
- *   }, // with optional setter
- * })
+ * @deprecated Please follow "Computed Properties" guide in docs.
  */
-export function proxyWithComputed<T extends object, U extends object>(
+export function proxyWithComputed_DEPRECATED<
+  T extends object,
+  U extends object
+>(
   initialObject: T,
   computedFns: {
     [K in keyof U]:
@@ -36,6 +20,11 @@ export function proxyWithComputed<T extends object, U extends object>(
         }
   }
 ) {
+  if (import.meta.env?.MODE !== 'production') {
+    console.warn(
+      'proxyWithComputed is deprecated. Please follow "Computed Properties" guide in docs.'
+    )
+  }
   ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {
     if (Object.getOwnPropertyDescriptor(initialObject, key)) {
       throw new Error('object property already defined')

@@ -320,61 +320,6 @@ derive(
 )
 ```
 
-#### `proxyWithComputed` util
-
-You can define own computed properties within a proxy.
-By combining with a memoization library such as
-[proxy-memoize](https://github.com/dai-shi/proxy-memoize),
-optimizing function calls is possible.
-
-Be careful not to overuse `proxy-memoize`
-because `proxy-memoize` and `useSnapshot` do similar optimization
-and double optimization may lead to less performance.
-
-```js
-import { memoize } from 'proxy-memoize'
-import { proxyWithComputed } from 'valtio/utils'
-
-const state = proxyWithComputed(
-  {
-    count: 1,
-  },
-  {
-    doubled: memoize((snap) => snap.count * 2),
-  }
-)
-
-// Computed values accept custom setters too:
-const state2 = proxyWithComputed(
-  {
-    firstName: 'Alec',
-    lastName: 'Baldwin',
-  },
-  {
-    fullName: {
-      get: memoize((snap) => snap.firstName + ' ' + snap.lastName),
-      set: (state, newValue) => {
-        ;[state.firstName, state.lastName] = newValue.split(' ')
-      },
-    },
-  }
-)
-
-// if you want a computed value to derive from another computed, you must declare the dependency first:
-const state = proxyWithComputed(
-  {
-    count: 1,
-  },
-  {
-    doubled: memoize((snap) => snap.count * 2),
-    quadrupled: memoize((snap) => snap.doubled * 2),
-  }
-)
-```
-
-The last use case fails to infer types in TypeScript
-[#192](https://github.com/pmndrs/valtio/issues/192).
-
 #### `proxyWithHistory` util
 
 This is a utility function to create a proxy with snapshot history.
