@@ -21,13 +21,14 @@ import { proxy, snapshot } from 'valtio'
 const store = proxy({ name: 'Mika' })
 const snap1 = snapshot(store) // an efficient copy of the current store values, unproxied
 const snap2 = snapshot(store)
-console.log(snap1 === snap2) // true
+console.log(snap1 === snap2) // true, no need to re-render
+
 store.name = 'Hanna'
 const snap3 = snapshot(store)
-console.log(snap1 === snap3) // false
+console.log(snap1 === snap3) // false, should re-render
 ```
 
-#### Copy on Write
+## Copy on Write
 
 Even though snapshots are a deep copy of the entire state, they use a lazy copy-on-write mechanism for updates, so in practice are quick to maintain.
 
@@ -67,7 +68,7 @@ console.log(s1.books[1] === s2.books[1]) // false
 
 Even though this example only reused one of the four existing snapshot instances, it shows that the cost of maintaining snapshots is based on the _depth_ of your state tree (which is typically low, like author to book to book reviews is three levels), and not the _breadth_ (1000s of books).
 
-#### Classes
+## Classes
 
 Snapshots main the original objects' prototypes, so methods and getters work, and correctly evaluate against the snapshot's frozen state.
 
@@ -100,7 +101,7 @@ Note that the results of getters and methods are not cached, and are re-evaluate
 
 This should be fine, because the expectation is that they execute very quickly (faster than the overhead of caching them would be worth) and are also deterministic, so the return value is based only on the already-frozen snapshot state. That said, if you do need to cache a getter's particularly expensive calculation, you can use <a href="/docs/api/utils/proxyWithComputed">`proxyWithComputed`</a>.
 
-#### Vanilla JavaScript
+## Vanilla JavaScript
 
 In VanillaJS, `snapshot` is not necessary to access proxied object values, inside or outside of subscribe. However, it is useful, for example, to keep a serializable list of unproxied objects or check if objects have changed. It also resolves promises.
 
