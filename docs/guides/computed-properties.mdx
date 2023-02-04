@@ -1,0 +1,62 @@
+---
+title: 'Computed Properties'
+section: 'Advanced'
+description: 'Use object getters and setters'
+---
+
+# Computed Properties
+
+Valtio itself doesn't provide a functionality for computed properties,
+but you can emulate it with object getters and setters.
+
+⚠️ Note: This is a very advanced usage.
+
+## Simple getter
+
+```js
+const state = proxy({
+  count: 1,
+  get doubled() {
+    return state.count * 2
+  },
+})
+```
+
+## Getter and setter
+
+```js
+const state = proxy({
+  count: 1,
+  get doubled() {
+    return state.count * 2
+  },
+  set doubled(newValue) {
+    state.count = newValue / 2
+  },
+})
+```
+
+## State usage tracking with `proxy-memoize`
+
+State usage tracking allows to optimize invoking functions.
+You need to install [proxy-memoize](https://github.com/dai-shi/proxy-memoize).
+
+```js
+import { memoize } from 'proxy-memoize'
+
+const memoizedDoubled = memoize((snap) => snap.count * 2)
+
+const state = proxy({
+  count: 1,
+  text: 'hello',
+  get doubled(): { return memoizedDoubled(snapshot(state)) },
+})
+```
+
+In this case, even if the `text` property changes, the memoized function won't be re-executed.
+
+## Note about using `this`
+
+You can use `this` instead of `state` in object getters and setters.
+You should be familiar with how JS `this` works,
+as `this` can point to proxy state or snapshot object depending on usage.

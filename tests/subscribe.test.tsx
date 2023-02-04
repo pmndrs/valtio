@@ -178,6 +178,18 @@ describe('subscribe', () => {
     expect(handler).toBeCalledTimes(2)
     expect(handler).lastCalledWith([['delete', ['nested', 'count'], 1]])
   })
+
+  it('should not notify with assigning same object', async () => {
+    const obj = {}
+    const state = proxy({ obj })
+
+    const handler = jest.fn()
+    subscribe(state, handler)
+
+    state.obj = obj
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(0)
+  })
 })
 
 describe('subscribeKey', () => {
