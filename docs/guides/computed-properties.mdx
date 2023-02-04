@@ -22,8 +22,6 @@ const state = proxy({
 })
 ```
 
-You can use `this` instead of `state` in getters.
-
 ## Getter and setter
 
 ```js
@@ -37,8 +35,6 @@ const state = proxy({
   },
 })
 ```
-
-Be careful: You shouldn't use `this` in setters.
 
 ## State usage tracking with `proxy-memoize`
 
@@ -58,3 +54,9 @@ const state = proxy({
 ```
 
 In this case, even if the `text` property changes, the memoized function won't be re-executed.
+
+## Note about using `this`
+
+You can use `this` instead of `state` in object getters and setters.
+You should be familiar with how JS `this` works,
+as `this` can point to proxy state or snapshot object depending on usage.
