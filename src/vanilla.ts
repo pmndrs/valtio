@@ -411,7 +411,11 @@ export const unstable_buildProxyFunction = buildProxyFunction
 function findPrototypeGetters(target: any): PropertyKey[] {
   const protoGetters: PropertyKey[] = []
   let current = Object.getPrototypeOf(target)
-  while (current && current !== Object.prototype) {
+  while (
+    current &&
+    current !== Object.prototype &&
+    current !== Array.prototype
+  ) {
     protoGetters.push(
       ...Reflect.ownKeys(current).filter(
         (key) => Object.getOwnPropertyDescriptor(current, key)?.get
