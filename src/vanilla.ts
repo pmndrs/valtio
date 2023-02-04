@@ -175,7 +175,7 @@ const buildProxyFunction = (
       prop: string | symbol,
       propProxyState: ProxyState
     ) => {
-      if (__DEV__ && propProxyStates.has(prop)) {
+      if (import.meta.env?.MODE !== 'production' && propProxyStates.has(prop)) {
         throw new Error('prop listener already exists')
       }
       if (listeners.size) {
@@ -196,7 +196,7 @@ const buildProxyFunction = (
       listeners.add(listener)
       if (listeners.size === 1) {
         propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
-          if (__DEV__ && prevRemove) {
+          if (import.meta.env?.MODE !== 'production' && prevRemove) {
             throw new Error('remove already exists')
           }
           const remove = propProxyState[3](createPropListener(prop))
@@ -326,7 +326,7 @@ export function subscribe<T extends object>(
   notifyInSync?: boolean
 ): () => void {
   const proxyState = proxyStateMap.get(proxyObject as object)
-  if (__DEV__ && !proxyState) {
+  if (import.meta.env?.MODE !== 'production' && !proxyState) {
     console.warn('Please use proxy object')
   }
   let promise: Promise<void> | undefined
@@ -361,7 +361,7 @@ export function snapshot<T extends object>(
   handlePromise?: HandlePromise
 ): Snapshot<T> {
   const proxyState = proxyStateMap.get(proxyObject as object)
-  if (__DEV__ && !proxyState) {
+  if (import.meta.env?.MODE !== 'production' && !proxyState) {
     console.warn('Please use proxy object')
   }
   const [target, ensureVersion, createSnapshot] = proxyState as ProxyState

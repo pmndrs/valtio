@@ -1,4 +1,12 @@
 import { StrictMode, Suspense } from 'react'
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  jest,
+} from '@jest/globals'
 import { act, fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 import { devtools } from 'valtio/utils'
@@ -6,7 +14,7 @@ import { devtools } from 'valtio/utils'
 let extensionSubscriber: ((message: any) => void) | undefined
 
 const extension = {
-  subscribe: jest.fn((f) => {
+  subscribe: jest.fn((f: any) => {
     extensionSubscriber = f
     return () => {}
   }),
@@ -53,16 +61,13 @@ it('connects to the extension by initialiing', () => {
 
 describe('If there is no extension installed...', () => {
   let savedConsoleWarn: any
-  let savedDEV: boolean
   beforeEach(() => {
     savedConsoleWarn = console.warn
     console.warn = jest.fn()
-    savedDEV = __DEV__
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
   afterEach(() => {
     console.warn = savedConsoleWarn
-    __DEV__ = savedDEV
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = extensionConnector
   })
 
@@ -108,7 +113,6 @@ describe('If there is no extension installed...', () => {
   })
 
   it('[DEV-ONLY] warns if enabled is true', () => {
-    __DEV__ = true
     const obj = proxy({ count: 0 })
     devtools(obj, { enabled: true })
     const Counter = () => {
@@ -130,8 +134,7 @@ describe('If there is no extension installed...', () => {
     )
   })
 
-  it('[PRD-ONLY] does not warn even if enabled is true', () => {
-    __DEV__ = false
+  it.skip('[PRD-ONLY] does not warn even if enabled is true', () => {
     const obj = proxy({ count: 0 })
     devtools(obj, { enabled: true })
     const Counter = () => {

@@ -1,9 +1,10 @@
 import { StrictMode } from 'react'
+import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 
 it('simple object getters', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = jest.fn((x: number) => x * 2)
   const state = proxy({
     count: 0,
     get doubled() {
@@ -45,7 +46,7 @@ it('simple object getters', async () => {
 })
 
 it('object getters returning object', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = jest.fn((x: number) => x * 2)
   const state = proxy({
     count: 0,
     get doubled() {
