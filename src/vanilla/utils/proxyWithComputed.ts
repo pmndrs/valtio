@@ -2,7 +2,9 @@ import { proxy, snapshot } from 'valtio/vanilla'
 import type { INTERNAL_Snapshot as Snapshot } from 'valtio/vanilla'
 
 /**
- * proxyWithComputed
+ * proxyWithComputed (DEPRECATED)
+ *
+ * @deprecated Please follow "Computed Properties" guide in docs.
  *
  * This is to create a proxy with initial object and additional object,
  * which specifies getters for computed values with dependency tracking.
@@ -25,7 +27,10 @@ import type { INTERNAL_Snapshot as Snapshot } from 'valtio/vanilla'
  *   }, // with optional setter
  * })
  */
-export function proxyWithComputed<T extends object, U extends object>(
+export function proxyWithComputed_DEPRECATED<
+  T extends object,
+  U extends object
+>(
   initialObject: T,
   computedFns: {
     [K in keyof U]:
