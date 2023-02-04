@@ -12,9 +12,11 @@ export function addComputed_DEPRECATED<T extends object, U extends object>(
   },
   targetObject: any = proxyObject
 ) {
-  console.warn(
-    'addComputed is deprecated. Please consider using `derive` or `proxyWithComputed` instead. Falling back to emulation with derive. https://github.com/pmndrs/valtio/pull/201'
-  )
+  if (import.meta.env?.MODE !== 'production') {
+    console.warn(
+      'addComputed is deprecated. Please consider using `derive`. Falling back to emulation with derive. https://github.com/pmndrs/valtio/pull/201'
+    )
+  }
   const derivedFns: {
     [K in keyof U]: (get: any) => U[K]
   } = {} as any
