@@ -1,7 +1,7 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { it } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, useSnapshot } from 'valtio'
+import { proxy, useSnapshot } from '../src/index.ts'
 
 it('simple class without methods', async () => {
   class CountClass {

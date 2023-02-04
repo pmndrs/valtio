@@ -1,4 +1,4 @@
-import { proxy } from 'valtio/vanilla'
+import { proxy } from '../../vanilla.ts'
 
 // properties that we don't want to expose to the end-user
 type InternalProxySet<T> = Set<T> & {

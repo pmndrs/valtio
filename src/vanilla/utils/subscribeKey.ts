@@ -1,4 +1,4 @@
-import { subscribe } from 'valtio/vanilla'
+import { subscribe } from '../../vanilla.ts'
 
 /**
  * subscribeKey

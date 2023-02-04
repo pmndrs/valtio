@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals'
-import { watch } from 'valtio/utils'
-import { proxy } from 'valtio/vanilla'
+import { watch } from '../src/utils.ts'
+import { proxy } from '../src/vanilla.ts'
 
 describe('watch', () => {
   it('should re-run for individual proxy updates', async () => {

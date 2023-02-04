@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { expect, it } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
-import { proxy, useSnapshot } from 'valtio'
+import { proxy, useSnapshot } from '../src/index.ts'
 
 it('unsupported map', async () => {
   const obj = proxy({ map: new Map([['count', 0]]) })

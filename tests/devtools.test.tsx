@@ -8,8 +8,8 @@ import {
   jest,
 } from '@jest/globals'
 import { act, fireEvent, render } from '@testing-library/react'
-import { proxy, useSnapshot } from 'valtio'
-import { devtools } from 'valtio/utils'
+import { proxy, useSnapshot } from '../src/index.ts'
+import { devtools } from '../src/utils.ts'
 
 let extensionSubscriber: ((message: any) => void) | undefined
 

@@ -6,8 +6,8 @@ import {
   it,
   jest,
 } from '@jest/globals'
-import { proxy, ref, subscribe } from 'valtio'
-import { subscribeKey } from 'valtio/utils'
+import { proxy, ref, subscribe } from '../src/index.ts'
+import { subscribeKey } from '../src/utils.ts'
 
 const consoleWarn = console.warn
 beforeEach(() => {

@@ -1,8 +1,8 @@
 import { StrictMode } from 'react'
 import { describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, useSnapshot } from 'valtio'
-import { proxyMap, proxySet } from 'valtio/utils'
+import { proxy, useSnapshot } from '../src/index.ts'
+import { proxyMap, proxySet } from '../src/utils.ts'
 
 const initialValues = [
   {

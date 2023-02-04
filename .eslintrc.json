@@ -36,6 +36,7 @@
     "prefer-const": "error",
     "curly": ["warn", "multi-line", "consistent"],
     "no-console": "off",
+    "import/extensions": ["error", "always"],
     "import/no-unresolved": ["error", { "commonjs": true, "amd": true }],
     "import/export": "error",
     "@typescript-eslint/no-duplicate-imports": ["error"],
@@ -96,13 +97,6 @@
       "node": {
         "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"],
         "paths": ["src"]
-      },
-      "alias": {
-        "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"],
-        "map": [
-          ["^valtio$", "./src/index.ts"],
-          ["valtio", "./src"]
-        ]
       }
     }
   },

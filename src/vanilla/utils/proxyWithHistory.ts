@@ -1,5 +1,5 @@
-import { proxy, ref, snapshot, subscribe } from 'valtio/vanilla'
-import type { INTERNAL_Snapshot as Snapshot } from 'valtio/vanilla'
+import { proxy, ref, snapshot, subscribe } from '../../vanilla.ts'
+import type { INTERNAL_Snapshot as Snapshot } from '../../vanilla.ts'
 
 type SnapshotOrUndefined<T> = Snapshot<T> | undefined
 type Snapshots<T> = Snapshot<T>[]

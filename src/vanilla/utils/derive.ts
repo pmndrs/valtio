@@ -1,4 +1,4 @@
-import { getVersion, proxy, subscribe } from 'valtio/vanilla'
+import { getVersion, proxy, subscribe } from '../../vanilla.ts'
 
 type DeriveGet = <T extends object>(proxyObject: T) => T
 
