@@ -32,3 +32,13 @@ it('should return correct snapshots without subscribe', async () => {
   ++child.count
   expect(snapshot(state)).toEqual({ child: { count: 1 } })
 })
+
+it('should not change snapshot with assigning same object', async () => {
+  const obj = {}
+  const state = proxy({ obj })
+
+  const snap1 = snapshot(state)
+  state.obj = obj
+  const snap2 = snapshot(state)
+  expect(snap1).toBe(snap2)
+})
