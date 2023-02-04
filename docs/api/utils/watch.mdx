@@ -9,7 +9,11 @@ description: 'watch for changes.'
 
 #### subscription via a getter
 
-This utility provides a specialized from of subscription. Proxy objects are tracked with a `get` function passed to the callback. Notice the callback will run eagerly as soon as a proxy is tracked, even if not yet mutated.
+This utility supports subscribing to multiple proxy objects (unlike `subscribe` which listens to only a single proxy). Proxy objects are subscribed with a `get` function passed to the callback.
+
+Any changes to the proxy object (or its child proxies) will rerun the callback.
+
+Also note the callback will run once immediately when `watch` is called, even if the proxies have not been yet mutated, to establish the initial subscriptions.
 
 ```js
 import { proxy } from 'valtio'
@@ -19,7 +23,10 @@ const userState = proxy({ user: { name: 'Juuso' } })
 const sessionState = proxy({ expired: false })
 
 watch((get) => {
-  const expired = get(sessionState).expired
+  // `get` adds `sessionState` to this callback's watched proxies
+  get(sessionState)
+  const expired = sessionState.expired
+  // Or call it inline
   const name = get(userState).user.name
   console.log(`${name}'s session is ${expired ? 'expired' : 'valid'}`)
 })
@@ -30,7 +37,10 @@ sessionState.expired = true
 
 #### cleanup
 
-You may return a callback function that runs after watch has evaluated its dependencies.
+You may return a cleanup function that runs both:
+
+- Before each re-invocation of the callback (i.e. due to a watched proxy changing)
+- When the `watch` itself is stopped (by calling the cleanup function returned by `watch`)
 
 ```js
 watch((get) => {
@@ -43,16 +53,33 @@ watch((get) => {
     }
   }
 })
+// Output from 1st immediate invocation of the callbcak
 // 'Juuso's session is valid'
+
+// Changing a dependency will invoke the cleanup callback first,
+// but the captured `expired` is false, so we only see output from the
+// 2nd invocation of the callback.
 sessionState.expired = true
 // 'Juuso's session is expired'
+
+// Changing a dependency will again invoke the cleanup callback,
+// and `expired` is true now, so we output from both our cleanup
+// function as well as the 3rd invocation of the callback.
 setTimeout(() => {
   userState.user.name = 'Anonymous'
 }, 200)
-// 200ms -> 'Anonymous's session is expired"
+// 200ms -> 'Anonymous's session is expired'
 // 'Cleaning up' logged
 ```
 
 #### gotchas
 
 If you remove the setTimeout in the example above, 'Juuso's session is expired' will become 'Anonymous's session is expired', logged twice. Valtio will batch updates by default. You may pass `{sync: true}` as a second argument to `watch` to disable batching.
+
+#### no usage tracking
+
+`watch` currently does not implement the usage tracking of `useSnapshot`, so the callback will rerun anytime a watched proxy (or child proxy) has any of its keys mutated, regardless of the keys accessed within the `callback`'s code.
+
+And the return value of `sub` is just the proxy itself, not a snapshot.
+
+This is because `watch` is a vanilla primitive built on top of `subscribe`. It is potentially possible for `watch`, or a new `watch`-like method, to implement usage tracking in the future, see [this discussion](https://github.com/pmndrs/valtio/discussions/640) if interested.

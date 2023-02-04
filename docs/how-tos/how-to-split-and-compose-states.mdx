@@ -1,0 +1,51 @@
+---
+title: 'How to split and compose states'
+---
+
+# How to split and compose states
+
+## You can split states
+
+Creating a state with nested object.
+
+```js
+const state = proxy({
+  obj1: { a: 1 },
+  obj2: { b: 2 },
+})
+```
+
+You can then split the state into pieces. They are both proxies.
+
+```js
+const obj1State = state.obj1
+const ojb2State = state.obj2
+```
+
+## You can combine states
+
+You can create states and then combine them.
+
+```js
+const obj1State = proxy({ a: 1 })
+const obj2State = proxy({ a: 2 })
+
+const state = proxy({
+  obj1: obj1State,
+  obj2: obj2State,
+})
+```
+
+This works equivalently to the previous example.
+
+## You can create circular states
+
+While there would be less use cases, you could create a circular structure.
+
+```js
+const state = proxy({
+  obj: { foo: 3 },
+})
+
+state.obj.bar = state.obj // 🤯
+```

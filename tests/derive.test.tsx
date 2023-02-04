@@ -1,4 +1,5 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
+import { describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { derive, underive } from 'valtio/utils'
@@ -9,7 +10,7 @@ const sleep = (ms: number) =>
   })
 
 it('basic derive', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = jest.fn((x: number) => x * 2)
   const state = proxy({
     text: '',
     count: 0,
@@ -41,7 +42,7 @@ it('basic derive', async () => {
 })
 
 it('derive another proxy', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = jest.fn((x: number) => x * 2)
   const state = proxy({
     text: '',
     count: 0,
@@ -79,7 +80,7 @@ it('derive another proxy', async () => {
 })
 
 it('derive with self', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = jest.fn((x: number) => x * 2)
   const state = proxy({
     text: '',
     count: 0,
@@ -116,7 +117,7 @@ it('derive with self', async () => {
 })
 
 it('derive with two dependencies', async () => {
-  const computeSum = jest.fn((x, y) => x + y)
+  const computeSum = jest.fn((x: number, y: number) => x + y)
   const state1 = proxy({ count: 1 })
   const state2 = proxy({ count: 10 })
   const derived = derive({
@@ -189,7 +190,7 @@ it('async derive', async () => {
 })
 
 it('nested emulation with derive', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = jest.fn((x: number) => x * 2)
   const state = proxy({ text: '', math: { count: 0 } })
   derive(
     {
@@ -254,7 +255,7 @@ it('derive with array.pop', async () => {
 })
 
 it('basic underive', async () => {
-  const computeDouble = jest.fn((x) => x * 2)
+  const computeDouble = jest.fn((x: number) => x * 2)
   const state = proxy({ count: 0 })
   const derived = derive({
     doubled: (get) => computeDouble(get(state).count),
@@ -289,7 +290,7 @@ describe('glitch free', () => {
     const state = proxy({ value: 0 })
     const derived1 = derive({ value: (get) => get(state).value })
     const derived2 = derive({ value: (get) => get(derived1).value })
-    const computeValue = jest.fn((get) => {
+    const computeValue = jest.fn((get: any) => {
       const v0 = get(state).value
       const v1 = get(derived1).value
       const v2 = get(derived2).value
@@ -333,7 +334,7 @@ describe('glitch free', () => {
     const derived2 = derive({
       value: (get) => get(derived1).value * 0,
     })
-    const computeValue = jest.fn((get) => {
+    const computeValue = jest.fn((get: any) => {
       const v0 = get(state).value
       const v1 = get(derived1).value
       const v2 = get(derived2).value
@@ -378,7 +379,7 @@ describe('glitch free', () => {
     const derived3 = derive({
       value: (get) => get(derived2).value,
     })
-    const computeValue = jest.fn((get) => {
+    const computeValue = jest.fn((get: any) => {
       const v0 = get(state).value
       const v1 = get(derived1).value
       const v2 = get(derived2).value
