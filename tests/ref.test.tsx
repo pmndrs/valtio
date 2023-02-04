@@ -1,7 +1,7 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
-import { proxy, ref, snapshot, subscribe, useSnapshot } from '../src/index.ts'
+import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
 
 it('should trigger re-render setting objects with ref wrapper', async () => {
   const obj = proxy({ nested: ref({ count: 0 }) })

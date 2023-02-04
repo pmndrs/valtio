@@ -1,7 +1,7 @@
 import { StrictMode, useEffect, useRef, useState } from 'react'
 import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { proxy, useSnapshot } from '../src/index.ts'
+import { proxy, useSnapshot } from 'valtio'
 
 it('simple counter', async () => {
   const obj = proxy({ count: 0 })

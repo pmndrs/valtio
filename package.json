@@ -115,6 +115,10 @@
       ".ts",
       ".tsx"
     ],
+    "moduleNameMapper": {
+      "^valtio$": "<rootDir>/src/index.ts",
+      "^valtio/(.*)$": "<rootDir>/src/$1.ts"
+    },
     "modulePathIgnorePatterns": [
       "dist"
     ],

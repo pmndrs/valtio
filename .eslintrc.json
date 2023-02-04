@@ -97,6 +97,13 @@
       "node": {
         "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"],
         "paths": ["src"]
+      },
+      "alias": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"],
+        "map": [
+          ["^valtio$", "./src/index.ts"],
+          ["valtio", "./src"]
+        ]
       }
     }
   },
@@ -105,6 +112,12 @@
       "files": ["src"],
       "parserOptions": {
         "project": "./tsconfig.json"
+      }
+    },
+    {
+      "files": ["tests/**/*.ts", "tests/**/*.tsx"],
+      "rules": {
+        "import/extensions": ["error", "never"]
       }
     },
     {

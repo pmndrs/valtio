@@ -9,8 +9,8 @@ import {
 } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
 import { memoize } from 'proxy-memoize'
-import { proxy, snapshot, subscribe, useSnapshot } from '../src/index.ts'
-import { addComputed, proxyWithComputed, subscribeKey } from '../src/utils.ts'
+import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
+import { addComputed, proxyWithComputed, subscribeKey } from 'valtio/utils'
 
 const consoleWarn = console.warn
 beforeEach(() => {

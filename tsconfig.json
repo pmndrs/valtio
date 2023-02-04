@@ -9,7 +9,11 @@
     "allowImportingTsExtensions": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "valtio": ["./src/index.ts"],
+      "valtio/*": ["./src/*.ts"]
+    }
   },
   "include": ["src/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]

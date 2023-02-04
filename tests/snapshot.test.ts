@@ -1,5 +1,5 @@
 import { expect, it } from '@jest/globals'
-import { proxy, snapshot } from '../src/index.ts'
+import { proxy, snapshot } from 'valtio'
 
 const sleep = (ms: number) =>
   new Promise((resolve) => {
