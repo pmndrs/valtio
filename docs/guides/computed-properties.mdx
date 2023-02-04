@@ -17,7 +17,7 @@ const state = proxy({
   count: 1,
   get doubled() {
     return this.count * 2
-  }
+  },
 })
 console.log(state.doubled) // 2
 
@@ -113,7 +113,9 @@ const memoizedDoubled = memoize((snap) => snap.count * 2)
 const state = proxy({
   count: 1,
   text: 'hello',
-  get doubled() { return memoizedDoubled(snapshot(state)) }
+  get doubled() {
+    return memoizedDoubled(snapshot(state))
+  },
 })
 ```
 
