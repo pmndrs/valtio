@@ -260,6 +260,17 @@ export function getDocsNav(): NavigationTree {
       ],
       Hacks: [pages["getVersion"], pages["unstable_buildProxyFunction"]],
     },
+    "How To's": [
+      pages["how-to-avoid-rerenders-manually"],
+      pages["how-to-easily-access-the-state-from-anywhere-in-the-application"],
+      pages["how-to-organize-actions"],
+      pages["how-to-persist-states"],
+      pages["how-to-reset-state"],
+      pages["how-to-split-and-compose-states"],
+      pages["how-to-use-with-context"],
+      pages["how-valtio-works"],
+      pages["some-gotchas"],
+    ],
     Resources: [pages["community"], pages["libraries"], pages["learn"]],
   };
 }

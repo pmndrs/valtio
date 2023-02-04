@@ -1,0 +1,34 @@
+---
+title: 'How to use with context'
+---
+
+# How to use with context
+
+To make a valtio state only live in React lifecycle, you can create a state in a ref, and you can pass it with props or context.
+
+## A basic pattern with context
+
+```jsx
+import { createContext, useContext } from 'react'
+import { proxy, useSnapshot } from 'valtio'
+
+const MyContext = createContext()
+
+const MyProvider = ({ children }) => {
+  const state = useRef(proxy({ count: 0 })).current
+  return <MyContext.Provider value={state}>{children}</MyContext.Provider>
+}
+
+const MyCounter = () => {
+  const state = useContext(MyContext)
+  const snap = useSnapshot(state)
+  return (
+    <>
+      {snap.count} <button onClick={() => ++state.count}>+1</button>
+    </>
+  )
+}
+```
+
+- If you are not happy with `useRef` usage, consider [use-constant](https://www.npmjs.com/package/use-constant) instead.
+- You can create custom hooks to `useContext` and optionally `useSnapshot`.

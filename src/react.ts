@@ -157,7 +157,7 @@ export function useSnapshot<T extends object>(
     lastSnapshot.current = currSnapshot
     lastAffected.current = currAffected
   })
-  if (__DEV__) {
+  if (import.meta.env?.MODE !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useAffectedDebugValue(currSnapshot, currAffected)
   }
