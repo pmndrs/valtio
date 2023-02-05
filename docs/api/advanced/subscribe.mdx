@@ -35,14 +35,6 @@ subscribe(state.arr, () => console.log('state.arr has changed to', state.arr))
 state.arr.push('world')
 ```
 
-#### No usage tracking by design
-
-Unlike `useSnapshot`, `subscribe` does not implement usage-based tracking; i.e. the callback will rerun anytime the subscribed proxy (or one of its child proxies) has any field mutated, regardless of the fields accessed within the `callback`'s code.
-
-This is by design, because the primary purpose of Valtio's subscription mechanism is to drive new snapshot creation (i.e. whenever a mutation creates a new version of a proxy, the snapshot for that proxy needs to be re-taken).
-
-It is then `useSnapshot` that implements usage-based tracking on top of the shared snapshots to make per-component re-rendering decisions.
-
 #### Codesandbox demo in VanillaJS
 
 https://codesandbox.io/s/valtio-photo-booth-demo-forked-xp8hs?file=/src/main.js
