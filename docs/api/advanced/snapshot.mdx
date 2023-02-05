@@ -70,7 +70,7 @@ Even though this example only reused one of the four existing snapshot instances
 
 ## Classes
 
-Snapshots main the original objects' prototypes, so methods and getters work, and correctly evaluate against the snapshot's frozen state.
+Snapshots maintain the original objects' prototypes, so methods and getters work, and correctly evaluate against the snapshot's frozen state.
 
 ```js
 import { proxy, snapshot } from 'valtio'
@@ -99,7 +99,7 @@ console.log(snap.fullName()) // 'f l'
 
 Note that the results of getters and methods are not cached, and are re-evaluated on every call.
 
-This should be fine, because the expectation is that they execute very quickly (faster than the overhead of caching them would be worth) and are also deterministic, so the return value is based only on the already-frozen snapshot state. That said, if you do need to cache a getter's particularly expensive calculation, you can use <a href="/docs/api/utils/proxyWithComputed">`proxyWithComputed`</a>.
+This should be fine, because the expectation is that they execute very quickly (faster than the overhead of caching them would be worth) and are also deterministic, so the return value is based only on the already-frozen snapshot state.
 
 ## Vanilla JavaScript
 
