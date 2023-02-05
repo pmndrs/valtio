@@ -108,7 +108,7 @@ const buildProxyFunction = (
     markToTrack(snap, true) // mark to track
     snapCache.set(target, [version, snap])
     Reflect.ownKeys(target).forEach((key) => {
-      if (Object.hasOwn(snap, key)) {
+      if (Object.getOwnPropertyDescriptor(snap, key)) {
         // Only the known case is Array.length so far.
         return
       }
