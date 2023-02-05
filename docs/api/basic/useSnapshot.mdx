@@ -8,7 +8,7 @@ description: 'Create a local snapshot that catches changes.'
 # useSnapshot
 
 Create a local snapshot that catches changes. This hook actually returns a wrapped snapshot in a proxy for
-render optimization instead of a plain object, which is what <a href="/docs/advanced/snapshot">`snapshot()`</a> returns.
+render optimization instead of a plain object, which is what <a href="/docs/api/advanced/snapshot">`snapshot()`</a> returns.
 
 #### Rule of thumb: read from snapshots in render function, otherwise use the source.
 
@@ -89,6 +89,15 @@ const { profile } = useSnapshot(state)
 
 return <div>{profile.name}</div>
 ```
+
+#### Dev Mode Debug Values
+
+In dev mode, `useSnapshot` uses React's `useDebugValue` to output a list of fields that were accessed during rendering, i.e. which specific fields will trigger re-render when the tracking proxy changes.
+
+There are two disclaimers to the debug value:
+
+1. Due to the way `useSnapshot` uses a proxy to recorded accesses _after_ `useSnapshot` has returned, the fields listed in `useDebugValue` are technically from the _previous_ render.
+2. Object getter and class getter calls are not included in the `useDebugValue` output, but don't worry, they are actually correctly tracked internally and correctly trigger re-renders when changed.
 
 ## Codesandbox demo
 
