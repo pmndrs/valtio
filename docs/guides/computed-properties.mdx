@@ -8,7 +8,7 @@ description: 'Use object getters and setters'
 
 In Valtio you can use object & class getters and setters to create computed properties.
 
-⚠️ Note: This is advanced usage due to the nuances around `this` behavior; see the "Note about this `this`" section below.
+⚠️ Note: Getters in JavaScript are a more advanced feature of the language, so Valtio recommends using them with caution. That said, if you are a more advanced JavaScript programmer, they should work as you expect; see the "Note about this `this`" section below.
 
 ## Simple object getter
 
@@ -16,7 +16,8 @@ In Valtio you can use object & class getters and setters to create computed prop
 const state = proxy({
   count: 1,
   get doubled() {
-    return this.count * 2
+    // We recommend `state.count` for clarity to beginners, but `this.count` works too
+    return state.count * 2
   },
 })
 console.log(state.doubled) // 2
@@ -43,10 +44,10 @@ Setters are also supported:
 const state = proxy({
   count: 1,
   get doubled() {
-    return this.count * 2
+    return state.count * 2
   },
   set doubled(newValue) {
-    this.count = newValue / 2
+    state.count = newValue / 2
   },
 })
 
