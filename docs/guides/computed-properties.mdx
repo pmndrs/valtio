@@ -8,7 +8,7 @@ description: 'Use object getters and setters'
 
 In Valtio you can use object & class getters and setters to create computed properties.
 
-⚠️ Note: Getters in JavaScript are a more advanced feature of the language, so Valtio recommends using them with caution. That said, if you are a more advanced JavaScript programmer, they should work as you expect; see the "Note about this `this`" section below.
+⚠️ Note: Getters in JavaScript are a more advanced feature of the language, so Valtio recommends using them with caution. That said, if you are a more advanced JavaScript programmer, they should work as you expect; see the "Note about using `this`" section below.
 
 ## Simple object getter
 
@@ -128,6 +128,6 @@ You can use `this` inside of getters and setters, however you should be familiar
 
 So if you call `state.doubled`, then `this` will be the `state` proxy.
 
-And if you call `snap.doubled`, then `this` will be the snapshot object (except for object getters & setters, where the value is literally copied during the snapshot process, so object getters & setters are never invoked on snapshots, and for them `this` is _always_ the proxy).
+And if you call `snap.doubled`, then `this` will be the snapshot object (except for object getters & setters, where the current value is copied during the snapshot process, so object getters & setters are never invoked on snapshots).
 
 Despite this nuance, you should be able to use `this` as you would expect, and things will "just work".
