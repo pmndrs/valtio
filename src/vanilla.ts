@@ -131,7 +131,9 @@ const buildProxyFunction = (
 
   versionHolder = [1, 1] as [number, number],
 
-  proxyFunction = <T extends object>(initialObject: T): T => {
+  proxyFunction = function proxyFunction<T extends object>(
+    initialObject: T
+  ): T {
     if (!isObject(initialObject)) {
       throw new Error('object required')
     }
@@ -261,7 +263,7 @@ const buildProxyFunction = (
             })
         } else {
           if (!proxyStateMap.has(value) && canProxy(value)) {
-            nextValue = proxy(value)
+            nextValue = proxyFunction(value)
           }
           const childProxyState =
             !refSet.has(nextValue) && proxyStateMap.get(nextValue)
