@@ -287,6 +287,8 @@ const buildProxyFunction = (
         key
       ) as PropertyDescriptor
       const hasValue = 'value' in desc
+      // `delete desc.value` is required, because otherwise
+      // we can't set a new value in the `if (hasValue)` block below.
       delete desc.value
       Object.defineProperty(baseObject, key, desc)
       if (hasValue) {
