@@ -108,30 +108,35 @@ const buildProxyFunction = (
     markToTrack(snap, true) // mark to track
     snapCache.set(target, [version, snap])
     Reflect.ownKeys(target).forEach((key) => {
+      if (Object.getOwnPropertyDescriptor(snap, key)) {
+        // Only the known case is Array.length so far.
+        return
+      }
       const value = Reflect.get(target, key)
+      const desc: PropertyDescriptor = {
+        value,
+        enumerable: true,
+      }
       if (refSet.has(value as object)) {
         markToTrack(value as object, false) // mark not to track
-        snap[key] = value
       } else if (value instanceof Promise) {
-        Object.defineProperty(snap, key, {
-          get() {
-            return handlePromise(value)
-          },
-        })
+        delete desc.value
+        desc.get = () => handlePromise(value)
       } else if (proxyStateMap.has(value as object)) {
-        snap[key] = snapshot(value as object, handlePromise)
-      } else {
-        snap[key] = value
+        desc.value = snapshot(value as object, handlePromise)
       }
+      Object.defineProperty(snap, key, desc)
     })
-    return Object.freeze(snap)
+    return snap
   },
 
   proxyCache = new WeakMap<object, ProxyObject>(),
 
   versionHolder = [1, 1] as [number, number],
 
-  proxyFunction = <T extends object>(initialObject: T): T => {
+  proxyFunction = function proxyFunction<T extends object>(
+    initialObject: T
+  ): T {
     if (!isObject(initialObject)) {
       throw new Error('object required')
     }
@@ -259,7 +264,7 @@ const buildProxyFunction = (
             })
         } else {
           if (!proxyStateMap.has(value) && canProxy(value)) {
-            nextValue = proxy(value)
+            nextValue = proxyFunction(value)
           }
           const childProxyState =
             !refSet.has(nextValue) && proxyStateMap.get(nextValue)
