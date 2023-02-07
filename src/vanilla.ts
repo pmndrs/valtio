@@ -245,9 +245,7 @@ const buildProxyFunction = (
           value = getUntracked(value) || value
         }
         let nextValue = value
-        if (Object.getOwnPropertyDescriptor(target, prop)?.set) {
-          // do nothing
-        } else if (value instanceof Promise) {
+        if (value instanceof Promise) {
           value
             .then((v) => {
               value.status = 'fulfilled'
@@ -288,9 +286,12 @@ const buildProxyFunction = (
         initialObject,
         key
       ) as PropertyDescriptor
-      if (desc.get || desc.set) {
-        Object.defineProperty(baseObject, key, desc)
-      } else {
+      const hasValue = 'value' in desc
+      // `delete desc.value` is required, because otherwise
+      // we can't set a new value in the `if (hasValue)` block below.
+      delete desc.value
+      Object.defineProperty(baseObject, key, desc)
+      if (hasValue) {
         proxyObject[key as keyof T] = initialObject[key as keyof T]
       }
     })
