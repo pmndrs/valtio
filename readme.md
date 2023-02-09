@@ -235,7 +235,7 @@ function TextBox() {
 
 #### Dev tools
 
-You can use [Redux DevTools Extension](https://github.com/zalmoxisus/redux-devtools-extension) for plain objects and arrays.
+You can use [Redux DevTools Extension](https://github.com/reduxjs/redux-devtools) for plain objects and arrays.
 
 ```jsx
 import { devtools } from 'valtio/utils'
