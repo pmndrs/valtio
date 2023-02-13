@@ -4665,10 +4665,9 @@ proxy-compare@2.4.0:
   resolved "https://registry.yarnpkg.com/proxy-compare/-/proxy-compare-2.4.0.tgz#90f6abffe734ef86d8e37428c5026268606a9c1b"
   integrity sha512-FD8KmQUQD6Mfpd0hywCOzcon/dbkFP8XBd9F1ycbKtvVsfv6TsFUKJ2eC0Iz2y+KzlkdT1Z8SY6ZSgm07zOyqg==
 
-proxy-compare@2.4.2:
+"proxy-compare@https://pkg.csb.dev/dai-shi/proxy-compare/commit/1e7b6a4e/proxy-compare":
   version "2.4.2"
-  resolved "https://registry.yarnpkg.com/proxy-compare/-/proxy-compare-2.4.2.tgz#057e30e0caa2e26afc079c2fb7acb0c3dd30148b"
-  integrity sha512-w/7pSps1muovCXJoNa8k3AslEfwQfBQff9emT1OgoaVdtC0WctWjflTBKXbtO0kJnM9RASc+/vXRyzT0dPgnBA==
+  resolved "https://pkg.csb.dev/dai-shi/proxy-compare/commit/1e7b6a4e/proxy-compare#3cbe86229754651a3546b281cd8ff6666f8b221e"
 
 proxy-memoize@^2.0.2:
   version "2.0.2"
