@@ -136,7 +136,7 @@
     ]
   },
   "dependencies": {
-    "proxy-compare": "2.4.1",
+    "proxy-compare": "2.5.0",
     "use-sync-external-store": "1.2.0"
   },
   "devDependencies": {
