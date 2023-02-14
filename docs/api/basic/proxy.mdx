@@ -10,7 +10,7 @@ description: 'Create a proxy object.'
 The proxy tracks changes to the original object and all nested objects, notifying listeners when an object is modified.
 
 ```js
-import { proxy, useSnapshot } from 'valtio'
+import { proxy } from 'valtio'
 
 const state = proxy({ count: 0, text: 'hello' })
 ```
@@ -71,7 +71,7 @@ const bombState = proxy({
 
 #### Gotchas
 
-If you reassign the proxy to a entirely new object, it will stop working.
+If you reassign the proxy to an entirely new object, it will stop working.
 
 ```jsx
 let state = proxy({ user: { name: 'Timo' } })
