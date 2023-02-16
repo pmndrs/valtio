@@ -15,17 +15,15 @@ type Op =
   | [op: 'reject', path: Path, error: unknown]
 type Listener = (op: Op, nextVersion: number) => void
 
-type AnyFunction = (...args: any[]) => any
-
-type Snapshot<T> = T extends AnyFunction
+type Snapshot<T> = T extends AsRef
   ? T
-  : T extends AsRef
-  ? T
-  : T extends Promise<any>
+  : T extends Promise<unknown>
   ? Awaited<T>
-  : {
-      readonly [K in keyof T]: Snapshot<T[K]>
-    }
+  : T extends unknown[]
+  ? readonly Snapshot<T[number]>[]
+  : T extends { [key: string]: unknown }
+  ? { readonly [K in keyof T]: Snapshot<T[K]> }
+  : T
 
 /**
  * This is not a public API.
