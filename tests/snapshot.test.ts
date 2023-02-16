@@ -42,3 +42,10 @@ it('should not change snapshot with assigning same object', async () => {
   const snap2 = snapshot(state)
   expect(snap1).toBe(snap2)
 })
+
+it('should create a new proxy from a snapshot', async () => {
+  const state = proxy({ c: 0 })
+  const snap1 = snapshot(state)
+  const state2 = proxy(snap1)
+  expect(state2.c).toBe(0)
+})
