@@ -105,3 +105,30 @@ expectType<
     }
   >
 >(true)
+
+class User {
+  firstName!: string
+
+  lastName!: string
+
+  role!: string
+
+  hasRole(role: string): boolean {
+    return this.role === role
+  }
+}
+
+const user = new User()
+
+// Turns class fields to readonly
+expectType<
+  TypeEqual<
+    Snapshot<typeof user>,
+    {
+      readonly firstName: string
+      readonly lastName: string
+      readonly role: string
+      readonly hasRole: (role: string) => boolean
+    }
+  >
+>(true)
