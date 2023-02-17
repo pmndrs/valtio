@@ -41,14 +41,26 @@ expectType<
 // Converts arrays to readonly arrays
 expectType<TypeEqual<Snapshot<number[]>, readonly number[]>>(true)
 
-// Keeps builtin objects as-is. Date, Map and Set as the example.
+// Keeps builtin objects as-is. Date, Map, Set, WeakMap, WeakSet, Error and RegExp as the example.
 expectType<
   TypeEqual<
-    Snapshot<{ date: Date; map: Map<string, unknown>; set: Set<string> }>,
+    Snapshot<{
+      date: Date
+      map: Map<string, unknown>
+      set: Set<string>
+      regexp: RegExp
+      error: Error
+      weakMap: WeakMap<any, any>
+      weakSet: WeakSet<any>
+    }>,
     {
       readonly date: Date
       readonly map: Map<string, unknown>
       readonly set: Set<string>
+      readonly regexp: RegExp
+      readonly error: Error
+      readonly weakMap: WeakMap<any, any>
+      readonly weakSet: WeakSet<any>
     }
   >
 >(true)
