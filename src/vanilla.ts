@@ -3,6 +3,8 @@ import { getUntracked, markToTrack } from 'proxy-compare'
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
+type AnyFunction = (...args: any[]) => any
+
 type AsRef = { $$valtioRef: true }
 
 type ProxyObject = object
@@ -15,13 +17,22 @@ type Op =
   | [op: 'reject', path: Path, error: unknown]
 type Listener = (op: Op, nextVersion: number) => void
 
-type Snapshot<T> = T extends AsRef
+type SnapshotIgnore =
+  | Date
+  | Map<any, any>
+  | Set<any>
+  | WeakMap<any, any>
+  | WeakSet<any>
+  | AsRef
+  | Error
+  | RegExp
+  | AnyFunction
+
+type Snapshot<T> = T extends SnapshotIgnore
   ? T
   : T extends Promise<unknown>
   ? Awaited<T>
-  : T extends unknown[]
-  ? readonly Snapshot<T[number]>[]
-  : T extends { [key: string]: unknown }
+  : T extends object
   ? { readonly [K in keyof T]: Snapshot<T[K]> }
   : T
 
