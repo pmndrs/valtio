@@ -1,4 +1,5 @@
 import { expect, it } from '@jest/globals'
+import { createProxy, getUntracked } from 'proxy-compare'
 import { TypeEqual, expectType } from 'ts-expect'
 import { INTERNAL_Snapshot as Snapshot, proxy, snapshot } from 'valtio'
 
@@ -172,4 +173,21 @@ it('turns class fields to readonly', () => {
       }
     >
   >(true)
+})
+
+it('should not cause proxy-compare to copy', async () => {
+  const state = proxy({ foo: 1 })
+  const snap1 = snapshot(state)
+  // Ensure configurable is true, otherwise proxy-compare will copy the object
+  // so that its Proxy.get trap can work, and we don't want that perf overhead.
+  expect(Object.getOwnPropertyDescriptor(snap1, 'foo')).toEqual({
+    configurable: true,
+    enumerable: true,
+    value: 1,
+    writable: false,
+  })
+  // Technically getUntracked is smart enough to not return the copy, so this
+  // assertion doesn't strictly mean we avoided the copy
+  const cmp = createProxy(snap1, new WeakMap())
+  expect(getUntracked(cmp)).toBe(snap1)
 })
