@@ -1,4 +1,4 @@
-import { expectType, TypeEqual } from 'ts-expect'
+import { TypeEqual, expectType } from 'ts-expect'
 import { INTERNAL_Snapshot as Snapshot } from 'valtio/vanilla'
 
 // Converts object properties to readonly
