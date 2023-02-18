@@ -81,10 +81,6 @@ expectType<
         details: string | null
         createdAt: Date
         updatedAt: Date
-        completions: {
-          details: string
-          completed: boolean
-        }[]
       }[]
     }>,
     {
@@ -96,10 +92,6 @@ expectType<
         readonly details: string | null
         readonly createdAt: Date
         readonly updatedAt: Date
-        readonly completions: readonly {
-          readonly details: string
-          readonly completed: boolean
-        }[]
       }[]
     }
   >
