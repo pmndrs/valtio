@@ -34,6 +34,10 @@ const useAffectedDebugValue = (
   useDebugValue(pathList.current)
 }
 
+// This is required only for performance.
+// Ref: https://github.com/pmndrs/valtio/issues/519
+const targetCache = new WeakMap()
+
 type Options = {
   sync?: boolean
 }
@@ -162,5 +166,10 @@ export function useSnapshot<T extends object>(
     useAffectedDebugValue(currSnapshot, currAffected)
   }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
-  return createProxyToCompare(currSnapshot, currAffected, proxyCache)
+  return createProxyToCompare(
+    currSnapshot,
+    currAffected,
+    proxyCache,
+    targetCache
+  )
 }

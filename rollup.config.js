@@ -89,18 +89,11 @@ function createCommonJSConfig(input, output) {
 }
 
 function createUMDConfig(input, output, env) {
-  const c = output.replace(/^dist\/umd\//, '').split('/')
-  let name
-  if (c.length === 1) {
-    name = 'valtio'
-  } else if (c.length === 2) {
-    name = `valtio${c[1].slice(0, 1).toUpperCase()}${c[1].slice(1)}`
-  } else if (c.length === 3) {
-    name = `valtio${c[1].slice(0, 1).toUpperCase()}${c[1].slice(1)}${c[2]
-      .slice(0, 1)
-      .toUpperCase()}${c[2].slice(1)}`
-  } else {
-    throw new Error('unexpected output format: ' + output)
+  let name = 'valtio'
+  const fileName = output.slice('dist/umd/'.length)
+  const capitalize = (s) => s.slice(0, 1).toUpperCase() + s.slice(1)
+  if (fileName !== 'index') {
+    name += fileName.replace(/(\w+)\W*/g, (_, p) => capitalize(p))
   }
   return {
     input,

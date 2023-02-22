@@ -116,6 +116,9 @@ const buildProxyFunction = (
       const desc: PropertyDescriptor = {
         value,
         enumerable: true,
+        // This is intentional to avoid copying with proxy-compare.
+        // It's still non-writable, so it avoids assigning a value.
+        configurable: true,
       }
       if (refSet.has(value as object)) {
         markToTrack(value as object, false) // mark not to track
@@ -123,7 +126,14 @@ const buildProxyFunction = (
         delete desc.value
         desc.get = () => handlePromise(value)
       } else if (proxyStateMap.has(value as object)) {
-        desc.value = snapshot(value as object, handlePromise)
+        const [target, ensureVersion] = proxyStateMap.get(
+          value as object
+        ) as ProxyState
+        desc.value = createSnapshot(
+          target,
+          ensureVersion(),
+          handlePromise
+        ) as Snapshot<T>
       }
       Object.defineProperty(snap, key, desc)
     })
@@ -134,9 +144,7 @@ const buildProxyFunction = (
 
   versionHolder = [1, 1] as [number, number],
 
-  proxyFunction = function proxyFunction<T extends object>(
-    initialObject: T
-  ): T {
+  proxyFunction = <T extends object>(initialObject: T): T => {
     if (!isObject(initialObject)) {
       throw new Error('object required')
     }
@@ -320,10 +328,10 @@ const buildProxyFunction = (
     versionHolder,
   ] as const
 
-const [proxyFunction] = buildProxyFunction()
+const [defaultProxyFunction] = buildProxyFunction()
 
 export function proxy<T extends object>(initialObject: T = {} as T): T {
-  return proxyFunction(initialObject)
+  return defaultProxyFunction(initialObject)
 }
 
 export function getVersion(proxyObject: unknown): number | undefined {
