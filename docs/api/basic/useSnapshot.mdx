@@ -15,9 +15,11 @@ However `useSnapshot` wraps the Valtio snapshot in an access-tracking proxy, so 
 
 ## Usage
 
-### Read from snapshots in render, write to the store in callbacks
+### Read from snapshots in render, use the proxy in callbacks
 
-Snapshots are read-only, so you can render JSX from them, but mutations still need to be made via the store.
+Snapshots are read-only to render the JSX from their consistent view of the data.
+
+Mutations, and also any reads in callbacks that make mutations, need to be made via the proxy, so that the callback reads & writes the latest value.
 
 ```jsx
 function Counter() {
@@ -25,7 +27,15 @@ function Counter() {
   return (
     <div>
       {snap.count}
-      <button onClick={() => ++state.count}>+1</button>
+      <button
+        onClick={() => {
+          // also read from the state proxy in callbacks
+          if (state.count < 10) {
+            ++state.count
+          }
+        }}>
+        +1
+      </button>
     </div>
   )
 }
@@ -88,6 +98,23 @@ function BookView({ book }) {
   return <div onClick={() => book.updateTitle()}>{snap.title}</div>
 }
 ```
+
+Or you can pass both the snapshot and proxy together, if you don't want to call `useSnapshot` in the child component:
+
+```jsx
+function AuthorView() {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      {snap.books.map((book, i) => (
+        <Book key={book.id} bookProxy={state.books[i]} bookSnapshot={book} />
+      ))}
+    </div>
+  )
+}
+```
+
+There should be no performance difference between these two approaches.
 
 ### Read only what you need
 
