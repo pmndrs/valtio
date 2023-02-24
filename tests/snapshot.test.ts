@@ -1,6 +1,7 @@
-import { expect, it } from '@jest/globals'
+import { describe, expect, it } from '@jest/globals'
 import { createProxy, getUntracked } from 'proxy-compare'
-import { proxy, snapshot } from 'valtio'
+import { TypeEqual, expectType } from 'ts-expect'
+import { INTERNAL_Snapshot as Snapshot, proxy, snapshot } from 'valtio'
 
 const sleep = (ms: number) =>
   new Promise((resolve) => {
@@ -59,4 +60,139 @@ it('should not cause proxy-compare to copy', async () => {
   // assertion doesn't strictly mean we avoided the copy
   const cmp = createProxy(snap1, new WeakMap())
   expect(getUntracked(cmp)).toBe(snap1)
+})
+
+describe('snapsoht typings', () => {
+  it('converts object properties to readonly', () => {
+    expectType<
+      TypeEqual<
+        Snapshot<{
+          string: string
+          number: number
+          null: null
+          undefined: undefined
+          bool: boolean
+          someFunction(): number
+          ref: {
+            $$valtioRef: true
+          }
+        }>,
+        {
+          readonly string: string
+          readonly number: number
+          readonly null: null
+          readonly undefined: undefined
+          readonly bool: boolean
+          readonly someFunction: () => number
+          readonly ref: {
+            $$valtioRef: true
+          }
+        }
+      >
+    >(true)
+  })
+
+  it('infers Promise result from property value', () => {
+    expectType<
+      TypeEqual<
+        Snapshot<{ promise: Promise<string> }>,
+        { readonly promise: string }
+      >
+    >(true)
+  })
+
+  it('converts arrays to readonly arrays', () => {
+    expectType<TypeEqual<Snapshot<number[]>, readonly number[]>>(true)
+  })
+
+  it('keeps builtin objects from SnapshotIgnore as-is', () => {
+    expectType<
+      TypeEqual<
+        Snapshot<{
+          date: Date
+          map: Map<string, unknown>
+          set: Set<string>
+          regexp: RegExp
+          error: Error
+          weakMap: WeakMap<any, any>
+          weakSet: WeakSet<any>
+        }>,
+        {
+          readonly date: Date
+          readonly map: Map<string, unknown>
+          readonly set: Set<string>
+          readonly regexp: RegExp
+          readonly error: Error
+          readonly weakMap: WeakMap<any, any>
+          readonly weakSet: WeakSet<any>
+        }
+      >
+    >(true)
+  })
+
+  it('converts collections to readonly', () => {
+    expectType<
+      TypeEqual<
+        Snapshot<{ key: string }[]>,
+        readonly { readonly key: string }[]
+      >
+    >(true)
+  })
+
+  it('convets object properties to readonly recursively', () => {
+    expectType<
+      TypeEqual<
+        Snapshot<{
+          prevPage: number | null
+          nextPage: number | null
+          rows: number
+          items: {
+            title: string
+            details: string | null
+            createdAt: Date
+            updatedAt: Date
+          }[]
+        }>,
+        {
+          readonly prevPage: number | null
+          readonly nextPage: number | null
+          readonly rows: number
+          readonly items: readonly {
+            readonly title: string
+            readonly details: string | null
+            readonly createdAt: Date
+            readonly updatedAt: Date
+          }[]
+        }
+      >
+    >(true)
+  })
+
+  it('turns class fields to readonly', () => {
+    class User {
+      firstName!: string
+
+      lastName!: string
+
+      role!: string
+
+      hasRole(role: string): boolean {
+        return this.role === role
+      }
+    }
+
+    const user = new User()
+
+    expectType<
+      TypeEqual<
+        Snapshot<typeof user>,
+        {
+          readonly firstName: string
+          readonly lastName: string
+          readonly role: string
+          readonly hasRole: (role: string) => boolean
+        }
+      >
+    >(true)
+  })
 })
