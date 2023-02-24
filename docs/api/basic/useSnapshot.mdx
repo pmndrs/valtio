@@ -9,9 +9,9 @@ description: 'Create a local snapshot that catches changes.'
 
 Create a local snapshot that catches changes.
 
-Normally, Valtio's snapshots (created via <a href="/docs/api/advanced/snapshot">`snapshot()`</a>) are recreated on _any_ change to a store, or any of its child stores.
+Normally, Valtio's snapshots (created via <a href="/docs/api/advanced/snapshot">`snapshot()`</a>) are recreated on _any_ change to a proxy, or any of its child proxies.
 
-However `useSnapshot` wraps the Valtio snapshot in an access-tracking proxy, so your component is render optimized, i.e. it will only re-render if keys that it (or its child components) specifically accessed have changed, and not on every single change to the store.
+However `useSnapshot` wraps the Valtio snapshot in an access-tracking proxy, so your component is render optimized, i.e. it will only re-render if keys that it (or its child components) specifically accessed have changed, and not on every single change to the proxy.
 
 ## Usage
 
@@ -78,7 +78,7 @@ Note if `BookView` is `React.memo`d, the 1st `BookView` will not re-render, b/c 
 
 ### Child Components Making Mutations
 
-The above approach works if `BookView` is read-only; if your child component needs to make mutations, then you'll need to pass the store:
+The above approach works if `BookView` is read-only; if your child component needs to make mutations, then you'll need to pass the proxy:
 
 ```jsx
 function AuthorView() {
@@ -93,7 +93,7 @@ function AuthorView() {
 }
 
 function BookView({ book }) {
-  // book is the store, so we can re-snap it + mutate it
+  // book is the proxy, so we can re-snap it + mutate it
   const snap = useSnapshot(book)
   return <div onClick={() => book.updateTitle()}>{snap.title}</div>
 }
