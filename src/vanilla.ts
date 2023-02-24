@@ -308,14 +308,14 @@ const buildProxyFunction = (
         initialObject,
         key
       ) as PropertyDescriptor
-      const hasValue = 'value' in desc
-      // `delete desc.value` is required, because otherwise
-      // we can't set a new value in the `if (hasValue)` block below.
-      delete desc.value
-      Object.defineProperty(baseObject, key, desc)
-      if (hasValue) {
+      if ('value' in desc) {
         proxyObject[key as keyof T] = initialObject[key as keyof T]
+        // We need to delete desc.value because we already set it,
+        // and delete desc.writable because we want to write it again.
+        delete desc.value
+        delete desc.writable
       }
+      Object.defineProperty(baseObject, key, desc)
     })
     return proxyObject
   }
