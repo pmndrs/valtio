@@ -31,7 +31,7 @@ export function devtools<T extends object>(
 /**
  * devtools
  *
- * This is to connect with [Redux DevTools Extension](https://github.com/zalmoxisus/redux-devtools-extension).
+ * This is to connect with [Redux DevTools Extension](https://github.com/reduxjs/redux-devtools).
  * Limitation: Only plain objects/values are supported.
  *
  * @example
