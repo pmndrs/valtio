@@ -68,7 +68,10 @@ function createESMConfig(input, output) {
           ? {
               'import.meta.env?.MODE': 'process.env.NODE_ENV',
             }
-          : {}),
+          : {
+              'import.meta.env?.MODE':
+                '(import.meta.env && import.meta.env.MODE)',
+            }),
         // a workround for #410
         'use-sync-external-store/shim': 'use-sync-external-store/shim/index.js',
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
@@ -98,13 +101,12 @@ function createCommonJSConfig(input, output) {
 }
 
 function createUMDConfig(input, output, env) {
-  const c = output.replace(/^dist\/umd\//, '').split(/\W/)
-  const name = c.reduce((acc, itm, idx) => {
-    if (idx === c.length - 1 && itm === 'index') {
-      return acc
-    }
-    return acc + `${itm.slice(0, 1).toUpperCase()}${itm.slice(1)}`
-  }, 'valtio')
+  let name = 'valtio'
+  const fileName = output.slice('dist/umd/'.length)
+  const capitalize = (s) => s.slice(0, 1).toUpperCase() + s.slice(1)
+  if (fileName !== 'index') {
+    name += fileName.replace(/(\w+)\W*/g, (_, p) => capitalize(p))
+  }
   return {
     input,
     output: {

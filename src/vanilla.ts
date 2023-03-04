@@ -3,6 +3,8 @@ import { getUntracked, markToTrack } from 'proxy-compare'
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
+type AnyFunction = (...args: any[]) => any
+
 type AsRef = { $$valtioRef: true }
 
 type ProxyObject = object
@@ -15,17 +17,24 @@ type Op =
   | [op: 'reject', path: Path, error: unknown]
 type Listener = (op: Op, nextVersion: number) => void
 
-type AnyFunction = (...args: any[]) => any
+type SnapshotIgnore =
+  | Date
+  | Map<any, any>
+  | Set<any>
+  | WeakMap<any, any>
+  | WeakSet<any>
+  | AsRef
+  | Error
+  | RegExp
+  | AnyFunction
 
-type Snapshot<T> = T extends AnyFunction
+type Snapshot<T> = T extends SnapshotIgnore
   ? T
-  : T extends AsRef
-  ? T
-  : T extends Promise<any>
+  : T extends Promise<unknown>
   ? Awaited<T>
-  : {
-      readonly [K in keyof T]: Snapshot<T[K]>
-    }
+  : T extends object
+  ? { readonly [K in keyof T]: Snapshot<T[K]> }
+  : T
 
 /**
  * This is not a public API.
@@ -299,14 +308,14 @@ const buildProxyFunction = (
         initialObject,
         key
       ) as PropertyDescriptor
-      const hasValue = 'value' in desc
-      // `delete desc.value` is required, because otherwise
-      // we can't set a new value in the `if (hasValue)` block below.
-      delete desc.value
-      Object.defineProperty(baseObject, key, desc)
-      if (hasValue) {
+      if ('value' in desc) {
         proxyObject[key as keyof T] = initialObject[key as keyof T]
+        // We need to delete desc.value because we already set it,
+        // and delete desc.writable because we want to write it again.
+        delete desc.value
+        delete desc.writable
       }
+      Object.defineProperty(baseObject, key, desc)
     })
     return proxyObject
   }
