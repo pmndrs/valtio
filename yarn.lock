@@ -5349,7 +5349,12 @@ typed-array-length@^1.0.4:
     for-each "^0.3.3"
     is-typed-array "^1.1.9"
 
-typescript@^5.0.0-beta, typescript@next:
+typescript@^5.0.1-rc:
+  version "5.0.1-rc"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.0.1-rc.tgz#f2ccabbdb9646b43b5e006dc6f7b0eaf9a222c8b"
+  integrity sha512-zh75jY8gPo/y7fpmlTVN2bb2MigoLx4hGk+Cla9pY6lgSTvzJrmQQrRt5S80VTsEt6biWPZJgLK2nm6f0Ya+mA==
+
+typescript@next:
   version "5.0.0-dev.20230203"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.0.0-dev.20230203.tgz#87e51b2079ea170e5af5242754cd70bacff7ab73"
   integrity sha512-B+UiFUnk+joGpmluibAIauIFWHdmhisuC9GB3BZVNqvOYMPCtg/HokU1P5cxsw/07TesqdWkjAWQqW5kJrm2qA==
