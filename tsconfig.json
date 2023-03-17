@@ -6,7 +6,7 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "nodenext",
-    "skipLibCheck": true,
+    "skipLibCheck": true /* FIXME remove this once vite fixes it */,
     "allowImportingTsExtensions": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
