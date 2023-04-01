@@ -1,4 +1,3 @@
-import { describe, expect, it } from '@jest/globals'
 import { createProxy, getUntracked } from 'proxy-compare'
 import { TypeEqual, expectType } from 'ts-expect'
 import { INTERNAL_Snapshot as Snapshot, proxy, snapshot } from 'valtio'

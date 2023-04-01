@@ -1,13 +1,5 @@
 import { vi } from 'vitest'
 import { StrictMode, Suspense } from 'react'
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  jest,
-} from '@jest/globals'
 import { act, fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 import { devtools } from 'valtio/utils'
@@ -65,7 +57,6 @@ describe('If there is no extension installed...', () => {
   beforeEach(() => {
     savedConsoleWarn = console.warn
     console.warn = vi.fn()
-    savedDEV = __DEV__
     ;(window as any).__REDUX_DEVTOOLS_EXTENSION__ = undefined
   })
   afterEach(() => {

@@ -1,5 +1,4 @@
 import { StrictMode } from 'react'
-import { expect, it } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 

@@ -1,4 +1,3 @@
-import { describe, expect, it, jest } from '@jest/globals'
 import { watch } from 'valtio/utils'
 import { proxy } from 'valtio/vanilla'
 import { vi } from 'vitest'

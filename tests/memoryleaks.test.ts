@@ -1,5 +1,4 @@
 import { exec } from 'child_process'
-import { describe, expect, it } from '@jest/globals'
 
 describe('no memory leaks with proxy', () => {
   const runTest = async (code: string) => {
@@ -17,11 +16,9 @@ describe('no memory leaks with proxy', () => {
     `
     const output = await new Promise((resolve) => {
       exec(`node --expose-gc --eval '${testCode}'`, (err, stdout) => {
-        console.log('here', err, stdout)
         resolve(err || stdout)
       })
     })
-    console.log('success', output)
     expect(output).toMatch('state is garbage collected')
   }
 
