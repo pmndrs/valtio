@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { StrictMode, useEffect, useRef, useState } from 'react'
+import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 

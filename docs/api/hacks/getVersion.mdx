@@ -7,7 +7,13 @@ description: ''
 
 # getVersion
 
-In Valtio, updates to proxied objects are tracked internally with a version number. Therefore `getVersion` helper can be used to check if a proxied object has been updated. This is not typically useful or recommended to use in application code.
+In Valtio, updates to proxied objects are tracked internally with a version number.
+
+Every mutation to a proxy increases a global version number, and assigns the just mutated proxy, and any parent proxies (which automatically subscribe to their child proxies), to the latest version number.
+
+This is how `snapshot` knows whether a new snapshot is necessary: has my proxy's version number changed since the last snapshot?
+
+Given its importance to valtio's internal behavior, the `getVersion` helper can be used to check if a proxied object has been updated, but this is not typically useful or recommended to use in application code because `snapshot` and `useSnapshot` already handle version tracking internally.
 
 ```js
 getVersion(proxyObject)

@@ -7,23 +7,101 @@ description: 'Create a snapshot of current state'
 
 # snapshot
 
-#### A snapshot takes a proxy and returns a immutable object, unwrapped from the proxy.
+snapshot takes a proxy and returns an immutable object, unwrapped from the proxy.
 
-Immutability is achieved by deeply freezing the object. In sequential snapshot calls, when the values in the proxy have not changed, a pointer to the same object is returned. This allows for shallow comparison in render functions, preventing spurious renders. Snapshots also throw promises, making them work with React Suspense.
+Immutability is achieved by _efficiently_ deep copying & freezing the object (see the "Copy on Write" section for details).
+
+Briefly, in sequential snapshot calls, when the values in the proxy have not changed, a pointer to the same previous snapshot object is returned. This allows for shallow comparison in render functions, preventing spurious renders.
+
+Snapshots also throw promises, making them work with React Suspense.
 
 ```js
 import { proxy, snapshot } from 'valtio'
 
 const store = proxy({ name: 'Mika' })
-const unwrappedStore = snapshot(store) // unwrapped store is the original object, unproxied
-const anotherUnwrappedStore = snapshot(store)
-console.log(unwrappedStore === anotherUnwrappedStore) // true
+const snap1 = snapshot(store) // an efficient copy of the current store values, unproxied
+const snap2 = snapshot(store)
+console.log(snap1 === snap2) // true, no need to re-render
+
 store.name = 'Hanna'
-const yetAnotherUnwrappedStore = snapshot(store)
-console.log(unwrappedStore === yetAnotherUnwrappedStore) // false
+const snap3 = snapshot(store)
+console.log(snap1 === snap3) // false, should re-render
 ```
 
-#### Vanilla javascript
+## Copy on Write
+
+Even though snapshots are a deep copy of the entire state, they use a lazy copy-on-write mechanism for updates, so in practice are quick to maintain.
+
+For example, if we have a nested object of:
+
+```js
+const author = proxy({
+  firstName: 'f',
+  lastName: 'l',
+  books: [{ title: 't1' }, { title: 't2' }],
+})
+
+const s1 = snapshot(author)
+```
+
+The first `snapshot` call creates four new instances:
+
+- one for the author,
+- one for the books array, and
+- two for the book objects.
+
+When we mutate the 2nd book, and take a new `snapshot`:
+
+```js
+author.books[1].title = 't2b'
+const s2 = snapshot(author)
+```
+
+Then `s2` will have a new copy of the 2nd book, but reuse the existing snapshot of the unchanged 1st book.
+
+```js
+console.log(s1 === s2) // false
+console.log(s1.books === s2.books) // false
+console.log(s1.books[0] === s2.books[0]) // true
+console.log(s1.books[1] === s2.books[1]) // false
+```
+
+Even though this example only reused one of the four existing snapshot instances, it shows that the cost of maintaining snapshots is based on the _depth_ of your state tree (which is typically low, like author to book to book reviews is three levels), and not the _breadth_ (1000s of books).
+
+## Classes
+
+Snapshots maintain the original objects' prototypes, so methods and getters work, and correctly evaluate against the snapshot's frozen state.
+
+```js
+import { proxy, snapshot } from 'valtio'
+
+class Author {
+  firstName = 'f'
+  lastName = 'l'
+  fullName() {
+    return `${this.firstName} ${this.lastName}`
+  }
+}
+
+const state = proxy(new Author())
+const snap = snapshot(state)
+
+// the snapshot has the Author prototype
+console.log(snap instanceof Author) // true
+
+state.firstName = 'f2'
+
+// Invocations use the snapshot's state, e.g. this is still 'f' because
+// inside `fullName`, `this` will be the frozen snapshot instance and not
+// the mutable state proxy
+console.log(snap.fullName()) // 'f l'
+```
+
+Note that the results of getters and methods are not cached, and are re-evaluated on every call.
+
+This should be fine, because the expectation is that they execute very quickly (faster than the overhead of caching them would be worth) and are also deterministic, so the return value is based only on the already-frozen snapshot state.
+
+## Vanilla JavaScript
 
 In VanillaJS, `snapshot` is not necessary to access proxied object values, inside or outside of subscribe. However, it is useful, for example, to keep a serializable list of unproxied objects or check if objects have changed. It also resolves promises.
 

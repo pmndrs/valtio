@@ -1,12 +1,14 @@
 import plugin from 'babel-plugin-macros'
-import pluginTester from 'babel-plugin-tester'
+import BabelPluginTester from 'babel-plugin-tester'
+
+const pluginTester = (BabelPluginTester as any).default || BabelPluginTester
 
 pluginTester({
   pluginName: 'valtio/macro',
   plugin,
   snapshot: true,
   babelOptions: {
-    filename: __filename,
+    filename: './valtio/tests',
     parserOpts: { plugins: ['jsx'] },
   },
   tests: [

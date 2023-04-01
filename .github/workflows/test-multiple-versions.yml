@@ -33,8 +33,8 @@ jobs:
           - 18.0.0
           - 18.1.0
           - 18.2.0
-          - 18.3.0-next-555ece0cd-20230112
-          - 0.0.0-experimental-555ece0cd-20230112
+          - 18.3.0-next-bfb9cbd8c-20230223
+          - 0.0.0-experimental-bfb9cbd8c-20230223
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -51,8 +51,9 @@ jobs:
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
           sed -i~ '1s/^/import React from "react";/' tests/*.tsx
-          sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' package.json
-          sed -i~ 's/automatic/classic/' .swcrc
+          sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' tsconfig.json
+          sed -i~ 's/import\.meta\.env[?]\.MODE/"DEVELOPMENT".toLowerCase()/' src/*.ts src/*/*.ts src/*/*/*.ts
+          sed -i~ 's/"test:ci":.*,$/"test:ci": "jest",/' package.json
       - name: Test ${{ matrix.react }}
         run: |
           yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}

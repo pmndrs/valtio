@@ -1,5 +1,6 @@
 import { vi } from 'vitest'
 import { StrictMode } from 'react'
+import { describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { proxy, useSnapshot } from 'valtio'
 import { proxySet } from 'valtio/utils'
@@ -198,7 +199,7 @@ describe('unsupported initial values', () => {
 
   unsupportedInputTestCases.forEach(({ name, value }) => {
     it(`throw type error when using ${name} as initial value`, () => {
-      expect(() => proxySet(value as any)).toThrow(TypeError)
+      expect(() => proxySet(value as any)).toThrow(/not iterable/)
     })
   })
 })

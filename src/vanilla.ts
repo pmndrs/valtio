@@ -3,6 +3,8 @@ import { getUntracked, markToTrack } from 'proxy-compare'
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
+type AnyFunction = (...args: any[]) => any
+
 type AsRef = { $$valtioRef: true }
 
 type ProxyObject = object
@@ -15,17 +17,24 @@ type Op =
   | [op: 'reject', path: Path, error: unknown]
 type Listener = (op: Op, nextVersion: number) => void
 
-type AnyFunction = (...args: any[]) => any
+type SnapshotIgnore =
+  | Date
+  | Map<any, any>
+  | Set<any>
+  | WeakMap<any, any>
+  | WeakSet<any>
+  | AsRef
+  | Error
+  | RegExp
+  | AnyFunction
 
-type Snapshot<T> = T extends AnyFunction
+type Snapshot<T> = T extends SnapshotIgnore
   ? T
-  : T extends AsRef
-  ? T
-  : T extends Promise<any>
+  : T extends Promise<unknown>
   ? Awaited<T>
-  : {
-      readonly [K in keyof T]: Snapshot<T[K]>
-    }
+  : T extends object
+  ? { readonly [K in keyof T]: Snapshot<T[K]> }
+  : T
 
 /**
  * This is not a public API.
@@ -108,23 +117,36 @@ const buildProxyFunction = (
     markToTrack(snap, true) // mark to track
     snapCache.set(target, [version, snap])
     Reflect.ownKeys(target).forEach((key) => {
+      if (Object.getOwnPropertyDescriptor(snap, key)) {
+        // Only the known case is Array.length so far.
+        return
+      }
       const value = Reflect.get(target, key)
+      const desc: PropertyDescriptor = {
+        value,
+        enumerable: true,
+        // This is intentional to avoid copying with proxy-compare.
+        // It's still non-writable, so it avoids assigning a value.
+        configurable: true,
+      }
       if (refSet.has(value as object)) {
         markToTrack(value as object, false) // mark not to track
-        snap[key] = value
       } else if (value instanceof Promise) {
-        Object.defineProperty(snap, key, {
-          get() {
-            return handlePromise(value)
-          },
-        })
+        delete desc.value
+        desc.get = () => handlePromise(value)
       } else if (proxyStateMap.has(value as object)) {
-        snap[key] = snapshot(value as object, handlePromise)
-      } else {
-        snap[key] = value
+        const [target, ensureVersion] = proxyStateMap.get(
+          value as object
+        ) as ProxyState
+        desc.value = createSnapshot(
+          target,
+          ensureVersion(),
+          handlePromise
+        ) as Snapshot<T>
       }
+      Object.defineProperty(snap, key, desc)
     })
-    return Object.freeze(snap)
+    return snap
   },
 
   proxyCache = new WeakMap<object, ProxyObject>(),
@@ -175,7 +197,7 @@ const buildProxyFunction = (
       prop: string | symbol,
       propProxyState: ProxyState
     ) => {
-      if (__DEV__ && propProxyStates.has(prop)) {
+      if (import.meta.env?.MODE !== 'production' && propProxyStates.has(prop)) {
         throw new Error('prop listener already exists')
       }
       if (listeners.size) {
@@ -196,7 +218,7 @@ const buildProxyFunction = (
       listeners.add(listener)
       if (listeners.size === 1) {
         propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
-          if (__DEV__ && prevRemove) {
+          if (import.meta.env?.MODE !== 'production' && prevRemove) {
             throw new Error('remove already exists')
           }
           const remove = propProxyState[3](createPropListener(prop))
@@ -232,7 +254,12 @@ const buildProxyFunction = (
       set(target: T, prop: string | symbol, value: any, receiver: object) {
         const hasPrevValue = Reflect.has(target, prop)
         const prevValue = Reflect.get(target, prop, receiver)
-        if (hasPrevValue && objectIs(prevValue, value)) {
+        if (
+          hasPrevValue &&
+          (objectIs(prevValue, value) ||
+            (proxyCache.has(value) &&
+              objectIs(prevValue, proxyCache.get(value))))
+        ) {
           return true
         }
         removePropListener(prop)
@@ -240,9 +267,7 @@ const buildProxyFunction = (
           value = getUntracked(value) || value
         }
         let nextValue = value
-        if (Object.getOwnPropertyDescriptor(target, prop)?.set) {
-          // do nothing
-        } else if (value instanceof Promise) {
+        if (value instanceof Promise) {
           value
             .then((v) => {
               value.status = 'fulfilled'
@@ -256,7 +281,7 @@ const buildProxyFunction = (
             })
         } else {
           if (!proxyStateMap.has(value) && canProxy(value)) {
-            nextValue = proxy(value)
+            nextValue = proxyFunction(value)
           }
           const childProxyState =
             !refSet.has(nextValue) && proxyStateMap.get(nextValue)
@@ -283,11 +308,14 @@ const buildProxyFunction = (
         initialObject,
         key
       ) as PropertyDescriptor
-      if (desc.get || desc.set) {
-        Object.defineProperty(baseObject, key, desc)
-      } else {
+      if ('value' in desc) {
         proxyObject[key as keyof T] = initialObject[key as keyof T]
+        // We need to delete desc.value because we already set it,
+        // and delete desc.writable because we want to write it again.
+        delete desc.value
+        delete desc.writable
       }
+      Object.defineProperty(baseObject, key, desc)
     })
     return proxyObject
   }
@@ -309,10 +337,10 @@ const buildProxyFunction = (
     versionHolder,
   ] as const
 
-const [proxyFunction] = buildProxyFunction()
+const [defaultProxyFunction] = buildProxyFunction()
 
 export function proxy<T extends object>(initialObject: T = {} as T): T {
-  return proxyFunction(initialObject)
+  return defaultProxyFunction(initialObject)
 }
 
 export function getVersion(proxyObject: unknown): number | undefined {
@@ -326,7 +354,7 @@ export function subscribe<T extends object>(
   notifyInSync?: boolean
 ): () => void {
   const proxyState = proxyStateMap.get(proxyObject as object)
-  if (__DEV__ && !proxyState) {
+  if (import.meta.env?.MODE !== 'production' && !proxyState) {
     console.warn('Please use proxy object')
   }
   let promise: Promise<void> | undefined
@@ -361,7 +389,7 @@ export function snapshot<T extends object>(
   handlePromise?: HandlePromise
 ): Snapshot<T> {
   const proxyState = proxyStateMap.get(proxyObject as object)
-  if (__DEV__ && !proxyState) {
+  if (import.meta.env?.MODE !== 'production' && !proxyState) {
     console.warn('Please use proxy object')
   }
   const [target, ensureVersion, createSnapshot] = proxyState as ProxyState

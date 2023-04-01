@@ -56,9 +56,14 @@ function createESMConfig(input, output) {
     plugins: [
       resolve({ extensions }),
       replace({
-        __DEV__: output.endsWith('.mjs')
-          ? '((import.meta.env&&import.meta.env.MODE)!=="production")'
-          : '(process.env.NODE_ENV!=="production")',
+        ...(output.endsWith('.js')
+          ? {
+              'import.meta.env?.MODE': 'process.env.NODE_ENV',
+            }
+          : {
+              'import.meta.env?.MODE':
+                '(import.meta.env && import.meta.env.MODE)',
+            }),
         // a workround for #410
         'use-sync-external-store/shim': 'use-sync-external-store/shim/index.js',
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
@@ -77,7 +82,8 @@ function createCommonJSConfig(input, output) {
     plugins: [
       resolve({ extensions }),
       replace({
-        __DEV__: '(process.env.NODE_ENV!=="production")',
+        'import.meta.env?.MODE': 'process.env.NODE_ENV',
+        delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
@@ -86,18 +92,11 @@ function createCommonJSConfig(input, output) {
 }
 
 function createUMDConfig(input, output, env) {
-  const c = output.replace(/^dist\/umd\//, '').split('/')
-  let name
-  if (c.length === 1) {
-    name = 'valtio'
-  } else if (c.length === 2) {
-    name = `valtio${c[1].slice(0, 1).toUpperCase()}${c[1].slice(1)}`
-  } else if (c.length === 3) {
-    name = `valtio${c[1].slice(0, 1).toUpperCase()}${c[1].slice(1)}${c[2]
-      .slice(0, 1)
-      .toUpperCase()}${c[2].slice(1)}`
-  } else {
-    throw new Error('unexpected output format: ' + output)
+  let name = 'valtio'
+  const fileName = output.slice('dist/umd/'.length)
+  const capitalize = (s) => s.slice(0, 1).toUpperCase() + s.slice(1)
+  if (fileName !== 'index') {
+    name += fileName.replace(/(\w+)\W*/g, (_, p) => capitalize(p))
   }
   return {
     input,
@@ -118,7 +117,8 @@ function createUMDConfig(input, output, env) {
     plugins: [
       resolve({ extensions }),
       replace({
-        __DEV__: env !== 'production' ? 'true' : 'false',
+        'import.meta.env?.MODE': JSON.stringify(env),
+        delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
       babelPlugin(getBabelOptions({ ie: 11 })),
@@ -138,7 +138,8 @@ function createSystemConfig(input, output, env) {
     plugins: [
       resolve({ extensions }),
       replace({
-        __DEV__: env !== 'production' ? 'true' : 'false',
+        'import.meta.env?.MODE': JSON.stringify(env),
+        delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
       getEsbuild('node12', env),
