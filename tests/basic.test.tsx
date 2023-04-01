@@ -1,6 +1,6 @@
-import { vi } from 'vitest'
 import { StrictMode, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
 it('simple counter', async () => {

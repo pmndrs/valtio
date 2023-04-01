@@ -1,6 +1,6 @@
-import { vi } from 'vitest'
 import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
+import { vi } from 'vitest'
 import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
 
 it('should trigger re-render setting objects with ref wrapper', async () => {

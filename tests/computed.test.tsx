@@ -1,7 +1,7 @@
-import { vi } from 'vitest'
 import { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { memoize } from 'proxy-memoize'
+import { vi } from 'vitest'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { addComputed, proxyWithComputed, subscribeKey } from 'valtio/utils'
 
