@@ -7,12 +7,19 @@ description: 'Create a local snapshot that catches changes.'
 
 # useSnapshot
 
-Create a local snapshot that catches changes. This hook actually returns a wrapped snapshot in a proxy for
-render optimization instead of a plain object, which is what <a href="/docs/api/advanced/snapshot">`snapshot()`</a> returns.
+Create a local snapshot that catches changes.
 
-#### Rule of thumb: read from snapshots in render function, otherwise use the source.
+Normally, Valtio's snapshots (created via <a href="/docs/api/advanced/snapshot">`snapshot()`</a>) are recreated on _any_ change to a proxy, or any of its child proxies.
 
-The component will only re-render when the parts of the state you access have changed; it is render-optimized.
+However `useSnapshot` wraps the Valtio snapshot in an access-tracking proxy, so your component is render optimized, i.e. it will only re-render if keys that it (or its child components) specifically accessed have changed, and not on every single change to the proxy.
+
+## Usage
+
+### Read from snapshots in render, use the proxy in callbacks
+
+Snapshots are read-only to render the JSX from their consistent view of the data.
+
+Mutations, and also any reads in callbacks that make mutations, need to be made via the proxy, so that the callback reads & writes the latest value.
 
 ```jsx
 function Counter() {
@@ -20,13 +27,96 @@ function Counter() {
   return (
     <div>
       {snap.count}
-      <button onClick={() => ++state.count}>+1</button>
+      <button
+        onClick={() => {
+          // also read from the state proxy in callbacks
+          if (state.count < 10) {
+            ++state.count
+          }
+        }}>
+        +1
+      </button>
     </div>
   )
 }
 ```
 
-#### Read only what you need
+### Parent/Child Components
+
+If you have a parent component use `useSnapshot`, it can pass snapshots to child components and the parent & children will re-render when the snapshot changes.
+
+For example:
+
+```jsx
+const state = proxy({
+  books: [
+    { id: 1, title: 'b1' },
+    { id: 2, title: 'b2' },
+  ],
+})
+
+function AuthorView() {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      {snap.books.map((book) => (
+        <Book key={book.id} book={book} />
+      ))}
+    </div>
+  )
+}
+
+function BookView({ book }) {
+  // book is a snapshot
+  return <div>{book.title}</div>
+}
+```
+
+If book 2's title is changed, a new `snap` is created and the `AuthorView` and `BookView` components will re-render.
+
+Note if `BookView` is `React.memo`d, the 1st `BookView` will not re-render, b/c the 1st `Book` snapshot will be the same instance, as only the 2nd `Book` was mutated (the root `Author` snapshot will also be updated since the list of `books` has changed).
+
+### Child Components Making Mutations
+
+The above approach works if `BookView` is read-only; if your child component needs to make mutations, then you'll need to pass the proxy:
+
+```jsx
+function AuthorView() {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      {snap.books.map((book, i) => (
+        <Book key={book.id} book={state.books[i]} />
+      ))}
+    </div>
+  )
+}
+
+function BookView({ book }) {
+  // book is the proxy, so we can re-snap it + mutate it
+  const snap = useSnapshot(book)
+  return <div onClick={() => book.updateTitle()}>{snap.title}</div>
+}
+```
+
+Or you can pass both the snapshot and proxy together, if you don't want to call `useSnapshot` in the child component:
+
+```jsx
+function AuthorView() {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      {snap.books.map((book, i) => (
+        <Book key={book.id} bookProxy={state.books[i]} bookSnapshot={book} />
+      ))}
+    </div>
+  )
+}
+```
+
+There should be no performance difference between these two approaches.
+
+### Read only what you need
 
 Every object inside your proxy also becomes a proxy (if you don't use <a href="/docs/advanced/ref">`ref()`</a>). So you can also use them to create
 a local snapshot.
@@ -38,7 +128,7 @@ function ProfileName() {
 }
 ```
 
-#### Gotchas
+### Gotchas
 
 Beware of replacing the child proxy with something else, breaking your snapshot. You can see
 here what happens with the original proxy when you replace the child proxy.
@@ -90,7 +180,7 @@ const { profile } = useSnapshot(state)
 return <div>{profile.name}</div>
 ```
 
-#### Dev Mode Debug Values
+### Dev Mode Debug Values
 
 In dev mode, `useSnapshot` uses React's `useDebugValue` to output a list of fields that were accessed during rendering, i.e. which specific fields will trigger re-render when the tracking proxy changes.
 
