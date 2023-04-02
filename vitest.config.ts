@@ -1,14 +1,11 @@
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  define: {
-    __DEV__: true,
-  },
   test: {
+    setupFiles: './tests/setup.ts',
     coverage: { include: ['src/**/*.{js,ts,tsx}', 'tests/**/*.{js,ts,tsx}'] },
     environment: 'jsdom',
-    include: ['./tests/**/*.{js,ts,tsx}'],
-    globals: true,
+    include: ['./tests/**/*.test.{js,ts,tsx}'],
     alias: [
       {
         find: new RegExp('^valtio$'),

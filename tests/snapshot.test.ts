@@ -1,5 +1,6 @@
 import { createProxy, getUntracked } from 'proxy-compare'
 import { TypeEqual, expectType } from 'ts-expect'
+import { expect, it, describe } from 'vitest'
 import { INTERNAL_Snapshot as Snapshot, proxy, snapshot } from 'valtio'
 
 const sleep = (ms: number) =>

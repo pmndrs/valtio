@@ -1,6 +1,6 @@
 import { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
-import { vi } from 'vitest'
+import { vi, expect, it, describe } from 'vitest'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { derive, underive } from 'valtio/utils'
 

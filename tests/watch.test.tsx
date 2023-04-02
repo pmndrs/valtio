@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, expect, it, describe } from 'vitest'
 import { watch } from 'valtio/utils'
 import { proxy } from 'valtio/vanilla'
 

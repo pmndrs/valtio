@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { vi } from 'vitest'
+import { vi, expect, it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
 it('simple counter', async () => {
@@ -16,7 +16,7 @@ it('simple counter', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText, findByText, unmount } = render(
     <StrictMode>
       <Counter />
     </StrictMode>
@@ -26,6 +26,7 @@ it('simple counter', async () => {
 
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
+  unmount()
 })
 
 it('no extra re-renders (commits)', async () => {

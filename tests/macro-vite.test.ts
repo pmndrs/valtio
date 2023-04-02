@@ -1,4 +1,5 @@
 import { EnvContext } from '@typed-macro/core'
+import { expect, it } from 'vitest'
 import { createTransformer } from '@typed-macro/runtime'
 import { valtioMacro } from 'valtio/macro/vite'
 

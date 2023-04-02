@@ -1,5 +1,10 @@
 import plugin from 'babel-plugin-macros'
 import BabelPluginTester from 'babel-plugin-tester'
+import { describe, it, expect } from 'vitest'
+
+globalThis.describe = describe
+globalThis.it = it
+globalThis.expect = expect
 
 const pluginTester = (BabelPluginTester as any).default || BabelPluginTester
 

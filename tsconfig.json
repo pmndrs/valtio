@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "types": ["vitest/globals"],
     "target": "esnext",
     "strict": true,
     "jsx": "react-jsx",
