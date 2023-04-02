@@ -9,9 +9,6 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['./tests/**/*.{js,ts,tsx}'],
     globals: true,
-    deps: {
-      // experimentalOptimizer: {enabled: true,include: ['proxy-compare', 'proxy-memoize'],}
-    },
     alias: [
       {
         find: new RegExp('^valtio$'),

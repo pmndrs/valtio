@@ -141,7 +141,7 @@
     "json": "^11.0.0",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.8.4",
-    "proxy-memoize": "^2.0.2",
+    "proxy-memoize": "https://pkg.csb.dev/dai-shi/proxy-memoize/commit/d15fd0ee/proxy-memoize/_pkg.tgz",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "redux": "^4.2.1",
