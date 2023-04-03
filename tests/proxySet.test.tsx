@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { vi, expect, it, describe } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 import { proxySet } from 'valtio/utils'
 

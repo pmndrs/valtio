@@ -1,4 +1,4 @@
-import { vi, expect, it, beforeEach, afterEach, describe } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, ref, subscribe } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 
