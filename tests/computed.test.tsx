@@ -25,7 +25,7 @@ const sleep = (ms: number) =>
 
 describe('proxyWithComputed', () => {
   it('simple computed getters', async () => {
-    const computeDouble = vi.fn((x) => x * 2)
+    const computeDouble = vi.fn((x: number) => x * 2)
     const state = proxyWithComputed(
       {
         text: '',
