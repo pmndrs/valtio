@@ -241,7 +241,7 @@ describe('DEPRECATED addComputed', () => {
   })
 
   it('nested emulation with addComputed', async () => {
-    const computeDouble = vi.fn((x) => x * 2)
+    const computeDouble = vi.fn((x: number) => x * 2)
     const state = proxy({ text: '', math: { count: 0 } })
     addComputed(
       state,
