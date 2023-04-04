@@ -19,10 +19,14 @@ import { useSnapshot } from 'valtio/react'
  * }
  *
  * @param proxy
+ * @param options
  * @returns A new proxy which you can use in the render as well as in callbacks.
  */
-export function useProxy<T extends object>(proxy: T): T {
-  const snapshot = useSnapshot(proxy) as T
+export function useProxy<T extends object>(
+  proxy: T,
+  options?: NonNullable<Parameters<typeof useSnapshot>[1]>
+): T {
+  const snapshot = useSnapshot(proxy, options) as T
 
   let isRendering = true
 
