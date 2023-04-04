@@ -46,7 +46,7 @@ it('simple object getters', async () => {
 })
 
 it('object getters returning object', async () => {
-  const computeDouble = vi.fn((x) => x * 2)
+  const computeDouble = vi.fn((x: number) => x * 2)
   const state = proxy({
     count: 0,
     get doubled() {
