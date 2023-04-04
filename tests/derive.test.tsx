@@ -255,7 +255,7 @@ it('derive with array.pop', async () => {
 })
 
 it('basic underive', async () => {
-  const computeDouble = vi.fn((x) => x * 2)
+  const computeDouble = vi.fn((x: number) => x * 2)
   const state = proxy({ count: 0 })
   const derived = derive({
     doubled: (get) => computeDouble(get(state).count),
