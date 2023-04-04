@@ -23,7 +23,7 @@ npm i valtio
 
 #### 1. proxy
 
-Let's learn Valtio by coding a simple to-do app in React and Typescript. We'll start by creating some state using [`proxy`](/docs/basic/proxy).
+Let's learn Valtio by coding a simple to-do app in React and Typescript. We'll start by creating some state using [`proxy`](../api/basic/proxy).
 
 ```ts
 import { proxy, useSnapshot } from 'valtio'
@@ -44,7 +44,7 @@ export const store = proxy<{ filter: Filter; todos: Todo[] }>({
 
 #### 2. useSnapshot
 
-To access the data in this store, we'll use [`useSnapshot`](/docs/basic/useSnapshot). The Todos component will rerender when the "todos" or "filter" properties are updated. Any other data we add to the proxy will be ignored.
+To access the data in this store, we'll use [`useSnapshot`](../api/basic/useSnapshot). The Todos component will rerender when the "todos" or "filter" properties are updated. Any other data we add to the proxy will be ignored.
 
 ```tsx
 const Todos = () => {
@@ -122,7 +122,7 @@ type Todo = {
 }
 ```
 
-Among other changes, we will add a Countdown component to display the ticking time for each todo. We are using an advanced technique of passing a nested proxy object to [`useSnapshot`](/docs/basic/useSnapshot). Alternatively, make this a dumb component by passing the todo's "timeLeft" as a prop.
+Among other changes, we will add a Countdown component to display the ticking time for each todo. We are using an advanced technique of passing a nested proxy object to [`useSnapshot`](../api/basic/useSnapshot). Alternatively, make this a dumb component by passing the todo's "timeLeft" as a prop.
 
 ```tsx
 import { useSnapshot } from 'valtio'
@@ -198,7 +198,7 @@ Please see the rest of the changes in the demo below.
 
 #### Subscribe in module scope
 
-Being able to mutate state outside of components is a huge benefit. We can also [`subscribe`](/docs/basic/subscribe) to state changes in module scope. We will leave it to you to try this out. You might, for instance, persist your todos to local storage as in [this example](https://github.com/pmndrs/valtio/wiki/How-to-persist-states#persist-with-localstorage).
+Being able to mutate state outside of components is a huge benefit. We can also [`subscribe`](../api/advanced/subscribe) to state changes in module scope. We will leave it to you to try this out. You might, for instance, persist your todos to local storage as in [this example](https://github.com/pmndrs/valtio/wiki/How-to-persist-states#persist-with-localstorage).
 
 ## Codesandbox demo
 
