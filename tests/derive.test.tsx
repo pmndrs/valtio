@@ -117,7 +117,7 @@ it('derive with self', async () => {
 })
 
 it('derive with two dependencies', async () => {
-  const computeSum = vi.fn((x, y) => x + y)
+  const computeSum = vi.fn((x: number, y: number) => x + y)
   const state1 = proxy({ count: 1 })
   const state2 = proxy({ count: 10 })
   const derived = derive({
