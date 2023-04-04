@@ -1,4 +1,4 @@
-import { subscribe } from 'valtio/vanilla'
+import { subscribe } from '../../vanilla.ts'
 
 type Cleanup = () => void
 type WatchGet = <T extends object>(proxyObject: T) => T
