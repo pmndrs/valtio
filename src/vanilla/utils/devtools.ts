@@ -1,4 +1,4 @@
-import { snapshot, subscribe } from 'valtio/vanilla'
+import { snapshot, subscribe } from '../../vanilla.ts'
 import type {} from '@redux-devtools/extension'
 
 // FIXME https://github.com/reduxjs/redux-devtools/issues/1097

@@ -1,4 +1,4 @@
-import { proxy } from 'valtio/vanilla'
+import { proxy } from '../../vanilla.ts'
 
 type KeyValRecord<K, V> = [key: K, value: V]
 

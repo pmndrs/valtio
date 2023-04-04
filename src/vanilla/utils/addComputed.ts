@@ -1,4 +1,4 @@
-import { derive } from './derive'
+import { derive } from './derive.ts'
 
 /**
  * addComputed (DEPRECATED)
