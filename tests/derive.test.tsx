@@ -42,7 +42,7 @@ it('basic derive', async () => {
 })
 
 it('derive another proxy', async () => {
-  const computeDouble = vi.fn((x) => x * 2)
+  const computeDouble = vi.fn((x: number) => x * 2)
   const state = proxy({
     text: '',
     count: 0,
