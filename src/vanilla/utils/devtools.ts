@@ -1,5 +1,5 @@
-import { snapshot, subscribe } from '../../vanilla.ts'
 import type { EnhancerOptions } from '@redux-devtools/extension'
+import { snapshot, subscribe } from '../../vanilla.ts'
 
 // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
 type Message = {
