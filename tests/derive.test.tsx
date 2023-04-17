@@ -308,7 +308,7 @@ describe('glitch free', () => {
       })
       return (
         <div>
-          value: {snap.value} (commits: {commitsRef.current})
+          <div>value: {snap.value} (commits: {commitsRef.current})</div>
           <button onClick={() => ++state.value}>button</button>
         </div>
       )
