@@ -7,7 +7,7 @@ import { devtools } from 'valtio/utils'
 let extensionSubscriber: ((message: any) => void) | undefined
 
 const extension = {
-  subscribe: vi.fn((f) => {
+  subscribe: vi.fn((f: typeof extensionSubscriber) => {
     extensionSubscriber = f
     return () => {}
   }),
