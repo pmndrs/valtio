@@ -56,13 +56,14 @@ jobs:
           yarn add -D pretty-format@25.5.0 @types/prettier@2.4.2 @types/yargs@17.0.13 @types/node@18.11.18 @types/babel__traverse@7.18.2
           rm -r tests/macro-vite.*
       - name: Install old TypeScript
-        run: yarn add -D typescript@${{ matrix.typescript }}
+        run: |
+          yarn add -D typescript@${{ matrix.typescript }}
+          rm node_modules/parse5/dist/*.d.ts
       - name: Patch testing setup for older TS
-        if: ${{ matrix.typescript == '3.9.7' ||  matrix.typescript == '3.8.3' }}
+        if: ${{ matrix.typescript == '3.9.7' ||  matrix.typescript == '3.8.3' ||  matrix.typescript == '3.7.5' }}
         run: |
           yarn add -D @testing-library/user-event@12.1.7 @testing-library/react@11.0.4
           rm node_modules/vitest/dist/*.d.ts
-          rm node_modules/parse5/dist/*.d.ts
           echo "declare module 'vitest'" >> ./src/types.d.ts
       - name: Test ${{ matrix.typescript }}
         run: |
