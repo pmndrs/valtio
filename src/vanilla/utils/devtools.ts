@@ -1,5 +1,5 @@
 import { snapshot, subscribe } from '../../vanilla.ts'
-import type {} from '@redux-devtools/extension'
+import type { EnhancerOptions } from '@redux-devtools/extension'
 
 // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
 type Message = {
@@ -10,9 +10,8 @@ type Message = {
 
 const DEVTOOLS = Symbol()
 
-type Options = {
+type Options = EnhancerOptions & {
   enabled?: boolean
-  name?: string
 }
 
 export function devtools<T extends object>(
@@ -67,7 +66,7 @@ export function devtools<T extends object>(
   }
 
   let isTimeTraveling = false
-  const devtools = extension.connect({ name })
+  const devtools = extension.connect({ name, ...options })
   const unsub1 = subscribe(proxyObject, (ops) => {
     const action = ops
       .filter(([_, path]) => path[0] !== DEVTOOLS)
