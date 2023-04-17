@@ -4,7 +4,7 @@ import { subscribeKey } from 'valtio/utils'
 
 const consoleWarn = console.warn
 beforeEach(() => {
-  console.warn = vi.fn((message) => {
+  console.warn = vi.fn((message: string) => {
     if (message === 'Please use proxy object') {
       return
     }

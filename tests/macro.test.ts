@@ -3,11 +3,11 @@ import BabelPluginTester from 'babel-plugin-tester'
 import { describe, expect, it } from 'vitest'
 
 // @ts-expect-error assigning to globals
-globalThis.describe = describe
+globalThis.describe = describe as any
 // @ts-expect-error assigning to globals
-globalThis.it = it
+globalThis.it = it as any
 // @ts-expect-error assigning to globals
-globalThis.expect = expect
+globalThis.expect = expect as any
 
 const pluginTester = (BabelPluginTester as any).default || BabelPluginTester
 

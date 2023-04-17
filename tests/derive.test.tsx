@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { derive, underive } from 'valtio/utils'
 
+type DeriveGet = <T extends object>(proxyObject: T) => T
+
 const sleep = (ms: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms)
@@ -290,7 +292,7 @@ describe('glitch free', () => {
     const state = proxy({ value: 0 })
     const derived1 = derive({ value: (get) => get(state).value })
     const derived2 = derive({ value: (get) => get(derived1).value })
-    const computeValue = vi.fn((get) => {
+    const computeValue = vi.fn((get: DeriveGet) => {
       const v0 = get(state).value
       const v1 = get(derived1).value
       const v2 = get(derived2).value
@@ -334,7 +336,7 @@ describe('glitch free', () => {
     const derived2 = derive({
       value: (get) => get(derived1).value * 0,
     })
-    const computeValue = vi.fn((get) => {
+    const computeValue = vi.fn((get: DeriveGet) => {
       const v0 = get(state).value
       const v1 = get(derived1).value
       const v2 = get(derived2).value
@@ -379,7 +381,7 @@ describe('glitch free', () => {
     const derived3 = derive({
       value: (get) => get(derived2).value,
     })
-    const computeValue = vi.fn((get) => {
+    const computeValue = vi.fn((get: DeriveGet) => {
       const v0 = get(state).value
       const v1 = get(derived1).value
       const v2 = get(derived2).value
