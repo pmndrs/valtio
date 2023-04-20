@@ -2,17 +2,21 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
+    name: 'valtio',
     setupFiles: './tests/setup.ts',
-    coverage: { include: ['src/**/*.{js,ts,tsx}', 'tests/**/*.{js,ts,tsx}'] },
+    coverage: {
+      reporter: ['text', 'json', 'html', 'text-summary'],
+      reportsDirectory: './coverage/',
+    },
     environment: 'jsdom',
-    include: ['./tests/**/*.test.{js,ts,tsx}'],
+    dir: 'tests',
     alias: [
       {
-        find: new RegExp('^valtio$'),
+        find: /^valtio$/,
         replacement: './src/index.ts',
       },
       {
-        find: new RegExp('^valtio/(.*)$'),
+        find: /^valtio(.*)$/,
         replacement: './src/$1.ts',
       },
     ],

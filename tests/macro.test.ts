@@ -1,3 +1,4 @@
+// eslint-disable @typescript-eslint/ban-ts-comment
 import plugin from 'babel-plugin-macros'
 import BabelPluginTester from 'babel-plugin-tester'
 import { describe, expect, it } from 'vitest'
