@@ -16,7 +16,7 @@ export default defineConfig({
         replacement: './src/index.ts',
       },
       {
-        find: /^valtio(.*)$/,
+        find: /^valtio\/(.*)$/,
         replacement: './src/$1.ts',
       },
     ],
