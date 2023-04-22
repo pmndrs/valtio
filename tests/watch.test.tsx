@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { proxy } from 'valtio'
+import { proxy } from 'valtio/vanilla'
 import { watch } from 'valtio/utils'
 
 describe('watch', () => {
