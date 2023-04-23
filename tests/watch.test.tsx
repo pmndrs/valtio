@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { proxy } from 'valtio/vanilla'
 import { watch } from 'valtio/utils'
+import { proxy } from 'valtio/vanilla'
 
 describe('watch', () => {
   it('should re-run for individual proxy updates', async () => {
