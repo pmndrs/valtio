@@ -14,7 +14,7 @@ export default defineConfig({
     alias: [
       {
         find: /^valtio$/,
-        replacement: path.resolve(__dirname, './src/index.ts')
+        replacement: './src/index.ts'
       },
       {
         find: /^valtio\/(.*)$/,
