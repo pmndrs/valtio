@@ -1,3 +1,4 @@
+import path from 'path'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
@@ -13,11 +14,11 @@ export default defineConfig({
     alias: [
       {
         find: /^valtio$/,
-        replacement: './src/index.ts',
+        replacement: path.resolve(__dirname, './src/index.ts')
       },
       {
         find: /^valtio\/(.*)$/,
-        replacement: './src/$1.ts',
+        replacement: path.resolve(__dirname, './src/$1.ts')
       },
     ],
   },
