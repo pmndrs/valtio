@@ -18,7 +18,7 @@ export default defineConfig({
       },
       {
         find: /^valtio\/(.*)$/,
-        replacement: './src/$1.ts'
+        replacement: path.resolve(__dirname, './src/$1.ts')
       },
     ],
   },
