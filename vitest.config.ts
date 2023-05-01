@@ -2,6 +2,12 @@ import path from 'path'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  resolve: {
+    alias: [
+      { find: /^valtio$/, replacement: './src/index.ts' },
+      { find: /^valtio(.*)$/, replacement: './src/$1.ts' },
+    ],
+  },
   test: {
     name: 'valtio',
     setupFiles: './tests/setup.ts',
@@ -11,15 +17,5 @@ export default defineConfig({
     },
     environment: 'jsdom',
     dir: 'tests',
-    alias: [
-      {
-        find: /^valtio$/,
-        replacement: './src/index.ts'
-      },
-      {
-        find: /^valtio\/(.*)$/,
-        replacement: path.resolve(__dirname, './src/$1.ts')
-      },
-    ],
   },
 })
