@@ -2,7 +2,6 @@
 
 exports[`valtio/macro > 1. valtio/macro > 1. valtio/macro 1`] = `
 "
-
 import { useProxy } from '../dist/macro'
 
 const Component = () => {
@@ -14,7 +13,6 @@ const Component = () => {
     </div>
   )
 }
-
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
@@ -28,12 +26,12 @@ const Component = () => {
     </div>
   )
 }
+
 "
 `;
 
 exports[`valtio/macro > 2. valtio/macro > 2. valtio/macro 1`] = `
 "
-
 import { useProxy } from '../dist/macro'
 
 const Component = () => {
@@ -48,7 +46,6 @@ const Component = () => {
     </div>
   )
 }
-
 
       ↓ ↓ ↓ ↓ ↓ ↓
 
@@ -68,5 +65,6 @@ const Component = () => {
     </div>
   )
 }
+
 "
 `;
