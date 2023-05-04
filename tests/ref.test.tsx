@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
-import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
+import { expect, it, vi } from 'vitest'
 import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
 
 it('should trigger re-render setting objects with ref wrapper', async () => {
@@ -94,7 +94,7 @@ it('should not update snapshot or notify subscription when mutating proxy wrappe
   const snap2 = snapshot(obj)
   expect(snap2).toBe(snap1)
 
-  const callback = jest.fn()
+  const callback = vi.fn()
   subscribe(obj, callback)
   ++obj.nested.count
   await Promise.resolve()

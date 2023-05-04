@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
-import { expect, it } from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
+import { expect, it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
 it('unsupported map', async () => {

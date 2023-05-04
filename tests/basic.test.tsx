@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useRef, useState } from 'react'
-import { expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
 it('simple counter', async () => {
@@ -16,7 +16,7 @@ it('simple counter', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  const { getByText, findByText, unmount } = render(
     <StrictMode>
       <Counter />
     </StrictMode>
@@ -26,6 +26,7 @@ it('simple counter', async () => {
 
   fireEvent.click(getByText('button'))
   await findByText('count: 1')
+  unmount()
 })
 
 it('no extra re-renders (commits)', async () => {
@@ -91,7 +92,7 @@ it('no extra re-renders (commits)', async () => {
 it('no extra re-renders (render func calls in non strict mode)', async () => {
   const obj = proxy({ count: 0, count2: 0 })
 
-  const renderFn = jest.fn()
+  const renderFn = vi.fn()
   const Counter = () => {
     const snap = useSnapshot(obj)
     renderFn(snap.count)
@@ -103,7 +104,7 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
     )
   }
 
-  const renderFn2 = jest.fn()
+  const renderFn2 = vi.fn()
   const Counter2 = () => {
     const snap = useSnapshot(obj)
     renderFn2(snap.count2)

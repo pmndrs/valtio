@@ -1,5 +1,14 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import plugin from 'babel-plugin-macros'
 import BabelPluginTester from 'babel-plugin-tester'
+import { describe, expect, it } from 'vitest'
+
+// @ts-ignore
+globalThis.describe = describe
+// @ts-ignore
+globalThis.it = it
+// @ts-ignore
+globalThis.expect = expect
 
 const pluginTester = (BabelPluginTester as any).default || BabelPluginTester
 

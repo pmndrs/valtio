@@ -1,6 +1,6 @@
 import { StrictMode, Suspense } from 'react'
-import { it } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
 const sleep = (ms: number) =>
