@@ -60,7 +60,7 @@ jobs:
           yarn add -D typescript@${{ matrix.typescript }}
           rm node_modules/parse5/dist/*.d.ts
       - name: Patch testing setup for older TS
-        if: ${{ matrix.typescript == '3.9.7' ||  matrix.typescript == '3.8.3' ||  matrix.typescript == '3.7.5' }}
+        if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
         run: |
           yarn add -D @testing-library/user-event@12.1.7 @testing-library/react@11.0.4
           rm node_modules/vitest/dist/*.d.ts
