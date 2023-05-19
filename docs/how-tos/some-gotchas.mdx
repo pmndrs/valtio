@@ -185,8 +185,8 @@ const a = proxy([
 
 const sa = snapshot(a) // b.
 
+// a.
 subscribe(a, () => {
-  // a.
   const updated = snapshot(a)
   console.log('this is updated proxy. test is Banana', a)
   console.log('however, for the snapshot of a, test is still apple', updated)
