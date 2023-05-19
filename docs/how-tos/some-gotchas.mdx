@@ -173,21 +173,23 @@ f. Push temp in the original array
 **Example issue case:**
 
 ```javascript
-const a = proxy([{
+const a = proxy([
+  {
     nested: {
       nested: {
-        test: "apple"
-      }
-    }
-  }
-]);
+        test: 'apple',
+      },
+    },
+  },
+])
 
 const sa = snapshot(a) // b.
 
-subscribe(a, ()=> { // a.
+subscribe(a, () => {
+  // a.
   const updated = snapshot(a)
-  console.log("this is updated proxy. test is Banana", a)
-  console.log("however, for the snapshot of a, test is still apple", updated)
+  console.log('this is updated proxy. test is Banana', a)
+  console.log('however, for the snapshot of a, test is still apple', updated)
 })
 
 function handle() {
