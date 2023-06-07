@@ -54,7 +54,9 @@ export function devtools<T extends object>(
   let extension: (typeof window)['__REDUX_DEVTOOLS_EXTENSION__'] | false
   try {
     extension =
-      (enabled ?? import.meta.env?.MODE !== 'production') &&
+      (typeof enabled === 'boolean'
+        ? enabled
+        : import.meta.env?.MODE !== 'production') &&
       window.__REDUX_DEVTOOLS_EXTENSION__
   } catch {
     // ignored
