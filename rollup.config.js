@@ -69,10 +69,8 @@ function createESMConfig(input, output) {
               'import.meta.env?.MODE': 'process.env.NODE_ENV',
             }
           : {
-              // we basically support this usage only:
-              // if (import.meta.env?.MODE !== 'production'
               'import.meta.env?.MODE':
-                'import.meta.env && import.meta.env.MODE',
+                '(!!import.meta.env && import.meta.env.MODE)',
             }),
         // a workround for #410
         'use-sync-external-store/shim': 'use-sync-external-store/shim/index.js',
