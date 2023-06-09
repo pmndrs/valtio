@@ -244,6 +244,7 @@ const buildProxyFunction = (
     const handler: ProxyHandler<T> = {
       deleteProperty(target: T, prop: string | symbol) {
         const prevValue = Reflect.get(target, prop)
+        snapCache.delete(target as Object)
         removePropListener(prop)
         const deleted = Reflect.deleteProperty(target, prop)
         if (deleted) {
