@@ -1,5 +1,5 @@
 import { exec } from 'child_process'
-import { describe, expect, it } from '@jest/globals'
+import { describe, expect, it } from 'vitest'
 
 describe('no memory leaks with proxy', () => {
   const runTest = async (code: string) => {

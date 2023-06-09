@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
-import { describe, expect, it, jest } from '@jest/globals'
 import { fireEvent, render, waitFor } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 import { proxyMap, proxySet } from 'valtio/utils'
 
@@ -131,8 +131,8 @@ describe('features parity with native Map', () => {
         })
 
         // cover loops
-        const handleForEach = jest.fn()
-        const handleForOf = jest.fn()
+        const handleForEach = vi.fn()
+        const handleForOf = vi.fn()
 
         map.forEach(handleForEach)
         expect(handleForEach).toHaveBeenCalledTimes(map.size)

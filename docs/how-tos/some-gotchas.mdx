@@ -140,3 +140,83 @@ subscribe(state.subscribeData, async () => {
   state.results = await load(state.someData)
 })
 ```
+
+## Issue with array proxy
+
+The following use case can occur unexpected results on `arr` subscription:
+
+```javascript
+const byId = {}
+arr.forEach((item) => {
+  byId[item.id] = item
+})
+arr.splice(0, arr.length)
+arr.push(newValue())
+someUpdateFunc(byId)
+Object.keys(byId).forEach((key) => arr.push(byId[key]))
+```
+
+[Issues](https://github.com/pmndrs/valtio/issues/712) may arise when handling the array proxy reference in the subsequent steps:
+
+a. Subscribe array proxy
+
+b. Use the proxy as snapshot
+
+c. Assign temp variable for updating
+
+d. Remove proxy from the array
+
+e. Update temp
+
+f. Push temp in the original array
+
+**Example issue case:**
+
+```javascript
+const a = proxy([
+  {
+    nested: {
+      nested: {
+        test: 'apple',
+      },
+    },
+  },
+])
+
+const sa = snapshot(a) // b.
+
+// a.
+subscribe(a, () => {
+  const updated = snapshot(a)
+  console.log('this is updated proxy. test is Banana', a)
+  console.log('however, for the snapshot of a, test is still apple', updated)
+})
+
+function handle() {
+  const temp = a[0] // c.
+  a.splice(0, 1) // d.
+  temp.nested.nested.test = 'Banana' // e.
+  a.push(temp) // f.
+  console.log(Object.is(temp, a[0])) // this will be true
+}
+```
+
+**To work around this, swap d and e:**
+
+```javascript
+// ...
+
+function handle() {
+  const temp = a[0]
+  temp.nested.nested.test = 'Banana' // Update first remove from array
+  a.splice(0, 1)
+  a.push(temp)
+}
+// ...
+```
+
+If the workaround is not applied and you are using react with [devtools()](https://valtio.pmnd.rs/docs/api/utils/devtools), the redux devtools will notify a value update, but the snapshot will remain the same within the devtools' subscription.
+
+As a result, the devtools will not display any state change.
+
+Additionally, this issue involved not only updating devtools, but also triggering `re-render`.

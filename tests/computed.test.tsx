@@ -1,20 +1,13 @@
 import { StrictMode, Suspense } from 'react'
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  jest,
-} from '@jest/globals'
 import { fireEvent, render } from '@testing-library/react'
 import { memoize } from 'proxy-memoize'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { addComputed, proxyWithComputed, subscribeKey } from 'valtio/utils'
 
 const consoleWarn = console.warn
 beforeEach(() => {
-  console.warn = jest.fn((message: any) => {
+  console.warn = vi.fn((message: string) => {
     if (message.startsWith('addComputed is deprecated.')) {
       return
     }
@@ -32,7 +25,7 @@ const sleep = (ms: number) =>
 
 describe('proxyWithComputed', () => {
   it('simple computed getters', async () => {
-    const computeDouble = jest.fn((x: number) => x * 2)
+    const computeDouble = vi.fn((x: number) => x * 2)
     const state = proxyWithComputed(
       {
         text: '',
@@ -43,7 +36,7 @@ describe('proxyWithComputed', () => {
       }
     )
 
-    const callback = jest.fn()
+    const callback = vi.fn()
     subscribe(state, callback)
 
     expect(snapshot(state)).toMatchObject({ text: '', count: 0, doubled: 0 })
@@ -64,7 +57,7 @@ describe('proxyWithComputed', () => {
   })
 
   it('computed getters and setters', async () => {
-    const computeDouble = jest.fn((x: number) => x * 2)
+    const computeDouble = vi.fn((x: number) => x * 2)
     const state = proxyWithComputed(
       {
         text: '',
@@ -178,7 +171,7 @@ describe('proxyWithComputed', () => {
 
 describe('DEPRECATED addComputed', () => {
   it('simple addComputed', async () => {
-    const computeDouble = jest.fn((x: number) => x * 2)
+    const computeDouble = vi.fn((x: number) => x * 2)
     const state = proxy({
       text: '',
       count: 0,
@@ -187,7 +180,7 @@ describe('DEPRECATED addComputed', () => {
       doubled: (snap) => computeDouble(snap.count),
     })
 
-    const callback = jest.fn()
+    const callback = vi.fn()
     subscribe(state, callback)
 
     expect(snapshot(state)).toMatchObject({ text: '', count: 0, doubled: 0 })
@@ -248,7 +241,7 @@ describe('DEPRECATED addComputed', () => {
   })
 
   it('nested emulation with addComputed', async () => {
-    const computeDouble = jest.fn((x: number) => x * 2)
+    const computeDouble = vi.fn((x: number) => x * 2)
     const state = proxy({ text: '', math: { count: 0 } })
     addComputed(
       state,
@@ -258,7 +251,7 @@ describe('DEPRECATED addComputed', () => {
       state.math
     )
 
-    const callback = jest.fn()
+    const callback = vi.fn()
     subscribe(state, callback)
 
     expect(snapshot(state)).toMatchObject({
@@ -320,7 +313,7 @@ describe('proxyWithComputed and subscribeKey', () => {
         doubled: (snap) => snap.count * 2,
       }
     )
-    const handler = jest.fn()
+    const handler = vi.fn()
     subscribeKey(state, 'doubled', handler)
     state.count = 2
     await Promise.resolve()

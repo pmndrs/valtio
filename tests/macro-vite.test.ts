@@ -1,6 +1,6 @@
-import { expect, it } from '@jest/globals'
 import { EnvContext } from '@typed-macro/core'
 import { createTransformer } from '@typed-macro/runtime'
+import { expect, it } from 'vitest'
 import { valtioMacro } from 'valtio/macro/vite'
 
 const env: EnvContext = {

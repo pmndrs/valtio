@@ -1,7 +1,7 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`valtio/macro 1. valtio/macro: 1. valtio/macro 1`] = `
-
+exports[`valtio/macro > 1. valtio/macro > 1. valtio/macro 1`] = `
+"
 import { useProxy } from '../dist/macro'
 
 const Component = () => {
@@ -27,11 +27,11 @@ const Component = () => {
   )
 }
 
-
+"
 `;
 
-exports[`valtio/macro 2. valtio/macro: 2. valtio/macro 1`] = `
-
+exports[`valtio/macro > 2. valtio/macro > 2. valtio/macro 1`] = `
+"
 import { useProxy } from '../dist/macro'
 
 const Component = () => {
@@ -66,5 +66,5 @@ const Component = () => {
   )
 }
 
-
+"
 `;
