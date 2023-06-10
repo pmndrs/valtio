@@ -1,7 +1,12 @@
 import { describe, expect, it } from '@jest/globals'
 import { createProxy, getUntracked } from 'proxy-compare'
 import { TypeEqual, expectType } from 'ts-expect'
-import { INTERNAL_Snapshot as Snapshot, proxy, snapshot } from 'valtio'
+import {
+  INTERNAL_Snapshot as Snapshot,
+  proxy,
+  snapshot,
+  subscribe,
+} from 'valtio'
 
 const sleep = (ms: number) =>
   new Promise((resolve) => {
@@ -67,6 +72,41 @@ it('should create a new proxy from a snapshot', async () => {
   const snap1 = snapshot(state)
   const state2 = proxy(snap1)
   expect(state2.c).toBe(0)
+})
+
+it('should return updated property snapshot when property is updated after removed from Array and added to array again', async () => {
+  /**
+   * error occurs when
+   * [1]. Remove target item should be in array
+   * [2]. Remove target item should be nested object
+   * [3]. Array should subscribed
+   * [4]. Array should pass to snapshot() before target item removed
+   */
+
+  const array = proxy([
+    //[1]
+    {
+      //[2]
+      nested: {
+        value: 'before',
+      },
+    },
+  ])
+
+  //[4]
+  subscribe(array, () => {})
+  //[3]
+  expect(snapshot(array)[0]?.nested.value).toEqual('before')
+
+  const property = array[0]
+  array.splice(0, 1)
+
+  if (property) {
+    property.nested.value = 'after'
+    array.push(property)
+  }
+
+  expect(snapshot(array)[0]?.nested.value).toEqual('after')
 })
 
 describe('snapsoht typings', () => {
