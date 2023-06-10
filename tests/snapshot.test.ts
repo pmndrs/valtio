@@ -77,10 +77,10 @@ it('should create a new proxy from a snapshot', async () => {
 it('should return updated property snapshot when property is updated after removed from Array and added to array again', async () => {
   /**
    * error occurs when
-   * [1]. Remove target item should be in array
+   * [1]. Remove target item should be in the array
    * [2]. Remove target item should be nested object
-   * [3]. Array should subscribed
-   * [4]. Array should pass to snapshot() before target item removed
+   * [3]. The array should be subscribed
+   * [4]. The array should pass to snapshot() before the target item removed
    */
 
   const array = proxy([
