@@ -5,7 +5,7 @@ exports[`basic 1`] = `
 
 
 const Component = () => {const valtio_macro_snap_state = _useSnapshot(
-  state);
+    state);
   return (
     <div>
       {valtio_macro_snap_state.count}
@@ -20,7 +20,7 @@ exports[`complex 1`] = `
 
 
 const Component = () => {const valtio_macro_snap_state = _useSnapshot(
-  state);
+    state);
   return (
     <div>
       <button onClick={() => {

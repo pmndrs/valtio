@@ -253,8 +253,8 @@ export function derive<T extends object, U extends object>(
         })
         lastDependencies = dependencies
       }
-      if (value instanceof Promise) {
-        value.finally(subscribeToDependencies)
+      if ((value as unknown) instanceof Promise) {
+        ;(value as Promise<unknown>).finally(subscribeToDependencies)
       } else {
         subscribeToDependencies()
       }
