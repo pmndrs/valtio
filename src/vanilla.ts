@@ -17,6 +17,8 @@ type Op =
   | [op: 'reject', path: Path, error: unknown]
 type Listener = (op: Op, nextVersion: number) => void
 
+type Primitive = string | number | boolean | null | undefined | symbol | bigint
+
 type SnapshotIgnore =
   | Date
   | Map<any, any>
@@ -27,6 +29,7 @@ type SnapshotIgnore =
   | Error
   | RegExp
   | AnyFunction
+  | Primitive
 
 type Snapshot<T> = T extends SnapshotIgnore
   ? T

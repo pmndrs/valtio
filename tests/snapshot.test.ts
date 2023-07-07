@@ -202,4 +202,20 @@ describe('snapsoht typings', () => {
       >
     >(true)
   })
+
+  it('ignores primitive types that have been branded/tagged', () => {
+    const symbolTag = Symbol()
+    expectType<
+      TypeEqual<
+        Snapshot<{
+          brandedWithStringKey: string & { __brand: 'Brand' }
+          brandedWithSymbolKey: number & { [symbolTag]: 'Tag' }
+        }>,
+        {
+          readonly brandedWithStringKey: string & { __brand: 'Brand' }
+          readonly brandedWithSymbolKey: number & { [symbolTag]: 'Tag' }
+        }
+      >
+    >(true)
+  })
 })
