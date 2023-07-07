@@ -146,7 +146,7 @@ describe('snapsoht typings', () => {
     >(true)
   })
 
-  it('convets object properties to readonly recursively', () => {
+  it('converts object properties to readonly recursively', () => {
     expectType<
       TypeEqual<
         Snapshot<{
