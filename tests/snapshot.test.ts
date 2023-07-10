@@ -45,6 +45,26 @@ it('should not change snapshot with assigning same object', async () => {
   expect(snap1).toBe(snap2)
 })
 
+it('should make the snapshot immutable', () => {
+  const state = proxy<{ foo: number; bar?: string }>({ foo: 1 })
+  const snap = snapshot(state)
+
+  // Overwriting existing property
+  expect(() => {
+    ;(snap as typeof state).foo = 100
+  }).toThrow()
+
+  // Extension (adding new property)
+  expect(() => {
+    ;(snap as typeof state).bar = 'hello'
+  }).toThrow()
+
+  // Note: The current implementation does not prevent property removal.
+  // Do not add a test for this unless we come up with an implementation that
+  // supports it.
+  // See https://github.com/pmndrs/valtio/issues/749
+})
+
 it('should not cause proxy-compare to copy', async () => {
   const state = proxy({ foo: 1 })
   const snap1 = snapshot(state)

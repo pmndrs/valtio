@@ -149,7 +149,7 @@ const buildProxyFunction = (
       }
       Object.defineProperty(snap, key, desc)
     })
-    return snap
+    return Object.preventExtensions(snap)
   },
 
   proxyCache = new WeakMap<object, ProxyObject>(),
