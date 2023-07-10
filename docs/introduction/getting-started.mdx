@@ -81,13 +81,19 @@ const addTodo = (description: string) => {
   })
 }
 
-const removeTodo = (index: number) => {
-  store.todos.splice(index, 1)
+const removeTodo = (id: number) => {
+  const index = store.todos.findIndex((todo) => todo.id === id)
+  if (index >= 0) {
+    store.todos.splice(index, 1)
+  }
 }
 
-const toggleDone = (index: number, currentStatus: Status) => {
+const toggleDone = (id: number, currentStatus: Status) => {
   const nextStatus = currentStatus === 'pending' ? 'completed' : 'pending'
-  store.todos[index].status = nextStatus
+  const todo = store.todos.find((todo) => todo.id === id)
+  if (todo) {
+    todo.status = nextStatus
+  }
 }
 
 const setFilter = (filter: Filter) => {
@@ -98,14 +104,14 @@ const setFilter = (filter: Filter) => {
 Finally, we wire up these actions to our inputs and buttons - check the demo below for the full code.
 
 ```tsx
-<button className="remove" onClick={() => removeTodo(index)}>
+<button className="remove" onClick={() => removeTodo(id)}>
   x
 </button>
 ```
 
 ## Codesandbox demo
 
-https://codesandbox.io/s/valtio-to-do-list-hm5kwz
+https://codesandbox.io/s/valtio-to-do-list-forked-6w9h3z
 
 #### Mutating state outside of components
 
