@@ -1,7 +1,7 @@
 import { createProxy, getUntracked } from 'proxy-compare'
 import { TypeEqual, expectType } from 'ts-expect'
-import { describe, expect, it } from 'vitest'
 import { INTERNAL_Snapshot as Snapshot, proxy, snapshot } from 'valtio'
+import { describe, expect, it } from 'vitest'
 
 const sleep = (ms: number) =>
   new Promise((resolve) => {
@@ -43,6 +43,26 @@ it('should not change snapshot with assigning same object', async () => {
   state.obj = obj
   const snap2 = snapshot(state)
   expect(snap1).toBe(snap2)
+})
+
+it('should make the snapshot immutable', () => {
+  const state = proxy<{ foo: number; bar?: string }>({ foo: 1 })
+  const snap = snapshot(state)
+
+  // Overwriting existing property
+  expect(() => {
+    ;(snap as typeof state).foo = 100
+  }).toThrow()
+
+  // Extension (adding new property)
+  expect(() => {
+    ;(snap as typeof state).bar = 'hello'
+  }).toThrow()
+
+  // Note: The current implementation does not prevent property removal.
+  // Do not add a test for this unless we come up with an implementation that
+  // supports it.
+  // See https://github.com/pmndrs/valtio/issues/749
 })
 
 it('should not cause proxy-compare to copy', async () => {

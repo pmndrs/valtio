@@ -146,6 +146,7 @@ const buildProxyFunction = (
       }
       Object.defineProperty(snap, key, desc)
     })
+    Object.preventExtensions(snap)
     return snap
   },
 
