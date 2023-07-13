@@ -86,6 +86,9 @@ const buildProxyFunction = (
     !(x instanceof RegExp) &&
     !(x instanceof ArrayBuffer),
 
+  shouldTrapDefineProperty = (desc: PropertyDescriptor) =>
+    desc.configurable && desc.enumerable && desc.writable,
+
   defaultHandlePromise = <P extends Promise<any>>(
     promise: P & {
       status?: 'pending' | 'fulfilled' | 'rejected'
@@ -244,10 +247,20 @@ const buildProxyFunction = (
     const baseObject = Array.isArray(initialObject)
       ? []
       : Object.create(Object.getPrototypeOf(initialObject))
-    const isSameOrProxied = (prevValue: any, value: any) =>
-      objectIs(prevValue, value) ||
-      (proxyCache.has(value) && objectIs(prevValue, proxyCache.get(value)))
-    const updatePropListeners = (prop: string | symbol, value: any) => {
+    const trapSet = (
+      hasPrevValue: boolean,
+      prevValue: any,
+      prop: string | symbol,
+      value: any,
+      setValue: (nextValue: any) => void
+    ) => {
+      if (
+        hasPrevValue &&
+        (objectIs(prevValue, value) ||
+          (proxyCache.has(value) && objectIs(prevValue, proxyCache.get(value))))
+      ) {
+        return
+      }
       removePropListener(prop)
       if (isObject(value)) {
         value = getUntracked(value) || value
@@ -275,7 +288,8 @@ const buildProxyFunction = (
           addPropListener(prop, childProxyState)
         }
       }
-      return nextValue
+      setValue(nextValue)
+      notifyUpdate(['set', [prop], value, prevValue])
     }
     const handler: ProxyHandler<T> = {
       deleteProperty(target: T, prop: string | symbol) {
@@ -290,12 +304,9 @@ const buildProxyFunction = (
       set(target: T, prop: string | symbol, value: any, receiver: object) {
         const hasPrevValue = Reflect.has(target, prop)
         const prevValue = Reflect.get(target, prop, receiver)
-        if (hasPrevValue && isSameOrProxied(prevValue, value)) {
-          return true
-        }
-        const nextValue = updatePropListeners(prop, value)
-        Reflect.set(target, prop, nextValue, receiver)
-        notifyUpdate(['set', [prop], value, prevValue])
+        trapSet(hasPrevValue, prevValue, prop, value, (nextValue) => {
+          Reflect.set(target, prop, nextValue, receiver)
+        })
         return true
       },
       defineProperty(
@@ -303,20 +314,21 @@ const buildProxyFunction = (
         prop: string | symbol,
         desc: PropertyDescriptor
       ) {
-        if (desc.configurable && desc.enumerable && desc.writable) {
-          const value = desc.value
+        if (shouldTrapDefineProperty(desc)) {
           const prevDesc = Reflect.getOwnPropertyDescriptor(target, prop)
-          if (
-            !prevDesc ||
-            (prevDesc.configurable && prevDesc.enumerable && prevDesc.writable)
-          ) {
-            const prevValue = prevDesc?.value
-            if (prevDesc && isSameOrProxied(prevValue, value)) {
-              return true
-            }
-            const nextValue = updatePropListeners(prop, value)
-            Reflect.defineProperty(target, prop, { ...desc, value: nextValue })
-            notifyUpdate(['set', [prop], value, prevValue])
+          if (!prevDesc || shouldTrapDefineProperty(prevDesc)) {
+            trapSet(
+              !!prevDesc,
+              prevDesc?.value,
+              prop,
+              desc.value,
+              (nextValue) => {
+                Reflect.defineProperty(target, prop, {
+                  ...desc,
+                  value: nextValue,
+                })
+              }
+            )
             return true
           }
         }
@@ -359,6 +371,7 @@ const buildProxyFunction = (
     objectIs,
     newProxy,
     canProxy,
+    shouldTrapDefineProperty,
     defaultHandlePromise,
     snapCache,
     createSnapshot,
