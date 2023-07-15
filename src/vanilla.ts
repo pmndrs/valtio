@@ -318,7 +318,7 @@ const buildProxyFunction = (
           const prevDesc = Reflect.getOwnPropertyDescriptor(target, prop)
           if (!prevDesc || shouldTrapDefineProperty(prevDesc)) {
             trapSet(
-              !!prevDesc,
+              !!prevDesc && 'value' in prevDesc,
               prevDesc?.value,
               prop,
               desc.value,
