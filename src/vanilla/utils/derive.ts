@@ -16,7 +16,7 @@ type SourceObjectEntry = [
   subscriptions: Set<Subscription>,
   unsubscribe: () => void,
   pendingCount: number,
-  pendingCallbacks: Set<() => void>
+  pendingCallbacks: Set<() => void>,
 ]
 
 type DerivedObjectEntry = [subscriptions: Set<Subscription>]
