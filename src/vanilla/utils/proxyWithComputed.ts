@@ -8,7 +8,7 @@ import type { INTERNAL_Snapshot as Snapshot } from '../../vanilla.ts'
  */
 export function proxyWithComputed_DEPRECATED<
   T extends object,
-  U extends object
+  U extends object,
 >(
   initialObject: T,
   computedFns: {

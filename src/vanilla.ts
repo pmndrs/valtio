@@ -60,7 +60,7 @@ type ProxyState = readonly [
   target: object,
   ensureVersion: (nextCheckVersion?: number) => number,
   createSnapshot: CreateSnapshot,
-  addListener: AddListener
+  addListener: AddListener,
 ]
 
 // shared state
