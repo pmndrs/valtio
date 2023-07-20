@@ -355,3 +355,31 @@ it('no extra re-renders with getters', async () => {
     getByText('sum: 2 (2)')
   })
 })
+
+it('support class fields (defineProperty semantics)', async () => {
+  class Base {
+    constructor() {
+      return proxy(this)
+    }
+  }
+  class CountClass extends Base {
+    counter = { count: 0 }
+  }
+  const obj = new CountClass()
+
+  const Counter = () => {
+    const snap = useSnapshot(obj)
+    return <div>count: {snap.counter.count}</div>
+  }
+
+  const { findByText } = render(
+    <StrictMode>
+      <Counter />
+    </StrictMode>
+  )
+
+  await findByText('count: 0')
+
+  obj.counter.count = 1
+  await findByText('count: 1')
+})
