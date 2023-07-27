@@ -86,9 +86,6 @@ const buildProxyFunction = (
     !(x instanceof RegExp) &&
     !(x instanceof ArrayBuffer),
 
-  shouldTrapDefineProperty = (desc: PropertyDescriptor) =>
-    desc.configurable && desc.enumerable && desc.writable,
-
   defaultHandlePromise = <P extends Promise<any>>(
     promise: P & {
       status?: 'pending' | 'fulfilled' | 'rejected'
@@ -247,50 +244,6 @@ const buildProxyFunction = (
     const baseObject = Array.isArray(initialObject)
       ? []
       : Object.create(Object.getPrototypeOf(initialObject))
-    const trapSet = (
-      hasPrevValue: boolean,
-      prevValue: any,
-      prop: string | symbol,
-      value: any,
-      setValue: (nextValue: any) => void
-    ) => {
-      if (
-        hasPrevValue &&
-        (objectIs(prevValue, value) ||
-          (proxyCache.has(value) && objectIs(prevValue, proxyCache.get(value))))
-      ) {
-        return
-      }
-      removePropListener(prop)
-      if (isObject(value)) {
-        value = getUntracked(value) || value
-      }
-      let nextValue = value
-      if (value instanceof Promise) {
-        value
-          .then((v) => {
-            value.status = 'fulfilled'
-            value.value = v
-            notifyUpdate(['resolve', [prop], v])
-          })
-          .catch((e) => {
-            value.status = 'rejected'
-            value.reason = e
-            notifyUpdate(['reject', [prop], e])
-          })
-      } else {
-        if (!proxyStateMap.has(value) && canProxy(value)) {
-          nextValue = proxyFunction(value)
-        }
-        const childProxyState =
-          !refSet.has(nextValue) && proxyStateMap.get(nextValue)
-        if (childProxyState) {
-          addPropListener(prop, childProxyState)
-        }
-      }
-      setValue(nextValue)
-      notifyUpdate(['set', [prop], value, prevValue])
-    }
     const handler: ProxyHandler<T> = {
       deleteProperty(target: T, prop: string | symbol) {
         const prevValue = Reflect.get(target, prop)
@@ -304,35 +257,44 @@ const buildProxyFunction = (
       set(target: T, prop: string | symbol, value: any, receiver: object) {
         const hasPrevValue = Reflect.has(target, prop)
         const prevValue = Reflect.get(target, prop, receiver)
-        trapSet(hasPrevValue, prevValue, prop, value, (nextValue) => {
-          Reflect.set(target, prop, nextValue, receiver)
-        })
-        return true
-      },
-      defineProperty(
-        target: T,
-        prop: string | symbol,
-        desc: PropertyDescriptor
-      ) {
-        if (shouldTrapDefineProperty(desc)) {
-          const prevDesc = Reflect.getOwnPropertyDescriptor(target, prop)
-          if (!prevDesc || shouldTrapDefineProperty(prevDesc)) {
-            trapSet(
-              !!prevDesc && 'value' in prevDesc,
-              prevDesc?.value,
-              prop,
-              desc.value,
-              (nextValue) => {
-                Reflect.defineProperty(target, prop, {
-                  ...desc,
-                  value: nextValue,
-                })
-              }
-            )
-            return true
+        if (
+          hasPrevValue &&
+          (objectIs(prevValue, value) ||
+            (proxyCache.has(value) &&
+              objectIs(prevValue, proxyCache.get(value))))
+        ) {
+          return true
+        }
+        removePropListener(prop)
+        if (isObject(value)) {
+          value = getUntracked(value) || value
+        }
+        let nextValue = value
+        if (value instanceof Promise) {
+          value
+            .then((v) => {
+              value.status = 'fulfilled'
+              value.value = v
+              notifyUpdate(['resolve', [prop], v])
+            })
+            .catch((e) => {
+              value.status = 'rejected'
+              value.reason = e
+              notifyUpdate(['reject', [prop], e])
+            })
+        } else {
+          if (!proxyStateMap.has(value) && canProxy(value)) {
+            nextValue = proxyFunction(value)
+          }
+          const childProxyState =
+            !refSet.has(nextValue) && proxyStateMap.get(nextValue)
+          if (childProxyState) {
+            addPropListener(prop, childProxyState)
           }
         }
-        return Reflect.defineProperty(target, prop, desc)
+        Reflect.set(target, prop, nextValue, receiver)
+        notifyUpdate(['set', [prop], value, prevValue])
+        return true
       },
     }
     const proxyObject = newProxy(baseObject, handler)
@@ -371,7 +333,6 @@ const buildProxyFunction = (
     objectIs,
     newProxy,
     canProxy,
-    shouldTrapDefineProperty,
     defaultHandlePromise,
     snapCache,
     createSnapshot,
