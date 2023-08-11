@@ -1,6 +1,76 @@
 import { snapshot, subscribe } from '../../vanilla.ts'
 import type {} from '@redux-devtools/extension'
 
+// Copy types to avoid import type { Config } from '@redux-devtools/extension'
+// https://github.com/pmndrs/valtio/issues/776
+type Action<T = any> = {
+  type: T
+}
+type ActionCreator<A, P extends any[] = any[]> = {
+  (...args: P): A
+}
+type EnhancerOptions = {
+  name?: string
+  actionCreators?:
+    | ActionCreator<any>[]
+    | {
+        [key: string]: ActionCreator<any>
+      }
+  latency?: number
+  maxAge?: number
+  serialize?:
+    | boolean
+    | {
+        options?:
+          | undefined
+          | boolean
+          | {
+              date?: true
+              regex?: true
+              undefined?: true
+              error?: true
+              symbol?: true
+              map?: true
+              set?: true
+              function?: true | ((fn: (...args: any[]) => any) => string)
+            }
+        replacer?: (key: string, value: unknown) => any
+        reviver?: (key: string, value: unknown) => any
+        immutable?: any
+        refs?: any
+      }
+  actionSanitizer?: <A extends Action>(action: A, id: number) => A
+  stateSanitizer?: <S>(state: S, index: number) => S
+  actionsBlacklist?: string | string[]
+  actionsWhitelist?: string | string[]
+  actionsDenylist?: string | string[]
+  actionsAllowlist?: string | string[]
+  predicate?: <S, A extends Action>(state: S, action: A) => boolean
+  shouldRecordChanges?: boolean
+  pauseActionType?: string
+  autoPause?: boolean
+  shouldStartLocked?: boolean
+  shouldHotReload?: boolean
+  shouldCatchErrors?: boolean
+  features?: {
+    pause?: boolean
+    lock?: boolean
+    persist?: boolean
+    export?: boolean | 'custom'
+    import?: boolean | 'custom'
+    jump?: boolean
+    skip?: boolean
+    reorder?: boolean
+    dispatch?: boolean
+    test?: boolean
+  }
+  trace?: boolean | (<A extends Action>(action: A) => string)
+  traceLimit?: number
+}
+type Config = EnhancerOptions & {
+  type?: string
+}
+
 // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
 type Message = {
   type: string
@@ -10,14 +80,10 @@ type Message = {
 
 const DEVTOOLS = Symbol()
 
-type EnhancerOptions = Parameters<
-  NonNullable<(typeof window)['__REDUX_DEVTOOLS_EXTENSION__']>['connect']
->[0]
-
 type Options = {
   enabled?: boolean
   name?: string
-} & EnhancerOptions
+} & Config
 
 export function devtools<T extends object>(
   proxyObject: T,
