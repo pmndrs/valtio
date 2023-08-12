@@ -157,9 +157,13 @@
     "vitest": "^0.33.0"
   },
   "peerDependencies": {
+    "@types/react": ">=16.8",
     "react": ">=16.8"
   },
   "peerDependenciesMeta": {
+    "@types/react": {
+      "optional": true
+    },
     "react": {
       "optional": true
     }
