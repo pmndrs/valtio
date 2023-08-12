@@ -41,3 +41,12 @@ subscribe(state, () => {
   const obj = snapshot(state) // A snapshot is an immutable object
 })
 ````
+
+#### Use it with TypeScript
+
+It's recommended to install and import types from `@redux-devtools/extension` to get types correctly.
+
+```ts
+import type {} from '@redux-devtools/extension'
+import { devtools } from 'valtio/utils'
+```

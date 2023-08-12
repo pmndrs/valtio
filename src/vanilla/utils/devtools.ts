@@ -10,14 +10,16 @@ type Message = {
 
 const DEVTOOLS = Symbol()
 
-type EnhancerOptions = Parameters<
-  NonNullable<(typeof window)['__REDUX_DEVTOOLS_EXTENSION__']>['connect']
+type Config = Parameters<
+  (Window extends { __REDUX_DEVTOOLS_EXTENSION__?: infer T }
+    ? T
+    : any)['connect']
 >[0]
 
 type Options = {
   enabled?: boolean
   name?: string
-} & EnhancerOptions
+} & Config
 
 export function devtools<T extends object>(
   proxyObject: T,
