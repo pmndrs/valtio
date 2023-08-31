@@ -21,7 +21,9 @@ This is to describe the high level abstraction of valtio.
 import { proxy, subscribe } from 'valtio'
 
 const s1 = proxy({})
-subscribe(s1, () => { console.log('s1 is changed!') })
+subscribe(s1, () => {
+  console.log('s1 is changed!')
+})
 s1.a = 1 // s1 is changed!
 ++s1.a // s1 is changed!
 delete s1.a // s1 is changed!
@@ -30,11 +32,15 @@ s1.b = 2 // (not changed)
 s1.obj = {} // s1 is changed!
 s1.obj.c = 3 // s1 is changed!
 const s2 = s1.obj
-subscribe(s2 () => { console.log('s2 is changed!') })
+subscribe(s2, () => {
+  console.log('s2 is changed!')
+})
 s1.obj.d = 4 // s1 is changed! and s2 is changed!
 s2.d = 5 // s1 is changed! and s2 is changed!
 const s3 = proxy({})
-subscribe(s3 () => { console.log('s3 is changed!') })
+subscribe(s3, () => {
+  console.log('s3 is changed!')
+})
 s1.o = s3
 s3.p = 'hello' // s1 is changed! and s3 is changed!
 s2.q = s3
