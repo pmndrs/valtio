@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
 it('simple class without methods', async () => {
@@ -354,4 +354,47 @@ it('no extra re-renders with getters', async () => {
     getByText('count: 1 (1)')
     getByText('sum: 2 (2)')
   })
+})
+
+it('handles cyclical classes', () => {
+  class Slot {
+    constructor(
+      readonly parent: Matryoshka,
+      public child?: Matryoshka
+    ) {
+      child?.setParentSlot(this)
+    }
+
+    set(child: Matryoshka) {
+      this.child = child
+      child.setParentSlot(this)
+    }
+  }
+
+  class Matryoshka {
+    parentSlot?: Slot
+    childSlot = new Slot(this)
+
+    get child() {
+      return this.childSlot.child
+    }
+
+    constructor(child?: Matryoshka) {
+      if (child) {
+        this.childSlot = new Slot(this, child)
+      }
+    }
+
+    setParentSlot(slot: Slot) {
+      this.parentSlot = slot
+    }
+  }
+
+  const store = proxy(new Matryoshka(new Matryoshka()))
+  // M1(M2)
+
+  store.childSlot.set(new Matryoshka(store.child))
+  // M1(M3(M2)))
+
+  expect(store.child?.child).toBeTruthy()
 })
