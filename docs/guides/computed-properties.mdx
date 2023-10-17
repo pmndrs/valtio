@@ -102,7 +102,7 @@ const greetings = proxy({
 ```
 
 Another method would be to create a separate proxy and
-synchronize with `subscribe` or `watch`.
+synchronize with `subscribe`.
 
 ```js
 const user = proxy({
@@ -111,8 +111,20 @@ const user = proxy({
 const greetings = proxy({
   greetingEn: 'Hello ' + user.name,
 })
-const unsub = subscribe(user, () => {
+subscribe(user, () => {
   greetings.greetingEn = 'Hello ' + user.name
+})
+```
+
+Or with `watch`.
+
+```js
+const user = proxy({
+  name: 'John',
+})
+const greetings = proxy({})
+watch((get) => {
+  greetings.greetingEn = 'Hello ' + get(user).name
 })
 ```
 
