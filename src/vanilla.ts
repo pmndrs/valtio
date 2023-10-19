@@ -122,9 +122,11 @@ const buildProxyFunction = (
         return
       }
       const value = Reflect.get(target, key)
+      const { enumerable = true } =
+        Reflect.getOwnPropertyDescriptor(target, key) ?? {}
       const desc: PropertyDescriptor = {
         value,
-        enumerable: true,
+        enumerable,
         // This is intentional to avoid copying with proxy-compare.
         // It's still non-writable, so it avoids assigning a value.
         configurable: true,
