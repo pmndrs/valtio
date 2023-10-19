@@ -36,6 +36,73 @@ When you call `state.doubled` on the `state` proxy, it is not cached, and will b
 
 However, when you make a snapshot, calls to `snap.doubled` are effectively cached, because the value of an object getter is copied during the snapshot process.
 
+⚠️ Note: In the current implementation a computed property should only reference _sibling_ properties, otherwise you'll encounter weird bugs. For example:
+
+```js
+const user = proxy({
+  name: 'John',
+  // OK - can reference sibling props via the proxy object
+  get greetingEn() {
+    return 'Hello ' + user.name
+  },
+  // OK - or via `this`
+  get greetingFr() {
+    return 'Bonjour ' + this.name
+  },
+})
+```
+
+```js
+const state = proxy({
+  // could be nested
+  user: {
+    name: 'John',
+    // OK - can reference sibling props via the proxy object
+    get greetingEn() {
+      return 'Hello ' + state.user.name
+    },
+    // OK - or via `this`
+    get greetingFr() {
+      return 'Bonjour ' + this.name
+    },
+  },
+})
+```
+
+```js
+const state = proxy({
+  user: {
+    name: 'John',
+  },
+  greetings: {
+    // WRONG - can reference sibling props only. Use `derive` instead
+    get greetingEn() {
+      return 'Hello ' + state.user.name
+    },
+    // WRONG - `this` points to `state.greetings`. Use `derive` instead
+    get greetingFr() {
+      return 'Bonjour ' + this.user.name
+    },
+  },
+})
+```
+
+```js
+const user = proxy({
+  name: 'John',
+})
+const greetings = proxy({
+  // WRONG - can reference sibling props only. Use `derive` instead
+  get greetingEn() {
+    return 'Hello ' + user.name
+  },
+  // WRONG - `this` points to `greetings`. Use `derive` instead
+  get greetingFr() {
+    return 'Bonjour ' + this.name
+  },
+})
+```
+
 ## Object getter and setter
 
 Setters are also supported:

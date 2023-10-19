@@ -20,7 +20,7 @@
     "prettier",
     "react-hooks",
     "import",
-    "jest"
+    "vitest"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -31,6 +31,8 @@
     }
   },
   "rules": {
+    "import/namespace": "off",
+    "import/named": "off",
     "eqeqeq": "error",
     "no-var": "error",
     "prefer-const": "error",
@@ -39,7 +41,7 @@
     "import/extensions": ["error", "always"],
     "import/no-unresolved": ["error", { "commonjs": true, "amd": true }],
     "import/export": "error",
-    "@typescript-eslint/no-duplicate-imports": ["error"],
+    "import/no-duplicates": ["error"],
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-unused-vars": [
       "warn",
@@ -48,7 +50,7 @@
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-explicit-any": "off",
-    "jest/consistent-test-it": [
+    "vitest/consistent-test-it": [
       "error",
       { "fn": "it", "withinDescribe": "it" }
     ],

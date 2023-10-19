@@ -74,11 +74,11 @@ const countersOneAndTwoSelectors = derive({
 })
 ```
 
-In this example even if `baseProxy.counter3` or `baseProxy.counter4` are changed, `countersOneAndTwoSelectors` will re-compute all of the keys in it.
+In this example if `baseProxy.counter3` or `baseProxy.counter4` are changed, `countersOneAndTwoSelectors` will re-compute all of the keys in it.
 
 ## get sub-objects due to update of unrelated proxies on parent proxy
 
-As noted on his page, re-computation occurs when unrelated properties change. It is possible to use `get` on sub-objects. This has the benefit of not re-computing when properties of the parent object are updated. Example:
+As noted on this page, re-computation occurs when unrelated properties change. It is possible to use `get` on sub-objects. This has the benefit of not re-computing when properties of the parent object are updated. Example:
 
 ```javascript
 const baseProxy = proxy({

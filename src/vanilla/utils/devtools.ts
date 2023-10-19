@@ -10,10 +10,16 @@ type Message = {
 
 const DEVTOOLS = Symbol()
 
+type Config = Parameters<
+  (Window extends { __REDUX_DEVTOOLS_EXTENSION__?: infer T }
+    ? T
+    : any)['connect']
+>[0]
+
 type Options = {
   enabled?: boolean
   name?: string
-}
+} & Config
 
 export function devtools<T extends object>(
   proxyObject: T,
@@ -49,7 +55,7 @@ export function devtools<T extends object>(
     )
     options = { name: options }
   }
-  const { enabled, name = '' } = options || {}
+  const { enabled, name = '', ...rest } = options || {}
 
   let extension: (typeof window)['__REDUX_DEVTOOLS_EXTENSION__'] | false
   try {
@@ -67,7 +73,7 @@ export function devtools<T extends object>(
   }
 
   let isTimeTraveling = false
-  const devtools = extension.connect({ name })
+  const devtools = extension.connect({ name, ...rest })
   const unsub1 = subscribe(proxyObject, (ops) => {
     const action = ops
       .filter(([_, path]) => path[0] !== DEVTOOLS)

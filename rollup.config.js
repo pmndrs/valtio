@@ -61,7 +61,7 @@ function createESMConfig(input, output) {
     output: { file: output, format: 'esm' },
     external,
     plugins: [
-      alias({ entries }),
+      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
       resolve({ extensions }),
       replace({
         ...(output.endsWith('.js')
@@ -70,7 +70,7 @@ function createESMConfig(input, output) {
             }
           : {
               'import.meta.env?.MODE':
-                '(import.meta.env && import.meta.env.MODE)',
+                '(import.meta.env ? import.meta.env.MODE : undefined)',
             }),
         // a workround for #410
         'use-sync-external-store/shim': 'use-sync-external-store/shim/index.js',
@@ -88,7 +88,7 @@ function createCommonJSConfig(input, output) {
     output: { file: `${output}.js`, format: 'cjs' },
     external,
     plugins: [
-      alias({ entries }),
+      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': 'process.env.NODE_ENV',
@@ -124,7 +124,7 @@ function createUMDConfig(input, output, env) {
     },
     external,
     plugins: [
-      alias({ entries }),
+      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': JSON.stringify(env),
@@ -146,7 +146,7 @@ function createSystemConfig(input, output, env) {
     },
     external,
     plugins: [
-      alias({ entries }),
+      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
       resolve({ extensions }),
       replace({
         'import.meta.env?.MODE': JSON.stringify(env),

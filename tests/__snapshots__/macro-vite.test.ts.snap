@@ -1,11 +1,11 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`basic 1`] = `
-"import { useSnapshot as _useSnapshot } from "valtio";
+"import { useSnapshot as _useSnapshot } from \\"valtio\\";
 
 
 const Component = () => {const valtio_macro_snap_state = _useSnapshot(
-  state);
+    state);
   return (
     <div>
       {valtio_macro_snap_state.count}
@@ -16,11 +16,11 @@ const Component = () => {const valtio_macro_snap_state = _useSnapshot(
 `;
 
 exports[`complex 1`] = `
-"import { useSnapshot as _useSnapshot } from "valtio";
+"import { useSnapshot as _useSnapshot } from \\"valtio\\";
 
 
 const Component = () => {const valtio_macro_snap_state = _useSnapshot(
-  state);
+    state);
   return (
     <div>
       <button onClick={() => {
