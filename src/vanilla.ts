@@ -125,8 +125,8 @@ const buildProxyFunction = (
         return
       }
       const value = Reflect.get(target, key)
-      const { enumerable = true } =
-        Reflect.getOwnPropertyDescriptor(target, key) ?? {}
+      const { enumerable = false } =
+        Reflect.getOwnPropertyDescriptor(target, key) as PropertyDescriptor
       const desc: PropertyDescriptor = {
         value,
         enumerable,
