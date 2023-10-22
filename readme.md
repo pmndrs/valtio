@@ -292,33 +292,22 @@ const Component = () => {
 }
 ```
 
-#### `derive` util
+#### Computed properties
 
-You can subscribe to some proxies and create a derived proxy.
+You can define computed properties with object getters.
 
 ```js
-import { derive } from 'valtio/utils'
-
-// create a base proxy
 const state = proxy({
   count: 1,
-})
-
-// create a derived proxy
-const derived = derive({
-  doubled: (get) => get(state).count * 2,
-})
-
-// alternatively, attach derived properties to an existing proxy
-derive(
-  {
-    tripled: (get) => get(state).count * 3,
+  get doubled() {
+    return this.count * 2
   },
-  {
-    proxy: state,
-  }
-)
+})
 ```
+
+Consider it as an advanced usage, because the behavior of `this` is sometimes confusing.
+
+For more information, check out [this guide](./docs/guides/computed-properties.mdx).
 
 #### `proxyWithHistory` util
 

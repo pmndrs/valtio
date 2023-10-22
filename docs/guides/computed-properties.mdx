@@ -16,8 +16,7 @@ In Valtio you can use object & class getters and setters to create computed prop
 const state = proxy({
   count: 1,
   get doubled() {
-    // We recommend `state.count` for clarity to beginners, but `this.count` works too
-    return state.count * 2
+    return this.count * 2
   },
 })
 console.log(state.doubled) // 2
@@ -41,13 +40,9 @@ However, when you make a snapshot, calls to `snap.doubled` are effectively cache
 ```js
 const user = proxy({
   name: 'John',
-  // OK - can reference sibling props via the proxy object
+  // OK - can reference sibling props via `this`
   get greetingEn() {
-    return 'Hello ' + user.name
-  },
-  // OK - or via `this`
-  get greetingFr() {
-    return 'Bonjour ' + this.name
+    return 'Hello ' + this.name
   },
 })
 ```
@@ -57,13 +52,9 @@ const state = proxy({
   // could be nested
   user: {
     name: 'John',
-    // OK - can reference sibling props via the proxy object
+    // OK - can reference sibling props via `this`
     get greetingEn() {
-      return 'Hello ' + state.user.name
-    },
-    // OK - or via `this`
-    get greetingFr() {
-      return 'Bonjour ' + this.name
+      return 'Hello ' + this.name
     },
   },
 })
@@ -75,13 +66,9 @@ const state = proxy({
     name: 'John',
   },
   greetings: {
-    // WRONG - can reference sibling props only. Use `derive` instead
+    // WRONG - `this` points to `state.greetings`.
     get greetingEn() {
-      return 'Hello ' + state.user.name
-    },
-    // WRONG - `this` points to `state.greetings`. Use `derive` instead
-    get greetingFr() {
-      return 'Bonjour ' + this.user.name
+      return 'Hello ' + this.user.name
     },
   },
 })
@@ -92,14 +79,52 @@ const user = proxy({
   name: 'John',
 })
 const greetings = proxy({
-  // WRONG - can reference sibling props only. Use `derive` instead
+  // WRONG - `this` points to `greetings`.
   get greetingEn() {
-    return 'Hello ' + user.name
+    return 'Hello ' + this.name
   },
-  // WRONG - `this` points to `greetings`. Use `derive` instead
-  get greetingFr() {
-    return 'Bonjour ' + this.name
+})
+```
+
+A workaround to it is to attach the related object as a property.
+
+```js
+const user = proxy({
+  name: 'John',
+})
+const greetings = proxy({
+  user, // attach the `user` proxy object
+  // OK - can reference user props via `this`
+  get greetingEn() {
+    return 'Hello ' + this.user.name
   },
+})
+```
+
+Another method would be to create a separate proxy and
+synchronize with `subscribe`.
+
+```js
+const user = proxy({
+  name: 'John',
+})
+const greetings = proxy({
+  greetingEn: 'Hello ' + user.name,
+})
+subscribe(user, () => {
+  greetings.greetingEn = 'Hello ' + user.name
+})
+```
+
+Or with `watch`.
+
+```js
+const user = proxy({
+  name: 'John',
+})
+const greetings = proxy({})
+watch((get) => {
+  greetings.greetingEn = 'Hello ' + get(user).name
 })
 ```
 
