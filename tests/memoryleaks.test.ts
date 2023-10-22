@@ -1,5 +1,7 @@
-import { exec } from 'child_process'
+import childProcess from 'child_process'
 import { describe, expect, it } from 'vitest'
+
+const { exec } = childProcess
 
 describe('no memory leaks with proxy', () => {
   const runTest = async (code: string) => {
