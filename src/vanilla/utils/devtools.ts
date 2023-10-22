@@ -13,7 +13,7 @@ const DEVTOOLS = Symbol()
 type Config = Parameters<
   (Window extends { __REDUX_DEVTOOLS_EXTENSION__?: infer T }
     ? T
-    : any)['connect']
+    : { connect: (param: any) => any })['connect']
 >[0]
 
 type Options = {
