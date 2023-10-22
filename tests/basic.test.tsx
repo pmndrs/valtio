@@ -1,7 +1,7 @@
 import { StrictMode, useEffect, useRef, useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import { proxy, snapshot, useSnapshot } from 'valtio'
 
 it('simple counter', async () => {
   const obj = proxy({ count: 0 })
@@ -492,4 +492,9 @@ it('sync snapshot between nested components (#460)', async () => {
     getByText('Parent: value2')
     getByText('Child: value2')
   })
+})
+
+it('respects property enumerability (#726)', async () => {
+  const x = proxy(Object.defineProperty({ a: 1 }, 'b', { value: 2 }))
+  expect(Object.keys(snapshot(x))).toEqual(Object.keys(x))
 })
