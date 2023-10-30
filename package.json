@@ -18,13 +18,13 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "module": {
-        "types": "./index.d.ts",
-        "default": "./esm/index.js"
-      },
       "import": {
         "types": "./esm/index.d.mts",
         "default": "./esm/index.mjs"
+      },
+      "module": {
+        "types": "./index.d.ts",
+        "default": "./esm/index.js"
       },
       "default": {
         "types": "./index.d.ts",
@@ -32,13 +32,13 @@
       }
     },
     "./*": {
-      "module": {
-        "types": "./*.d.ts",
-        "default": "./esm/*.js"
-      },
       "import": {
         "types": "./esm/*.d.mts",
         "default": "./esm/*.mjs"
+      },
+      "module": {
+        "types": "./*.d.ts",
+        "default": "./esm/*.js"
       },
       "default": {
         "types": "./*.d.ts",
