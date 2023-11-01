@@ -23,7 +23,7 @@
         "default": "./esm/index.mjs"
       },
       "module": {
-        "types": "./index.d.ts",
+        "types": "./esm/index.d.ts",
         "default": "./esm/index.js"
       },
       "default": {
@@ -37,7 +37,7 @@
         "default": "./esm/*.mjs"
       },
       "module": {
-        "types": "./*.d.ts",
+        "types": "./esm/*.d.ts",
         "default": "./esm/*.js"
       },
       "default": {
