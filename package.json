@@ -18,22 +18,32 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./index.d.ts",
       "import": {
         "types": "./esm/index.d.mts",
         "default": "./esm/index.mjs"
       },
-      "module": "./esm/index.js",
-      "default": "./index.js"
+      "module": {
+        "types": "./esm/index.d.ts",
+        "default": "./esm/index.js"
+      },
+      "default": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      }
     },
     "./*": {
-      "types": "./*.d.ts",
       "import": {
         "types": "./esm/*.d.mts",
         "default": "./esm/*.mjs"
       },
-      "module": "./esm/*.js",
-      "default": "./*.js"
+      "module": {
+        "types": "./esm/*.d.ts",
+        "default": "./esm/*.js"
+      },
+      "default": {
+        "types": "./*.d.ts",
+        "default": "./*.js"
+      }
     }
   },
   "files": [
