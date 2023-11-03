@@ -1,4 +1,4 @@
-import { derive } from './derive.ts'
+import { derive } from 'derive-valtio'
 
 /**
  * addComputed (DEPRECATED)

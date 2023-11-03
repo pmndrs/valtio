@@ -99,6 +99,7 @@
   "homepage": "https://github.com/pmndrs/valtio",
   "dependencies": {
     "proxy-compare": "2.5.1",
+    "derive-valtio": "0.1.0",
     "use-sync-external-store": "1.2.0"
   },
   "devDependencies": {
