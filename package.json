@@ -2,6 +2,9 @@
   "name": "valtio",
   "private": true,
   "version": "1.12.0",
+  "publishConfig": {
+    "tag": "next"
+  },
   "description": "💊 Valtio makes proxy-state simple for React and Vanilla",
   "main": "./index.js",
   "types": "./index.d.ts",
