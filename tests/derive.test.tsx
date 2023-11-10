@@ -154,7 +154,7 @@ it('derive with two dependencies', async () => {
   expect(callback).toBeCalledTimes(2)
 })
 
-it('async derive', async () => {
+it.skipIf(typeof use === 'undefined')('async derive', async () => {
   const state = proxy({ count: 0 })
   derive(
     {

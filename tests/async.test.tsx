@@ -13,7 +13,7 @@ const sleep = (ms: number) =>
 type Awaited<T> = T extends Promise<infer V> ? V : T // for TS < 4.5 FIXME later
 const use2 = <T,>(x: T): Awaited<T> => (x instanceof Promise ? use(x) : x)
 
-it('delayed increment', async () => {
+it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
   const state = proxy<any>({ count: 0 })
   const delayedIncrement = () => {
     const nextCount = state.count + 1

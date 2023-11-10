@@ -206,7 +206,7 @@ describe('DEPRECATED addComputed', () => {
     expect(callback).toBeCalledTimes(2)
   })
 
-  it('async addComputed', async () => {
+  it.skipIf(typeof use === 'undefined')('async addComputed', async () => {
     const state = proxy({ count: 0 })
     addComputed(state, {
       delayedCount: async (snap) => {
