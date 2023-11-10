@@ -10,7 +10,7 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms)
   })
 
-const { use } = ReactExports
+const { use } = ReactExports as any // for TS < 4.3 FIXME later
 type Awaited<T> = T extends Promise<infer V> ? V : T // for TS < 4.5 FIXME later
 const use2 = <T,>(x: T): Awaited<T> => (x instanceof Promise ? use(x) : x)
 
@@ -124,7 +124,7 @@ it.skipIf(typeof use === 'undefined')(
   }
 )
 
-it('delayed falsy value', async () => {
+it.skipIf(typeof use === 'undefined')('delayed falsy value', async () => {
   const state = proxy<any>({ value: true })
   const delayedValue = () => {
     state.value = sleep(300).then(() => null)
