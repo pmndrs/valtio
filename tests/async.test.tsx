@@ -11,8 +11,7 @@ const sleep = (ms: number) =>
   })
 
 const { use } = ReactExports as any // for TS < 4.3 FIXME later
-type Awaited<T> = T extends Promise<infer V> ? V : T // for TS < 4.5 FIXME later
-const use2 = <T,>(x: T): Awaited<T> => (x instanceof Promise ? use(x) : x)
+const use2 = (x: any) => (x instanceof Promise ? use(x) : x)
 
 it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
   const state = proxy<any>({ count: 0 })
