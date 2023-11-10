@@ -46,7 +46,7 @@ it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
   await findByText('count: 1')
 })
 
-it('delayed object', async () => {
+it.skipIf(typeof use === 'undefined')('delayed object', async () => {
   const state = proxy<any>({ object: { text: 'none' } })
   const delayedObject = () => {
     state.object = sleep(300).then(() => ({ text: 'hello' }))
@@ -77,49 +77,52 @@ it('delayed object', async () => {
   await findByText('text: hello')
 })
 
-it('delayed object update fulfilled', async () => {
-  const state = proxy<any>({
-    object: sleep(300).then(() => ({ text: 'counter', count: 0 })),
-  })
-  const updateObject = () => {
-    state.object = state.object.then((v: any) =>
-      sleep(300).then(() => ({ ...v, count: v.count + 1 }))
+it.skipIf(typeof use === 'undefined')(
+  'delayed object update fulfilled',
+  async () => {
+    const state = proxy<any>({
+      object: sleep(300).then(() => ({ text: 'counter', count: 0 })),
+    })
+    const updateObject = () => {
+      state.object = state.object.then((v: any) =>
+        sleep(300).then(() => ({ ...v, count: v.count + 1 }))
+      )
+    }
+
+    const Counter = () => {
+      const snap = useSnapshot(state)
+      return (
+        <>
+          <div>text: {use2(snap.object).text}</div>
+          <div>count: {use2(snap.object).count}</div>
+          <button onClick={updateObject}>button</button>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>
     )
+
+    await findByText('loading')
+    await waitFor(() => {
+      getByText('text: counter')
+      getByText('count: 0')
+    })
+
+    fireEvent.click(getByText('button'))
+
+    await findByText('loading')
+    await waitFor(() => {
+      getByText('text: counter')
+      getByText('count: 1')
+    })
   }
-
-  const Counter = () => {
-    const snap = useSnapshot(state)
-    return (
-      <>
-        <div>text: {use2(snap.object).text}</div>
-        <div>count: {use2(snap.object).count}</div>
-        <button onClick={updateObject}>button</button>
-      </>
-    )
-  }
-
-  const { getByText, findByText } = render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </StrictMode>
-  )
-
-  await findByText('loading')
-  await waitFor(() => {
-    getByText('text: counter')
-    getByText('count: 0')
-  })
-
-  fireEvent.click(getByText('button'))
-
-  await findByText('loading')
-  await waitFor(() => {
-    getByText('text: counter')
-    getByText('count: 1')
-  })
-})
+)
 
 it('delayed falsy value', async () => {
   const state = proxy<any>({ value: true })
