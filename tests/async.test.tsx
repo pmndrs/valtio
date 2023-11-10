@@ -1,3 +1,5 @@
+/// <reference types="react/canary" />
+
 import { StrictMode, Suspense, use } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { it } from 'vitest'
@@ -8,7 +10,7 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms)
   })
 
-const use2 = <T,>(x: T): T => (x instanceof Promise ? use(x) : x)
+const use2 = <T,>(x: T): Awaited<T> => (x instanceof Promise ? use(x) : x)
 
 it('delayed increment', async () => {
   const state = proxy<any>({ count: 0 })

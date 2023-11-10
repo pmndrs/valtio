@@ -1,5 +1,3 @@
-/// <reference types="react/experimental" />
-
 import { useCallback, useDebugValue, useEffect, useMemo, useRef } from 'react'
 import {
   affectedToPathList,
