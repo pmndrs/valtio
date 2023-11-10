@@ -1,6 +1,6 @@
 /// <reference types="react/canary" />
 
-import { StrictMode, Suspense, use } from 'react'
+import ReactExports, { StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
@@ -10,6 +10,7 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms)
   })
 
+const { use } = ReactExports
 type Awaited<T> = T extends Promise<infer V> ? V : T // for TS < 4.5 FIXME later
 const use2 = <T,>(x: T): Awaited<T> => (x instanceof Promise ? use(x) : x)
 
