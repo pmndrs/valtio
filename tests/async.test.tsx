@@ -1,4 +1,4 @@
-import { StrictMode, Suspense } from 'react'
+import { StrictMode, Suspense, use } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
@@ -7,6 +7,8 @@ const sleep = (ms: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
+
+const use2 = <T,>(x: T): T => (x instanceof Promise ? use(x) : x)
 
 it('delayed increment', async () => {
   const state = proxy<any>({ count: 0 })
@@ -19,7 +21,7 @@ it('delayed increment', async () => {
     const snap = useSnapshot(state)
     return (
       <>
-        <div>count: {snap.count}</div>
+        <div>count: {use2(snap.count)}</div>
         <button onClick={delayedIncrement}>button</button>
       </>
     )
@@ -50,7 +52,7 @@ it('delayed object', async () => {
     const snap = useSnapshot(state)
     return (
       <>
-        <div>text: {snap.object.text}</div>
+        <div>text: {use2(snap.object).text}</div>
         <button onClick={delayedObject}>button</button>
       </>
     )
@@ -85,8 +87,8 @@ it('delayed object update fulfilled', async () => {
     const snap = useSnapshot(state)
     return (
       <>
-        <div>text: {snap.object.text}</div>
-        <div>count: {snap.object.count}</div>
+        <div>text: {use2(snap.object).text}</div>
+        <div>count: {use2(snap.object).count}</div>
         <button onClick={updateObject}>button</button>
       </>
     )
@@ -125,7 +127,7 @@ it('delayed falsy value', async () => {
     const snap = useSnapshot(state)
     return (
       <>
-        <div>value: {String(snap.value)}</div>
+        <div>value: {String(use2(snap.value))}</div>
         <button onClick={delayedValue}>button</button>
       </>
     )

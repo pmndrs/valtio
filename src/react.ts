@@ -1,12 +1,6 @@
 /// <reference types="react/experimental" />
 
-import ReactExports, {
-  useCallback,
-  useDebugValue,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react'
+import { useCallback, useDebugValue, useEffect, useMemo, useRef } from 'react'
 import {
   affectedToPathList,
   createProxy as createProxyToCompare,
@@ -21,7 +15,6 @@ import useSyncExternalStoreExports from 'use-sync-external-store/shim'
 import { snapshot, subscribe } from './vanilla.ts'
 import type { INTERNAL_Snapshot as Snapshot } from './vanilla.ts'
 
-const { use } = ReactExports
 const { useSyncExternalStore } = useSyncExternalStoreExports
 
 const useAffectedDebugValue = (
@@ -133,7 +126,7 @@ export function useSnapshot<T extends object>(
       [proxyObject, notifyInSync]
     ),
     () => {
-      const nextSnapshot = snapshot(proxyObject, use)
+      const nextSnapshot = snapshot(proxyObject)
       try {
         if (
           !inRender &&
@@ -154,7 +147,7 @@ export function useSnapshot<T extends object>(
       }
       return nextSnapshot
     },
-    () => snapshot(proxyObject, use)
+    () => snapshot(proxyObject)
   )
   inRender = false
   const currAffected = new WeakMap()

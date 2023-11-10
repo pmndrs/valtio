@@ -33,8 +33,6 @@ type SnapshotIgnore =
 
 type Snapshot<T> = T extends SnapshotIgnore
   ? T
-  : T extends Promise<unknown>
-  ? Awaited<T>
   : T extends object
   ? { readonly [K in keyof T]: Snapshot<T[K]> }
   : T
@@ -45,13 +43,7 @@ type Snapshot<T> = T extends SnapshotIgnore
  */
 export type INTERNAL_Snapshot<T> = Snapshot<T>
 
-type HandlePromise = <P extends Promise<any>>(promise: P) => Awaited<P>
-
-type CreateSnapshot = <T extends object>(
-  target: T,
-  version: number,
-  handlePromise?: HandlePromise
-) => T
+type CreateSnapshot = <T extends object>(target: T, version: number) => T
 
 type RemoveListener = () => void
 type AddListener = (listener: Listener) => RemoveListener
@@ -86,29 +78,11 @@ const buildProxyFunction = (
     !(x instanceof RegExp) &&
     !(x instanceof ArrayBuffer),
 
-  defaultHandlePromise = <P extends Promise<any>>(
-    promise: P & {
-      status?: 'pending' | 'fulfilled' | 'rejected'
-      value?: Awaited<P>
-      reason?: unknown
-    }
-  ) => {
-    switch (promise.status) {
-      case 'fulfilled':
-        return promise.value as Awaited<P>
-      case 'rejected':
-        throw promise.reason
-      default:
-        throw promise
-    }
-  },
-
   snapCache = new WeakMap<object, [version: number, snap: unknown]>(),
 
   createSnapshot: CreateSnapshot = <T extends object>(
     target: T,
-    version: number,
-    handlePromise: HandlePromise = defaultHandlePromise
+    version: number
   ): T => {
     const cache = snapCache.get(target)
     if (cache?.[0] === version) {
@@ -138,18 +112,11 @@ const buildProxyFunction = (
       }
       if (refSet.has(value as object)) {
         markToTrack(value as object, false) // mark not to track
-      } else if (value instanceof Promise) {
-        delete desc.value
-        desc.get = () => handlePromise(value)
       } else if (proxyStateMap.has(value as object)) {
         const [target, ensureVersion] = proxyStateMap.get(
           value as object
         ) as ProxyState
-        desc.value = createSnapshot(
-          target,
-          ensureVersion(),
-          handlePromise
-        ) as Snapshot<T>
+        desc.value = createSnapshot(target, ensureVersion()) as Snapshot<T>
       }
       Object.defineProperty(snap, key, desc)
     })
@@ -337,7 +304,6 @@ const buildProxyFunction = (
     objectIs,
     newProxy,
     canProxy,
-    defaultHandlePromise,
     snapCache,
     createSnapshot,
     proxyCache,
@@ -391,16 +357,13 @@ export function subscribe<T extends object>(
   }
 }
 
-export function snapshot<T extends object>(
-  proxyObject: T,
-  handlePromise?: HandlePromise
-): Snapshot<T> {
+export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
   const proxyState = proxyStateMap.get(proxyObject as object)
   if (import.meta.env?.MODE !== 'production' && !proxyState) {
     console.warn('Please use proxy object')
   }
   const [target, ensureVersion, createSnapshot] = proxyState as ProxyState
-  return createSnapshot(target, ensureVersion(), handlePromise) as Snapshot<T>
+  return createSnapshot(target, ensureVersion()) as Snapshot<T>
 }
 
 export function ref<T extends object>(obj: T): T & AsRef {
