@@ -9,7 +9,7 @@ export const deepClone = <T>(obj: T, getRefSet?: () => WeakSet<object>): T => {
     ? []
     : Object.create(Object.getPrototypeOf(obj))
   Reflect.ownKeys(obj).forEach((key) => {
-    baseObject[key as keyof T] = deepClone(obj[key as keyof T])
+    baseObject[key as keyof T] = deepClone(obj[key as keyof T], getRefSet)
   })
   return baseObject
 }
