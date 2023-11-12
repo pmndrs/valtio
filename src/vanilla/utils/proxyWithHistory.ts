@@ -6,29 +6,17 @@ import {
   subscribe,
 } from '../../vanilla.ts'
 import type { INTERNAL_Snapshot as Snapshot } from '../../vanilla.ts'
+import { deepClone } from './deepClone.ts'
 
 type SnapshotOrUndefined<T> = Snapshot<T> | undefined
 type Snapshots<T> = Snapshot<T>[]
 
-const isObject = (x: unknown): x is object =>
-  typeof x === 'object' && x !== null
-
-let refSet: WeakSet<object> | undefined
-
-const deepClone = <T>(obj: T): T => {
-  if (!refSet) {
-    refSet = buildProxyFunction()[2]
+let defaultRefSet: WeakSet<object> | undefined
+const getDefaultRefSet = (): WeakSet<object> => {
+  if (!defaultRefSet) {
+    defaultRefSet = buildProxyFunction()[2]
   }
-  if (!isObject(obj) || refSet.has(obj)) {
-    return obj
-  }
-  const baseObject: T = Array.isArray(obj)
-    ? []
-    : Object.create(Object.getPrototypeOf(obj))
-  Reflect.ownKeys(obj).forEach((key) => {
-    baseObject[key as keyof T] = deepClone(obj[key as keyof T])
-  })
-  return baseObject
+  return defaultRefSet
 }
 
 /**
@@ -67,7 +55,8 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
     undo: () => {
       if (proxyObject.canUndo()) {
         proxyObject.value = (proxyObject.history.wip = proxyObject.clone(
-          proxyObject.history.snapshots[--proxyObject.history.index]
+          proxyObject.history.snapshots[--proxyObject.history.index],
+          getDefaultRefSet
         ) as Snapshot<V>) as V
       }
     },
