@@ -1,4 +1,6 @@
-import { StrictMode, Suspense, useEffect, useRef } from 'react'
+/// <reference types="react/canary" />
+
+import ReactExports, { StrictMode, Suspense, useEffect, useRef } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
@@ -10,6 +12,9 @@ const sleep = (ms: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
+
+const { use } = ReactExports as any // for TS < 4.3 FIXME later
+const use2 = (x: any) => (x instanceof Promise ? use(x) : x)
 
 it('basic derive', async () => {
   const computeDouble = vi.fn((x: number) => x * 2)
@@ -149,7 +154,7 @@ it('derive with two dependencies', async () => {
   expect(callback).toBeCalledTimes(2)
 })
 
-it('async derive', async () => {
+it.skipIf(typeof use === 'undefined')('async derive', async () => {
   const state = proxy({ count: 0 })
   derive(
     {
@@ -168,7 +173,7 @@ it('async derive', async () => {
     return (
       <>
         <div>
-          count: {snap.count}, delayedCount: {snap.delayedCount}
+          count: {snap.count}, delayedCount: {use2(snap.delayedCount)}
         </div>
         <button onClick={() => ++state.count}>button</button>
       </>

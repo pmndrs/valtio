@@ -1,9 +1,14 @@
-import { StrictMode, Suspense } from 'react'
+/// <reference types="react/canary" />
+
+import ReactExports, { StrictMode, Suspense } from 'react'
 import { fireEvent, render } from '@testing-library/react'
 import { memoize } from 'proxy-memoize'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { addComputed, proxyWithComputed, subscribeKey } from 'valtio/utils'
+
+const { use } = ReactExports as any // for TS < 4.3 FIXME later
+const use2 = (x: any) => (x instanceof Promise ? use(x) : x)
 
 const consoleWarn = console.warn
 beforeEach(() => {
@@ -201,7 +206,7 @@ describe('DEPRECATED addComputed', () => {
     expect(callback).toBeCalledTimes(2)
   })
 
-  it('async addComputed', async () => {
+  it.skipIf(typeof use === 'undefined')('async addComputed', async () => {
     const state = proxy({ count: 0 })
     addComputed(state, {
       delayedCount: async (snap) => {
@@ -217,7 +222,7 @@ describe('DEPRECATED addComputed', () => {
       return (
         <>
           <div>
-            count: {snap.count}, delayedCount: {snap.delayedCount}
+            count: {snap.count}, delayedCount: {use2(snap.delayedCount)}
           </div>
           <button onClick={() => ++state.count}>button</button>
         </>
