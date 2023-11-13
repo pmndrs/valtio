@@ -91,7 +91,7 @@ describe('watch', () => {
       (get) => {
         get(reference)
       },
-      { sync: true }
+      { sync: true },
     )
 
     reference.value = 'Update'

@@ -117,13 +117,13 @@ describe('features parity with native Set', () => {
       const expectOutputToMatch = () => {
         expect(set.size).toStrictEqual(nativeSet.size)
         expect(Array.from(set.values())).toStrictEqual(
-          Array.from(nativeSet.values())
+          Array.from(nativeSet.values()),
         )
         expect(Array.from(set.keys())).toStrictEqual(
-          Array.from(nativeSet.keys())
+          Array.from(nativeSet.keys()),
         )
         expect(Array.from(set.entries())).toStrictEqual(
-          Array.from(nativeSet.entries())
+          Array.from(nativeSet.entries()),
         )
         expect(JSON.stringify(set)).toStrictEqual(JSON.stringify(nativeSet))
 
@@ -153,7 +153,7 @@ describe('features parity with native Set', () => {
       const [valueToDeleteFromNativeSet] = nativeSet
 
       expect(set.delete(valueToDeleteFromSet)).toBe(
-        nativeSet.delete(valueToDeleteFromNativeSet)
+        nativeSet.delete(valueToDeleteFromNativeSet),
       )
 
       expectOutputToMatch()
@@ -224,7 +224,7 @@ describe('clear set', () => {
       const { getByText } = render(
         <StrictMode>
           <TestComponent />
-        </StrictMode>
+        </StrictMode>,
       )
 
       getByText(`size: ${state.set.size}`)
@@ -258,7 +258,7 @@ describe('add value', () => {
       const { getByText } = render(
         <StrictMode>
           <TestComponent />
-        </StrictMode>
+        </StrictMode>,
       )
 
       getByText('size: 0')
@@ -299,7 +299,7 @@ describe('delete', () => {
       const { getByText } = render(
         <StrictMode>
           <TestComponent />
-        </StrictMode>
+        </StrictMode>,
       )
 
       getByText(`size: ${state.set.size}`)
@@ -331,7 +331,7 @@ describe('proxySet internal', () => {
   it('should list only enumerable properties', () => {
     const notEnumerableProps = ['data', 'size', 'toJSON']
     expect(
-      Object.keys(proxySet()).some((k) => notEnumerableProps.includes(k))
+      Object.keys(proxySet()).some((k) => notEnumerableProps.includes(k)),
     ).toBe(false)
   })
 })

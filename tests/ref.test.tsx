@@ -25,7 +25,7 @@ it('should trigger re-render setting objects with ref wrapper', async () => {
   const { getByText, findByText } = render(
     <>
       <Counter />
-    </>
+    </>,
   )
 
   await findByText('count: 0 (1)')
@@ -52,7 +52,7 @@ it('should not track object wrapped in ref assigned to proxy state', async () =>
   const { getByText, findByText } = render(
     <StrictMode>
       <Component />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('original')
@@ -77,7 +77,7 @@ it('should not trigger re-render when mutating object wrapped in ref', async () 
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
