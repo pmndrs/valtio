@@ -30,7 +30,7 @@ it('delayed increment', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -61,7 +61,7 @@ it('delayed object', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('text: none')
@@ -77,7 +77,7 @@ it('delayed object update fulfilled', async () => {
   })
   const updateObject = () => {
     state.object = state.object.then((v: any) =>
-      sleep(300).then(() => ({ ...v, count: v.count + 1 }))
+      sleep(300).then(() => ({ ...v, count: v.count + 1 })),
     )
   }
 
@@ -97,7 +97,7 @@ it('delayed object update fulfilled', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -136,7 +136,7 @@ it('delayed falsy value', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('value: true')

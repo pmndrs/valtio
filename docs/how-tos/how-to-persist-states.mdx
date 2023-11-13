@@ -13,7 +13,7 @@ const state = proxy(
   JSON.parse(localStorage.getItem('foo')) || {
     count: 0,
     text: 'hello',
-  }
+  },
 )
 
 subscribe(state, () => {

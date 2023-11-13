@@ -19,7 +19,7 @@ it('unsupported map', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -45,7 +45,7 @@ it('unsupported set', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 1,2,3')

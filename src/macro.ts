@@ -17,7 +17,7 @@ const macro = ({ references }: any) => {
     path.parentPath?.parentPath?.replaceWith(
       t.variableDeclaration('const', [
         t.variableDeclarator(snap, t.callExpression(hook, [proxy])),
-      ])
+      ]),
     )
     let inFunction = 0
     path.parentPath?.getFunctionParent()?.traverse({

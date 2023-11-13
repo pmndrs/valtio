@@ -31,8 +31,8 @@ const Component = () => {
 }
 `,
       'test.ts',
-      env
-    )
+      env,
+    ),
   ).toMatchSnapshot()
 })
 
@@ -59,7 +59,7 @@ const Component = () => {
 }
 `,
       'test.ts',
-      env
-    )
+      env,
+    ),
   ).toMatchSnapshot()
 })

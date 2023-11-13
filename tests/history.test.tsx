@@ -22,7 +22,7 @@ it('simple count', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -76,7 +76,7 @@ it('count in object', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -130,7 +130,7 @@ it('count in nested object', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -179,14 +179,16 @@ it('multiple redos at once (#323)', async () => {
           onClick={() => {
             state.undo()
             state.undo()
-          }}>
+          }}
+        >
           undo twice
         </button>
         <button
           onClick={() => {
             state.redo()
             state.redo()
-          }}>
+          }}
+        >
           redo twice
         </button>
       </>
@@ -196,7 +198,7 @@ it('multiple redos at once (#323)', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -232,7 +234,8 @@ it('nested array (#516)', async () => {
         <button
           onClick={() => {
             state.undo()
-          }}>
+          }}
+        >
           undo
         </button>
         <button
@@ -240,7 +243,8 @@ it('nested array (#516)', async () => {
             if (state.value.level0Values[1]) {
               state.value.level0Values[1].level1Values[0] = 10
             }
-          }}>
+          }}
+        >
           change 2 to 10
         </button>
         <button
@@ -248,7 +252,8 @@ it('nested array (#516)', async () => {
             if (state.value.level0Values[1]) {
               state.value.level0Values[1].level1Values[0] = 11
             }
-          }}>
+          }}
+        >
           change 10 to 11
         </button>
         <button
@@ -256,7 +261,8 @@ it('nested array (#516)', async () => {
             if (state.value.level0Values[0]) {
               state.value.level0Values[0].level1Values[0] = 12
             }
-          }}>
+          }}
+        >
           change 0 to 12
         </button>
       </>
@@ -266,40 +272,40 @@ it('nested array (#516)', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <NestedArray />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText(
-    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[2,3]}]}'
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[2,3]}]}',
   )
 
   fireEvent.click(getByText('change 2 to 10'))
   await findByText(
-    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}'
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}',
   )
 
   fireEvent.click(getByText('change 10 to 11'))
   await findByText(
-    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[11,3]}]}'
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[11,3]}]}',
   )
 
   fireEvent.click(getByText('undo')) // => 11 back to 10
   await findByText(
-    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}'
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}',
   )
 
   fireEvent.click(getByText('change 0 to 12'))
   await findByText(
-    'values: {"level0Values":[{"level1Values":[12,1]},{"level1Values":[10,3]}]}'
+    'values: {"level0Values":[{"level1Values":[12,1]},{"level1Values":[10,3]}]}',
   )
 
   fireEvent.click(getByText('undo')) // => 12 back to 0
   await findByText(
-    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}'
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[10,3]}]}',
   )
 
   fireEvent.click(getByText('undo')) // => 10 back to 2
   await findByText(
-    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[2,3]}]}'
+    'values: {"level0Values":[{"level1Values":[0,1]},{"level1Values":[2,3]}]}',
   )
 })

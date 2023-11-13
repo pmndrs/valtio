@@ -23,7 +23,7 @@ type Options = {
 
 export function devtools<T extends object>(
   proxyObject: T,
-  options?: Options
+  options?: Options,
 ): (() => void) | undefined
 
 /**
@@ -31,7 +31,7 @@ export function devtools<T extends object>(
  */
 export function devtools<T extends object>(
   proxyObject: T,
-  name?: string
+  name?: string,
 ): (() => void) | undefined
 
 /**
@@ -47,11 +47,11 @@ export function devtools<T extends object>(
  */
 export function devtools<T extends object>(
   proxyObject: T,
-  options?: Options | string
+  options?: Options | string,
 ) {
   if (typeof options === 'string') {
     console.warn(
-      'string name option is deprecated, use { name }. https://github.com/pmndrs/valtio/pull/400'
+      'string name option is deprecated, use { name }. https://github.com/pmndrs/valtio/pull/400',
     )
     options = { name: options }
   }
@@ -94,7 +94,7 @@ export function devtools<T extends object>(
           type: action,
           updatedAt: new Date().toLocaleString(),
         } as any,
-        snapWithoutDevtools
+        snapWithoutDevtools,
       )
     }
   })
@@ -102,7 +102,7 @@ export function devtools<T extends object>(
     devtools as unknown as {
       // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
       subscribe: (
-        listener: (message: Message) => void
+        listener: (message: Message) => void,
       ) => (() => void) | undefined
     }
   ).subscribe((message) => {
@@ -112,7 +112,7 @@ export function devtools<T extends object>(
       } catch (e) {
         console.error(
           'please dispatch a serializable value that JSON.parse() and proxy() support\n',
-          e
+          e,
         )
       }
     }

@@ -67,7 +67,7 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
     undo: () => {
       if (proxyObject.canUndo()) {
         proxyObject.value = (proxyObject.history.wip = proxyObject.clone(
-          proxyObject.history.snapshots[--proxyObject.history.index]
+          proxyObject.history.snapshots[--proxyObject.history.index],
         ) as Snapshot<V>) as V
       }
     },
@@ -76,7 +76,7 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
     redo: () => {
       if (proxyObject.canRedo()) {
         proxyObject.value = (proxyObject.history.wip = proxyObject.clone(
-          proxyObject.history.snapshots[++proxyObject.history.index]
+          proxyObject.history.snapshots[++proxyObject.history.index],
         ) as Snapshot<V>) as V
       }
     },
@@ -91,7 +91,7 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
           ops.every(
             (op) =>
               op[1][0] === 'value' &&
-              (op[0] !== 'set' || op[2] !== proxyObject.history.wip)
+              (op[0] !== 'set' || op[2] !== proxyObject.history.wip),
           )
         ) {
           proxyObject.saveHistory()
