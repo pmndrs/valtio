@@ -41,7 +41,6 @@ jobs:
       - name: Install old TypeScript
         run: |
           yarn add -D typescript@${{ matrix.typescript }}
-          rm node_modules/parse5/dist/*.d.ts
       - name: Test ${{ matrix.typescript }}
         run: |
           rm -r node_modules/@types/babel__core/node_modules
