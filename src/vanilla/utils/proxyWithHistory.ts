@@ -1,35 +1,9 @@
-import {
-  unstable_buildProxyFunction as buildProxyFunction,
-  proxy,
-  ref,
-  snapshot,
-  subscribe,
-} from '../../vanilla.ts'
+import { proxy, ref, snapshot, subscribe } from '../../vanilla.ts'
 import type { INTERNAL_Snapshot as Snapshot } from '../../vanilla.ts'
+import { deepClone } from './deepClone.ts'
 
 type SnapshotOrUndefined<T> = Snapshot<T> | undefined
 type Snapshots<T> = Snapshot<T>[]
-
-const isObject = (x: unknown): x is object =>
-  typeof x === 'object' && x !== null
-
-let refSet: WeakSet<object> | undefined
-
-const deepClone = <T>(obj: T): T => {
-  if (!refSet) {
-    refSet = buildProxyFunction()[2]
-  }
-  if (!isObject(obj) || refSet.has(obj)) {
-    return obj
-  }
-  const baseObject: T = Array.isArray(obj)
-    ? []
-    : Object.create(Object.getPrototypeOf(obj))
-  Reflect.ownKeys(obj).forEach((key) => {
-    baseObject[key as keyof T] = deepClone(obj[key as keyof T])
-  })
-  return baseObject
-}
 
 /**
  * proxyWithHistory
