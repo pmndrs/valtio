@@ -72,8 +72,6 @@ function createESMConfig(input, output) {
               'import.meta.env?.MODE':
                 '(import.meta.env ? import.meta.env.MODE : undefined)',
             }),
-        // a workround for #410
-        'use-sync-external-store/shim': 'use-sync-external-store/shim/index.js',
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),

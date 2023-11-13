@@ -112,8 +112,7 @@
   "homepage": "https://github.com/pmndrs/valtio",
   "dependencies": {
     "proxy-compare": "2.5.1",
-    "derive-valtio": "0.1.0",
-    "use-sync-external-store": "1.2.0"
+    "derive-valtio": "0.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.23.2",
@@ -134,7 +133,6 @@
     "@types/jsdom": "^21.1.4",
     "@types/react": "^18.2.34",
     "@types/react-dom": "^18.2.14",
-    "@types/use-sync-external-store": "^0.0.5",
     "@typescript-eslint/eslint-plugin": "^6.9.1",
     "@typescript-eslint/parser": "^6.9.1",
     "@vitest/coverage-v8": "0.33.0",
@@ -170,8 +168,8 @@
     "vitest": "0.33.0"
   },
   "peerDependencies": {
-    "@types/react": ">=16.8",
-    "react": ">=16.8"
+    "@types/react": ">=18.0",
+    "react": ">=18.0"
   },
   "peerDependenciesMeta": {
     "@types/react": {
