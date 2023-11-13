@@ -13,8 +13,8 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms)
   })
 
-const { use } = ReactExports as any // for TS < 4.3 FIXME later
-const use2 = (x: any) => (x instanceof Promise ? use(x) : x)
+const { use } = ReactExports
+const use2 = <T,>(x: T): Awaited<T> => (x instanceof Promise ? use(x) : x)
 
 it('basic derive', async () => {
   const computeDouble = vi.fn((x: number) => x * 2)
