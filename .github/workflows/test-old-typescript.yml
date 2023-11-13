@@ -43,5 +43,4 @@ jobs:
           yarn add -D typescript@${{ matrix.typescript }}
       - name: Test ${{ matrix.typescript }}
         run: |
-          rm -r node_modules/@types/babel__core/node_modules
           yarn tsc --noEmit
