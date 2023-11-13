@@ -33,7 +33,7 @@ describe('proxyWithComputed', () => {
       },
       {
         doubled: { get: memoize((snap) => computeDouble(snap.count)) },
-      }
+      },
     )
 
     const callback = vi.fn()
@@ -70,7 +70,7 @@ describe('proxyWithComputed', () => {
             state.count = newValue / 2
           },
         },
-      }
+      },
     )
 
     expect(snapshot(state)).toMatchObject({ text: '', count: 0, doubled: 0 })
@@ -111,7 +111,7 @@ describe('proxyWithComputed', () => {
             state.arr = newValue
           },
         },
-      }
+      },
     )
 
     expect(snapshot(state)).toMatchObject({
@@ -143,7 +143,7 @@ describe('proxyWithComputed', () => {
           if (!snap.filter) return snap.texts
           return snap.texts.filter((text) => !text.includes(snap.filter))
         }),
-      }
+      },
     )
 
     const Component = () => {
@@ -159,7 +159,7 @@ describe('proxyWithComputed', () => {
     const { getByText, findByText } = render(
       <StrictMode>
         <Component />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('filtered: []')
@@ -212,7 +212,7 @@ describe('DEPRECATED addComputed', () => {
 
     const Counter = () => {
       const snap = useSnapshot(
-        state as { count: number; delayedCount: Promise<number> }
+        state as { count: number; delayedCount: Promise<number> },
       )
       return (
         <>
@@ -229,7 +229,7 @@ describe('DEPRECATED addComputed', () => {
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('loading')
@@ -248,7 +248,7 @@ describe('DEPRECATED addComputed', () => {
       {
         doubled: (snap) => computeDouble(snap.math.count),
       },
-      state.math
+      state.math,
     )
 
     const callback = vi.fn()
@@ -311,7 +311,7 @@ describe('proxyWithComputed and subscribeKey', () => {
       },
       {
         doubled: (snap) => snap.count * 2,
-      }
+      },
     )
     const handler = vi.fn()
     subscribeKey(state, 'doubled', handler)

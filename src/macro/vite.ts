@@ -26,7 +26,7 @@ export const valtioMacro = defineMacro(`useProxy`)
     path.parentPath?.replaceWith(
       t.variableDeclaration('const', [
         t.variableDeclarator(snap, t.callExpression(hook, [proxy])),
-      ])
+      ]),
     )
 
     let inFunction = 0

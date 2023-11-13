@@ -114,13 +114,13 @@ describe('features parity with native Map', () => {
       const expectOutputToMatch = () => {
         expect(map.size).toStrictEqual(nativeMap.size)
         expect(Array.from(map.values())).toStrictEqual(
-          Array.from(nativeMap.values())
+          Array.from(nativeMap.values()),
         )
         expect(Array.from(map.keys())).toStrictEqual(
-          Array.from(nativeMap.keys())
+          Array.from(nativeMap.keys()),
         )
         expect(Array.from(map.entries())).toStrictEqual(
-          Array.from(nativeMap.entries())
+          Array.from(nativeMap.entries()),
         )
         expect(JSON.stringify(map)).toStrictEqual(JSON.stringify(nativeMap))
 
@@ -180,11 +180,11 @@ describe('features parity with native Map', () => {
 
     expect(map.size).toStrictEqual(nativeMap.size)
     expect(Array.from(map.values())).toStrictEqual(
-      Array.from(nativeMap.values())
+      Array.from(nativeMap.values()),
     )
     expect(Array.from(map.keys())).toStrictEqual(Array.from(nativeMap.keys()))
     expect(Array.from(map.entries())).toStrictEqual(
-      Array.from(nativeMap.entries())
+      Array.from(nativeMap.entries()),
     )
   })
 })
@@ -208,7 +208,7 @@ describe('clear map', () => {
       const { getByText } = render(
         <StrictMode>
           <TestComponent />
-        </StrictMode>
+        </StrictMode>,
       )
 
       expect(state.size).toBeGreaterThan(0)
@@ -243,7 +243,7 @@ describe('add value', () => {
       const { getByText } = render(
         <StrictMode>
           <TestComponent />
-        </StrictMode>
+        </StrictMode>,
       )
 
       getByText('size: 0')
@@ -291,7 +291,7 @@ describe('delete', () => {
       const { getByText } = render(
         <StrictMode>
           <TestComponent />
-        </StrictMode>
+        </StrictMode>,
       )
 
       getByText(`size: ${state.map.size}`)
@@ -315,7 +315,7 @@ describe('proxyMap internal', () => {
   it('should list only enumerable properties', () => {
     const notEnumerableProps = ['data', 'size', 'toJSON']
     expect(
-      Object.keys(proxyMap()).some((k) => notEnumerableProps.includes(k))
+      Object.keys(proxyMap()).some((k) => notEnumerableProps.includes(k)),
     ).toBe(false)
   })
 })

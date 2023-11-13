@@ -26,7 +26,7 @@ it('simple class without methods', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -83,7 +83,7 @@ it('no extra re-renders with class', async () => {
     <>
       <Counter />
       <Counter2 />
-    </>
+    </>,
   )
 
   await waitFor(() => {
@@ -134,7 +134,7 @@ it('inherited class without methods', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -189,7 +189,7 @@ it('class with a method', async () => {
     <>
       <Counter />
       <Counter2 />
-    </>
+    </>,
   )
 
   await waitFor(() => {
@@ -260,7 +260,7 @@ it('inherited class with a method', async () => {
     <>
       <Counter />
       <Counter2 />
-    </>
+    </>,
   )
 
   await waitFor(() => {
@@ -335,7 +335,7 @@ it('no extra re-renders with getters', async () => {
     <>
       <Counter />
       <Counter2 />
-    </>
+    </>,
   )
 
   await waitFor(() => {

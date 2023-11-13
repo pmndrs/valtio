@@ -34,7 +34,7 @@ let currentCleanups: Set<Cleanup> | undefined
  */
 export function watch(
   callback: WatchCallback,
-  options?: WatchOptions
+  options?: WatchOptions,
 ): Cleanup {
   let alive = true
   const cleanups = new Set<Cleanup>()

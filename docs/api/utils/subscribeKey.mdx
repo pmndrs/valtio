@@ -14,7 +14,7 @@ import { subscribeKey } from 'valtio/utils'
 
 const state = proxy({ count: 0, text: 'hello' })
 subscribeKey(state, 'count', (v) =>
-  console.log('state.count has changed to', v)
+  console.log('state.count has changed to', v),
 )
 ```
 

@@ -56,7 +56,7 @@ it('derive another proxy', async () => {
     },
     {
       proxy: anotherState,
-    }
+    },
   )
 
   const callback = vi.fn()
@@ -93,7 +93,7 @@ it('derive with self', async () => {
     },
     {
       proxy: state,
-    }
+    },
   )
 
   const callback = vi.fn()
@@ -158,12 +158,12 @@ it('async derive', async () => {
         return get(state).count + 1
       },
     },
-    { proxy: state }
+    { proxy: state },
   )
 
   const Counter = () => {
     const snap = useSnapshot(
-      state as { count: number; delayedCount: Promise<number> }
+      state as { count: number; delayedCount: Promise<number> },
     )
     return (
       <>
@@ -180,7 +180,7 @@ it('async derive', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('loading')
@@ -198,7 +198,7 @@ it('nested emulation with derive', async () => {
     {
       doubled: (get) => computeDouble(get(state.math).count),
     },
-    { proxy: state.math, sync: true }
+    { proxy: state.math, sync: true },
   )
 
   const callback = vi.fn()
@@ -240,7 +240,7 @@ it('derive with array.pop', async () => {
     {
       nums: (get) => get(state.arr).map((item) => item.n),
     },
-    { proxy: state }
+    { proxy: state },
   )
 
   expect(snapshot(state)).toMatchObject({
@@ -317,7 +317,7 @@ describe('glitch free', () => {
     const { getByText, findByText } = render(
       <>
         <App />
-      </>
+      </>,
     )
 
     await findByText('value: v0: 0, v1: 0, v2: 0 (commits: 1)')
@@ -359,7 +359,7 @@ describe('glitch free', () => {
     const { getByText, findByText } = render(
       <StrictMode>
         <App />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('value: 0')
@@ -405,7 +405,7 @@ describe('glitch free', () => {
     const { getByText, findByText } = render(
       <StrictMode>
         <App />
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('value: 0')
@@ -433,7 +433,7 @@ describe('two derived properties', () => {
           return 1
         },
       },
-      { proxy: state }
+      { proxy: state },
     )
     derive(
       {
@@ -442,7 +442,7 @@ describe('two derived properties', () => {
           return 1
         },
       },
-      { proxy: state }
+      { proxy: state },
     )
     await Promise.resolve()
     expect(state.derived1).toBeDefined()
@@ -462,7 +462,7 @@ describe('two derived properties', () => {
           return {}
         },
       },
-      { proxy: state }
+      { proxy: state },
     )
     await Promise.resolve()
     expect(state.derived1).toBeDefined()
@@ -478,7 +478,7 @@ describe('two derived properties', () => {
           return {}
         },
       },
-      { proxy: state }
+      { proxy: state },
     )
     derive(
       {
@@ -487,7 +487,7 @@ describe('two derived properties', () => {
           return {}
         },
       },
-      { proxy: state }
+      { proxy: state },
     )
     await Promise.resolve()
     expect(state.derived1).toBeDefined()

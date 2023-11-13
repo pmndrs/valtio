@@ -24,7 +24,7 @@ import { useSnapshot } from '../../react.ts'
  */
 export function useProxy<T extends object>(
   proxy: T,
-  options?: NonNullable<Parameters<typeof useSnapshot>[1]>
+  options?: NonNullable<Parameters<typeof useSnapshot>[1]>,
 ): T {
   const snapshot = useSnapshot(proxy, options) as T
 

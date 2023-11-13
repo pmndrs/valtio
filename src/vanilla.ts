@@ -50,7 +50,7 @@ type HandlePromise = <P extends Promise<any>>(promise: P) => Awaited<P>
 type CreateSnapshot = <T extends object>(
   target: T,
   version: number,
-  handlePromise?: HandlePromise
+  handlePromise?: HandlePromise,
 ) => T
 
 type RemoveListener = () => void
@@ -91,7 +91,7 @@ const buildProxyFunction = (
       status?: 'pending' | 'fulfilled' | 'rejected'
       value?: Awaited<P>
       reason?: unknown
-    }
+    },
   ) => {
     switch (promise.status) {
       case 'fulfilled':
@@ -108,7 +108,7 @@ const buildProxyFunction = (
   createSnapshot: CreateSnapshot = <T extends object>(
     target: T,
     version: number,
-    handlePromise: HandlePromise = defaultHandlePromise
+    handlePromise: HandlePromise = defaultHandlePromise,
   ): T => {
     const cache = snapCache.get(target)
     if (cache?.[0] === version) {
@@ -127,7 +127,7 @@ const buildProxyFunction = (
       const value = Reflect.get(target, key)
       const { enumerable } = Reflect.getOwnPropertyDescriptor(
         target,
-        key
+        key,
       ) as PropertyDescriptor
       const desc: PropertyDescriptor = {
         value,
@@ -143,12 +143,12 @@ const buildProxyFunction = (
         desc.get = () => handlePromise(value)
       } else if (proxyStateMap.has(value as object)) {
         const [target, ensureVersion] = proxyStateMap.get(
-          value as object
+          value as object,
         ) as ProxyState
         desc.value = createSnapshot(
           target,
           ensureVersion(),
-          handlePromise
+          handlePromise,
         ) as Snapshot<T>
       }
       Object.defineProperty(snap, key, desc)
@@ -202,7 +202,7 @@ const buildProxyFunction = (
     >()
     const addPropListener = (
       prop: string | symbol,
-      propProxyState: ProxyState
+      propProxyState: ProxyState,
     ) => {
       if (import.meta.env?.MODE !== 'production' && propProxyStates.has(prop)) {
         throw new Error('prop listener already exists')
@@ -313,7 +313,7 @@ const buildProxyFunction = (
     Reflect.ownKeys(initialObject).forEach((key) => {
       const desc = Object.getOwnPropertyDescriptor(
         initialObject,
-        key
+        key,
       ) as PropertyDescriptor
       if ('value' in desc) {
         proxyObject[key as keyof T] = initialObject[key as keyof T]
@@ -325,7 +325,7 @@ const buildProxyFunction = (
       Object.defineProperty(baseObject, key, desc)
     })
     return proxyObject
-  }
+  },
 ) =>
   [
     // public functions
@@ -358,7 +358,7 @@ export function getVersion(proxyObject: unknown): number | undefined {
 export function subscribe<T extends object>(
   proxyObject: T,
   callback: (ops: Op[]) => void,
-  notifyInSync?: boolean
+  notifyInSync?: boolean,
 ): () => void {
   const proxyState = proxyStateMap.get(proxyObject as object)
   if (import.meta.env?.MODE !== 'production' && !proxyState) {
@@ -393,7 +393,7 @@ export function subscribe<T extends object>(
 
 export function snapshot<T extends object>(
   proxyObject: T,
-  handlePromise?: HandlePromise
+  handlePromise?: HandlePromise,
 ): Snapshot<T> {
   const proxyState = proxyStateMap.get(proxyObject as object)
   if (import.meta.env?.MODE !== 'production' && !proxyState) {
