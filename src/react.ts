@@ -17,7 +17,7 @@ const { useSyncExternalStore } = useSyncExternalStoreExports
 
 const useAffectedDebugValue = (
   state: object,
-  affected: WeakMap<object, unknown>
+  affected: WeakMap<object, unknown>,
 ) => {
   const pathList = useRef<(string | number | symbol)[][]>()
   useEffect(() => {
@@ -108,7 +108,7 @@ type Options = {
  */
 export function useSnapshot<T extends object>(
   proxyObject: T,
-  options?: Options
+  options?: Options,
 ): Snapshot<T> {
   const notifyInSync = options?.sync
   const lastSnapshot = useRef<Snapshot<T>>()
@@ -121,7 +121,7 @@ export function useSnapshot<T extends object>(
         callback() // Note: do we really need this?
         return unsub
       },
-      [proxyObject, notifyInSync]
+      [proxyObject, notifyInSync],
     ),
     () => {
       const nextSnapshot = snapshot(proxyObject)
@@ -134,7 +134,7 @@ export function useSnapshot<T extends object>(
             lastSnapshot.current,
             nextSnapshot,
             lastAffected.current,
-            new WeakMap()
+            new WeakMap(),
           )
         ) {
           // not changed
@@ -145,7 +145,7 @@ export function useSnapshot<T extends object>(
       }
       return nextSnapshot
     },
-    () => snapshot(proxyObject)
+    () => snapshot(proxyObject),
   )
   inRender = false
   const currAffected = new WeakMap()
@@ -162,6 +162,6 @@ export function useSnapshot<T extends object>(
     currSnapshot,
     currAffected,
     proxyCache,
-    targetCache
+    targetCache,
   )
 }

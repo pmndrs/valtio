@@ -82,7 +82,7 @@ const buildProxyFunction = (
 
   createSnapshot: CreateSnapshot = <T extends object>(
     target: T,
-    version: number
+    version: number,
   ): T => {
     const cache = snapCache.get(target)
     if (cache?.[0] === version) {
@@ -101,7 +101,7 @@ const buildProxyFunction = (
       const value = Reflect.get(target, key)
       const { enumerable } = Reflect.getOwnPropertyDescriptor(
         target,
-        key
+        key,
       ) as PropertyDescriptor
       const desc: PropertyDescriptor = {
         value,
@@ -114,7 +114,7 @@ const buildProxyFunction = (
         markToTrack(value as object, false) // mark not to track
       } else if (proxyStateMap.has(value as object)) {
         const [target, ensureVersion] = proxyStateMap.get(
-          value as object
+          value as object,
         ) as ProxyState
         desc.value = createSnapshot(target, ensureVersion()) as Snapshot<T>
       }
@@ -279,7 +279,7 @@ const buildProxyFunction = (
     Reflect.ownKeys(baseObject).forEach((key) => {
       const desc = Object.getOwnPropertyDescriptor(
         baseObject,
-        key
+        key,
       ) as PropertyDescriptor
       if ('value' in desc && desc.writable) {
         proxyObject[key as keyof T] = baseObject[key as keyof T]
@@ -287,7 +287,7 @@ const buildProxyFunction = (
     })
     initializing = false
     return proxyObject
-  }
+  },
 ) =>
   [
     // public functions
@@ -319,7 +319,7 @@ export function getVersion(proxyObject: unknown): number | undefined {
 export function subscribe<T extends object>(
   proxyObject: T,
   callback: (ops: Op[]) => void,
-  notifyInSync?: boolean
+  notifyInSync?: boolean,
 ): () => void {
   const proxyState = proxyStateMap.get(proxyObject as object)
   if (import.meta.env?.MODE !== 'production' && !proxyState) {
