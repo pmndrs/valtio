@@ -5,7 +5,7 @@ import { fireEvent, render } from '@testing-library/react'
 import { memoize } from 'proxy-memoize'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
-import { addComputed, proxyWithComputed, subscribeKey } from 'valtio/utils'
+import { addComputed, subscribeKey } from 'valtio/utils'
 
 const { use } = ReactExports
 const use2 = <T,>(x: T): Awaited<T> => (x instanceof Promise ? use(x) : x)
@@ -27,152 +27,6 @@ const sleep = (ms: number) =>
   new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
-
-describe('proxyWithComputed', () => {
-  it('simple computed getters', async () => {
-    const computeDouble = vi.fn((x: number) => x * 2)
-    const state = proxyWithComputed(
-      {
-        text: '',
-        count: 0,
-      },
-      {
-        doubled: { get: memoize((snap) => computeDouble(snap.count)) },
-      },
-    )
-
-    const callback = vi.fn()
-    subscribe(state, callback)
-
-    expect(snapshot(state)).toMatchObject({ text: '', count: 0, doubled: 0 })
-    expect(computeDouble).toBeCalledTimes(1)
-    expect(callback).toBeCalledTimes(0)
-
-    state.count += 1
-    await Promise.resolve()
-    expect(snapshot(state)).toMatchObject({ text: '', count: 1, doubled: 2 })
-    expect(computeDouble).toBeCalledTimes(2)
-    expect(callback).toBeCalledTimes(1)
-
-    state.text = 'a'
-    await Promise.resolve()
-    expect(snapshot(state)).toMatchObject({ text: 'a', count: 1, doubled: 2 })
-    expect(computeDouble).toBeCalledTimes(2)
-    expect(callback).toBeCalledTimes(2)
-  })
-
-  it('computed getters and setters', async () => {
-    const computeDouble = vi.fn((x: number) => x * 2)
-    const state = proxyWithComputed(
-      {
-        text: '',
-        count: 0,
-      },
-      {
-        doubled: {
-          get: memoize((snap) => computeDouble(snap.count)),
-          set: (state, newValue: number) => {
-            state.count = newValue / 2
-          },
-        },
-      },
-    )
-
-    expect(snapshot(state)).toMatchObject({ text: '', count: 0, doubled: 0 })
-    expect(computeDouble).toBeCalledTimes(1)
-
-    state.count += 1
-    await Promise.resolve()
-    expect(snapshot(state)).toMatchObject({ text: '', count: 1, doubled: 2 })
-    expect(computeDouble).toBeCalledTimes(2)
-
-    state.doubled = 1
-    await Promise.resolve()
-    expect(snapshot(state)).toMatchObject({ text: '', count: 0.5, doubled: 1 })
-    expect(computeDouble).toBeCalledTimes(3)
-
-    state.text = 'a'
-    await Promise.resolve()
-    expect(snapshot(state)).toMatchObject({ text: 'a', count: 0.5, doubled: 1 })
-    expect(computeDouble).toBeCalledTimes(3)
-  })
-
-  it('computed setters with object and array', async () => {
-    const state = proxyWithComputed(
-      {
-        obj: { a: 1 },
-        arr: [2],
-      },
-      {
-        object: {
-          get: memoize((snap) => snap.obj),
-          set: (state, newValue: any) => {
-            state.obj = newValue
-          },
-        },
-        array: {
-          get: (snap) => snap.arr,
-          set: (state, newValue: any) => {
-            state.arr = newValue
-          },
-        },
-      },
-    )
-
-    expect(snapshot(state)).toMatchObject({
-      obj: { a: 1 },
-      arr: [2],
-      object: { a: 1 },
-      array: [2],
-    })
-
-    state.object = { a: 2 }
-    state.array = [3]
-    await Promise.resolve()
-    expect(snapshot(state)).toMatchObject({
-      obj: { a: 2 },
-      arr: [3],
-      object: { a: 2 },
-      array: [3],
-    })
-  })
-
-  it('render computed getter with condition (#435)', async () => {
-    const state = proxyWithComputed(
-      {
-        texts: [] as string[],
-        filter: '',
-      },
-      {
-        filtered: memoize((snap) => {
-          if (!snap.filter) return snap.texts
-          return snap.texts.filter((text) => !text.includes(snap.filter))
-        }),
-      },
-    )
-
-    const Component = () => {
-      const snap = useSnapshot(state)
-      return (
-        <>
-          <div>filtered: [{snap.filtered.join(',')}]</div>
-          <button onClick={() => (state.texts = ['foo'])}>button</button>
-        </>
-      )
-    }
-
-    const { getByText, findByText } = render(
-      <StrictMode>
-        <Component />
-      </StrictMode>,
-    )
-
-    await findByText('filtered: []')
-
-    fireEvent.click(getByText('button'))
-    await findByText('filtered: [foo]')
-  })
-})
 
 describe('DEPRECATED addComputed', () => {
   it('simple addComputed', async () => {
@@ -305,23 +159,5 @@ describe('DEPRECATED addComputed', () => {
       arr: [{ n: 1 }, { n: 2 }],
       nums: [1, 2],
     })
-  })
-})
-
-describe('proxyWithComputed and subscribeKey', () => {
-  it('should call subscribeKey subscription when computed value changes?', async () => {
-    const state = proxyWithComputed(
-      {
-        count: 1,
-      },
-      {
-        doubled: (snap) => snap.count * 2,
-      },
-    )
-    const handler = vi.fn()
-    subscribeKey(state, 'doubled', handler)
-    state.count = 2
-    await Promise.resolve()
-    expect(handler).toBeCalledTimes(1)
   })
 })
