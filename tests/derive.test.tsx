@@ -14,8 +14,7 @@ const sleep = (ms: number) =>
   })
 
 const { use } = ReactExports
-const useMaybePromise = <T,>(x: T): Awaited<T> =>
-  x instanceof Promise ? use(x) : x
+const use2 = <T,>(x: T): Awaited<T> => (x instanceof Promise ? use(x) : x)
 
 it('basic derive', async () => {
   const computeDouble = vi.fn((x: number) => x * 2)
@@ -174,8 +173,7 @@ it.skipIf(typeof use === 'undefined')('async derive', async () => {
     return (
       <>
         <div>
-          count: {snap.count}, delayedCount:{' '}
-          {useMaybePromise(snap.delayedCount)}
+          count: {snap.count}, delayedCount: {use2(snap.delayedCount)}
         </div>
         <button onClick={() => ++state.count}>button</button>
       </>
