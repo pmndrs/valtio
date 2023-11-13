@@ -7,8 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { addComputed, proxyWithComputed, subscribeKey } from 'valtio/utils'
 
-const { use } = ReactExports as any // for TS < 4.3 FIXME later
-const use2 = (x: any) => (x instanceof Promise ? use(x) : x)
+const { use } = ReactExports
+const useMaybePromise = <T,>(x: T): Awaited<T> =>
+  x instanceof Promise ? use(x) : x
 
 const consoleWarn = console.warn
 beforeEach(() => {
@@ -222,7 +223,8 @@ describe('DEPRECATED addComputed', () => {
       return (
         <>
           <div>
-            count: {snap.count}, delayedCount: {use2(snap.delayedCount)}
+            count: {snap.count}, delayedCount:{' '}
+            {useMaybePromise(snap.delayedCount)}
           </div>
           <button onClick={() => ++state.count}>button</button>
         </>
