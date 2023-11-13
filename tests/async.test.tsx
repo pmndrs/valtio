@@ -10,8 +10,11 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms)
   })
 
-const { use } = ReactExports as any // for TS < 4.3 FIXME later
-const use2 = (x: any) => (x instanceof Promise ? use(x) : x)
+const { use } = ReactExports
+const useMaybePromise = <T,>(
+  x: T
+): [typeof use] extends [never] ? T : Awaited<T> =>
+  x instanceof Promise ? use(x) : x
 
 it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
   const state = proxy<any>({ count: 0 })
@@ -24,7 +27,7 @@ it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
     const snap = useSnapshot(state)
     return (
       <>
-        <div>count: {use2(snap.count)}</div>
+        <div>count: {useMaybePromise(snap.count)}</div>
         <button onClick={delayedIncrement}>button</button>
       </>
     )
@@ -55,7 +58,7 @@ it.skipIf(typeof use === 'undefined')('delayed object', async () => {
     const snap = useSnapshot(state)
     return (
       <>
-        <div>text: {use2(snap.object).text}</div>
+        <div>text: {useMaybePromise(snap.object).text}</div>
         <button onClick={delayedObject}>button</button>
       </>
     )
@@ -92,8 +95,8 @@ it.skipIf(typeof use === 'undefined')(
       const snap = useSnapshot(state)
       return (
         <>
-          <div>text: {use2(snap.object).text}</div>
-          <div>count: {use2(snap.object).count}</div>
+          <div>text: {useMaybePromise(snap.object).text}</div>
+          <div>count: {useMaybePromise(snap.object).count}</div>
           <button onClick={updateObject}>button</button>
         </>
       )
@@ -133,7 +136,7 @@ it.skipIf(typeof use === 'undefined')('delayed falsy value', async () => {
     const snap = useSnapshot(state)
     return (
       <>
-        <div>value: {String(use2(snap.value))}</div>
+        <div>value: {String(useMaybePromise(snap.value))}</div>
         <button onClick={delayedValue}>button</button>
       </>
     )
