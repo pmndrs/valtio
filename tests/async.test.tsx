@@ -11,9 +11,7 @@ const sleep = (ms: number) =>
   })
 
 const { use } = ReactExports
-const useMaybePromise = <T,>(
-  x: T
-): [typeof use] extends [never] ? T : Awaited<T> =>
+const useMaybePromise = <T,>(x: T): Awaited<T> =>
   x instanceof Promise ? use(x) : x
 
 it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
