@@ -108,6 +108,7 @@
     "derive-valtio": "0.1.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.23.2",
     "@babel/plugin-transform-react-jsx": "^7.22.15",
     "@babel/plugin-transform-typescript": "^7.22.15",
     "@babel/preset-env": "^7.23.2",
