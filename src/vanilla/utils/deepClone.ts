@@ -1,7 +1,17 @@
+import { unstable_buildProxyFunction as buildProxyFunction } from '../../vanilla.ts'
+
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
-export const deepClone = <T>(obj: T, getRefSet?: () => WeakSet<object>): T => {
+let defaultRefSet: WeakSet<object> | undefined
+const getDefaultRefSet = (): WeakSet<object> => {
+  if (!defaultRefSet) {
+    defaultRefSet = buildProxyFunction()[2]
+  }
+  return defaultRefSet
+}
+
+export const deepClone = <T>(obj: T, getRefSet = getDefaultRefSet): T => {
   if (!isObject(obj) || getRefSet?.().has(obj)) {
     return obj
   }

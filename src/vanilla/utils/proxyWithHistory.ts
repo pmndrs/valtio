@@ -1,23 +1,9 @@
-import {
-  unstable_buildProxyFunction as buildProxyFunction,
-  proxy,
-  ref,
-  snapshot,
-  subscribe,
-} from '../../vanilla.ts'
+import { proxy, ref, snapshot, subscribe } from '../../vanilla.ts'
 import type { INTERNAL_Snapshot as Snapshot } from '../../vanilla.ts'
 import { deepClone } from './deepClone.ts'
 
 type SnapshotOrUndefined<T> = Snapshot<T> | undefined
 type Snapshots<T> = Snapshot<T>[]
-
-let defaultRefSet: WeakSet<object> | undefined
-const getDefaultRefSet = (): WeakSet<object> => {
-  if (!defaultRefSet) {
-    defaultRefSet = buildProxyFunction()[2]
-  }
-  return defaultRefSet
-}
 
 /**
  * proxyWithHistory
@@ -55,8 +41,7 @@ export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
     undo: () => {
       if (proxyObject.canUndo()) {
         proxyObject.value = (proxyObject.history.wip = proxyObject.clone(
-          proxyObject.history.snapshots[--proxyObject.history.index],
-          getDefaultRefSet
+          proxyObject.history.snapshots[--proxyObject.history.index]
         ) as Snapshot<V>) as V
       }
     },
