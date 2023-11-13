@@ -168,20 +168,20 @@ const buildProxyFunction = (
       readonly [ProxyState, RemoveListener?]
     >()
     const addPropListener = (prop: string | symbol, propValue: unknown) => {
-      const propProxyState =
-        !refSet.has(propValue as object) &&
-        proxyStateMap.get(propValue as object)
-      if (!propProxyState) {
-        return
-      }
-      if (import.meta.env?.MODE !== 'production' && propProxyStates.has(prop)) {
-        throw new Error('prop listener already exists')
-      }
-      if (listeners.size) {
-        const remove = propProxyState[3](createPropListener(prop))
-        propProxyStates.set(prop, [propProxyState, remove])
-      } else {
-        propProxyStates.set(prop, [propProxyState])
+      const propProxyState = proxyStateMap.get(propValue as object)
+      if (propProxyState) {
+        if (
+          import.meta.env?.MODE !== 'production' &&
+          propProxyStates.has(prop)
+        ) {
+          throw new Error('prop listener already exists')
+        }
+        if (listeners.size) {
+          const remove = propProxyState[3](createPropListener(prop))
+          propProxyStates.set(prop, [propProxyState, remove])
+        } else {
+          propProxyStates.set(prop, [propProxyState])
+        }
       }
     }
     const removePropListener = (prop: string | symbol) => {
