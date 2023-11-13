@@ -12,7 +12,7 @@ const getDefaultRefSet = (): WeakSet<object> => {
 }
 
 export const deepClone = <T>(obj: T, getRefSet = getDefaultRefSet): T => {
-  if (!isObject(obj) || getRefSet?.().has(obj)) {
+  if (!isObject(obj) || getRefSet().has(obj)) {
     return obj
   }
   const baseObject: T = Array.isArray(obj)
