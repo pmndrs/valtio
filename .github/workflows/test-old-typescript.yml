@@ -33,8 +33,6 @@ jobs:
       - name: Patch for Old TS
         run: |
           sed -i~ 's/\/\/ @ts-expect-error.*\[LATEST-TS-ONLY\]//' tests/*.tsx
-          sed -i~ 's/"target":/"skipLibCheck":true,"target":/' tsconfig.json
-          sed -i~ 's/"exactOptionalPropertyTypes": true,//' tsconfig.json
           sed -i~ 's/"moduleResolution": "bundler",/"moduleResolution": "node",/' tsconfig.json
           sed -i~ 's/"allowImportingTsExtensions": true,//' tsconfig.json
           sed -i~ 's/"valtio": \["\.\/src\/index\.ts"\],/"valtio": [".\/dist\/index.d.ts"],/' tsconfig.json
