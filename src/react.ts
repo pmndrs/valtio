@@ -1,19 +1,18 @@
-import { useCallback, useDebugValue, useEffect, useMemo, useRef } from 'react'
+import {
+  useCallback,
+  useDebugValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+} from 'react'
 import {
   affectedToPathList,
   createProxy as createProxyToCompare,
   isChanged,
 } from 'proxy-compare'
-// import { useSyncExternalStore } from 'use-sync-external-store/shim'
-// This doesn't work in ESM, because use-sync-external-store only exposes CJS.
-// See: https://github.com/pmndrs/valtio/issues/452
-// The following is a workaround until ESM is supported.
-// eslint-disable-next-line import/extensions
-import useSyncExternalStoreExports from 'use-sync-external-store/shim'
 import { snapshot, subscribe } from './vanilla.ts'
 import type { INTERNAL_Snapshot as Snapshot } from './vanilla.ts'
-
-const { useSyncExternalStore } = useSyncExternalStoreExports
 
 const useAffectedDebugValue = (
   state: object,

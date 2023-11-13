@@ -1691,11 +1691,6 @@
   resolved "https://registry.yarnpkg.com/@types/tough-cookie/-/tough-cookie-4.0.4.tgz#cf2f0c7c51b985b6afecea73eb2cd65421ecb717"
   integrity sha512-95Sfz4nvMAb0Nl9DTxN3j64adfwfbBPEYq14VN7zT5J5O2M9V6iZMIIQU1U+pJyl9agHYHNCqhCXgyEtIRRa5A==
 
-"@types/use-sync-external-store@^0.0.5":
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/@types/use-sync-external-store/-/use-sync-external-store-0.0.5.tgz#a4416edea87d78115c8339f668775c5ba102653d"
-  integrity sha512-+fHc7rdrgMIng29ISUqNjsbPl1EMo1PCDh/+16HNlTOJeQzs6c9Om23rVizETd3dDx4YM+aWGbyF/KP4FUwZyg==
-
 "@typescript-eslint/eslint-plugin@^6.9.1":
   version "6.9.1"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-6.9.1.tgz#d8ce497dc0ed42066e195c8ecc40d45c7b1254f4"
@@ -5050,11 +5045,6 @@ url-parse@^1.5.3:
   dependencies:
     querystringify "^2.1.1"
     requires-port "^1.0.0"
-
-use-sync-external-store@1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.2.0.tgz#7dbefd6ef3fe4e767a0cf5d7287aacfb5846928a"
-  integrity sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==
 
 v8-to-istanbul@^9.1.0:
   version "9.1.3"
