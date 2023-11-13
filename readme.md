@@ -121,7 +121,7 @@ import { subscribe } from 'valtio'
 
 // Subscribe to all state changes
 const unsubscribe = subscribe(state, () =>
-  console.log('state has changed to', state)
+  console.log('state has changed to', state),
 )
 // Unsubscribe by calling the result
 unsubscribe()
@@ -146,7 +146,7 @@ import { subscribeKey } from 'valtio/utils'
 
 const state = proxy({ count: 0, text: 'hello' })
 subscribeKey(state, 'count', (v) =>
-  console.log('state.count has changed to', v)
+  console.log('state.count has changed to', v),
 )
 ```
 

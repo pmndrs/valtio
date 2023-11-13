@@ -36,7 +36,7 @@ type InternalProxyMap<K, V> = Map<K, V> & {
  * state.get(key) //undefined
  */
 export function proxyMap<K, V>(
-  entries?: Iterable<readonly [K, V]> | null
+  entries?: Iterable<readonly [K, V]> | null,
 ): Map<K, V> {
   const map: InternalProxyMap<K, V> = proxy({
     data: Array.from(entries || []) as KeyValRecord<K, V>[],

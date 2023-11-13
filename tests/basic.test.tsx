@@ -19,7 +19,7 @@ it('simple counter', async () => {
   const { getByText, findByText, unmount } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -68,7 +68,7 @@ it('no extra re-renders (commits)', async () => {
     <>
       <Counter />
       <Counter2 />
-    </>
+    </>,
   )
 
   await waitFor(() => {
@@ -120,7 +120,7 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
     <>
       <Counter />
       <Counter2 />
-    </>
+    </>,
   )
 
   await waitFor(() => {
@@ -189,7 +189,7 @@ it('object in object', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -216,7 +216,7 @@ it('array in object', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('counts: 0,1,2')
@@ -242,7 +242,7 @@ it('array pop and splice', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('counts: 0,1,2')
@@ -264,13 +264,15 @@ it('array length after direct assignment', async () => {
         <div>counts: {snap.counts.join(',')}</div>
         <div>length: {snap.counts.length}</div>
         <button
-          onClick={() => (obj.counts[obj.counts.length] = obj.counts.length)}>
+          onClick={() => (obj.counts[obj.counts.length] = obj.counts.length)}
+        >
           increment
         </button>
         <button
           onClick={() =>
             (obj.counts[obj.counts.length + 5] = obj.counts.length + 5)
-          }>
+          }
+        >
           jump
         </button>
       </>
@@ -280,7 +282,7 @@ it('array length after direct assignment', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('counts: 0,1,2')
@@ -308,7 +310,7 @@ it('deleting property', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 1')
@@ -335,7 +337,7 @@ it('circular object', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -357,7 +359,7 @@ it('circular object with non-proxy object (#375)', async () => {
   const { findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 1')
@@ -385,7 +387,7 @@ it('render from outside', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('anotherCount: 0')
@@ -417,7 +419,7 @@ it('counter with sync option', async () => {
   const { getByText, findByText } = render(
     <>
       <Counter />
-    </>
+    </>,
   )
 
   await findByText('count: 0 (1)')
@@ -442,7 +444,7 @@ it('support undefined property (#439)', async () => {
   const { findByText } = render(
     <StrictMode>
       <Component />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('has prop: true')
@@ -479,7 +481,7 @@ it('sync snapshot between nested components (#460)', async () => {
   const { getByText } = render(
     <StrictMode>
       <Parent />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {

@@ -46,7 +46,7 @@ it('connects to the extension by initialiing', () => {
   render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   expect(extension.init).toHaveBeenLastCalledWith({ count: 0 })
@@ -80,7 +80,7 @@ describe('If there is no extension installed...', () => {
       render(
         <StrictMode>
           <Counter />
-        </StrictMode>
+        </StrictMode>,
       )
     }).not.toThrow()
   })
@@ -100,7 +100,7 @@ describe('If there is no extension installed...', () => {
     render(
       <StrictMode>
         <Counter />
-      </StrictMode>
+      </StrictMode>,
     )
     expect(console.warn).not.toBeCalled()
   })
@@ -120,10 +120,10 @@ describe('If there is no extension installed...', () => {
     render(
       <StrictMode>
         <Counter />
-      </StrictMode>
+      </StrictMode>,
     )
     expect(console.warn).toHaveBeenLastCalledWith(
-      '[Warning] Please install/enable Redux devtools extension'
+      '[Warning] Please install/enable Redux devtools extension',
     )
   })
 
@@ -142,7 +142,7 @@ describe('If there is no extension installed...', () => {
     render(
       <StrictMode>
         <Counter />
-      </StrictMode>
+      </StrictMode>,
     )
     expect(console.warn).not.toBeCalled()
   })
@@ -166,7 +166,7 @@ it('updating state should call devtools.send', async () => {
   const { getByText, findByText } = render(
     <StrictMode>
       <Counter />
-    </StrictMode>
+    </StrictMode>,
   )
 
   expect(extension.send).toBeCalledTimes(0)
@@ -199,7 +199,7 @@ describe('when it receives an message of type...', () => {
         <Suspense fallback={'loading'}>
           <Counter />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     expect(extension.send).toBeCalledTimes(0)
@@ -210,7 +210,7 @@ describe('when it receives an message of type...', () => {
       (extensionSubscriber as (message: any) => void)({
         type: 'ACTION',
         payload: JSON.stringify({ count: 0 }),
-      })
+      }),
     )
     await findByText('count: 0')
     expect(extension.send).toBeCalledTimes(2)
@@ -235,7 +235,7 @@ describe('when it receives an message of type...', () => {
       const { getByText, findByText } = render(
         <StrictMode>
           <Counter />
-        </StrictMode>
+        </StrictMode>,
       )
 
       expect(extension.send).toBeCalledTimes(0)
@@ -248,7 +248,7 @@ describe('when it receives an message of type...', () => {
         (extensionSubscriber as (message: any) => void)({
           type: 'DISPATCH',
           payload: { type: 'COMMIT' },
-        })
+        }),
       )
       await findByText('count: 2')
       expect(extension.init).toBeCalledWith({ count: 2 })
@@ -272,7 +272,7 @@ describe('when it receives an message of type...', () => {
       const { getByText, findByText } = render(
         <StrictMode>
           <Counter />
-        </StrictMode>
+        </StrictMode>,
       )
 
       const nextLiftedState = {
@@ -290,7 +290,7 @@ describe('when it receives an message of type...', () => {
         (extensionSubscriber as (message: any) => void)({
           type: 'DISPATCH',
           payload: { type: 'IMPORT_STATE', nextLiftedState },
-        })
+        }),
       )
       expect(extension.init).toBeCalledWith({ count: 5 })
       await findByText('count: 6')
@@ -315,7 +315,7 @@ describe('when it receives an message of type...', () => {
         const { getByText, findByText } = render(
           <StrictMode>
             <Counter />
-          </StrictMode>
+          </StrictMode>,
         )
 
         expect(extension.send).toBeCalledTimes(0)
@@ -327,7 +327,7 @@ describe('when it receives an message of type...', () => {
             type: 'DISPATCH',
             payload: { type: 'JUMP_TO_ACTION' },
             state: JSON.stringify({ count: 0 }),
-          })
+          }),
         )
         await findByText('count: 0')
         expect(extension.send).toBeCalledTimes(1)

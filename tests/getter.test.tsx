@@ -28,7 +28,7 @@ it('simple object getters', async () => {
     <StrictMode>
       <Counter name="A" />
       <Counter name="B" />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {
@@ -70,7 +70,7 @@ it('object getters returning object', async () => {
     <StrictMode>
       <Counter name="A" />
       <Counter name="B" />
-    </StrictMode>
+    </StrictMode>,
   )
 
   await waitFor(() => {

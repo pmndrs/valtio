@@ -18,11 +18,11 @@ export function proxyWithComputed_DEPRECATED<
           get: (snap: Snapshot<T>) => U[K]
           set?: (state: T, newValue: U[K]) => void
         }
-  }
+  },
 ) {
   if (import.meta.env?.MODE !== 'production') {
     console.warn(
-      'proxyWithComputed is deprecated. Please follow "Computed Properties" guide in docs.'
+      'proxyWithComputed is deprecated. Please follow "Computed Properties" guide in docs.',
     )
   }
   ;(Object.keys(computedFns) as (keyof U)[]).forEach((key) => {

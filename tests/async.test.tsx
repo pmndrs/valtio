@@ -35,7 +35,7 @@ it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('count: 0')
@@ -66,7 +66,7 @@ it.skipIf(typeof use === 'undefined')('delayed object', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('text: none')
@@ -84,7 +84,7 @@ it.skipIf(typeof use === 'undefined')(
     })
     const updateObject = () => {
       state.object = state.object.then((v: any) =>
-        sleep(300).then(() => ({ ...v, count: v.count + 1 }))
+        sleep(300).then(() => ({ ...v, count: v.count + 1 })),
       )
     }
 
@@ -104,7 +104,7 @@ it.skipIf(typeof use === 'undefined')(
         <Suspense fallback="loading">
           <Counter />
         </Suspense>
-      </StrictMode>
+      </StrictMode>,
     )
 
     await findByText('loading')
@@ -120,7 +120,7 @@ it.skipIf(typeof use === 'undefined')(
       getByText('text: counter')
       getByText('count: 1')
     })
-  }
+  },
 )
 
 it.skipIf(typeof use === 'undefined')('delayed falsy value', async () => {
@@ -144,7 +144,7 @@ it.skipIf(typeof use === 'undefined')('delayed falsy value', async () => {
       <Suspense fallback="loading">
         <Counter />
       </Suspense>
-    </StrictMode>
+    </StrictMode>,
   )
 
   await findByText('value: true')
