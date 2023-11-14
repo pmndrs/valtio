@@ -104,8 +104,7 @@
   },
   "homepage": "https://github.com/pmndrs/valtio",
   "dependencies": {
-    "proxy-compare": "2.5.1",
-    "derive-valtio": "0.1.0"
+    "proxy-compare": "2.5.1"
   },
   "devDependencies": {
     "@babel/core": "^7.23.2",
