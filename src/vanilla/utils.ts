@@ -1,7 +1,6 @@
 export { subscribeKey } from './utils/subscribeKey.ts'
 export { watch } from './utils/watch.ts'
 export { devtools } from './utils/devtools.ts'
-export { derive, underive, unstable_deriveSubscriptions } from 'derive-valtio'
 export { deepClone } from './utils/deepClone.ts'
 export { proxyWithHistory } from './utils/proxyWithHistory.ts'
 export { proxySet } from './utils/proxySet.ts'
