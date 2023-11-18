@@ -357,7 +357,7 @@ export function getVersion(proxyObject: unknown): number | undefined {
 
 export function subscribe<T extends object>(
   proxyObject: T,
-  callback: (ops: Op[]) => void,
+  callback: (ops: Op[]) => void | Promise<void>,
   notifyInSync?: boolean,
 ): () => void {
   const proxyState = proxyStateMap.get(proxyObject as object)
