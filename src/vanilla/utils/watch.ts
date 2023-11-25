@@ -11,10 +11,6 @@ type WatchOptions = {
 
 let currentCleanups: Set<Cleanup> | undefined
 
-function runFnCallback<T extends CallableFunction>(value: T) {
-  value()
-}
-
 /**
  * watch
  *
@@ -52,9 +48,9 @@ export function watch(
   const cleanup = () => {
     if (alive) {
       alive = false
-      cleanups.forEach(runFnCallback)
+      cleanups.forEach((clean) => clean())
       cleanups.clear()
-      subscriptions.forEach(runFnCallback)
+      subscriptions.forEach((unsubscribe) => unsubscribe())
       subscriptions.clear()
     }
   }
@@ -65,7 +61,7 @@ export function watch(
     }
 
     // run own cleanups before re-subscribing
-    cleanups.forEach(runFnCallback)
+    cleanups.forEach((clean) => clean())
     cleanups.clear()
 
     const proxiesToSubscribe = new Set<ProxyObject>()
