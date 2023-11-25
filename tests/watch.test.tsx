@@ -1,14 +1,21 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy } from 'valtio'
 import { watch } from 'valtio/utils'
 
-function wait(ms: number) {
-  return new Promise<void>((resolve) => {
+const sleep = (ms: number) =>
+  new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
-}
 
 describe('watch', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('should re-run for individual proxy updates', async () => {
     const reference = proxy({ value: 'Example' })
 
@@ -107,14 +114,16 @@ describe('watch', () => {
 
     const callback = vi.fn()
 
-    const waitPromise = wait(1000)
+    const waitPromise = sleep(0)
     watch(async (get) => {
       await waitPromise
       get(reference)
       callback()
     })
 
+    vi.runAllTimers()
     await waitPromise
+
     expect(callback).toBeCalledTimes(1)
     // listener will only be attached after one promise callback due to the await stack
     await Promise.resolve()
@@ -125,19 +134,23 @@ describe('watch', () => {
     await Promise.resolve()
     expect(callback).toBeCalledTimes(2)
   })
+
   it('should not subscribe if the watch is stopped before the promise completes', async () => {
     const reference = proxy({ value: 'Example' })
 
     const callback = vi.fn()
 
-    const waitPromise = wait(1000)
+    const waitPromise = sleep(0)
     const stop = watch(async (get) => {
       await waitPromise
       get(reference)
       callback()
     })
     stop()
+
+    vi.runAllTimers()
     await waitPromise
+
     expect(callback).toBeCalledTimes(1)
     // listener will only be attached after one promise callback due to the await stack
     await Promise.resolve()
