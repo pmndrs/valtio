@@ -114,7 +114,7 @@ describe('watch', () => {
 
     const callback = vi.fn()
 
-    const waitPromise = sleep(0)
+    const waitPromise = sleep(10000)
     watch(async (get) => {
       await waitPromise
       get(reference)
@@ -140,7 +140,7 @@ describe('watch', () => {
 
     const callback = vi.fn()
 
-    const waitPromise = sleep(0)
+    const waitPromise = sleep(10000)
     const stop = watch(async (get) => {
       await waitPromise
       get(reference)
