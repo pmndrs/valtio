@@ -4,7 +4,7 @@ type Cleanup = () => void
 type WatchGet = <T extends object>(proxyObject: T) => T
 type WatchCallback = (
   get: WatchGet,
-) => Cleanup | void | Promise<void | Cleanup> | undefined
+) => Cleanup | void | Promise<Cleanup | void> | undefined
 type WatchOptions = {
   sync?: boolean
 }
