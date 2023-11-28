@@ -34,10 +34,10 @@ type SnapshotIgnore =
 type Snapshot<T> = T extends SnapshotIgnore
   ? T
   : T extends Promise<unknown>
-  ? Awaited<T>
-  : T extends object
-  ? { readonly [K in keyof T]: Snapshot<T[K]> }
-  : T
+    ? Awaited<T>
+    : T extends object
+      ? { readonly [K in keyof T]: Snapshot<T[K]> }
+      : T
 
 /**
  * This is not a public API.
