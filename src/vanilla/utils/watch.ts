@@ -2,7 +2,9 @@ import { subscribe } from '../../vanilla.ts'
 
 type Cleanup = () => void
 type WatchGet = <T extends object>(proxyObject: T) => T
-type WatchCallback = (get: WatchGet) => Cleanup | void | undefined
+type WatchCallback = (
+  get: WatchGet,
+) => Cleanup | void | Promise<Cleanup | void> | undefined
 type WatchOptions = {
   sync?: boolean
 }
@@ -53,10 +55,12 @@ export function watch(
     }
   }
 
-  const revalidate = () => {
+  const revalidate = async () => {
     if (!alive) {
       return
     }
+
+    // run own cleanups before re-subscribing
     cleanups.forEach((clean) => clean())
     cleanups.clear()
 
@@ -69,14 +73,28 @@ export function watch(
 
     // Ensures that the parent is reset if the callback throws an error.
     try {
-      const cleanupReturn = callback((proxyObject) => {
+      const promiseOrPossibleCleanup = callback((proxyObject) => {
         proxiesToSubscribe.add(proxyObject)
+        // in case the callback is a promise and the watch has ended
+        if (alive && !subscriptions.has(proxyObject)) {
+          // subscribe to new proxy immediately -> this fixes problems when Promises are used due to the callstack
+          const unsubscribe = subscribe(proxyObject, revalidate, options?.sync)
+          subscriptions.set(proxyObject, unsubscribe)
+        }
         return proxyObject
       })
+      const couldBeCleanup =
+        promiseOrPossibleCleanup && promiseOrPossibleCleanup instanceof Promise
+          ? await promiseOrPossibleCleanup
+          : promiseOrPossibleCleanup
 
       // If there's a cleanup, we add this to the cleanups set
-      if (cleanupReturn) {
-        cleanups.add(cleanupReturn)
+      if (couldBeCleanup) {
+        if (alive) {
+          cleanups.add(couldBeCleanup)
+        } else {
+          cleanup()
+        }
       }
     } finally {
       currentCleanups = parent
@@ -84,19 +102,10 @@ export function watch(
 
     // Unsubscribe old subscriptions
     subscriptions.forEach((unsubscribe, proxyObject) => {
-      if (proxiesToSubscribe.has(proxyObject)) {
-        // Already subscribed
-        proxiesToSubscribe.delete(proxyObject)
-      } else {
+      if (!proxiesToSubscribe.has(proxyObject)) {
         subscriptions.delete(proxyObject)
         unsubscribe()
       }
-    })
-
-    // Subscribe to new proxies
-    proxiesToSubscribe.forEach((proxyObject) => {
-      const unsubscribe = subscribe(proxyObject, revalidate, options?.sync)
-      subscriptions.set(proxyObject, unsubscribe)
     })
   }
 
