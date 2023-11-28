@@ -34,8 +34,8 @@ type SnapshotIgnore =
 type Snapshot<T> = T extends SnapshotIgnore
   ? T
   : T extends object
-  ? { readonly [K in keyof T]: Snapshot<T[K]> }
-  : T
+    ? { readonly [K in keyof T]: Snapshot<T[K]> }
+    : T
 
 /**
  * This is not a public API.
