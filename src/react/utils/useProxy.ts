@@ -1,6 +1,8 @@
 import { useLayoutEffect } from 'react'
 import { useSnapshot } from '../../react.ts'
 
+const DUMMY_SYMBOL = Symbol()
+
 /**
  * useProxy
  *
@@ -28,8 +30,10 @@ export function useProxy<T extends object>(
 ): T {
   const snapshot = useSnapshot(proxy, options) as T
 
-  let isRendering = true
+  // touch dummy prop so that it doesn't trigger re-renders when no props are touched.
+  ;(snapshot as any)[DUMMY_SYMBOL]
 
+  let isRendering = true
   useLayoutEffect(() => {
     // This is an intentional hack
     // eslint-disable-next-line react-hooks/exhaustive-deps
