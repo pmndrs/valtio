@@ -12,7 +12,7 @@ description: 'Subscribe to a current state/object'
 You can access state outside your components and subscribe to changes.
 
 ```jsx
-import { subscribe } from 'valtio'
+import { proxy, subscribe } from 'valtio'
 
 const state = proxy({ count: 0 })
 
