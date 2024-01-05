@@ -53,8 +53,19 @@ const deepClone = <T>(obj: T): T => {
  * const state = proxyWithHistory({
  *   count: 1,
  * })
+ *
+ * @deprecated Please use the `valtio-history` package. eg.
+ * import { proxyWithHistory } from 'valtio-history'
  */
-export function proxyWithHistory<V>(initialValue: V, skipSubscribe = false) {
+export function proxyWithHistory_DEPRECATED<V>(
+  initialValue: V,
+  skipSubscribe = false,
+) {
+  if (import.meta.env?.MODE !== 'production') {
+    console.warn(
+      'proxyWithHistory is deprecated. Please use the "valtio-history" package; refer to the docs',
+    )
+  }
   const proxyObject = proxy({
     value: initialValue,
     history: ref({
