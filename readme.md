@@ -314,7 +314,7 @@ For more information, check out [this guide](./docs/guides/computed-properties.m
 This is a utility function to create a proxy with snapshot history.
 
 ```js
-import { proxyWithHistory } from 'valtio/utils'
+import { proxyWithHistory } from 'valtio-history'
 
 const state = proxyWithHistory({ count: 0 })
 console.log(state.value) // ---> { count: 0 }

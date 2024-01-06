@@ -3,6 +3,16 @@
   text-align: center;
 }
 
+.info {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+
+  & > span {
+    margin-right: 32px;
+  }
+}
+
 .editor {
   display: flex;
   margin: 0 auto;
