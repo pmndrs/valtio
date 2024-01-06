@@ -12,7 +12,7 @@ description: ''
 This is a utility function to create a proxy with snapshot history.
 
 ```js
-import { proxyWithHistory } from 'valtio/utils'
+import { proxyWithHistory } from 'valtio-history'
 
 const state = proxyWithHistory({ count: 0 })
 console.log(state.value) // ---> { count: 0 }
@@ -26,4 +26,4 @@ console.log(state.value) // ---> { count: 1 }
 
 ## Codesandbox demo
 
-https://codesandbox.io/s/admiring-wright-2oh2x?file=/src/App.tsx
+https://codesandbox.io/s/valtio-history-example-v0-m353xc?file=/src/App.tsx
