@@ -18,22 +18,26 @@ type Op =
 type Listener = (op: Op, nextVersion: number) => void
 
 type Primitive = string | number | boolean | null | undefined | symbol | bigint
-type SnapshotIgnore = Date | AsRef | Error | RegExp | AnyFunction | Primitive
-type Collection = Map<any, any> | Set<any> | WeakMap<any, any> | WeakSet<any>
-type Readonly<T extends Collection> = Omit<
-  T,
-  'set' | 'add' | 'delete' | 'clear'
->
+
+type SnapshotIgnore =
+  | Date
+  | Map<any, any>
+  | Set<any>
+  | WeakMap<any, any>
+  | WeakSet<any>
+  | AsRef
+  | Error
+  | RegExp
+  | AnyFunction
+  | Primitive
 
 type Snapshot<T> = T extends SnapshotIgnore
   ? T
   : T extends Promise<unknown>
     ? Awaited<T>
-    : T extends Collection
-      ? Readonly<T>
-      : T extends object
-        ? { readonly [K in keyof T]: Snapshot<T[K]> }
-        : T
+    : T extends object
+      ? { readonly [K in keyof T]: Snapshot<T[K]> }
+      : T
 
 /**
  * This is not a public API.
