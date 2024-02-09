@@ -28,19 +28,13 @@ type SnapshotIgnore =
   | AnyFunction
   | Primitive
 
-type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
+export type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
   ? S
   : T extends SnapshotIgnore
     ? T
     : T extends object
       ? { readonly [K in keyof T]: Snapshot<T[K]> }
       : T
-
-/**
- * This is not a public API.
- * It can be changed without any notice.
- */
-export type INTERNAL_Snapshot<T> = Snapshot<T>
 
 type CreateSnapshot = <T extends object>(target: T, version: number) => T
 

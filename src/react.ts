@@ -12,7 +12,7 @@ import {
   isChanged,
 } from 'proxy-compare'
 import { snapshot, subscribe } from './vanilla.ts'
-import type { INTERNAL_Snapshot as Snapshot } from './vanilla.ts'
+import type { Snapshot } from './vanilla.ts'
 
 const useAffectedDebugValue = (
   state: object,
