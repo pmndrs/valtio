@@ -35,9 +35,7 @@ type InternalProxyMap<K, V> = Map<K, V> & {
  * state.set(key, "value")
  * state.get(key) //undefined
  */
-export function proxyMap<K, V>(
-  entries?: Iterable<readonly [K, V]> | null,
-): Map<K, V> {
+export function proxyMap<K, V>(entries?: Iterable<readonly [K, V]> | null) {
   const map: InternalProxyMap<K, V> = proxy({
     data: Array.from(entries || []) as KeyValRecord<K, V>[],
     has(key) {
@@ -107,5 +105,7 @@ export function proxyMap<K, V>(
   })
   Object.seal(map)
 
-  return map as Map<K, V>
+  return map as unknown as Map<K, V> & {
+    $$valtioSnapshot: Omit<Map<K, V>, 'set' | 'delete' | 'clear'>
+  }
 }

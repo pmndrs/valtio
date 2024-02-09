@@ -5,8 +5,6 @@ const isObject = (x: unknown): x is object =>
 
 type AnyFunction = (...args: any[]) => any
 
-type AsRef = { $$valtioRef: true }
-
 type ProxyObject = object
 
 type Path = (string | symbol)[]
@@ -25,17 +23,18 @@ type SnapshotIgnore =
   | Set<any>
   | WeakMap<any, any>
   | WeakSet<any>
-  | AsRef
   | Error
   | RegExp
   | AnyFunction
   | Primitive
 
-type Snapshot<T> = T extends SnapshotIgnore
-  ? T
-  : T extends object
-    ? { readonly [K in keyof T]: Snapshot<T[K]> }
-    : T
+type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
+  ? S
+  : T extends SnapshotIgnore
+    ? T
+    : T extends object
+      ? { readonly [K in keyof T]: Snapshot<T[K]> }
+      : T
 
 /**
  * This is not a public API.
@@ -361,9 +360,9 @@ export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
   return createSnapshot(target, ensureVersion()) as Snapshot<T>
 }
 
-export function ref<T extends object>(obj: T): T & AsRef {
+export function ref<T extends object>(obj: T) {
   refSet.add(obj)
-  return obj as T & AsRef
+  return obj as T & { $$valtioSnapshot: T }
 }
 
 export const unstable_buildProxyFunction = buildProxyFunction
