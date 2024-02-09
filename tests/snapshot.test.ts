@@ -1,7 +1,7 @@
 import { createProxy, getUntracked } from 'proxy-compare'
 import { TypeEqual, expectType } from 'ts-expect'
 import { describe, expect, it } from 'vitest'
-import { INTERNAL_Snapshot as Snapshot, proxy, snapshot } from 'valtio'
+import { Snapshot, proxy, snapshot } from 'valtio'
 
 it('should return correct snapshots without subscribe', async () => {
   const child = proxy({ count: 0 })
