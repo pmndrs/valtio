@@ -21,7 +21,7 @@ type InternalProxySet<T> = Set<T> & {
  *   set: proxySet()
  * })
  */
-export function proxySet<T>(initialValues?: Iterable<T> | null): Set<T> {
+export function proxySet<T>(initialValues?: Iterable<T> | null) {
   const set: InternalProxySet<T> = proxy({
     data: Array.from(new Set(initialValues)),
     has(value) {
@@ -92,5 +92,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null): Set<T> {
 
   Object.seal(set)
 
-  return set as Set<T>
+  return set as unknown as Set<T> & {
+    $$valtioSnapshot: Omit<Set<T>, 'add' | 'delete' | 'clear'>
+  }
 }
