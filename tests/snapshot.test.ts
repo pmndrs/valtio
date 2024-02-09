@@ -100,9 +100,7 @@ describe('snapsoht typings', () => {
           undefined: undefined
           bool: boolean
           someFunction(): number
-          ref: {
-            $$valtioRef: true
-          }
+          ref: { x: unknown } & { $$valtioSnapshot: { x: unknown } }
         }>,
         {
           readonly string: string
@@ -111,9 +109,7 @@ describe('snapsoht typings', () => {
           readonly undefined: undefined
           readonly bool: boolean
           readonly someFunction: () => number
-          readonly ref: {
-            $$valtioRef: true
-          }
+          readonly ref: { x: unknown }
         }
       >
     >(true)
