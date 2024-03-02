@@ -110,8 +110,9 @@ export function useSnapshot<T extends object>(
   options?: Options,
 ): Snapshot<T> {
   const notifyInSync = options?.sync
+  // per-hook affected, it's not ideal but memo compatible
+  const affected = useMemo(() => new WeakMap<object, unknown>(), [])
   const lastSnapshot = useRef<Snapshot<T>>()
-  const lastAffected = useRef<WeakMap<object, unknown>>()
   let inRender = true
   const currSnapshot = useSyncExternalStore(
     useCallback(
@@ -128,11 +129,10 @@ export function useSnapshot<T extends object>(
         if (
           !inRender &&
           lastSnapshot.current &&
-          lastAffected.current &&
           !isChanged(
             lastSnapshot.current,
             nextSnapshot,
-            lastAffected.current,
+            affected,
             new WeakMap(),
           )
         ) {
@@ -147,20 +147,13 @@ export function useSnapshot<T extends object>(
     () => snapshot(proxyObject),
   )
   inRender = false
-  const currAffected = new WeakMap()
   useEffect(() => {
     lastSnapshot.current = currSnapshot
-    lastAffected.current = currAffected
   })
   if (import.meta.env?.MODE !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useAffectedDebugValue(currSnapshot, currAffected)
+    useAffectedDebugValue(currSnapshot, affected)
   }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
-  return createProxyToCompare(
-    currSnapshot,
-    currAffected,
-    proxyCache,
-    targetCache,
-  )
+  return createProxyToCompare(currSnapshot, affected, proxyCache, targetCache)
 }
