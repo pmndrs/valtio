@@ -30,10 +30,11 @@ function getBabelOptions(targets) {
   }
 }
 
-function getEsbuild(target, env = 'development') {
+function getEsbuild(env = 'development') {
   return esbuild({
     minify: env === 'production',
-    target,
+    target: 'es2018',
+    supported: { 'import-meta': true },
     tsconfig: path.resolve('./tsconfig.json'),
   })
 }
@@ -77,7 +78,7 @@ function createESMConfig(input, output) {
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
-      getEsbuild('node12'),
+      getEsbuild(),
     ],
   }
 }
@@ -153,7 +154,7 @@ function createSystemConfig(input, output, env) {
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
-      getEsbuild('node12', env),
+      getEsbuild(env),
     ],
   }
 }
