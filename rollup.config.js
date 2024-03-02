@@ -1,6 +1,5 @@
 const path = require('path')
 const alias = require('@rollup/plugin-alias')
-const babelPlugin = require('@rollup/plugin-babel')
 const resolve = require('@rollup/plugin-node-resolve')
 const replace = require('@rollup/plugin-replace')
 const typescript = require('@rollup/plugin-typescript')
@@ -19,24 +18,9 @@ function external(id) {
   return !id.startsWith('.') && !id.startsWith(root)
 }
 
-function getBabelOptions(targets) {
-  return {
-    babelrc: false,
-    ignore: ['./node_modules'],
-    presets: [['@babel/preset-env', { loose: true, modules: false, targets }]],
-    plugins: [
-      ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }],
-      ['@babel/plugin-transform-typescript', { isTSX: true }],
-    ],
-    extensions,
-    comments: false,
-    babelHelpers: 'bundled',
-  }
-}
-
-function getEsbuild(env = 'development') {
+function getEsbuild(format) {
   return esbuild({
-    minify: env === 'production',
+    format,
     target: 'es2018',
     supported: { 'import-meta': true },
     tsconfig: path.resolve('./tsconfig.json'),
@@ -80,7 +64,7 @@ function createESMConfig(input, output) {
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
-      getEsbuild(),
+      getEsbuild('esm'),
     ],
   }
 }
@@ -88,7 +72,7 @@ function createESMConfig(input, output) {
 function createCommonJSConfig(input, output) {
   return {
     input,
-    output: { file: `${output}.js`, format: 'cjs' },
+    output: { file: output, format: 'cjs' },
     external,
     plugins: [
       alias({ entries: entries.filter((e) => !e.find.test(input)) }),
@@ -98,7 +82,7 @@ function createCommonJSConfig(input, output) {
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
-      babelPlugin(getBabelOptions({ ie: 11 })),
+      getEsbuild('cjs'),
     ],
   }
 }
@@ -112,7 +96,7 @@ module.exports = function (args) {
   }
   return [
     ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
-    createCommonJSConfig(`src/${c}.ts`, `dist/${c}`),
+    createCommonJSConfig(`src/${c}.ts`, `dist/${c}.js`),
     createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`),
   ]
 }
