@@ -110,8 +110,9 @@ export function useSnapshot<T extends object>(
   options?: Options,
 ): Snapshot<T> {
   const notifyInSync = options?.sync
-  // per-hook affected, it's not ideal but memo compatible
-  const affected = useMemo(() => new WeakMap<object, unknown>(), [])
+  // per-proxy & per-hook affected, it's not ideal but memo compatible
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const affected = useMemo(() => new WeakMap<object, unknown>(), [proxyObject])
   const lastSnapshot = useRef<Snapshot<T>>()
   let inRender = true
   const currSnapshot = useSyncExternalStore(
