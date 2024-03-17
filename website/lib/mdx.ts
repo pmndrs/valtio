@@ -152,6 +152,7 @@ export async function getDocBySlug(slug: string) {
         ".js": "jsx",
         ".ts": "tsx",
         ".svg": "dataurl",
+        ".webp": "dataurl",
         ".png": "dataurl",
       };
       options.outdir = path.join(root, "build");
@@ -243,9 +244,13 @@ export function getDocsMap(): Record<string, Navigation> {
 export function getDocsNav(): NavigationTree {
   const pages = getDocsMap();
   return {
-    Introduction: [pages["getting-started"]],
+    Introduction: [
+      pages["getting-started"],
+      pages["with-vanilla"],
+      pages["with-react"]],
     Guides: [
       pages["async"],
+      pages["sync-vs-async-observer"],
       pages["component-state"],
       pages["computed-properties"],
     ],
@@ -254,6 +259,7 @@ export function getDocsNav(): NavigationTree {
       Advanced: [pages["ref"], pages["subscribe"], pages["snapshot"]],
       Utils: [
         pages["subscribeKey"],
+        pages["useProxy"],
         pages["watch"],
         pages["devtools"],
         pages["derive"],

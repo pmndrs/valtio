@@ -1,0 +1,46 @@
+---
+title: 'With vanilla'
+---
+
+Valtio has helpers for React, but the core is not coupled to it, it only relies on JavaScript Proxy which means it can be used with Vanilla JavaScript as well, in the browser or even in server environments.
+
+When playing with such environments, you might want to use the `valtio/vanilla` package directly, without the React helpers overhead.
+
+This does not require additionnal package, vanilla modules are included in the main `valtio` package.
+
+## What's in the box
+
+Vanilla Valtio provides the following helpers:
+
+**Core**
+
+- `proxy`: a function to create a reactive object
+- `subscribe`: a function to listen to changes on a reactive object
+- `snapshot`: a function to create a snapshot of a reactive object, which are kind of immutable deep-copies of the state at a given time.
+
+```tsx
+import { proxy, subscribe } from 'valtio/vanilla'
+
+const state = proxy({ count: 0 });
+
+subcribe(state, () => {
+  console.log('state changed', state.count);
+});
+
+const snap = snapshot(state);
+state.count++;
+const snap2 = snapshot(state);
+console.log(snap === snap2); // false
+```
+
+**Utils**
+
+Some functions that uses the core API to provide some useful features:
+
+- `subscribeKey`: a function to listen to changes on a specific key of a reactive object, which uses `subscribe` under the hood.
+- `watch`: Used to subscribe to multiple proxies at once.
+- And many others, see the details in the **UTILS** section of the documentation.
+
+
+
+

@@ -13,199 +13,28 @@ import logo from './logo.svg'
 
 The Valtio API is minimal, flexible, unopinionated and a touch magical. Valtio's proxy turns the object you pass it into a self-aware proxy, allowing fine-grained subscription and reactivity when making state updates. In React, Valtio shines at render optimization. It is compatible with Suspense and React 18. Valtio is also a viable option in vanilla javascript applications.
 
-#### Installation
+Valtio also work on desktop with NodeJS, Deno or Bun.
+
+## Installation
+
+Add the package with any dependencies manager you like in `dependencies`.
 
 ```bash
 npm i valtio
 ```
 
-#### The to-do app example
-
-#### 1. proxy
-
-Let's learn Valtio by coding a simple to-do app in React and Typescript. We'll start by creating some state using [`proxy`](../api/basic/proxy).
-
-```ts
-import { proxy, useSnapshot } from 'valtio'
-
-type Status = 'pending' | 'completed'
-type Filter = Status | 'all'
-type Todo = {
-  description: string
-  status: Status
-  id: number
-}
-
-export const store = proxy<{ filter: Filter; todos: Todo[] }>({
-  filter: 'all',
-  todos: [],
-})
+```bash
+pnpm add valtio
 ```
 
-#### 2. useSnapshot
-
-To access the data in this store, we'll use [`useSnapshot`](../api/basic/useSnapshot). The Todos component will rerender when the "todos" or "filter" properties are updated. Any other data we add to the proxy will be ignored.
-
-```tsx
-const Todos = () => {
-  const snap = useSnapshot(store)
-  return (
-    <ul>
-      {snap.todos
-        .filter(({ status }) => status === snap.filter || snap.filter === 'all')
-        .map(({ description, status, id }) => {
-          return (
-            <li key={id}>
-              <span data-status={status} className="description">
-                {description}
-              </span>
-              <button className="remove">x</button>
-            </li>
-          )
-        })}
-    </ul>
-  )
-}
+```bash
+yarn add valtio
 ```
 
-#### 3. actions
+## Basic usage
 
-Finally, we need to create, update, and delete our todos. To do so, we simply mutate properties on the store we created, not the snap. Commonly, these mutations are wrapped up in functions called actions.
+Working with valtio is simple and straightforward. It's a small library with a simple API. A basic workflow with valtio is:
 
-```ts
-const addTodo = (description: string) => {
-  store.todos.push({
-    description,
-    status: 'pending',
-    id: Date.now(),
-  })
-}
-
-const removeTodo = (id: number) => {
-  const index = store.todos.findIndex((todo) => todo.id === id)
-  if (index >= 0) {
-    store.todos.splice(index, 1)
-  }
-}
-
-const toggleDone = (id: number, currentStatus: Status) => {
-  const nextStatus = currentStatus === 'pending' ? 'completed' : 'pending'
-  const todo = store.todos.find((todo) => todo.id === id)
-  if (todo) {
-    todo.status = nextStatus
-  }
-}
-
-const setFilter = (filter: Filter) => {
-  store.filter = filter
-}
-```
-
-Finally, we wire up these actions to our inputs and buttons - check the demo below for the full code.
-
-```tsx
-<button className="remove" onClick={() => removeTodo(id)}>
-  x
-</button>
-```
-
-## Codesandbox demo
-
-https://codesandbox.io/s/valtio-to-do-list-forked-6w9h3z
-
-#### Mutating state outside of components
-
-In our first to-do app, Valtio enabled mutations without worrying about performance or "breaking" React. `useSnapshot` turned these mutations into immutable snapshots and optimized renders. But we could have easily used React's own state handling. Let's add a bit of complexity to our to-do app to see what else Valtio offers.
-
-We will add a "timeLeft" property to a todo. Now each todo will tick down to zero and become "overdue" if not completed in time.
-
-```ts
-type Todo = {
-  description: string
-  status: Status
-  id: number
-  timeLeft: number
-}
-```
-
-Among other changes, we will add a Countdown component to display the ticking time for each todo. We are using an advanced technique of passing a nested proxy object to [`useSnapshot`](../api/basic/useSnapshot). Alternatively, make this a dumb component by passing the todo's "timeLeft" as a prop.
-
-```tsx
-import { useSnapshot } from 'valtio'
-import { formatTimeDelta, calcTimeDelta } from './utils'
-import { store } from './App'
-
-export const Countdown = ({ index }: { index: number }) => {
-  const snap = useSnapshot(store.todos[index])
-  const delta = calcTimeDelta(snap.timeLeft)
-  const { days, hours, minutes, seconds } = formatTimeDelta(delta)
-  return (
-    <span className="countdown-time">
-      {delta.total < 0 ? '-' : ''}
-      {days}
-      {days ? ':' : ''}
-      {hours}:{minutes}:{seconds}
-    </span>
-  )
-}
-```
-
-#### Mutate in module scope
-
-Instead of managing multiple timers inside of a React component, let's move these updates outside of React altogether by defining a recursive `countdown` function in module scope which will mutate the todos.
-
-```tsx
-const countdown = (index: number) => {
-  const todo = store.todos[index]
-  // user removed todo case
-  if (!todo) return
-  // todo done of overdue case
-  if (todo.status !== 'pending') {
-    return
-  }
-  // time over
-  if (todo.timeLeft < 1000) {
-    todo.timeLeft = 0
-    todo.status = 'overdue'
-    return
-  }
-  setTimeout(() => {
-    todo.timeLeft -= 1000
-    countdown(index)
-  }, 1000)
-}
-```
-
-We can start the recursive countdown from an enhanced `addTodo` action.
-
-```tsx
-const addTodo = (e: React.SyntheticEvent, reset: VoidFunction) => {
-  e.preventDefault()
-  const target = e.target as typeof e.target & {
-    deadline: { value: Date }
-    description: { value: string }
-  }
-  const deadline = target.deadline.value
-  const description = target.description.value
-  const now = Date.now()
-  store.todos.push({
-    description,
-    status: 'pending',
-    id: now,
-    timeLeft: new Date(deadline).getTime() - now,
-  })
-  // clear the form
-  reset()
-  countdown(store.todos.length - 1)
-}
-```
-
-Please see the rest of the changes in the demo below.
-
-#### Subscribe in module scope
-
-Being able to mutate state outside of components is a huge benefit. We can also [`subscribe`](../api/advanced/subscribe) to state changes in module scope. We will leave it to you to try this out. You might, for instance, persist your todos to local storage as in [this example](https://github.com/pmndrs/valtio/wiki/How-to-persist-states#persist-with-localstorage).
-
-## Codesandbox demo
-
-https://codesandbox.io/s/valtio-countdown-to-do-list-xkgmri
+1. Create a state object with `proxy`.
+2. Subscribe for changes with `subscribe` or some other methods like `subscribeKey`, `derived` or `watch`. When using react you rather use `useSnapshot` or `useProxy` which are optimized for React rendering.
+3. You mutate the state object directly and subscribers will be notified.

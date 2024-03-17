@@ -1,0 +1,56 @@
+---
+title: 'Sync vs async observer'
+description: 'Understand the difference between synchronous and asynchronous updates when using valtio observer'
+---
+import eventLoopSrc from './event_loop.webp'
+
+## Subscribe : Synchronous vs asynchronous updates
+
+When using subscribe based observer, the callback might be called synchronously or asynchronously.
+
+But before this, we need a quick reminder of the event loop behavior in JavaScript, the following schema is a simplified version of the event loop for NodeJS, browser implemention is similar.
+
+<img src={eventLoopSrc} alt="eventloop" />
+<div className='text-center text-xs'>Schema copyrights from builder.io</div>
+
+After each callback the JS engine check for callbacks in the microtask queue. If there are some, it will execute them before the next iteration of the event loop.
+
+In valtio, each time a proxy update is notified if the mode is async (default) it will be deferred to the microtask queue, thus allowing batching of state.
+
+When using `subscribe`, the third argument defines if the callback should be called synchronously or asynchronously. If `true` the callback will be called synchronously, if `false` it will be called asynchronously.
+
+Let's see an example
+```tsx
+import { proxy, subscribe } from "valtio/vanilla";
+
+const store = proxy({
+  count: 0,
+});
+
+subscribe(
+  store,
+  () => {
+    console.log("Sync log", store.count);
+  },
+  true
+);
+
+subscribe(
+  store,
+  () => {
+    console.log("Batched log", store.count);
+  },
+  false
+);
+
+// During the same tick
+store.count++;
+store.count++;
+
+// Will log
+// Sync log 1
+// Sync log 2
+// Batched log 2
+```
+
+Batching is generally more efficient and prefered as it regroups all the changes occuring during the same tick. But in some cases, you might want to have synchronous updates. A quick example is having a detailed log of the changes. When batching you'll only see the final result, but with synchronous updates you'll see each change.
