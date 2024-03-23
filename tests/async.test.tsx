@@ -1,4 +1,6 @@
-import { StrictMode, Suspense } from 'react'
+/// <reference types="react/canary" />
+
+import ReactExports, { StrictMode, Suspense } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
@@ -8,7 +10,10 @@ const sleep = (ms: number) =>
     setTimeout(resolve, ms)
   })
 
-it('delayed increment', async () => {
+const { use } = ReactExports
+const use2 = <T,>(x: T): Awaited<T> => (x instanceof Promise ? use(x) : x)
+
+it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
   const state = proxy<any>({ count: 0 })
   const delayedIncrement = () => {
     const nextCount = state.count + 1
@@ -19,7 +24,7 @@ it('delayed increment', async () => {
     const snap = useSnapshot(state)
     return (
       <>
-        <div>count: {snap.count}</div>
+        <div>count: {use2(snap.count)}</div>
         <button onClick={delayedIncrement}>button</button>
       </>
     )
@@ -40,7 +45,7 @@ it('delayed increment', async () => {
   await findByText('count: 1')
 })
 
-it('delayed object', async () => {
+it.skipIf(typeof use === 'undefined')('delayed object', async () => {
   const state = proxy<any>({ object: { text: 'none' } })
   const delayedObject = () => {
     state.object = sleep(300).then(() => ({ text: 'hello' }))
@@ -50,7 +55,7 @@ it('delayed object', async () => {
     const snap = useSnapshot(state)
     return (
       <>
-        <div>text: {snap.object.text}</div>
+        <div>text: {use2(snap.object).text}</div>
         <button onClick={delayedObject}>button</button>
       </>
     )
@@ -71,51 +76,54 @@ it('delayed object', async () => {
   await findByText('text: hello')
 })
 
-it('delayed object update fulfilled', async () => {
-  const state = proxy<any>({
-    object: sleep(300).then(() => ({ text: 'counter', count: 0 })),
-  })
-  const updateObject = () => {
-    state.object = state.object.then((v: any) =>
-      sleep(300).then(() => ({ ...v, count: v.count + 1 })),
+it.skipIf(typeof use === 'undefined')(
+  'delayed object update fulfilled',
+  async () => {
+    const state = proxy<any>({
+      object: sleep(300).then(() => ({ text: 'counter', count: 0 })),
+    })
+    const updateObject = () => {
+      state.object = state.object.then((v: any) =>
+        sleep(300).then(() => ({ ...v, count: v.count + 1 })),
+      )
+    }
+
+    const Counter = () => {
+      const snap = useSnapshot(state)
+      return (
+        <>
+          <div>text: {use2(snap.object).text}</div>
+          <div>count: {use2(snap.object).count}</div>
+          <button onClick={updateObject}>button</button>
+        </>
+      )
+    }
+
+    const { getByText, findByText } = render(
+      <StrictMode>
+        <Suspense fallback="loading">
+          <Counter />
+        </Suspense>
+      </StrictMode>,
     )
-  }
 
-  const Counter = () => {
-    const snap = useSnapshot(state)
-    return (
-      <>
-        <div>text: {snap.object.text}</div>
-        <div>count: {snap.object.count}</div>
-        <button onClick={updateObject}>button</button>
-      </>
-    )
-  }
+    await findByText('loading')
+    await waitFor(() => {
+      getByText('text: counter')
+      getByText('count: 0')
+    })
 
-  const { getByText, findByText } = render(
-    <StrictMode>
-      <Suspense fallback="loading">
-        <Counter />
-      </Suspense>
-    </StrictMode>,
-  )
+    fireEvent.click(getByText('button'))
 
-  await findByText('loading')
-  await waitFor(() => {
-    getByText('text: counter')
-    getByText('count: 0')
-  })
+    await findByText('loading')
+    await waitFor(() => {
+      getByText('text: counter')
+      getByText('count: 1')
+    })
+  },
+)
 
-  fireEvent.click(getByText('button'))
-
-  await findByText('loading')
-  await waitFor(() => {
-    getByText('text: counter')
-    getByText('count: 1')
-  })
-})
-
-it('delayed falsy value', async () => {
+it.skipIf(typeof use === 'undefined')('delayed falsy value', async () => {
   const state = proxy<any>({ value: true })
   const delayedValue = () => {
     state.value = sleep(300).then(() => null)
@@ -125,7 +133,7 @@ it('delayed falsy value', async () => {
     const snap = useSnapshot(state)
     return (
       <>
-        <div>value: {String(snap.value)}</div>
+        <div>value: {String(use2(snap.value))}</div>
         <button onClick={delayedValue}>button</button>
       </>
     )
