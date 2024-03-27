@@ -183,6 +183,24 @@ describe('subscribe', () => {
     await Promise.resolve()
     expect(handler).toBeCalledTimes(0)
   })
+
+  it('should keep a subscription when a nested object is replaced', async () => {
+    const state = proxy({ obj: { nested: 'prop' } })
+    const handler = vi.fn()
+
+    subscribe(state.obj, handler)
+
+    state.obj = { nested: 'new prop' }
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(1)
+
+    state.obj = { nested: 'new propss' }
+
+    await Promise.resolve()
+
+    expect(handler).toBeCalledTimes(2)
+  })
 })
 
 describe('subscribeKey', () => {

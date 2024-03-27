@@ -60,6 +60,7 @@ type ProxyState = readonly [
   ensureVersion: (nextCheckVersion?: number) => number,
   createSnapshot: CreateSnapshot,
   addListener: AddListener,
+  listeners: Set<Listener>,
 ]
 
 // shared state
@@ -288,6 +289,13 @@ const buildProxyFunction = (
         } else {
           if (!proxyStateMap.has(value) && canProxy(value)) {
             nextValue = proxyFunction(value)
+            // If the we are replacing an object and the previous object has listeners
+            // add the listeners to the new object
+            if (isObject(prevValue) && proxyStateMap.has(prevValue)) {
+              const proxyState = proxyStateMap.get(prevValue)
+              const listeners = (proxyState as ProxyState)[4]
+              listeners.forEach((listener) => addListener(listener))
+            }
           }
           const childProxyState =
             !refSet.has(nextValue) && proxyStateMap.get(nextValue)
@@ -307,6 +315,7 @@ const buildProxyFunction = (
       ensureVersion,
       createSnapshot,
       addListener,
+      listeners,
     ]
     proxyStateMap.set(proxyObject, proxyState)
     Reflect.ownKeys(initialObject).forEach((key) => {
