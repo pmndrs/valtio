@@ -41,7 +41,7 @@ jobs:
         if: ${{ matrix.build == 'cjs' }}
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.ts
-          sed -i~ "s/\"valtio/vanilla\"/\"..\/..\/..\/dist\/vanilla.js\"/" node_modules/derive-valtio/dist/index.umd.js
+          sed -i~ "s/\"valtio\/vanilla\"/\"..\/..\/..\/dist\/vanilla.js\"/" node_modules/derive-valtio/dist/index.umd.js
       - name: Patch for ESM
         if: ${{ matrix.build == 'esm' }}
         run: |
@@ -53,7 +53,7 @@ jobs:
         if: ${{ matrix.build == 'umd' }}
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/umd\1.${NODE_ENV}.js')/" vitest.config.ts
-          sed -i~ "s/\"valtio/vanilla\"/\"..\/..\/..\/dist\/umd\/vanilla.${NODE_ENV}.js\"/" node_modules/derive-valtio/dist/index.umd.js
+          sed -i~ "s/\"valtio\/vanilla\"/\"..\/..\/..\/dist\/umd\/vanilla.${NODE_ENV}.js\"/" node_modules/derive-valtio/dist/index.umd.js
         env:
           NODE_ENV: ${{ matrix.env }}
       - name: Patch for SystemJS
