@@ -18,12 +18,5 @@ export default defineConfig({
     },
     environment: 'jsdom',
     dir: 'tests',
-    deps: {
-      optimizer: {
-        web: {
-          include: ['derive-valtio'],
-        },
-      },
-    },
   },
 })
