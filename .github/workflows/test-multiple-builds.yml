@@ -41,11 +41,13 @@ jobs:
         if: ${{ matrix.build == 'cjs' }}
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.ts
+          sed -i~ "s/alias: [/alias: [{find:'derive-valtio',replacement:'node_modules/derive-valtio/dist/index.umd.js'},/" vitest.config.ts
+          cat vitest.config.ts
       - name: Patch for ESM
         if: ${{ matrix.build == 'esm' }}
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/esm\1.mjs')/" vitest.config.ts
-          sed -i~ "1s/^/import.meta.env=import.meta.env||{};import.meta.env.MODE='${NODE_ENV}';/" tests.ts tests/*.tsx
+          sed -i~ "1s/^/import.meta.env=import.meta.env||{};import.meta.env.MODE='${NODE_ENV}';/" tests/*.tsx
         env:
           NODE_ENV: ${{ matrix.env }}
       - name: Patch for UMD
