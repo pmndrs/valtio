@@ -1,12 +1,12 @@
-import path from 'path'
+import { resolve } from 'path'
 // eslint-disable-next-line import/extensions
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   resolve: {
     alias: [
-      { find: /^valtio$/, replacement: path.resolve('./src/index.ts') },
-      { find: /^valtio(.*)$/, replacement: path.resolve('./src/$1.ts') },
+      { find: /^valtio$/, replacement: resolve('./src/index.ts') },
+      { find: /^valtio(.*)$/, replacement: resolve('./src/$1.ts') },
     ],
   },
   test: {
