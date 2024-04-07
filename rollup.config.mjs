@@ -1,13 +1,13 @@
-import { dirname, parse, resolve } from 'node:path'
+import { parse, resolve } from 'node:path'
 import alias from '@rollup/plugin-alias'
 import babelPlugin from '@rollup/plugin-babel'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import replace from '@rollup/plugin-replace'
 import terser from '@rollup/plugin-terser'
 // import typescript from '@rollup/plugin-typescript'
+import dts from 'rollup-plugin-dts'
 import { default as esbuild } from 'rollup-plugin-esbuild'
 import createBabelConfig from './babel.config.js'
-import dts from 'rollup-plugin-dts'
 
 const extensions = ['.js', '.ts', '.tsx']
 const { root } = parse(process.cwd())
@@ -47,33 +47,34 @@ function getEsbuild(env = 'development') {
 function createDeclarationConfig(input) {
   const file = `dist/${input}`
   /** @type {import('rollup').RollupOptions[]}*/
-  const entry = [{
-    // modern build
-    input: `src/${input}.ts`,
-    output: [
-      { file: `${file}.d.cts` },
-      { file: `${file}.d.mts` },
-      { file: `${file}.d.ts` }, // for node10 compatibility
-    ],
-    external,
-    plugins: [
-      dts(),
-    ],
-  }, {
-    // ts 3.4 build
-    input: `src/${input}.ts`,
-    output: [
-      { file: `dist/ts3.4/${file}.d.ts` }, // only for node10 compatibility
-    ],
-    external,
-    plugins: [
-      dts({
-        compilerOptions: {
-          target: "es5",
-        }
-      }),
-    ],
-  }]
+  const entry = [
+    {
+      // modern build
+      input: `src/${input}.ts`,
+      output: [
+        { file: `${file}.d.cts` },
+        { file: `${file}.d.mts` },
+        { file: `${file}.d.ts` }, // for node10 compatibility
+      ],
+      external,
+      plugins: [dts()],
+    },
+    {
+      // ts 3.4 build
+      input: `src/${input}.ts`,
+      output: [
+        { file: `dist/ts3.4/${input}.d.ts` }, // only for node10 compatibility
+      ],
+      external,
+      plugins: [
+        dts({
+          compilerOptions: {
+            target: 'es5',
+          },
+        }),
+      ],
+    },
+  ]
   return entry
 }
 
@@ -83,21 +84,21 @@ function createDeclarationConfig(input) {
  */
 function createESMConfig(input) {
   /** @type {import('rollup').RollupOptions}*/
-  const entry= {
+  const entry = {
     input: `src/${input}.ts`,
     output: {
       file: `dist/${input}.mjs`,
-      format: "esm",
-      exports: "auto",
+      format: 'esm',
+      exports: 'auto',
     },
     external,
     plugins: [
       alias({ entries: entries.filter((e) => !e.find.test(input)) }),
       nodeResolve({ extensions }),
       replace({
-        ...({
+        ...{
           'import.meta.env?.MODE': 'process.env.NODE_ENV',
-        }),
+        },
         // a workround for #410
         'use-sync-external-store/shim': 'use-sync-external-store/shim/index.js',
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
@@ -119,10 +120,10 @@ function createCommonJSConfig(input) {
     input: `src/${input}.ts`,
     output: {
       file: `dist/${input}.cjs`,
-      format: "cjs",
-      exports: "auto"
+      format: 'cjs',
+      exports: 'auto',
     },
-    interop: "auto",
+    interop: 'auto',
     external,
     plugins: [
       alias({ entries: entries.filter((e) => !e.find.test(input)) }),
@@ -219,19 +220,22 @@ export default function (args) {
     'vanilla',
     'vanilla/utils',
   ]
-  if (c === "all") {
-    return generate.reverse().reduce((acc, c) => {
-      acc.push(
-        ...createDeclarationConfig(c),
-        createCommonJSConfig(c),
-        createESMConfig(c),
-        createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development'),
-        createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production'),
-        createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'development'),
-        createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'production'),
-      )
-      return acc
-    }, /** @type {import('rollup').RollupOptions[]}*/ [])
+  if (c === 'all') {
+    return generate.reverse().reduce(
+      (acc, c) => {
+        acc.push(
+          ...createDeclarationConfig(c),
+          createCommonJSConfig(c),
+          createESMConfig(c),
+          createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development'),
+          createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production'),
+          createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'development'),
+          createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'production'),
+        )
+        return acc
+      },
+      /** @type {import('rollup').RollupOptions[]}*/ [],
+    )
   } else {
     return [
       ...createDeclarationConfig(c),

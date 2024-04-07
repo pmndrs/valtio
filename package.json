@@ -39,7 +39,7 @@
       "require": "./dist/vanilla/utils.cjs"
     }
   },
-  "main": ".dist/index.cjs",
+  "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "typesVersions": {
@@ -70,7 +70,7 @@
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
-    "build": "rollup -c --config-all && node scripts/fix-cjs.mjs",
+    "build": "rollup -c --config-all && node scripts/patch-dts.mjs",
     "old-build": "concurrently -m 8 'yarn:build:*'",
     "build-watch": "concurrently -n watch: 'yarn:build:* --watch'",
     "build:utils": "rollup -c --config-utils",
@@ -80,6 +80,7 @@
     "build:react_utils": "rollup -c --config-react_utils",
     "build:macro": "rollup -c --config-macro",
     "build:macro_vite": "rollup -c --config-macro_vite",
+    "postbuild": "yarn copy",
     "xpostbuild": "yarn patch-d-ts && yarn copy && yarn patch-macro-vite && yarn patch-ts3.4 && yarn patch-esm-ts",
     "prettier": "prettier '*.{js,json,md}' '{src,tests,docs}/**/*.{ts,tsx,md,mdx}' --write",
     "prettier:ci": "prettier '*.{js,json,md}' '{src,tests,docs}/**/*.{ts,tsx,md,mdx}' --list-different",
