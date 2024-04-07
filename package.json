@@ -1,49 +1,67 @@
 {
   "name": "valtio",
+  "type": "module",
   "private": true,
   "version": "1.13.2",
   "description": "💊 Valtio makes proxy-state simple for React and Vanilla",
-  "main": "./index.js",
-  "types": "./index.d.ts",
-  "typesVersions": {
-    "<4.5": {
-      "esm/*": [
-        "ts3.4/*"
-      ],
-      "*": [
-        "ts3.4/*"
-      ]
-    }
-  },
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": {
-        "types": "./esm/index.d.mts",
-        "default": "./esm/index.mjs"
-      },
-      "module": {
-        "types": "./esm/index.d.ts",
-        "default": "./esm/index.js"
-      },
-      "default": {
-        "types": "./index.d.ts",
-        "default": "./index.js"
-      }
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
     },
-    "./*": {
-      "import": {
-        "types": "./esm/*.d.mts",
-        "default": "./esm/*.mjs"
-      },
-      "module": {
-        "types": "./esm/*.d.ts",
-        "default": "./esm/*.js"
-      },
-      "default": {
-        "types": "./*.d.ts",
-        "default": "./*.js"
-      }
+    "./macro": {
+      "import": "./dist/macro.mjs",
+      "require": "./dist/macro.cjs"
+    },
+    "./macro/vite": {
+      "import": "./dist/macro/vite.mjs",
+      "require": "./dist/macro/vite.cjs"
+    },
+    "./react": {
+      "import": "./dist/react.mjs",
+      "require": "./dist/react.cjs"
+    },
+    "./react/utils": {
+      "import": "./dist/react/utils.mjs",
+      "require": "./dist/react/utils.cjs"
+    },
+    "./utils": {
+      "import": "./dist/utils.mjs",
+      "require": "./dist/utils.cjs"
+    },
+    "./vanilla": {
+      "import": "./dist/vanilla.mjs",
+      "require": "./dist/vanilla.cjs"
+    },
+    "./vanilla/utils": {
+      "import": "./dist/vanilla/utils.mjs",
+      "require": "./dist/vanilla/utils.cjs"
+    }
+  },
+  "main": ".dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "typesVersions": {
+    "<4.5": {
+      "macro": ["./dist/ts3.4/macro.d.ts"],
+      "macro/vite": ["./dist/ts3.4/macro/vite.d.ts"],
+      "react": ["./dist/ts3.4/react.d.ts"],
+      "react/utils": ["./dist/ts3.4/react/utils.d.ts"],
+      "utils": ["./dist/ts3.4/utils.d.ts"],
+      "vanilla": ["./dist/ts3.4/vanilla.d.ts"],
+      "vanilla/utils": ["./dist/ts3.4/vanilla/utils.d.ts"],
+      "*": ["./dist/ts3.4/*"]
+    },
+    ">=4.5": {
+      "macro": ["./dist/macro.d.ts"],
+      "macro/vite": ["./dist/macro/vite.d.ts"],
+      "react": ["./dist/react.d.ts"],
+      "react/utils": ["./dist/react/utils.d.ts"],
+      "utils": ["./dist/utils.d.ts"],
+      "vanilla": ["./dist/vanilla.d.ts"],
+      "vanilla/utils": ["./dist/vanilla/utils.d.ts"],
+      "*": ["./*"]
     }
   },
   "files": [
@@ -52,9 +70,9 @@
   "sideEffects": false,
   "scripts": {
     "prebuild": "shx rm -rf dist",
-    "build": "concurrently -m 8 'yarn:build:*'",
+    "build": "rollup -c --config-all && node scripts/fix-cjs.mjs",
+    "old-build": "concurrently -m 8 'yarn:build:*'",
     "build-watch": "concurrently -n watch: 'yarn:build:* --watch'",
-    "build:base": "rollup -c",
     "build:utils": "rollup -c --config-utils",
     "build:vanilla": "rollup -c --config-vanilla",
     "build:vanilla_utils": "rollup -c --config-vanilla_utils",
@@ -62,7 +80,7 @@
     "build:react_utils": "rollup -c --config-react_utils",
     "build:macro": "rollup -c --config-macro",
     "build:macro_vite": "rollup -c --config-macro_vite",
-    "postbuild": "yarn patch-d-ts && yarn copy && yarn patch-macro-vite && yarn patch-ts3.4 && yarn patch-esm-ts",
+    "xpostbuild": "yarn patch-d-ts && yarn copy && yarn patch-macro-vite && yarn patch-ts3.4 && yarn patch-esm-ts",
     "prettier": "prettier '*.{js,json,md}' '{src,tests,docs}/**/*.{ts,tsx,md,mdx}' --write",
     "prettier:ci": "prettier '*.{js,json,md}' '{src,tests,docs}/**/*.{ts,tsx,md,mdx}' --list-different",
     "eslint": "eslint --no-eslintrc --c .eslintrc.json --fix '*.{js,json,ts}' '{src,tests}/**/*.{ts,tsx}'",
@@ -155,6 +173,7 @@
     "react-dom": "^18.2.0",
     "redux": "^5.0.1",
     "rollup": "^4.12.0",
+    "rollup-plugin-dts": "^6.1.0",
     "rollup-plugin-esbuild": "^6.1.1",
     "shx": "^0.3.4",
     "ts-expect": "^1.3.0",

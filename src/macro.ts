@@ -5,7 +5,7 @@ import type { NodePath } from '@babel/traverse'
 import * as t from '@babel/types'
 import { MacroError, createMacro } from 'babel-plugin-macros'
 
-const macro = ({ references }: any) => {
+const macroConf = ({ references }: any) => {
   if (import.meta.env?.MODE !== 'production') {
     console.warn('[DEPRECATED] Use useProxy hook instead.')
   }
@@ -41,10 +41,14 @@ const macro = ({ references }: any) => {
     })
   })
 }
+/*
 
-/**
+/!**
  * @deprecated Use useProxy hook instead.
- */
+ *!/
 export declare function useProxy<T extends object>(proxyObject: T): void
+*/
 
-export default createMacro(macro, { configName: 'valtio' })
+const macro = createMacro(macroConf, { configName: 'valtio' })
+
+export default macro

@@ -1,4 +1,4 @@
-module.exports = (api, targets) => {
+export default (api, targets) => {
   // https://babeljs.io/docs/en/config-files#config-function-api
   const isTestEnv = api.env('test')
 
