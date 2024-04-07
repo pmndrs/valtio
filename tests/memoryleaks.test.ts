@@ -9,8 +9,7 @@ describe('no memory leaks with proxy', () => {
       const state = proxy({})
       detector = new LeakDetector(state)
     })()
-    const isLeaking = await detector.isLeaking()
-    expect(isLeaking).toBe(false)
+    expect(await detector.isLeaking()).toBe(false)
   })
 
   it('child object', async () => {
@@ -19,8 +18,7 @@ describe('no memory leaks with proxy', () => {
       const state = proxy({ child: {} })
       detector = new LeakDetector(state)
     })()
-    const isLeaking = await detector.isLeaking()
-    expect(isLeaking).toBe(false)
+    expect(await detector.isLeaking()).toBe(false)
   })
 
   it('global child object', async () => {
@@ -30,8 +28,7 @@ describe('no memory leaks with proxy', () => {
       const state = proxy({ child })
       detector = new LeakDetector(state)
     })()
-    const isLeaking = await detector.isLeaking()
-    expect(isLeaking).toBe(false)
+    expect(await detector.isLeaking()).toBe(false)
   })
 
   it('global child proxy', async () => {
@@ -41,7 +38,6 @@ describe('no memory leaks with proxy', () => {
       const state = proxy({ child })
       detector = new LeakDetector(state)
     })()
-    const isLeaking = await detector.isLeaking()
-    expect(isLeaking).toBe(false)
+    expect(await detector.isLeaking()).toBe(false)
   })
 })
