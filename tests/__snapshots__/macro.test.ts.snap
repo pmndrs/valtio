@@ -2,7 +2,7 @@
 
 exports[`valtio/macro > 1. valtio/macro > 1. valtio/macro 1`] = `
 "
-import { useProxy } from '../dist/macro'
+import { useProxy } from '../dist/macro.cjs'
 
 const Component = () => {
   useProxy(state)
@@ -32,7 +32,7 @@ const Component = () => {
 
 exports[`valtio/macro > 2. valtio/macro > 2. valtio/macro 1`] = `
 "
-import { useProxy } from '../dist/macro'
+import { useProxy } from '../dist/macro.cjs'
 
 const Component = () => {
   useProxy(state)

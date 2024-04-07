@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 describe('no memory leaks with proxy', () => {
   const runTest = async (code: string) => {
     const testCode = `
-      const { proxy } = require("./dist/vanilla.js");
+      const { proxy } = require("./dist/vanilla.cjs");
       ${code}
       const registry = new FinalizationRegistry(() => {
         console.log("state is garbage collected");

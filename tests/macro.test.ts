@@ -22,7 +22,7 @@ pluginTester({
   },
   tests: [
     `
-import { useProxy } from '../dist/macro'
+import { useProxy } from '../dist/macro.cjs'
 
 const Component = () => {
   useProxy(state)
@@ -35,7 +35,7 @@ const Component = () => {
 }
 `,
     `
-import { useProxy } from '../dist/macro'
+import { useProxy } from '../dist/macro.cjs'
 
 const Component = () => {
   useProxy(state)
