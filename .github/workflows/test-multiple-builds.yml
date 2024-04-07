@@ -37,7 +37,6 @@ jobs:
         run: |
           sed -i~ "s/it[.a-zA-Z]*('\[PRD-ONLY\]/it('/" tests/*.ts tests/*.tsx
           sed -i~ "s/it[.a-zA-Z]*('\[DEV-ONLY\]/it.skip('/" tests/*.ts tests/*.tsx
-          sed -i~ "s/describe(/describe.skip(/" tests/memoryleaks.test.ts # FIXME why it doesn't work in production mode?
       - name: Patch for CJS
         if: ${{ matrix.build == 'cjs' }}
         run: |
