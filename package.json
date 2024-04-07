@@ -104,8 +104,8 @@
   },
   "homepage": "https://github.com/pmndrs/valtio",
   "dependencies": {
-    "proxy-compare": "2.6.0",
     "derive-valtio": "0.1.0",
+    "proxy-compare": "2.6.0",
     "use-sync-external-store": "1.2.0"
   },
   "devDependencies": {
@@ -146,6 +146,7 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-vitest": "^0.3.22",
+    "jest-leak-detector": "^29.7.0",
     "jsdom": "^24.0.0",
     "json": "^11.0.0",
     "postinstall-postinstall": "^2.1.0",

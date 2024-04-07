@@ -1,51 +1,43 @@
-import { exec } from 'child_process'
+import LeakDetector from 'jest-leak-detector'
 import { describe, expect, it } from 'vitest'
+import { proxy } from 'valtio'
 
 describe('no memory leaks with proxy', () => {
-  const runTest = async (code: string) => {
-    const testCode = `
-      const { proxy } = require("./dist/vanilla.js");
-      ${code}
-      const registry = new FinalizationRegistry(() => {
-        console.log("state is garbage collected");
-      });
-      registry.register(state, undefined);
-      state = null;
-      setImmediate(() => {
-        global.gc();
-      });
-    `
-    const output = await new Promise((resolve) => {
-      exec(`node --expose-gc --eval '${testCode}'`, (err, stdout) => {
-        resolve(err || stdout)
-      })
-    })
-    expect(output).toMatch('state is garbage collected')
-  }
-
   it('empty object', async () => {
-    await runTest(`
-      let state = proxy({});
-    `)
+    let detector: LeakDetector
+    ;(() => {
+      const state = proxy({})
+      detector = new LeakDetector(state)
+    })()
+    expect(await detector.isLeaking()).toBe(false)
   })
 
   it('child object', async () => {
-    await runTest(`
-      let state = proxy({ child: {} });
-    `)
+    let detector: LeakDetector
+    ;(() => {
+      const state = proxy({ child: {} })
+      detector = new LeakDetector(state)
+    })()
+    expect(await detector.isLeaking()).toBe(false)
   })
 
   it('global child object', async () => {
-    await runTest(`
-      const child = {};
-      let state = proxy({ child });
-    `)
+    let detector: LeakDetector
+    ;(() => {
+      const child = {}
+      const state = proxy({ child })
+      detector = new LeakDetector(state)
+    })()
+    expect(await detector.isLeaking()).toBe(false)
   })
 
   it('global child proxy', async () => {
-    await runTest(`
-      const child = proxy({});
-      let state = proxy({ child });
-    `)
+    let detector: LeakDetector
+    ;(() => {
+      const child = proxy({})
+      const state = proxy({ child })
+      detector = new LeakDetector(state)
+    })()
+    expect(await detector.isLeaking()).toBe(false)
   })
 })
