@@ -9,12 +9,12 @@ import { subscribe } from '../../vanilla.ts'
  *
  * @example
  * import { subscribeKey } from 'valtio/utils'
- * subscribeKey(state, 'count', (v) => console.log('state.count has changed to', v))
+ * subscribeKey(state, 'count', (v, prev) => console.log('state.count has changed from', prev, 'to', v))
  */
 export function subscribeKey<T extends object, K extends keyof T>(
   proxyObject: T,
   key: K,
-  callback: (value: T[K]) => void,
+  callback: (value: T[K], previous?: T[K]) => void,
   notifyInSync?: boolean,
 ) {
   let prevValue = proxyObject[key]
@@ -23,7 +23,8 @@ export function subscribeKey<T extends object, K extends keyof T>(
     () => {
       const nextValue = proxyObject[key]
       if (!Object.is(prevValue, nextValue)) {
-        callback((prevValue = nextValue))
+        callback(nextValue, prevValue)
+        prevValue = nextValue
       }
     },
     notifyInSync,
