@@ -9,7 +9,7 @@ import { subscribe } from '../../vanilla.ts'
  *
  * @example
  * import { subscribeKeys } from 'valtio/utils'
- * subscribeKey(state, ['name', 'surname'], (v, old) => console.log('state.surname has changed from', old[1], 'to', v[1]))
+ * subscribeKey(state, ['width', 'height'], (v, old) => console.log('area has changed from', old[0] * old[1], 'to', v[0] * v[1]))
  */
 export function subscribeKeys<
   T extends object,
