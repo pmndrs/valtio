@@ -1,4 +1,5 @@
 export { subscribeKey } from './utils/subscribeKey.ts'
+export { subscribeKeys } from './utils/subscribeKeys.ts'
 export { watch } from './utils/watch.ts'
 export { devtools } from './utils/devtools.ts'
 export { derive, underive, unstable_deriveSubscriptions } from 'derive-valtio'
