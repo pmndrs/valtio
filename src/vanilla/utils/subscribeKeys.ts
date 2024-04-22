@@ -15,24 +15,24 @@ export function subscribeKeys<
   T extends object,
   K extends ReadonlyArray<keyof T>,
   V extends {
-    [I in keyof K]: T[K[I]];
-  }
+    [I in keyof K]: T[K[I]]
+  },
 >(
   proxyObject: T,
   keys: K,
   callback: (values: V, prevValues?: V) => void,
   notifyInSync?: boolean,
 ) {
-  let prevValues = keys.map((key) => proxyObject[key]) as unknown as V;
+  let prevValues = keys.map((key) => proxyObject[key]) as unknown as V
   return subscribe(
     proxyObject,
     () => {
-      const nextValues = keys.map((key) => proxyObject[key]) as unknown as V;
+      const nextValues = keys.map((key) => proxyObject[key]) as unknown as V
       if (
         nextValues.some((nextValue, i) => !Object.is(prevValues[i], nextValue))
       ) {
-        callback(nextValues, prevValues);
-        prevValues = nextValues;
+        callback(nextValues, prevValues)
+        prevValues = nextValues
       }
     },
     notifyInSync,
