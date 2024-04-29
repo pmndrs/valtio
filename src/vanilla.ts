@@ -276,13 +276,13 @@ const buildProxyFunction = (
         if (value instanceof Promise) {
           value
             .then((v) => {
-              value.status = 'fulfilled'
-              value.value = v
+              ;(value as any).status = 'fulfilled'
+              ;(value as any).value = v
               notifyUpdate(['resolve', [prop], v])
             })
             .catch((e) => {
-              value.status = 'rejected'
-              value.reason = e
+              ;(value as any).status = 'rejected'
+              ;(value as any).reason = e
               notifyUpdate(['reject', [prop], e])
             })
         } else {

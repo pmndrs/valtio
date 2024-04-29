@@ -164,7 +164,7 @@ export function useSnapshot<T extends object>(
   })
   if (import.meta.env?.MODE !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useAffectedDebugValue(currSnapshot, currAffected)
+    useAffectedDebugValue(currSnapshot as object, currAffected)
   }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
   return createProxyToCompare(
