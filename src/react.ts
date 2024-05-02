@@ -2,6 +2,7 @@ import {
   useCallback,
   useDebugValue,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useSyncExternalStore,
@@ -148,7 +149,7 @@ export function useSnapshot<T extends object>(
     () => snapshot(proxyObject),
   )
   inRender = false
-  useEffect(() => {
+  useLayoutEffect(() => {
     lastSnapshot.current = currSnapshot
   })
   if (import.meta.env?.MODE !== 'production') {
