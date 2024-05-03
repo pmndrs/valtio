@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
-import { proxy, snapshot, useSnapshot } from 'valtio'
+import { proxy, useSnapshot } from 'valtio'
 
 it('regression: useSnapshot renders should not fail consistency check with extra render (nested useSnapshot)', async () => {
   const obj = proxy({ childCount: 0, parentCount: 0 })
