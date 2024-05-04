@@ -34,8 +34,8 @@ jobs:
           - 18.1.0
           - 18.2.0
           - 18.3.1
-          - 19.0.0-beta-94eed63c49-20240425
-          - 0.0.0-experimental-94eed63c49-20240425
+          - 19.0.0-beta-1beb73de0f-20240503
+          - 0.0.0-experimental-1beb73de0f-20240503
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
