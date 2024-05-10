@@ -82,6 +82,9 @@ devDependencies:
   '@types/react':
     specifier: 17.0.38
     version: 17.0.38
+  '@types/unist':
+    specifier: ^2.0.0
+    version: 2.0.10
   autoprefixer:
     specifier: ^10.4.13
     version: 10.4.19(postcss@8.4.38)
