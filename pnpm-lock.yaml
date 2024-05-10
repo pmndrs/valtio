@@ -61,6 +61,12 @@ devDependencies:
   '@testing-library/react':
     specifier: ^15.0.6
     version: 15.0.7(@types/react@18.2.56)(react-dom@18.3.1)(react@18.3.1)
+  '@typed-macro/core':
+    specifier: 1.0.0-alpha
+    version: 1.0.0-alpha(chokidar@3.6.0)
+  '@typed-macro/runtime':
+    specifier: 1.0.0-alpha
+    version: 1.0.0-alpha(chokidar@3.6.0)
   '@types/babel-plugin-macros':
     specifier: ^3.1.3
     version: 3.1.3
@@ -2058,6 +2064,25 @@ packages:
       react-dom: 18.3.1(react@18.3.1)
     dev: true
 
+  /@typed-macro/core@1.0.0-alpha(chokidar@3.6.0):
+    resolution: {integrity: sha512-8tKQ8PMcqUu8a3joZCvt+CR6cPjq+ijW1YRRl8aToGotmYwmjGUTTJOWpWU+YgAn7fPlYPb66XkfXUVvXcXPWA==}
+    peerDependencies:
+      chokidar: ^3.5.2
+    dependencies:
+      '@babel/generator': 7.24.5
+      '@babel/parser': 7.24.5
+      '@babel/template': 7.24.0
+      '@babel/traverse': 7.24.5
+      '@babel/types': 7.24.5
+      '@typed-macro/shared': 1.0.0-alpha
+      '@types/babel__generator': 7.6.8
+      '@types/babel__template': 7.4.4
+      '@types/babel__traverse': 7.20.5
+      chokidar: 3.6.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /@typed-macro/core@1.0.0-alpha.1:
     resolution: {integrity: sha512-Io7F9hZVuj5UXBrJBYlEdOThxV0/S3jweJqKs936a4nnXxmePa91EFkSFdtAPMXo76Eyl0748WUPIF131dfciQ==}
     dependencies:
@@ -2070,6 +2095,27 @@ packages:
       '@types/babel__generator': 7.6.8
       '@types/babel__template': 7.4.4
       '@types/babel__traverse': 7.20.5
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@typed-macro/runtime@1.0.0-alpha(chokidar@3.6.0):
+    resolution: {integrity: sha512-XWvAPFN/JIrxlep4WKZwD74YSkEyHG/3w2xPzH1xEiC4+uTBan/QIZ+iyOxuv1HB1ef/+2NlyR6C5AmG+xJEuQ==}
+    peerDependencies:
+      chokidar: ^3.5.2
+    dependencies:
+      '@babel/generator': 7.24.5
+      '@babel/parser': 7.24.5
+      '@babel/template': 7.24.0
+      '@babel/traverse': 7.24.5
+      '@babel/types': 7.24.5
+      '@typed-macro/core': 1.0.0-alpha(chokidar@3.6.0)
+      '@typed-macro/shared': 1.0.0-alpha
+      '@types/babel__generator': 7.6.8
+      '@types/babel__template': 7.4.4
+      '@types/babel__traverse': 7.20.5
+      chokidar: 3.6.0
+      picomatch: 2.3.1
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -2090,6 +2136,10 @@ packages:
       picomatch: 2.3.1
     transitivePeerDependencies:
       - supports-color
+    dev: true
+
+  /@typed-macro/shared@1.0.0-alpha:
+    resolution: {integrity: sha512-4kB0MtyKl+asBX7UJfb/rONAeq0/aL0z+Eaj/TTgkmJ9aYRqWL6RWAw34iqsQiOEWGrXyfcjvXB/ohj++WbRXw==}
     dev: true
 
   /@typed-macro/shared@1.0.0-alpha.1:
