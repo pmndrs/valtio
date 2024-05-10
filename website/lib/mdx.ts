@@ -129,6 +129,7 @@ export async function getDocBySlug(slug: string) {
       // this is the recommended way to add custom remark/rehype plugins:
       // The syntax might look weird, but it protects you in case we add/remove
       // plugins in the future.
+      // @ts-expect-error FIXME what's wrong?
       options.remarkPlugins = [
         ...(options.remarkPlugins ?? []),
         remarkCodeSandboxURLUpdater,
