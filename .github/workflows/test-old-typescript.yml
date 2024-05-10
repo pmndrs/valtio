@@ -78,5 +78,4 @@ jobs:
           echo "declare module 'vitest'" >> ./src/types.d.ts
       - name: Test ${{ matrix.typescript }}
         run: |
-          rm -r node_modules/@types/babel__core/node_modules
           pnpm test:types

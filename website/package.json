@@ -28,6 +28,7 @@
     "rehype-slug": "^5.0.1",
     "remark-gfm": "^3.0.1",
     "remark-mdx-images": "^1.0.3",
+    "unified": "^11.0.4",
     "valtio": "^1.5.2"
   },
   "devDependencies": {
