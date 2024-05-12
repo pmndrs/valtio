@@ -1,8 +1,7 @@
-import { visit, Node } from "unist-util-visit";
+import type { Node } from "unist";
+import { visit } from "unist-util-visit";
 
 const codesandboxBaseUrl = "https://codesandbox.io/s";
-
-type Params = Record<string, string | number>;
 
 const defaultParams = {
   codemirror: 1,

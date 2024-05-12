@@ -10,16 +10,18 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
         with:
-          node-version: '18'
-          cache: yarn
-      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-      - run: yarn install --frozen-lockfile --check-files
-      - run: yarn build
-      - name: Test Default
-        run: yarn test:ci
+          version: 8.2.0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build # we don't have any other workflows to test build
+      - run: pnpm test:spec
 
   test_matrix:
     runs-on: ubuntu-latest
@@ -37,17 +39,20 @@ jobs:
           - 19.0.0-beta-1beb73de0f-20240503
           - 0.0.0-experimental-1beb73de0f-20240503
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
         with:
-          node-version: '18'
-          cache: yarn
-      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-      - run: yarn install --frozen-lockfile --check-files
-      - run: yarn build
+          version: 8.2.0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build # for macro test
       - name: Install legacy testing-library
         if: ${{ startsWith(matrix.react, '16.') || startsWith(matrix.react, '17.') }}
-        run: yarn add -D @testing-library/react@12.1.4
+        run: pnpm add -D @testing-library/react@12.1.4
       - name: Patch for React 16
         if: ${{ startsWith(matrix.react, '16.') }}
         run: |
@@ -56,5 +61,5 @@ jobs:
           sed -i~ 's/import\.meta\.env[?]\.MODE/"DEVELOPMENT".toLowerCase()/' src/*.ts src/*/*.ts src/*/*/*.ts
       - name: Test ${{ matrix.react }}
         run: |
-          yarn add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
-          yarn test:ci
+          pnpm add -D react@${{ matrix.react }} react-dom@${{ matrix.react }}
+          pnpm test:spec

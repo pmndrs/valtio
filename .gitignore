@@ -25,7 +25,3 @@ yarn-error.log*
 # misc
 .DS_Store
 .idea
-
-# pnpn & npm lockfiles
-pnpm-lock.yaml
-package-lock.json

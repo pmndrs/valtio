@@ -15,18 +15,21 @@ jobs:
         build: [cjs, esm]
         env: [development, production]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
         with:
-          node-version: '18'
-          cache: yarn
-      - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-      - run: yarn install --frozen-lockfile --check-files
-      - run: yarn build
+          version: 8.2.0
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'pnpm'
+          cache-dependency-path: '**/pnpm-lock.yaml'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
       - name: Use React 17 for production test
         if: ${{ matrix.env == 'production' }}
         run: |
-          yarn add -D react@17.0.2 react-dom@17.0.2 @testing-library/react@12.1.4
+          pnpm add -D react@17.0.2 react-dom@17.0.2 @testing-library/react@12.1.4
       - name: Patch for DEV-ONLY
         if: ${{ matrix.env == 'development' }}
         run: |
@@ -41,7 +44,7 @@ jobs:
         if: ${{ matrix.build == 'cjs' }}
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.ts
-          sed -i~ "s/\"valtio\/vanilla\"/\"..\/..\/..\/dist\/vanilla.js\"/" node_modules/derive-valtio/dist/index.umd.js
+          sed -i~ "s/\"valtio\/vanilla\"/\"..\/..\/..\/..\/..\/..\/dist\/vanilla.js\"/" node_modules/derive-valtio/dist/index.umd.js
       - name: Patch for ESM
         if: ${{ matrix.build == 'esm' }}
         run: |
@@ -53,7 +56,7 @@ jobs:
         if: ${{ matrix.build == 'umd' }}
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/umd\1.${NODE_ENV}.js')/" vitest.config.ts
-          sed -i~ "s/\"valtio\/vanilla\"/\"..\/..\/..\/dist\/umd\/vanilla.${NODE_ENV}.js\"/" node_modules/derive-valtio/dist/index.umd.js
+          sed -i~ "s/\"valtio\/vanilla\"/\"..\/..\/..\/..\/..\/..\/dist\/umd\/vanilla.${NODE_ENV}.js\"/" node_modules/derive-valtio/dist/index.umd.js
         env:
           NODE_ENV: ${{ matrix.env }}
       - name: Patch for SystemJS
@@ -64,6 +67,6 @@ jobs:
           NODE_ENV: ${{ matrix.env }}
       - name: Test ${{ matrix.build }} ${{ matrix.env }}
         run: |
-          yarn test:ci
+          pnpm test:spec
         env:
           NODE_ENV: ${{ matrix.env }}
