@@ -1,12 +1,9 @@
 const path = require('path')
 const alias = require('@rollup/plugin-alias')
-const babelPlugin = require('@rollup/plugin-babel')
 const resolve = require('@rollup/plugin-node-resolve')
 const replace = require('@rollup/plugin-replace')
-const terser = require('@rollup/plugin-terser')
 const typescript = require('@rollup/plugin-typescript')
 const { default: esbuild } = require('rollup-plugin-esbuild')
-const createBabelConfig = require('./babel.config.js')
 
 const extensions = ['.js', '.ts', '.tsx']
 const { root } = path.parse(process.cwd())
@@ -21,18 +18,8 @@ function external(id) {
   return !id.startsWith('.') && !id.startsWith(root)
 }
 
-function getBabelOptions(targets) {
-  return {
-    ...createBabelConfig({ env: (env) => env === 'build' }, targets),
-    extensions,
-    comments: false,
-    babelHelpers: 'bundled',
-  }
-}
-
-function getEsbuild(env = 'development') {
+function getEsbuild() {
   return esbuild({
-    minify: env === 'production',
     target: 'es2018',
     supported: { 'import-meta': true },
     tsconfig: path.resolve('./tsconfig.json'),
@@ -73,8 +60,6 @@ function createESMConfig(input, output) {
               'import.meta.env?.MODE':
                 '(import.meta.env ? import.meta.env.MODE : undefined)',
             }),
-        // a workround for #410
-        'use-sync-external-store/shim': 'use-sync-external-store/shim/index.js',
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
@@ -86,7 +71,7 @@ function createESMConfig(input, output) {
 function createCommonJSConfig(input, output) {
   return {
     input,
-    output: { file: `${output}.js`, format: 'cjs' },
+    output: { file: output, format: 'cjs' },
     external,
     plugins: [
       alias({ entries: entries.filter((e) => !e.find.test(input)) }),
@@ -96,65 +81,7 @@ function createCommonJSConfig(input, output) {
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
-      babelPlugin(getBabelOptions({ ie: 11 })),
-    ],
-  }
-}
-
-function createUMDConfig(input, output, env) {
-  let name = 'valtio'
-  const fileName = output.slice('dist/umd/'.length)
-  const capitalize = (s) => s.slice(0, 1).toUpperCase() + s.slice(1)
-  if (fileName !== 'index') {
-    name += fileName.replace(/(\w+)\W*/g, (_, p) => capitalize(p))
-  }
-  return {
-    input,
-    output: {
-      file: `${output}.${env}.js`,
-      format: 'umd',
-      name,
-      globals: {
-        react: 'React',
-        'valtio/vanilla': 'valtioVanilla',
-        'valtio/utils': 'valtioUtils',
-        'valtio/react': 'valtioReact',
-        'valtio/vanilla/utils': 'valtioVanillaUtils',
-        'valtio/react/utils': 'valtioReactUtils',
-      },
-    },
-    external,
-    plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
-      resolve({ extensions }),
-      replace({
-        'import.meta.env?.MODE': JSON.stringify(env),
-        delimiters: ['\\b', '\\b(?!(\\.|/))'],
-        preventAssignment: true,
-      }),
-      babelPlugin(getBabelOptions({ ie: 11 })),
-      ...(env === 'production' ? [terser()] : []),
-    ],
-  }
-}
-
-function createSystemConfig(input, output, env) {
-  return {
-    input,
-    output: {
-      file: `${output}.${env}.js`,
-      format: 'system',
-    },
-    external,
-    plugins: [
-      alias({ entries: entries.filter((e) => !e.find.test(input)) }),
-      resolve({ extensions }),
-      replace({
-        'import.meta.env?.MODE': JSON.stringify(env),
-        delimiters: ['\\b', '\\b(?!(\\.|/))'],
-        preventAssignment: true,
-      }),
-      getEsbuild(env),
+      getEsbuild(),
     ],
   }
 }
@@ -168,13 +95,8 @@ module.exports = function (args) {
   }
   return [
     ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
-    createCommonJSConfig(`src/${c}.ts`, `dist/${c}`),
-    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.js`),
+    createCommonJSConfig(`src/${c}.ts`, `dist/${c}.js`),
     createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`),
-    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'development'),
-    createUMDConfig(`src/${c}.ts`, `dist/umd/${c}`, 'production'),
-    createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'development'),
-    createSystemConfig(`src/${c}.ts`, `dist/system/${c}`, 'production'),
   ]
 }
 

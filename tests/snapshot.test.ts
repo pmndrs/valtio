@@ -1,29 +1,7 @@
 import { createProxy, getUntracked } from 'proxy-compare'
 import { TypeEqual, expectType } from 'ts-expect'
 import { describe, expect, it } from 'vitest'
-import { INTERNAL_Snapshot as Snapshot, proxy, snapshot } from 'valtio'
-
-const sleep = (ms: number) =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-
-it('getter returns value after promise is resolved', async () => {
-  const state = proxy<any>({ status: sleep(10).then(() => 'done') })
-  const snap = snapshot(state)
-
-  await new Promise((resolve) => {
-    resolve(snap.status)
-  })
-    .catch((thrown) => {
-      expect(thrown).toBeInstanceOf(Promise)
-      return thrown
-    })
-    .then((value) => {
-      expect(value).toBe('done')
-      expect(snap.status).toBe('done')
-    })
-})
+import { Snapshot, proxy, snapshot } from 'valtio'
 
 it('should return correct snapshots without subscribe', async () => {
   const child = proxy({ count: 0 })
@@ -111,15 +89,6 @@ describe('snapsoht typings', () => {
           readonly someFunction: () => number
           readonly ref: { x: unknown }
         }
-      >
-    >(true)
-  })
-
-  it('infers Promise result from property value', () => {
-    expectType<
-      TypeEqual<
-        Snapshot<{ promise: Promise<string> }>,
-        { readonly promise: string }
       >
     >(true)
   })
