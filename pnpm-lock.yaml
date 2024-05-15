@@ -30,7 +30,7 @@ devDependencies:
     version: 11.1.6(rollup@4.17.2)(tslib@2.6.2)(typescript@5.4.5)
   '@testing-library/react':
     specifier: ^15.0.7
-    version: 15.0.7(@types/react@18.2.56)(react-dom@19.0.0-beta-1beb73de0f-20240503)(react@19.0.0-beta-1beb73de0f-20240503)
+    version: 15.0.7(@types/react@18.2.56)(react-dom@19.0.0-rc-915b914b3a-20240515)(react@19.0.0-rc-915b914b3a-20240515)
   '@types/jsdom':
     specifier: ^21.1.6
     version: 21.1.6
@@ -98,11 +98,11 @@ devDependencies:
     specifier: ^3.0.0
     version: 3.0.0
   react:
-    specifier: 19.0.0-beta-1beb73de0f-20240503
-    version: 19.0.0-beta-1beb73de0f-20240503
+    specifier: 19.0.0-rc-915b914b3a-20240515
+    version: 19.0.0-rc-915b914b3a-20240515
   react-dom:
-    specifier: 19.0.0-beta-1beb73de0f-20240503
-    version: 19.0.0-beta-1beb73de0f-20240503(react@19.0.0-beta-1beb73de0f-20240503)
+    specifier: 19.0.0-rc-915b914b3a-20240515
+    version: 19.0.0-rc-915b914b3a-20240515(react@19.0.0-rc-915b914b3a-20240515)
   redux:
     specifier: ^5.0.1
     version: 5.0.1
@@ -979,7 +979,7 @@ packages:
       pretty-format: 27.5.1
     dev: true
 
-  /@testing-library/react@15.0.7(@types/react@18.2.56)(react-dom@19.0.0-beta-1beb73de0f-20240503)(react@19.0.0-beta-1beb73de0f-20240503):
+  /@testing-library/react@15.0.7(@types/react@18.2.56)(react-dom@19.0.0-rc-915b914b3a-20240515)(react@19.0.0-rc-915b914b3a-20240515):
     resolution: {integrity: sha512-cg0RvEdD1TIhhkm1IeYMQxrzy0MtUNfa3minv4MjbgcYzJAZ7yD0i0lwoPOTPr+INtiXFezt2o8xMSnyHhEn2Q==}
     engines: {node: '>=18'}
     peerDependencies:
@@ -994,8 +994,8 @@ packages:
       '@testing-library/dom': 10.1.0
       '@types/react': 18.2.56
       '@types/react-dom': 18.3.0
-      react: 19.0.0-beta-1beb73de0f-20240503
-      react-dom: 19.0.0-beta-1beb73de0f-20240503(react@19.0.0-beta-1beb73de0f-20240503)
+      react: 19.0.0-rc-915b914b3a-20240515
+      react-dom: 19.0.0-rc-915b914b3a-20240515(react@19.0.0-rc-915b914b3a-20240515)
     dev: true
 
   /@types/aria-query@5.0.4:
@@ -3335,13 +3335,13 @@ packages:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
     dev: true
 
-  /react-dom@19.0.0-beta-1beb73de0f-20240503(react@19.0.0-beta-1beb73de0f-20240503):
-    resolution: {integrity: sha512-rO+shDuY8lkywpDDeQswtY//YnqIif4bpkkCQLDCwGqU+wk8m4PLJUeVEwzdfTQ2M8B74Urgh9P6WGnWuhAblQ==}
+  /react-dom@19.0.0-rc-915b914b3a-20240515(react@19.0.0-rc-915b914b3a-20240515):
+    resolution: {integrity: sha512-Njv9p2b7/3ZEk7hcWAzgxbLfYbYJfI01bwI0V+a1WKbhhxwth1o2mQejIsUtnDwkXZ34Oej8rIY5Z93pUfSCdQ==}
     peerDependencies:
-      react: 19.0.0-beta-1beb73de0f-20240503
+      react: 19.0.0-rc-915b914b3a-20240515
     dependencies:
-      react: 19.0.0-beta-1beb73de0f-20240503
-      scheduler: 0.25.0-beta-1beb73de0f-20240503
+      react: 19.0.0-rc-915b914b3a-20240515
+      scheduler: 0.25.0-rc-915b914b3a-20240515
     dev: true
 
   /react-is@16.13.1:
@@ -3356,8 +3356,8 @@ packages:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
     dev: true
 
-  /react@19.0.0-beta-1beb73de0f-20240503:
-    resolution: {integrity: sha512-8/w0xugUoj/eE/270K+2DU4tbGG1XYKejW9yxzJCunIQfpSos80wlPT4F6rFuPiQLko46csH7F3zac6zQWvotg==}
+  /react@19.0.0-rc-915b914b3a-20240515:
+    resolution: {integrity: sha512-/XKPm2pbDBheMbNUV/uRoL0/RZXg+CCyen3YBjDetySqGZjsRBQKKtK9sWMjQO8J6y8PoC02HzjAP4/OQ2Wmow==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -3525,8 +3525,8 @@ packages:
       xmlchars: 2.2.0
     dev: true
 
-  /scheduler@0.25.0-beta-1beb73de0f-20240503:
-    resolution: {integrity: sha512-DjdpTSyuA41YgJxUfivFeOrtP94k+k2f51IOTY+AWELpiTKDudU/3lkmx9O9rt1zj5o2dIQZFapNcKReRQcSew==}
+  /scheduler@0.25.0-rc-915b914b3a-20240515:
+    resolution: {integrity: sha512-NeqcaiiRfnXjrrtI8CxyU9FlT9UTdRvpSCy/fnAK+hwwrMjk6BhtCmdziCOkCat5bI3p6uUIwR2NNCK2F/1bZg==}
     dev: true
 
   /semver@6.3.1:
