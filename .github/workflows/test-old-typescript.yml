@@ -23,14 +23,6 @@ jobs:
           - 4.7.4
           - 4.6.4
           - 4.5.5
-          - 4.4.4
-          - 4.3.5
-          - 4.2.3
-          - 4.1.5
-          - 4.0.5
-          - 3.9.7
-          - 3.8.3
-          - 3.7.5
     steps:
       - uses: actions/checkout@v3
       - uses: pnpm/action-setup@v2
@@ -45,39 +37,12 @@ jobs:
       - run: pnpm build
       - name: Patch for Old TS
         run: |
-          sed -i~ 's/\/\/ @ts-expect-error.*\[LATEST-TS-ONLY\]//' tests/*.tsx
-          sed -i~ 's/"target":/"skipLibCheck":true,"target":/' tsconfig.json
-          sed -i~ 's/"exactOptionalPropertyTypes": true,//' tsconfig.json
           sed -i~ 's/"moduleResolution": "bundler",/"moduleResolution": "node",/' tsconfig.json
           sed -i~ 's/"allowImportingTsExtensions": true,//' tsconfig.json
-          sed -i~ 's/"valtio": \["\.\/src\/index\.ts"\],/"valtio": [".\/dist\/ts3.4\/index.d.ts"],/' tsconfig.json
-          sed -i~ 's/"valtio\/\*": \["\.\/src\/\*\.ts"\]/"valtio\/*": [".\/dist\/ts3.4\/*.d.ts"]/' tsconfig.json
+          sed -i~ 's/"valtio": \["\.\/src\/index\.ts"\],/"valtio": [".\/dist\/index.d.ts"],/' tsconfig.json
+          sed -i~ 's/"valtio\/\*": \["\.\/src\/\*\.ts"\]/"valtio\/*": [".\/dist\/*.d.ts"]/' tsconfig.json
           sed -i~ 's/"include": .*/"include": ["src\/types.d.ts", "dist\/**\/*", "tests\/**\/*"],/' tsconfig.json
-      - name: Patch for Older TS
-        if: ${{ matrix.typescript == '4.4.4' ||matrix.typescript == '4.3.5' ||  matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
-        run: |
-          sed -i~ 's/import\.meta\.env/(import.meta.env as any)/' tests/*.tsx
-          sed -i~ '1s/^/import React from "react";/' tests/*.tsx
-          sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' tsconfig.json
-          sed -i~ 's/"noUncheckedIndexedAccess": true,//' tsconfig.json
-          pnpm json -I -f package.json -e "this.resolutions={}; this.resolutions['pretty-format']='25.5.0'; this.resolutions['@types/prettier']='2.4.2'; this.resolutions['@types/yargs']='17.0.13'; this.resolutions['@types/node']='18.11.18';"
-          pnpm add -D pretty-format@25.5.0 @types/prettier@2.4.2 @types/yargs@17.0.13 @types/node@18.11.18 @types/babel__traverse@7.18.2
-          rm -r tests/macro-vite.*
       - name: Install old TypeScript
-        run: |
-          pnpm add -D typescript@${{ matrix.typescript }}
-          rm node_modules/.pnpm/parse5@*/node_modules/parse5/dist/*.d.ts
-      - name: Patch testing setup for Old TS
-        if: ${{ matrix.typescript == '4.4.4' || matrix.typescript == '4.3.5' || matrix.typescript == '4.2.3' || matrix.typescript == '4.1.5' ||  matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
-        run: |
-          pnpm add -D vitest@0.33.0 @vitest/coverage-v8@0.33.0 @vitest/ui@0.33.0
-      - name: Patch testing setup for older TS
-        if: ${{ matrix.typescript == '4.0.5' || startsWith(matrix.typescript, '3.') }}
-        run: |
-          pnpm add -D @testing-library/user-event@12.1.7 @testing-library/react@11.0.4
-          rm node_modules/vitest/dist/*.d.ts
-          rm node_modules/.pnpm/@types+babel__traverse@*/node_modules/@types/babel__traverse/*.d.ts
-          echo "declare module 'vitest'" >> ./src/types.d.ts
+        run: pnpm add -D typescript@${{ matrix.typescript }}
       - name: Test ${{ matrix.typescript }}
-        run: |
-          pnpm test:types
+        run: pnpm test:types

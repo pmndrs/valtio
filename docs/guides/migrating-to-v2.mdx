@@ -1,0 +1,83 @@
+---
+title: 'How to Migrate to v2 from v1'
+---
+
+# How to Migrate to v2 from v1
+
+## Changes in v2
+
+React 19 officially introduces the `use` hook to handle promises.
+Valtio v1 internally handled promises, which is no longer recommended.
+In Valtio v2, promises are not handled internally,
+and developers should explicitly use the `use` hook to manage promises.
+
+Valtio v2 also introduces several changes in its design choices:
+
+First, the behavior of `proxy(obj)` has changed. In v1, it was a pure function and deeply copied `obj`. In v2, it is an impure function and deeply modifies `obj`. Generally, reusing `obj` is not recommended, and if you have followed this convention, nothing will break.
+
+Second, the behavior of `useSnapshot()` has been altered. Although it is a subtle change, it is less optimized to ensure compatibility with `useMemo` and the upcoming React compiler. The change may lead to extra re-renders in some edge cases, but it might not be noticeable.
+
+Other notable changes to keep things updated and fresh include:
+
+- Removal of all deprecated features
+- Requirement of React version 18 and above
+- Requirement of TypeScript version 4.5 and above
+- The build target updated to ES2018
+
+## Migration for breaking changes
+
+### Resolving promises
+
+```js
+// v1
+import { proxy, useSnapshot } from 'valtio'
+
+const state = proxy({ data: fetch(...).then((res) => res.json()) })
+
+const Component = () => {
+  const snap = useSnapshot(state)
+  return <>{JSON.stringify(snap.data)}</>
+}
+```
+
+```js
+// v2
+import { use } from 'react'
+import { proxy, useSnapshot } from 'valtio'
+
+const state = proxy({ data: fetch(...).then((res) => res.json()) })
+
+const Component = () => {
+  const snap = useSnapshot(state)
+  return <>{JSON.stringify(use(snap.data))}</>
+  // If `data` is not an object, you can directly embed it in JSX.
+  // return <>{snap.data}</>
+}
+```
+
+### Impure `proxy(obj)`
+
+```js
+// v1
+import { proxy } from 'valtio'
+
+const state = proxy({ count: 1, obj: { text: 'hi' } })
+state.obj = { text: 'hello' }
+```
+
+```js
+// v2
+import { proxy } from 'valtio'
+import { deepClone } from 'valtio/utils'
+
+const state = proxy(deepClone({ count: 1, obj: { text: 'hi' } }))
+state.obj = deepClone({ text: 'hello' })
+```
+
+Note that `deepClone` is unnecessary unless you are reusing the object.
+It is generally recommended to avoid reusing the object.
+
+## Links
+
+- https://github.com/pmndrs/valtio/discussions/703
+- https://github.com/pmndrs/valtio/pull/810
