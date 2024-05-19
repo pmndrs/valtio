@@ -28,29 +28,15 @@ type SnapshotIgnore =
   | AnyFunction
   | Primitive
 
-type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
+export type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
   ? S
   : T extends SnapshotIgnore
     ? T
-    : T extends Promise<unknown>
-      ? Awaited<T>
-      : T extends object
-        ? { readonly [K in keyof T]: Snapshot<T[K]> }
-        : T
+    : T extends object
+      ? { readonly [K in keyof T]: Snapshot<T[K]> }
+      : T
 
-/**
- * This is not a public API.
- * It can be changed without any notice.
- */
-export type INTERNAL_Snapshot<T> = Snapshot<T>
-
-type HandlePromise = <P extends Promise<any>>(promise: P) => Awaited<P>
-
-type CreateSnapshot = <T extends object>(
-  target: T,
-  version: number,
-  handlePromise?: HandlePromise,
-) => T
+type CreateSnapshot = <T extends object>(target: T, version: number) => T
 
 type RemoveListener = () => void
 type AddListener = (listener: Listener) => RemoveListener
@@ -85,29 +71,11 @@ const buildProxyFunction = (
     !(x instanceof RegExp) &&
     !(x instanceof ArrayBuffer),
 
-  defaultHandlePromise = <P extends Promise<any>>(
-    promise: P & {
-      status?: 'pending' | 'fulfilled' | 'rejected'
-      value?: Awaited<P>
-      reason?: unknown
-    },
-  ) => {
-    switch (promise.status) {
-      case 'fulfilled':
-        return promise.value as Awaited<P>
-      case 'rejected':
-        throw promise.reason
-      default:
-        throw promise
-    }
-  },
-
   snapCache = new WeakMap<object, [version: number, snap: unknown]>(),
 
   createSnapshot: CreateSnapshot = <T extends object>(
     target: T,
     version: number,
-    handlePromise: HandlePromise = defaultHandlePromise,
   ): T => {
     const cache = snapCache.get(target)
     if (cache?.[0] === version) {
@@ -137,18 +105,11 @@ const buildProxyFunction = (
       }
       if (refSet.has(value as object)) {
         markToTrack(value as object, false) // mark not to track
-      } else if (value instanceof Promise) {
-        delete desc.value
-        desc.get = () => handlePromise(value)
       } else if (proxyStateMap.has(value as object)) {
         const [target, ensureVersion] = proxyStateMap.get(
           value as object,
         ) as ProxyState
-        desc.value = createSnapshot(
-          target,
-          ensureVersion(),
-          handlePromise,
-        ) as Snapshot<T>
+        desc.value = createSnapshot(target, ensureVersion()) as Snapshot<T>
       }
       Object.defineProperty(snap, key, desc)
     })
@@ -159,11 +120,11 @@ const buildProxyFunction = (
 
   versionHolder = [1, 1] as [number, number],
 
-  proxyFunction = <T extends object>(initialObject: T): T => {
-    if (!isObject(initialObject)) {
+  proxyFunction = <T extends object>(baseObject: T): T => {
+    if (!isObject(baseObject)) {
       throw new Error('object required')
     }
-    const found = proxyCache.get(initialObject) as T | undefined
+    const found = proxyCache.get(baseObject) as T | undefined
     if (found) {
       return found
     }
@@ -199,18 +160,23 @@ const buildProxyFunction = (
       string | symbol,
       readonly [ProxyState, RemoveListener?]
     >()
-    const addPropListener = (
-      prop: string | symbol,
-      propProxyState: ProxyState,
-    ) => {
-      if (import.meta.env?.MODE !== 'production' && propProxyStates.has(prop)) {
-        throw new Error('prop listener already exists')
-      }
-      if (listeners.size) {
-        const remove = propProxyState[3](createPropListener(prop))
-        propProxyStates.set(prop, [propProxyState, remove])
-      } else {
-        propProxyStates.set(prop, [propProxyState])
+    const addPropListener = (prop: string | symbol, propValue: unknown) => {
+      const propProxyState =
+        !refSet.has(propValue as object) &&
+        proxyStateMap.get(propValue as object)
+      if (propProxyState) {
+        if (
+          import.meta.env?.MODE !== 'production' &&
+          propProxyStates.has(prop)
+        ) {
+          throw new Error('prop listener already exists')
+        }
+        if (listeners.size) {
+          const remove = propProxyState[3](createPropListener(prop))
+          propProxyStates.set(prop, [propProxyState, remove])
+        } else {
+          propProxyStates.set(prop, [propProxyState])
+        }
       }
     }
     const removePropListener = (prop: string | symbol) => {
@@ -244,9 +210,7 @@ const buildProxyFunction = (
       }
       return removeListener
     }
-    const baseObject = Array.isArray(initialObject)
-      ? []
-      : Object.create(Object.getPrototypeOf(initialObject))
+    let initializing = true
     const handler: ProxyHandler<T> = {
       deleteProperty(target: T, prop: string | symbol) {
         const prevValue = Reflect.get(target, prop)
@@ -258,7 +222,7 @@ const buildProxyFunction = (
         return deleted
       },
       set(target: T, prop: string | symbol, value: any, receiver: object) {
-        const hasPrevValue = Reflect.has(target, prop)
+        const hasPrevValue = !initializing && Reflect.has(target, prop)
         const prevValue = Reflect.get(target, prop, receiver)
         if (
           hasPrevValue &&
@@ -289,11 +253,7 @@ const buildProxyFunction = (
           if (!proxyStateMap.has(value) && canProxy(value)) {
             nextValue = proxyFunction(value)
           }
-          const childProxyState =
-            !refSet.has(nextValue) && proxyStateMap.get(nextValue)
-          if (childProxyState) {
-            addPropListener(prop, childProxyState)
-          }
+          addPropListener(prop, nextValue)
         }
         Reflect.set(target, prop, nextValue, receiver)
         notifyUpdate(['set', [prop], value, prevValue])
@@ -301,7 +261,7 @@ const buildProxyFunction = (
       },
     }
     const proxyObject = newProxy(baseObject, handler)
-    proxyCache.set(initialObject, proxyObject)
+    proxyCache.set(baseObject, proxyObject)
     const proxyState: ProxyState = [
       baseObject,
       ensureVersion,
@@ -309,20 +269,16 @@ const buildProxyFunction = (
       addListener,
     ]
     proxyStateMap.set(proxyObject, proxyState)
-    Reflect.ownKeys(initialObject).forEach((key) => {
+    Reflect.ownKeys(baseObject).forEach((key) => {
       const desc = Object.getOwnPropertyDescriptor(
-        initialObject,
+        baseObject,
         key,
       ) as PropertyDescriptor
-      if ('value' in desc) {
-        proxyObject[key as keyof T] = initialObject[key as keyof T]
-        // We need to delete desc.value because we already set it,
-        // and delete desc.writable because we want to write it again.
-        delete desc.value
-        delete desc.writable
+      if ('value' in desc && desc.writable) {
+        proxyObject[key as keyof T] = baseObject[key as keyof T]
       }
-      Object.defineProperty(baseObject, key, desc)
     })
+    initializing = false
     return proxyObject
   },
 ) =>
@@ -336,7 +292,6 @@ const buildProxyFunction = (
     objectIs,
     newProxy,
     canProxy,
-    defaultHandlePromise,
     snapCache,
     createSnapshot,
     proxyCache,
@@ -345,8 +300,8 @@ const buildProxyFunction = (
 
 const [defaultProxyFunction] = buildProxyFunction()
 
-export function proxy<T extends object>(initialObject: T = {} as T): T {
-  return defaultProxyFunction(initialObject)
+export function proxy<T extends object>(baseObject: T = {} as T): T {
+  return defaultProxyFunction(baseObject)
 }
 
 export function getVersion(proxyObject: unknown): number | undefined {
@@ -390,16 +345,13 @@ export function subscribe<T extends object>(
   }
 }
 
-export function snapshot<T extends object>(
-  proxyObject: T,
-  handlePromise?: HandlePromise,
-): Snapshot<T> {
+export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
   const proxyState = proxyStateMap.get(proxyObject as object)
   if (import.meta.env?.MODE !== 'production' && !proxyState) {
     console.warn('Please use proxy object')
   }
   const [target, ensureVersion, createSnapshot] = proxyState as ProxyState
-  return createSnapshot(target, ensureVersion(), handlePromise) as Snapshot<T>
+  return createSnapshot(target, ensureVersion()) as Snapshot<T>
 }
 
 export function ref<T extends object>(obj: T) {

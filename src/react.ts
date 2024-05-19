@@ -1,28 +1,19 @@
-/// <reference types="react/experimental" />
-
-import ReactExports, {
+import {
   useCallback,
   useDebugValue,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
+  useSyncExternalStore,
 } from 'react'
 import {
   affectedToPathList,
   createProxy as createProxyToCompare,
   isChanged,
 } from 'proxy-compare'
-// import { useSyncExternalStore } from 'use-sync-external-store/shim'
-// This doesn't work in ESM, because use-sync-external-store only exposes CJS.
-// See: https://github.com/pmndrs/valtio/issues/452
-// The following is a workaround until ESM is supported.
-// eslint-disable-next-line import/extensions
-import useSyncExternalStoreExports from 'use-sync-external-store/shim'
 import { snapshot, subscribe } from './vanilla.ts'
-import type { INTERNAL_Snapshot as Snapshot } from './vanilla.ts'
-
-const { use } = ReactExports
-const { useSyncExternalStore } = useSyncExternalStoreExports
+import type { Snapshot } from './vanilla.ts'
 
 const useAffectedDebugValue = (
   state: object,
@@ -120,8 +111,10 @@ export function useSnapshot<T extends object>(
   options?: Options,
 ): Snapshot<T> {
   const notifyInSync = options?.sync
+  // per-proxy & per-hook affected, it's not ideal but memo compatible
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const affected = useMemo(() => new WeakMap<object, unknown>(), [proxyObject])
   const lastSnapshot = useRef<Snapshot<T>>()
-  const lastAffected = useRef<WeakMap<object, unknown>>()
   let inRender = true
   const currSnapshot = useSyncExternalStore(
     useCallback(
@@ -133,16 +126,15 @@ export function useSnapshot<T extends object>(
       [proxyObject, notifyInSync],
     ),
     () => {
-      const nextSnapshot = snapshot(proxyObject, use)
+      const nextSnapshot = snapshot(proxyObject)
       try {
         if (
           !inRender &&
           lastSnapshot.current &&
-          lastAffected.current &&
           !isChanged(
             lastSnapshot.current,
             nextSnapshot,
-            lastAffected.current,
+            affected,
             new WeakMap(),
           )
         ) {
@@ -154,23 +146,16 @@ export function useSnapshot<T extends object>(
       }
       return nextSnapshot
     },
-    () => snapshot(proxyObject, use),
+    () => snapshot(proxyObject),
   )
   inRender = false
-  const currAffected = new WeakMap()
-  useEffect(() => {
+  useLayoutEffect(() => {
     lastSnapshot.current = currSnapshot
-    lastAffected.current = currAffected
   })
   if (import.meta.env?.MODE !== 'production') {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    useAffectedDebugValue(currSnapshot as object, currAffected)
+    useAffectedDebugValue(currSnapshot as object, affected)
   }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
-  return createProxyToCompare(
-    currSnapshot,
-    currAffected,
-    proxyCache,
-    targetCache,
-  )
+  return createProxyToCompare(currSnapshot, affected, proxyCache, targetCache)
 }

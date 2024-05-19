@@ -21,19 +21,6 @@ type Options = {
   name?: string
 } & Config
 
-export function devtools<T extends object>(
-  proxyObject: T,
-  options?: Options,
-): (() => void) | undefined
-
-/**
- * @deprecated Please use { name } option
- */
-export function devtools<T extends object>(
-  proxyObject: T,
-  name?: string,
-): (() => void) | undefined
-
 /**
  * devtools
  *
@@ -47,14 +34,8 @@ export function devtools<T extends object>(
  */
 export function devtools<T extends object>(
   proxyObject: T,
-  options?: Options | string,
-) {
-  if (typeof options === 'string') {
-    console.warn(
-      'string name option is deprecated, use { name }. https://github.com/pmndrs/valtio/pull/400',
-    )
-    options = { name: options }
-  }
+  options?: Options,
+): (() => void) | undefined {
   const { enabled, name = '', ...rest } = options || {}
 
   let extension: (typeof window)['__REDUX_DEVTOOLS_EXTENSION__'] | false
