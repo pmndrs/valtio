@@ -249,6 +249,7 @@ export function getDocsNav(): NavigationTree {
       pages["async"],
       pages["component-state"],
       pages["computed-properties"],
+      pages["migrating-to-v2"],
     ],
     API: {
       Basic: [pages["proxy"], pages["useSnapshot"]],
