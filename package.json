@@ -106,6 +106,7 @@
   "homepage": "https://github.com/pmndrs/valtio",
   "packageManager": "pnpm@8.15.0",
   "dependencies": {
+    "eslint-plugin-react-compiler": "0.0.0-experimental-51a85ea-20240601",
     "proxy-compare": "^3.0.0"
   },
   "devDependencies": {
