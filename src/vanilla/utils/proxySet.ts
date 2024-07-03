@@ -2,7 +2,7 @@ import { proxy } from '../../vanilla.ts'
 
 // properties that we don't want to expose to the end-user
 type InternalProxySet<T> = Set<T> & {
-  data: T[]
+  data: boolean
   toJSON: object
 }
 
@@ -22,59 +22,52 @@ type InternalProxySet<T> = Set<T> & {
  * })
  */
 export function proxySet<T>(initialValues?: Iterable<T> | null) {
+  const s = new Set(initialValues)
   const set: InternalProxySet<T> = proxy({
-    data: Array.from(new Set(initialValues)),
+    data: false as boolean,
     has(value) {
-      return this.data.indexOf(value) !== -1
+      return s.has(value)
     },
     add(value) {
-      let hasProxy = false
-      if (typeof value === 'object' && value !== null) {
-        hasProxy = this.data.indexOf(proxy(value as T & object)) !== -1
-      }
-      if (this.data.indexOf(value) === -1 && !hasProxy) {
-        this.data.push(value)
-      }
+      s.add(value)
+      this.data = !this.data
       return this
     },
     delete(value) {
-      const index = this.data.indexOf(value)
-      if (index === -1) {
-        return false
+      const result = s.delete(value)
+      if (result) {
+        this.data = !this.data
       }
-      this.data.splice(index, 1)
-      return true
+      return result
     },
     clear() {
-      this.data.splice(0)
+      s.clear()
+      this.data = !this.data
     },
     get size() {
-      return this.data.length
+      return s.size
     },
     forEach(cb) {
-      this.data.forEach((value) => {
-        cb(value, value, this)
-      })
+      s.forEach(cb)
     },
     get [Symbol.toStringTag]() {
       return 'Set'
     },
     toJSON() {
-      return new Set(this.data)
+      return new Set(s)
     },
     [Symbol.iterator]() {
-      return this.data[Symbol.iterator]()
+      return s[Symbol.iterator]()
     },
     values() {
-      return this.data.values()
+      return s.values()
     },
     keys() {
       // for Set.keys is an alias for Set.values()
-      return this.data.values()
+      return s.keys()
     },
     entries() {
-      // array.entries returns [index, value] while Set [value, value]
-      return new Set(this.data).entries()
+      return s.entries()
     },
   })
 

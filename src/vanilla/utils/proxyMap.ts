@@ -1,9 +1,7 @@
 import { proxy } from '../../vanilla.ts'
 
-type KeyValRecord<K, V> = [key: K, value: V]
-
 type InternalProxyMap<K, V> = Map<K, V> & {
-  data: KeyValRecord<K, V>[]
+  data: boolean
   toJSON: object
 }
 
@@ -36,53 +34,48 @@ type InternalProxyMap<K, V> = Map<K, V> & {
  * state.get(key) //undefined
  */
 export function proxyMap<K, V>(entries?: Iterable<readonly [K, V]> | null) {
+  const m = new Map(entries)
   const map: InternalProxyMap<K, V> = proxy({
-    data: Array.from(entries || []) as KeyValRecord<K, V>[],
+    data: false as boolean,
     has(key) {
-      return this.data.some((p) => p[0] === key)
+      return m.has(key)
     },
     set(key, value) {
-      const record = this.data.find((p) => p[0] === key)
-      if (record) {
-        record[1] = value
-      } else {
-        this.data.push([key, value])
-      }
+      m.set(key, value)
+      this.data = !this.data
       return this
     },
     get(key) {
-      return this.data.find((p) => p[0] === key)?.[1]
+      return m.get(key)
     },
     delete(key) {
-      const index = this.data.findIndex((p) => p[0] === key)
-      if (index === -1) {
-        return false
+      const result = m.delete(key)
+      if (result) {
+        this.data = !this.data
       }
-      this.data.splice(index, 1)
-      return true
+      return result
     },
     clear() {
-      this.data.splice(0)
+      m.clear()
+      this.data = !this.data
     },
     get size() {
-      return this.data.length
+      return m.size
     },
     toJSON() {
-      return new Map(this.data)
+      return new Map(m)
     },
     forEach(cb) {
-      this.data.forEach((p) => {
-        cb(p[1], p[0], this)
-      })
+      m.forEach(cb)
     },
     keys() {
-      return this.data.map((p) => p[0]).values()
+      return m.keys()
     },
     values() {
-      return this.data.map((p) => p[1]).values()
+      return m.values()
     },
     entries() {
-      return new Map(this.data).entries()
+      return m.entries()
     },
     get [Symbol.toStringTag]() {
       return 'Map'
