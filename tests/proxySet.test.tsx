@@ -323,6 +323,35 @@ describe('delete', () => {
   })
 })
 
+describe('performance', () => {
+  it('should not be slow as linear growth', () => {
+    const state = proxySet()
+
+    let operation100Time: number
+    {
+      const start = performance.now()
+      for (let i = 0; i < 100; i++) {
+        state.add(i)
+      }
+      const end = performance.now()
+      operation100Time = end - start
+    }
+
+    let operation1000Time: number
+    {
+      const start = performance.now()
+      for (let i = 0; i < 1000; i++) {
+        state.add(i)
+      }
+      const end = performance.now()
+      operation1000Time = end - start
+    }
+
+    const ratio = operation1000Time / operation100Time
+    expect(ratio).toBeLessThan(10)
+  })
+})
+
 describe('proxySet internal', () => {
   it('should be sealed', () => {
     expect(Object.isSealed(proxySet())).toBe(true)
