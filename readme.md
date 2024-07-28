@@ -379,9 +379,9 @@ Valtio also works without React. See [vanilla](#use-it-vanilla).
 #### Recipes
 
 Valtio is unopinionated about best practices.
-The community is working on recipes on wiki pages.
+The community is working on recipes.
 
-- [How to organize actions](https://github.com/pmndrs/valtio/wiki/How-to-organize-actions)
-- [How to persist states](https://github.com/pmndrs/valtio/wiki/How-to-persist-states)
-- [How to use with context](https://github.com/pmndrs/valtio/wiki/How-to-use-with-context)
-- [How to split and compose states](https://github.com/pmndrs/valtio/wiki/How-to-split-and-compose-states)
+- [How to organize actions](https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-organize-actions.mdx)
+- [How to persist states](https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-persist-states.mdx)
+- [How to use with context](https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-use-with-context.mdx)
+- [How to split and compose states](https://github.com/pmndrs/valtio/blob/main/docs/how-tos/how-to-split-and-compose-states.mdx)
