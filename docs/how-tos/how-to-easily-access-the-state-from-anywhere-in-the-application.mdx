@@ -78,6 +78,23 @@ module.exports = {
      (state, useSnapshot, subscribe)
    } from '@state';` from anywhere inside your application.
 
+## Using Typescript
+
+Similar to babel above, if you are using typescript in your project, you can add the paths to tsconfig.json
+```json
+{
+  {
+    "compilerOptions": {
+      // ...
+      "paths": {
+        "@/*": ["./src"]
+      }
+      // ...
+    }
+  }
+}
+```
+
 ## Using a third party library
 
 You can use a third party library to create aliases and achieve the same result.
