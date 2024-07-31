@@ -46,21 +46,21 @@ const Component = () => {
 
 ### Impure `proxy(obj)`
 
-```js
-// v1
-import { proxy } from 'valtio'
-
-const state = proxy({ count: 1, obj: { text: 'hi' } })
-state.obj = { text: 'hello' }
+```diff
+- // v1
+- import { proxy } from 'valtio'
+-
+- const state = proxy({ count: 1, obj: { text: 'hi' } })
+- state.obj = { text: 'hello' }
 ```
 
-```js
-// v2
-import { proxy } from 'valtio'
-import { deepClone } from 'valtio/utils'
-
-const state = proxy(deepClone({ count: 1, obj: { text: 'hi' } }))
-state.obj = deepClone({ text: 'hello' })
+```diff
++ // v2
++ import { proxy } from 'valtio'
++ import { deepClone } from 'valtio/utils'
++
++ const state = proxy(deepClone({ count: 1, obj: { text: 'hi' } }))
++ state.obj = deepClone({ text: 'hello' })
 ```
 
 Note that `deepClone` is unnecessary unless you are reusing the object.
