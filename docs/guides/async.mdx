@@ -4,9 +4,9 @@ section: 'Advanced'
 description: 'Working with promises and Suspense'
 ---
 
-# async
+# `async`
 
-#### Promises
+## Promises
 
 Promises may be values in a proxied object. They will be resolved in calls to `snapshot`.
 
@@ -28,9 +28,9 @@ subscribe(store, () => {
 })
 ```
 
-#### Suspend your React components
+## Suspend your React components
 
-Valtio supports React Suspense and will throw promises that you access within a components render function. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
+Valtio supports React Suspense and will throw promises that you access within a components render function. This eliminates all the async back-and-forth. You can access your data directly while the parent is responsible for fallback state and error handling.
 
 ```jsx
 const state = proxy({ post: fetch(url).then((res) => res.json()) })

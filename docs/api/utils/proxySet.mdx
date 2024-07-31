@@ -5,11 +5,11 @@ subSection: 'Utils'
 description: ''
 ---
 
-# proxySet
+# `proxySet`
 
-#### use a js Set with Valtio
+## Use a js `Set` with Valtio
 
-This utility creates a proxy which mimics the native Set behavior. The API is the same as the native Set API.
+This utility creates a proxy which mimics the native `Set` behavior. The API is the same as the native `Set` API.
 
 ```js
 import { proxySet } from 'valtio/utils'
@@ -21,7 +21,7 @@ state.delete(1)
 state.forEach((v) => console.log(v)) // --->  2,3,4
 ```
 
-#### Nesting
+## Nesting
 
 It can be used inside a `proxy` as well.
 

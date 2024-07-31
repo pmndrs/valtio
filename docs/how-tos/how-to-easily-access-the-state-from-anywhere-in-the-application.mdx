@@ -29,7 +29,7 @@ const state = proxy({
 export { state, useSnapshot, subscribe }
 ```
 
-2. Create the file `/jsconfig.json`:
+2. Create the file `/jsconfig.json` (or `/tsconfig.json` if you're using typescript):
 
 ```json
 {
@@ -44,6 +44,12 @@ export { state, useSnapshot, subscribe }
   "exclude": ["node_modules"]
 }
 ```
+
+> [!TIP] Using TypeScript? Here are some links for reference
+> https://www.totaltypescript.com/tsconfig-cheat-sheet<br />
+> https://github.com/tsconfig/bases<br />
+> https://www.typescriptlang.org/tsconfig/
+
 
 3. Add the **Module Resolver** plugin the plugins in your `babel.config.js`:
 
@@ -77,24 +83,6 @@ module.exports = {
    That's it you will now be able to do `import {
      (state, useSnapshot, subscribe)
    } from '@state';` from anywhere inside your application.
-
-## Using Typescript
-
-Similar to babel above, if you are using typescript in your project, you can add the paths to tsconfig.json
-
-```json
-{
-  {
-    "compilerOptions": {
-      // ...
-      "paths": {
-        "@/*": ["./src"]
-      }
-      // ...
-    }
-  }
-}
-```
 
 ## Using a third party library
 
