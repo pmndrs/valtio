@@ -102,10 +102,10 @@ const createSnapshotDefault = <T extends object>(
 }
 
 const createHandlerDefault = <T extends object>(
-  getInitializing: () => boolean,
+  isInitializing: () => boolean,
   addPropListener: (prop: string | symbol, propValue: unknown) => void,
   removePropListener: (prop: string | symbol) => void,
-  notifyUpdate: (op: Op, nextVersion?: number) => void,
+  notifyUpdate: (op: Op) => void,
 ): ProxyHandler<T> => ({
   deleteProperty(target: T, prop: string | symbol) {
     const prevValue = Reflect.get(target, prop)
@@ -117,7 +117,7 @@ const createHandlerDefault = <T extends object>(
     return deleted
   },
   set(target: T, prop: string | symbol, value: any, receiver: object) {
-    const hasPrevValue = !getInitializing() && Reflect.has(target, prop)
+    const hasPrevValue = !isInitializing() && Reflect.has(target, prop)
     const prevValue = Reflect.get(target, prop, receiver)
     if (
       hasPrevValue &&
