@@ -48,7 +48,9 @@ This is technically same as the previous one. It doesn't touch the property of `
 
 In summary, if a snapshot object (nested or not) is not accessed with any properties, it assumes the entire object is accessed, so any change inside the object will trigger re-render.
 
-## Using `React.memo` with object props may result in unexpected behavior
+## Using `React.memo` with object props may result in unexpected behavior (v1 only)
+
+⚠️ This behavior is fixed in v2.
 
 The `snap` variable returned by `useSnapshot(state)` is tracked for render optimization.
 If you pass the `snap` or some objects in `snap` to a component with `React.memo`,
