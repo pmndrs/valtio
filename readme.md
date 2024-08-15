@@ -163,7 +163,7 @@ const stop = watch((get) => {
 
 #### Suspend your components
 
-Valtio is compatible with React 19 use hook. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
+Valtio is compatible with React 19 `use` hook. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
 
 ```jsx
 import { use } from 'react' // React 19
