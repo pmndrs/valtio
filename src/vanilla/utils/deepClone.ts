@@ -1,4 +1,4 @@
-import { unstable_buildProxyFunction as buildProxyFunction } from '../../vanilla.ts'
+import { unstable_getInternalStates } from '../../vanilla.ts'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -6,7 +6,7 @@ const isObject = (x: unknown): x is object =>
 let defaultRefSet: WeakSet<object> | undefined
 const getDefaultRefSet = (): WeakSet<object> => {
   if (!defaultRefSet) {
-    defaultRefSet = buildProxyFunction()[2]
+    defaultRefSet = unstable_getInternalStates().refSet
   }
   return defaultRefSet
 }
