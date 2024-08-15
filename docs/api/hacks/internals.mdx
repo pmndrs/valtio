@@ -1,0 +1,17 @@
+---
+title: 'Internals'
+section: 'API'
+subSection: 'Hacks'
+description: ''
+---
+
+Valtio exposes some internal capabilities.
+This isn't for app developers. Use it at your own risk.
+
+# unstable_getInternalStates
+
+This function exposes the internal states. Modifying such states may result in wrong behaviors. You need to understand the [source code](https://github.com/pmndrs/valtio/blob/main/src/vanilla.ts) thoroughly to use it.
+
+# unstable_replaceInternalFunction
+
+This function exposes a way to replace some internal functions. It can easily break things. You need to understand the [source code](https://github.com/pmndrs/valtio/blob/main/src/vanilla.ts) thoroughly to use it.
