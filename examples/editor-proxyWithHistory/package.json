@@ -1,7 +1,7 @@
 {
   "name": "valtio-proxy-with-history-example",
   "version": "1.0.0",
-  "description": "💊 Valtio history utility",
+  "description": "🧙 Valtio history utility",
   "keywords": [],
   "main": "src/index.tsx",
   "dependencies": {
