@@ -11,6 +11,8 @@ Valtio v1 internally handled promises, which is no longer recommended.
 In Valtio v2, promises are not handled internally,
 and developers should explicitly use the `use` hook to manage promises.
 
+Note: If you are still using React 18, you can use [the `use` hook shim](https://github.com/dai-shi/react18-use).
+
 Valtio v2 also introduces several changes in its design choices:
 
 First, the behavior of `proxy(obj)` has changed. In v1, it was a pure function and deeply copied `obj`. In v2, it is an impure function and deeply modifies `obj`. Generally, reusing `obj` is not recommended, and if you have followed this convention, nothing will break.
