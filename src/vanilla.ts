@@ -257,54 +257,12 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     return removeListener
   }
   let initializing = true
-  const handler: ProxyHandler<T> = {
-    deleteProperty(target: T, prop: string | symbol) {
-      const prevValue = Reflect.get(target, prop)
-      removePropListener(prop)
-      const deleted = Reflect.deleteProperty(target, prop)
-      if (deleted) {
-        notifyUpdate(['delete', [prop], prevValue])
-      }
-      return deleted
-    },
-    set(target: T, prop: string | symbol, value: any, receiver: object) {
-      const hasPrevValue = !initializing && Reflect.has(target, prop)
-      const prevValue = Reflect.get(target, prop, receiver)
-      if (
-        hasPrevValue &&
-        (objectIs(prevValue, value) ||
-          (proxyCache.has(value) && objectIs(prevValue, proxyCache.get(value))))
-      ) {
-        return true
-      }
-      removePropListener(prop)
-      if (isObject(value)) {
-        value = getUntracked(value) || value
-      }
-      let nextValue = value
-      if (value instanceof Promise) {
-        value
-          .then((v) => {
-            ;(value as any).status = 'fulfilled'
-            ;(value as any).value = v
-            notifyUpdate(['resolve', [prop], v])
-          })
-          .catch((e) => {
-            ;(value as any).status = 'rejected'
-            ;(value as any).reason = e
-            notifyUpdate(['reject', [prop], e])
-          })
-      } else {
-        if (!proxyStateMap.has(value) && canProxy(value)) {
-          nextValue = proxy(value)
-        }
-        addPropListener(prop, nextValue)
-      }
-      Reflect.set(target, prop, nextValue, receiver)
-      notifyUpdate(['set', [prop], value, prevValue])
-      return true
-    },
-  }
+  const handler = createHandler<T>(
+    () => initializing,
+    addPropListener,
+    removePropListener,
+    notifyUpdate,
+  )
   const proxyObject = newProxy(baseObject, handler)
   proxyCache.set(baseObject, proxyObject)
   const proxyState: ProxyState = [baseObject, ensureVersion, addListener]
