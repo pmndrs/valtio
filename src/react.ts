@@ -144,7 +144,7 @@ export function useSnapshot<T extends object>(
           // not changed
           return lastSnapshot.current
         }
-      } catch (_e) {
+      } catch {
         // ignore if a promise or something is thrown
       }
       return nextSnapshot
