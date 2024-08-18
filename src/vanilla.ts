@@ -11,8 +11,6 @@ type Path = (string | symbol)[]
 type Op =
   | [op: 'set', path: Path, value: unknown, prevValue: unknown]
   | [op: 'delete', path: Path, prevValue: unknown]
-  | [op: 'resolve', path: Path, value: unknown]
-  | [op: 'reject', path: Path, error: unknown]
 type Listener = (op: Op, nextVersion: number) => void
 
 type Primitive = string | number | boolean | null | undefined | symbol | bigint
@@ -56,7 +54,8 @@ const canProxyDefault = (x: unknown) =>
   !(x instanceof Date) &&
   !(x instanceof String) &&
   !(x instanceof RegExp) &&
-  !(x instanceof ArrayBuffer)
+  !(x instanceof ArrayBuffer) &&
+  !(x instanceof Promise)
 
 const createSnapshotDefault = <T extends object>(
   target: T,
@@ -130,25 +129,9 @@ const createHandlerDefault = <T extends object>(
     if (isObject(value)) {
       value = getUntracked(value) || value
     }
-    let nextValue = value
-    if (value instanceof Promise) {
-      value
-        .then((v) => {
-          ;(value as any).status = 'fulfilled'
-          ;(value as any).value = v
-          notifyUpdate(['resolve', [prop], v])
-        })
-        .catch((e) => {
-          ;(value as any).status = 'rejected'
-          ;(value as any).reason = e
-          notifyUpdate(['reject', [prop], e])
-        })
-    } else {
-      if (!proxyStateMap.has(value) && canProxy(value)) {
-        nextValue = proxy(value)
-      }
-      addPropListener(prop, nextValue)
-    }
+    const nextValue =
+      !proxyStateMap.has(value) && canProxy(value) ? proxy(value) : value
+    addPropListener(prop, nextValue)
     Reflect.set(target, prop, nextValue, receiver)
     notifyUpdate(['set', [prop], value, prevValue])
     return true
