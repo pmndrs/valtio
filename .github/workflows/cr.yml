@@ -21,7 +21,5 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - run: pnpx pkg-pr-new publish --compact
+      - run: pnpx pkg-pr-new publish --compact --templates '../examples/*'
         working-directory: ./dist
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
