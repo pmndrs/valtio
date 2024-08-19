@@ -21,5 +21,4 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - run: pnpx pkg-pr-new publish --compact --templates '../examples/*'
-        working-directory: ./dist
+      - run: pnpx pkg-pr-new publish './dist' --compact --templates '../examples/*'
