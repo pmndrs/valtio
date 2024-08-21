@@ -314,23 +314,6 @@ Consider it as an advanced usage, because the behavior of `this` is sometimes co
 
 For more information, check out [this guide](./docs/guides/computed-properties.mdx).
 
-#### `proxyWithHistory` util
-
-This is a utility function to create a proxy with snapshot history.
-
-```js
-import { proxyWithHistory } from 'valtio-history'
-
-const state = proxyWithHistory({ count: 0 })
-console.log(state.value) // ---> { count: 0 }
-state.value.count += 1
-console.log(state.value) // ---> { count: 1 }
-state.undo()
-console.log(state.value) // ---> { count: 0 }
-state.redo()
-console.log(state.value) // ---> { count: 1 }
-```
-
 #### `proxySet` util
 
 This is to create a proxy which mimic the native Set behavior. The API is the same as Set API
@@ -369,7 +352,7 @@ state.forEach((value, key) => console.log(key, value)) // ---> "key", "value", "
 
 #### Compatibility
 
-Valtio works with React with hooks support (>=16.8).
+Valtio v2 works with React 18 and up.
 It only depends on `react` and works with any
 renderers such as `react-dom`, `react-native`, `react-three-fiber`, and so on.
 
