@@ -3,7 +3,7 @@
   "description": "🧙 Valtio makes proxy-state simple for React and Vanilla",
   "private": true,
   "type": "commonjs",
-  "version": "2.0.0-rc.2",
+  "version": "2.0.0",
   "main": "./index.js",
   "types": "./index.d.ts",
   "typesVersions": {
