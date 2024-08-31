@@ -31,12 +31,30 @@ Other notable changes to keep things updated and fresh include:
 ### Resolving promises
 
 ```js
+// v1
 import { proxy, useSnapshot } from 'valtio'
 
 const state = proxy({ data: fetch(...).then((res) => res.json()) })
 
 const Component = () => {
   const snap = useSnapshot(state)
+  return <>{JSON.stringify(snap.data)}</>
+}
+```
+
+```js
+// v2
+import { use } from 'react'
+import { proxy, useSnapshot } from 'valtio'
+
+const state = proxy({ data: fetch(...).then((res) => res.json()) })
+
+const Component = () => {
+  const snap = useSnapshot(state)
+  return <>{JSON.stringify(use(snap.data))}</>
+  // If `data` is not an object, you can directly embed it in JSX.
+  // return <>{snap.data}</>
+}
 ```
 
 ```diff
@@ -44,7 +62,6 @@ const Component = () => {
 +    return <>{JSON.stringify(use(snap.data))}</>   // v2
 +    // If `data` is not an object, you can embed it directly in JSX.
 +    // return <>{snap.data}</>
-}
 ```
 
 ### Impure `proxy(obj)`
