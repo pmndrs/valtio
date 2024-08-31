@@ -26,6 +26,24 @@ Other notable changes to keep things updated and fresh include:
 - Requirement of TypeScript version 4.5 and above
 - The build target updated to ES2018
 
+## Codemods
+
+To assist with the upgrade, a set of codemods is available to automatically update your codebase from Valtio v1. These codemods automate common code transformations to streamline the migration process.
+
+Run all codemods listed in this guide with the Valtio v2 codemod recipe:
+
+  ```bash     
+  npx codemod valtio/v2/migration-recipe
+  ```
+
+This will run the following codemods:
+ - `valtio/v2/use-snapshot-migration`
+ - `valtio/v2/deep-clone-proxy-objects`
+
+Each of these codemods automates the changes listed in this migration guide.
+For a complete list of available Valtio codemods and further details, 
+see the [codemod registry](https://codemod.com/registry?q=valtio).
+
 ## Migration for breaking changes
 
 ### Resolving promises
@@ -56,7 +74,10 @@ const Component = () => {
   // return <>{snap.data}</>
 }
 ```
-
+**Codemod** for using Resolving promises
+```bash
+  npx codemod valtio/v2/use-snapshot-migration
+```
 ### Impure `proxy(obj)`
 
 ```js
@@ -78,6 +99,11 @@ state.obj = deepClone({ text: 'hello' })
 
 Note that `deepClone` is unnecessary unless you are reusing the object.
 It is generally recommended to avoid reusing the object.
+
+**Codemod** for Proxy Objects
+```bash
+  npx codemod valtio/v2/deep-clone-proxy-objects
+```
 
 ## Links
 
