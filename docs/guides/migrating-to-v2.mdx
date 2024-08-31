@@ -13,9 +13,9 @@ and developers should explicitly use the `use` hook to manage promises.
 
 Note: If you are still using React 18, you can use [the `use` hook shim](https://github.com/dai-shi/react18-use).
 
-Valtio v2 also introduces several changes in its design choices:
+Valtio v2 also introduces two subtle changes in its design choices:
 
-First, the behavior of `proxy(obj)` has changed. In v1, it was a pure function and deeply copied `obj`. In v2, it is an impure function and deeply modifies `obj`. Generally, reusing `obj` is not recommended, and if you have followed this convention, nothing will break.
+First, the behavior of `proxy(obj)` has changed. In v1, it was a pure function and deeply copied `obj`. In v2, it is an impure function and deeply modifies `obj`. Generally, reusing `obj` is not recommended. Unless you reuse `obj`, nothing will break.
 
 Second, the behavior of `useSnapshot()` has been altered. Although it is a subtle change, it is less optimized to ensure compatibility with `useMemo` and the upcoming React compiler. The change may lead to extra re-renders in some edge cases, but it might not be noticeable.
 
@@ -59,12 +59,33 @@ const Component = () => {
 
 ### Impure `proxy(obj)`
 
+If you don't reuse the object you pass to the proxy, nothing will break.
+
+```js
+import { proxy } from 'valtio'
+
+// This works in both v1 and v2
+const state = proxy({ count: 1, obj: { text: 'hi' } })
+
+// This works in both v1 and v2
+state.obj = { text: 'hello' }
+```
+
+That's the recommended way to use `proxy`.
+
+For some reason, if you reuse the object, you need to use `deepClone` explicitly in v2 to keep the same behavior as v1.
+
 ```js
 // v1
 import { proxy } from 'valtio'
 
-const state = proxy({ count: 1, obj: { text: 'hi' } })
-state.obj = { text: 'hello' }
+const initialObj = { count: 1, obj: { text: 'hi' } }
+const state = proxy(initialObj)
+// and do something later with `initialObj`
+
+const newObj = { text: 'hello' }
+state.obj = newObj
+// and do something later with `newObj`
 ```
 
 ```js
@@ -72,12 +93,14 @@ state.obj = { text: 'hello' }
 import { proxy } from 'valtio'
 import { deepClone } from 'valtio/utils'
 
-const state = proxy(deepClone({ count: 1, obj: { text: 'hi' } }))
-state.obj = deepClone({ text: 'hello' })
-```
+const initialObj = { count: 1, obj: { text: 'hi' } }
+const state = proxy(deepClone(initialObj))
+// and do something later with `initialObj`
 
-Note that `deepClone` is unnecessary unless you are reusing the object.
-It is generally recommended to avoid reusing the object.
+const newObj = { text: 'hello' }
+state.obj = deepClone(newObj)
+// and do something later with `newObj`
+```
 
 ## Links
 
