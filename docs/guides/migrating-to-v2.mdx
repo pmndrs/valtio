@@ -38,6 +38,7 @@ const state = proxy({ data: fetch(...).then((res) => res.json()) })
 const Component = () => {
   const snap = useSnapshot(state)
 ```
+
 ```diff
 -    return <>{JSON.stringify(snap.data)}</>        // v1
 +    return <>{JSON.stringify(use(snap.data))}</>   // v2

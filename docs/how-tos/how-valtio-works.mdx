@@ -111,13 +111,13 @@ const MyComponent = () => {
       <div>
         <input
           type="input"
-          
+
           {/* we use snapshot for reading */}
           value={text}
-          
+
           {/* the line above equivalent to this */}
           value={snap.text}
-          
+
           {/* we use the proxy (s1) for mutations */}
           onChange={e => {
             s1.text = e.target.value

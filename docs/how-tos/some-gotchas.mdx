@@ -62,8 +62,13 @@ We have some options:
 
 <ol type="a">
   <li>Do not use `React.memo`.</li>
-  <li>Do not pass objects to components with `React.memo` (pass primitive values instead).</li>
-  <li>Pass in the proxy of that element, and then `useSnapshot` on that proxy.</li>
+  <li>
+    Do not pass objects to components with `React.memo` (pass primitive values
+    instead).
+  </li>
+  <li>
+    Pass in the proxy of that element, and then `useSnapshot` on that proxy.
+  </li>
 </ol>
 
 ### Example of (b)
