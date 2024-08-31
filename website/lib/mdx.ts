@@ -263,7 +263,7 @@ export function getDocsNav(): NavigationTree {
         pages["proxySet"],
         pages["proxyMap"],
       ],
-      Hacks: [pages["getVersion"], pages["unstable_buildProxyFunction"]],
+      Hacks: [pages["getVersion"], pages["internals"]],
     },
     "How To's": [
       pages["how-to-avoid-rerenders-manually"],

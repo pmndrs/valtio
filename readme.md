@@ -163,14 +163,17 @@ const stop = watch((get) => {
 
 #### Suspend your components
 
-Valtio supports React-suspense and will throw promises that you access within a components render function. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
+Valtio is compatible with React 19 `use` hook. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
 
 ```jsx
+import { use } from 'react' // React 19
+// import { use } from 'react18-use' // React 18
+
 const state = proxy({ post: fetch(url).then((res) => res.json()) })
 
 function Post() {
   const snap = useSnapshot(state)
-  return <div>{snap.post.title}</div>
+  return <div>{use(snap.post).title}</div>
 }
 
 function App() {
@@ -181,6 +184,8 @@ function App() {
   )
 }
 ```
+
+It still suffers from "de-opt", which prevents `useTransition` to work well. To mitigate it, there is a third-party library [use-valtio](https://github.com/valtiojs/use-valtio).
 
 #### Holding objects in state without tracking them
 
@@ -309,23 +314,6 @@ Consider it as an advanced usage, because the behavior of `this` is sometimes co
 
 For more information, check out [this guide](./docs/guides/computed-properties.mdx).
 
-#### `proxyWithHistory` util
-
-This is a utility function to create a proxy with snapshot history.
-
-```js
-import { proxyWithHistory } from 'valtio-history'
-
-const state = proxyWithHistory({ count: 0 })
-console.log(state.value) // ---> { count: 0 }
-state.value.count += 1
-console.log(state.value) // ---> { count: 1 }
-state.undo()
-console.log(state.value) // ---> { count: 0 }
-state.redo()
-console.log(state.value) // ---> { count: 1 }
-```
-
 #### `proxySet` util
 
 This is to create a proxy which mimic the native Set behavior. The API is the same as Set API
@@ -364,7 +352,7 @@ state.forEach((value, key) => console.log(key, value)) // ---> "key", "value", "
 
 #### Compatibility
 
-Valtio works with React with hooks support (>=16.8).
+Valtio v2 works with React 18 and up.
 It only depends on `react` and works with any
 renderers such as `react-dom`, `react-native`, `react-three-fiber`, and so on.
 

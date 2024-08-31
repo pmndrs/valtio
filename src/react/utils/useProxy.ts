@@ -31,12 +31,14 @@ export function useProxy<T extends object>(
   const snapshot = useSnapshot(proxy, options) as T
 
   // touch dummy prop so that it doesn't trigger re-renders when no props are touched.
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   ;(snapshot as any)[DUMMY_SYMBOL]
 
   let isRendering = true
   useLayoutEffect(() => {
     // This is an intentional hack
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // It might not work with React Compiler
+    // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
     isRendering = false
   })
 

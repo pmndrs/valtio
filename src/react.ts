@@ -25,6 +25,7 @@ const useAffectedDebugValue = (
   })
   useDebugValue(pathList.current)
 }
+const condUseAffectedDebugValue = useAffectedDebugValue
 
 // This is required only for performance.
 // Ref: https://github.com/pmndrs/valtio/issues/519
@@ -112,8 +113,10 @@ export function useSnapshot<T extends object>(
 ): Snapshot<T> {
   const notifyInSync = options?.sync
   // per-proxy & per-hook affected, it's not ideal but memo compatible
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const affected = useMemo(() => new WeakMap<object, unknown>(), [proxyObject])
+  const affected = useMemo(
+    () => proxyObject && new WeakMap<object, unknown>(),
+    [proxyObject],
+  )
   const lastSnapshot = useRef<Snapshot<T>>()
   let inRender = true
   const currSnapshot = useSyncExternalStore(
@@ -141,7 +144,7 @@ export function useSnapshot<T extends object>(
           // not changed
           return lastSnapshot.current
         }
-      } catch (e) {
+      } catch {
         // ignore if a promise or something is thrown
       }
       return nextSnapshot
@@ -153,8 +156,7 @@ export function useSnapshot<T extends object>(
     lastSnapshot.current = currSnapshot
   })
   if (import.meta.env?.MODE !== 'production') {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useAffectedDebugValue(currSnapshot as object, affected)
+    condUseAffectedDebugValue(currSnapshot as object, affected)
   }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
   return createProxyToCompare(currSnapshot, affected, proxyCache, targetCache)
