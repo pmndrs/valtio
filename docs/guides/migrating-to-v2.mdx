@@ -60,7 +60,7 @@ const Component = () => {
 ```diff
 -    return <>{JSON.stringify(snap.data)}</>        // v1
 +    return <>{JSON.stringify(use(snap.data))}</>   // v2
-+    // If `data` is not an object, you can embed it directly in JSX.
++    // If `data` is not an object, you can directly embed it in JSX.
 +    // return <>{snap.data}</>
 ```
 
@@ -69,11 +69,31 @@ const Component = () => {
 If you don't reuse the object you pass to the proxy, nothing will break.
 
 ```js
+import { proxy } from 'valtio'
+
+// This works in both v1 and v2
+const state = proxy({ count: 1, obj: { text: 'hi' } })
+
+// This works in both v1 and v2
+state.obj = { text: 'hello' }
+```
+
+
+That's the recommended way to use `proxy`.
+
+For some reason, if you reuse the object, you need to use `deepClone` explicitly in v2 to keep the same behavior as v1.
+
+```js
 // v1
 import { proxy } from 'valtio'
 
-const state = proxy({ count: 1, obj: { text: 'hi' } })
-state.obj = { text: 'hello' }
+const initialObj = { count: 1, obj: { text: 'hi' } }
+const state = proxy(initialObj)
+// and do something later with `initialObj`
+
+const newObj = { text: 'hello' }
+state.obj = newObj
+// and do something later with `newObj`
 ```
 
 ```js
@@ -81,13 +101,24 @@ state.obj = { text: 'hello' }
 import { proxy } from 'valtio'
 import { deepClone } from 'valtio/utils'
 
-const state = proxy(deepClone({ count: 1, obj: { text: 'hi' } }))
-state.obj = deepClone({ text: 'hello' })
+const initialObj = { count: 1, obj: { text: 'hi' } }
+const state = proxy(deepClone(initialObj))
+// and do something later with `initialObj`
+
+const newObj = { text: 'hello' }
+state.obj = deepClone(newObj)
+// and do something later with `newObj`
 ```
 
-Note that `deepClone` is unnecessary unless you are reusing the object.
-It is generally recommended to avoid reusing the object.
+```diff
++ import { deepClone } from 'valtio/utils'     // v2
 
+- const state = proxy(initialObj)              // v1
++ const state = proxy(deepClone(initialObj))   // v2
+
+- state.obj = newObj                           // v1
++ state.obj = deepClone(newObj)                // v2
+```
 ## Links
 
 - https://github.com/pmndrs/valtio/discussions/703
