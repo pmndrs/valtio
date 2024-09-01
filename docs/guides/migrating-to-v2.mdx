@@ -57,13 +57,6 @@ const Component = () => {
 }
 ```
 
-```diff
--    return <>{JSON.stringify(snap.data)}</>        // v1
-+    return <>{JSON.stringify(use(snap.data))}</>   // v2
-+    // If `data` is not an object, you can directly embed it in JSX.
-+    // return <>{snap.data}</>
-```
-
 ### Impure `proxy(obj)`
 
 If you don't reuse the object you pass to the proxy, nothing will break.
@@ -107,16 +100,6 @@ const state = proxy(deepClone(initialObj))
 const newObj = { text: 'hello' }
 state.obj = deepClone(newObj)
 // and do something later with `newObj`
-```
-
-```diff
-+ import { deepClone } from 'valtio/utils'     // v2
-
-- const state = proxy(initialObj)              // v1
-+ const state = proxy(deepClone(initialObj))   // v2
-
-- state.obj = newObj                           // v1
-+ state.obj = deepClone(newObj)                // v2
 ```
 
 ## Links
