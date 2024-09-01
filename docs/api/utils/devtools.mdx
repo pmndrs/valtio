@@ -32,7 +32,7 @@ Valtio is not tied to React, you can use it in vanillaJS.
 ```jsx
 import { proxy, subscribe, snapshot } from 'valtio/vanilla'
 
-const state = proxy({ count: 0, text: 'llo' })
+const state = proxy({ count: 0, text: 'hello' })
 
 subscribe(state, () => {
   console.log('state is mutated')
