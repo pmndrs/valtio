@@ -9,7 +9,7 @@ description: 'Create a snapshot of current state'
 
 `snapshot` takes a proxy and returns an immutable object, unwrapped from the proxy.
 
-Immutability is achieved by _efficiently_ deep copying & freezing the object (see the [Copy on Write](#copyonwrite) section for details).
+Immutability is achieved by _efficiently_ deep copying & freezing the object (see the [Copy on Write](#copy-on-write) section for details).
 
 Briefly, in sequential `snapshot` calls, when the values in the proxy have not changed, the previous snapshot's object reference is returned. This allows for shallow comparison in render functions, preventing spurious renders.
 
