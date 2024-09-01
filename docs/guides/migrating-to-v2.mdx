@@ -78,7 +78,6 @@ const state = proxy({ count: 1, obj: { text: 'hi' } })
 state.obj = { text: 'hello' }
 ```
 
-
 That's the recommended way to use `proxy`.
 
 For some reason, if you reuse the object, you need to use `deepClone` explicitly in v2 to keep the same behavior as v1.
@@ -119,6 +118,7 @@ state.obj = deepClone(newObj)
 - state.obj = newObj                           // v1
 + state.obj = deepClone(newObj)                // v2
 ```
+
 ## Links
 
 - https://github.com/pmndrs/valtio/discussions/703
