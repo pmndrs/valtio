@@ -29,7 +29,7 @@ const state = proxy({
 export { state, useSnapshot, subscribe }
 ```
 
-2. Create the file `/jsconfig.json`:
+2. Create the file `/jsconfig.json` (or `/tsconfig.json` if you're using typescript):
 
 ```json
 {
@@ -44,6 +44,9 @@ export { state, useSnapshot, subscribe }
   "exclude": ["node_modules"]
 }
 ```
+
+> [!TIP] Using TypeScript? Here are some links for reference
+> https://www.totaltypescript.com/tsconfig-cheat-sheet<br /> > https://github.com/tsconfig/bases<br /> > https://www.typescriptlang.org/tsconfig/
 
 3. Add the **Module Resolver** plugin the plugins in your `babel.config.js`:
 
