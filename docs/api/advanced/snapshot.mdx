@@ -28,7 +28,7 @@ const snap3 = snapshot(store)
 console.log(snap1 === snap3) // false, should re-render
 ```
 
-## <a name="copyonwrite"></a> Copy on Write
+## Copy on Write
 
 Even though snapshots are a deep copy of the entire state, they use a lazy copy-on-write mechanism for updates, so in practice they are quick to maintain.
 
