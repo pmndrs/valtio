@@ -102,6 +102,19 @@ state.obj = deepClone(newObj)
 // and do something later with `newObj`
 ```
 
+### `useLayoutEffect` server warning
+
+If you're using React 18 with SSR, add this conditional to prevent excessive warnings.
+
+```js
+import { snapshot, useSnapshot as useSnapshotOrig } from 'valtio'
+
+const isSSR = typeof window === 'undefined'
+export const useSnapshot = isSSR ? (p) => snapshot(p) : useSnapshotOrig
+
+// render with `useSnapshot` as usual
+```
+
 ## Links
 
 - https://github.com/pmndrs/valtio/discussions/703
