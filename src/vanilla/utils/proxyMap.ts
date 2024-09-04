@@ -18,7 +18,7 @@ import { proxy, ref } from 'valtio'
 const versionSymbol = Symbol('version')
 
 type InternalProxyObject<K, V> = Map<K, V> & {
-  [versionSymbol]: number,
+  [versionSymbol]: number
   toJSON(): Map<K, V>
 }
 
