@@ -48,7 +48,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     },
   })
 
-  const sebObject: InternalProxySet<T> ={
+  const setObject: InternalProxySet<T> ={
     get [Symbol.toStringTag]() {
       return 'Set'
     },
@@ -110,14 +110,13 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     // },
   }
 
-  Object.defineProperties(setProxy, {
-    data: { enumerable: false },
+  Object.defineProperties(setObject, {
+    [versionSymbol]: { enumerable: false },
     size: { enumerable: false },
-    toJSON: { enumerable: false },
   })
-  Object.seal(setProxy)
+  Object.seal(setObject)
 
-  return setProxy as unknown as Set<T> & {
+  return proxy(setProxy) as unknown as Set<T> & {
     $$valtioSnapshot: Omit<Set<T>, 'add' | 'delete' | 'clear'>
   }
 }
