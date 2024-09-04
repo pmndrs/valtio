@@ -1,4 +1,4 @@
-import { proxy, ref } from 'valtio'
+import { proxy, subscribe } from 'valtio'
 /**
  * Instance methods
  *   Map.prototype.clear()
@@ -19,8 +19,11 @@ const versionSymbol = Symbol('version')
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   [versionSymbol]: number
-  toJSON(): Map<K, V>
+  toJSON(): Map<K, V>,
+  data: Array<[K, V]>
 }
+
+const subscriptions = new Map()
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
   const map = new Map(entries ? [...entries] : [])
@@ -39,6 +42,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
   })
 
   const vObject: InternalProxyObject<K, V> = {
+    data: Array.from(map.entries()),
     get size() {
       return mapProxy.size
     },
@@ -47,16 +51,32 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
     },
     [versionSymbol]: 0,
     set(key, value) {
-      mapProxy.set(key, value)
+      if (typeof value === 'object' && value !== null) {
+        const proxied = proxy(value)
+        mapProxy.set(key, proxied)
+        const unsub = subscribe(
+          proxied,
+          () => {
+            this[versionSymbol]++
+          },
+          true,
+        )
+        subscriptions.set(key, unsub)
+      } else {
+        mapProxy.set(key, value)
+      }
       this[versionSymbol]++
+      this.data = Array.from(map.entries())
       return this
     },
     get(key) {
-      return mapProxy.get(key)
+      return map.get(key)
     },
     clear() {
       mapProxy.clear()
+      subscriptions.clear()
       this[versionSymbol]++
+      this.data = Array.from(map.entries())
       return
     },
     entries() {
@@ -69,6 +89,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
     },
     delete(key) {
       const result = mapProxy.delete(key)
+      subscriptions.get(key)?.()
+      subscriptions.delete(key)
+      this.data = Array.from(map.entries())
       if (result) {
         this[versionSymbol]++
         return true
@@ -99,6 +122,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
     size: { enumerable: false },
     [versionSymbol]: { enumerable: false },
     toJSON: { enumerable: false },
+    data: { enumerable: false },
   })
 
   Object.seal(proxiedObject)
