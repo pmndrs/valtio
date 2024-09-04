@@ -2,7 +2,7 @@ import { proxy } from '../../vanilla.ts'
 
 type InternalProxySet<T> = Set<T> & {
   [versionSymbol]: number
-} & SetMethods<T>
+}
 type SetMethods<O> = {
   intersection(other: Set<O>): Set<O>
   isDisjointFrom(other: Set<O>): boolean
@@ -48,7 +48,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     },
   })
 
-  const setObject: InternalProxySet<T> ={
+  const setObject: InternalProxySet<T> = {
     get [Symbol.toStringTag]() {
       return 'Set'
     },
