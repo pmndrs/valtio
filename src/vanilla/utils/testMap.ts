@@ -1,6 +1,6 @@
 import util from 'util'
 import { snapshot, getVersion } from '../../vanilla.ts'
-import { proxyMap } from './proxyMap.old.ts'
+import { proxyMap } from './proxyMap.ts'
 import { proxySet } from './proxySet.ts'
 
 const initialValues = [
@@ -154,12 +154,24 @@ const dir = (v: any) =>
 
 // const state = proxyMap()
 
-const state = proxyMap()
-state.set('a', 1)
-const snap = snapshot(state)
-state.set('a', 2)
-console.log(snap.get('a')) // must be 1
+// const state = proxyMap()
+// state.set('a', 1)
+// const snap = snapshot(state)
+// state.set('a', 2)
+// console.log(snap.get('a')) // must be 1
 
+// const state = proxyMap()
+// const key = {}
+// state.set(key, {})
+// const val = state.get(key)
+// val.a = 1
+// const snap1 = snapshot(state)
+// val.a = 2
+// const snap2 = snapshot(state)
+
+// console.log(snap1.get(key)) // must be 1
+// console.log(snap2.get(key).a) // ust be
+// const state = proxyMap()
 // state.set('a', 1)
 // console.log(state.get('a'))
 // console.log(getVersion(state))
@@ -306,3 +318,44 @@ console.log(snap.get('a')) // must be 1
 //   nativeMap.set('newKey', 'newValue')
 //   console.log(map.get('newKey'))
 //   console.log(nativeMap.get('newKey'))
+
+// const state = proxyMap()
+// const key = {}
+// state.set('a', 1)
+// state.set('b', 2)
+// state.set(key, 3)
+// const snap = snapshot(state)
+// console.log('snap.get("a")',snap.get('a'))
+// console.log('snap.get("a")',snap.get('b'))
+// console.log('snap.get("a")',snap.get(key))
+// const it = state.entries()
+// console.log('state.get(key)', state.get(key))
+// console.log(it.next().value)
+// console.log(it.next().value)
+// console.log(it.next().value)
+
+const state = proxyMap()
+const nativeMap = new Map()
+
+state.set('a', initialValues[0])
+console.log(getVersion(state))
+state.set('b', initialValues[1])
+console.log(getVersion(state))
+state.set('c', initialValues[2])
+console.log(getVersion(state))
+state.set({}, initialValues[3])
+console.log(getVersion(state))
+nativeMap.set('a', initialValues[0])
+nativeMap.set('b', initialValues[1])
+nativeMap.set('c', initialValues[2])
+nativeMap.set({}, initialValues[3])
+state.forEach((v, k, m) => {
+  console.log(k, v)
+  m.set(k, '2')
+})
+console.log(getVersion(state))
+console.log(state.get('a'))
+console.log(state.get('b'))
+console.log(state.get('b'))
+console.log('has', state.has('b'))
+console.log(JSON.stringify(state) === JSON.stringify(nativeMap))

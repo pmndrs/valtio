@@ -14,89 +14,81 @@ import { proxy, ref } from 'valtio'
  * Instance properties
  *   Map.prototype.size
  **/
-type KeyValRecord<K, V> = [key: K, value: V]
 
-type InternalProxyMap<K, V> = Map<K, V> & {
-  data: KeyValRecord<K, V>[]
-  toJSON: object
+const versionSymbol = Symbol('version')
+
+type InternalProxyObject<K, V> = Map<K, V> & {
+  [versionSymbol]: number
 }
 
-class subMap<K, V> extends Map<K, V> {
-  constructor(iterable: Iterable<[K, V]> = []) {
-    super(iterable)
-  }
-}
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
-  const map = new subMap(entries ? [...entries] : [])
-  const mapProxy = proxy<InternalProxyMap<K, V>>({
-    [Symbol.iterator](): IterableIterator<[K, V]> {
-      return map[Symbol.iterator]()
-    },
+  const map = new Map(entries ? [...entries] : [])
 
+  const mapProxy = new Proxy(map, {
+    get(target, prop) {
+      let value = Reflect.get(target, prop)
+      if (typeof value === 'function') {
+        value = value.bind(map)
+      }
+      return value
+    },
+    set(target, prop, value, _receiver) {
+      return Reflect.set(target, prop, value)
+    },
+  })
+
+  const vObject: InternalProxyObject<K, V> = {
+    get size() {
+      return mapProxy.size
+    },
     get [Symbol.toStringTag]() {
       return 'Map'
     },
-
-    get data() {
-      return Array.from(map.entries())
+    [versionSymbol]: 0,
+    set(key, value) {
+      this[versionSymbol]++
+      mapProxy.set(key, value)
+      return this
     },
-
-    get size() {
-      return map.size
+    get(key) {
+      return mapProxy.get(key)
     },
-
-    toJSON() {
-      return new Map(this.data)
-    },
-
     clear() {
-      map.clear()
+      this[versionSymbol]++
+      return mapProxy.clear()
     },
-
-    delete(key: K) {
-      return map.delete(key)
-    },
-
     entries() {
-      return map.entries()
+      return mapProxy.entries()
     },
-
-    forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
-      return map.forEach((value, key) => cb(value, key, mapProxy), mapProxy)
+    forEach(cb) {
+      return mapProxy.forEach((value, key, map) => {
+        cb(value, key, this)
+      })
     },
-
-    get(key: K): V | undefined {
-      const value = map.get(key)
-      ;(mapProxy as any)[key] = value
-      return (mapProxy as any)[key]
+    delete(key) {
+      this[versionSymbol]++
+      return mapProxy.delete(key)
     },
-
-    has(key: K) {
-      return map.has(key)
+    has(key) {
+      return mapProxy.has(key)
     },
-
-    keys() {
-      return map.keys()
-    },
-
-    set(key: K, value: V): any {
-      map.set(key, value)
-      return mapProxy
-    },
-
     values() {
-      return map.values()
+      return mapProxy.values()
     },
-  })
-
-  Object.defineProperties(mapProxy, {
-    data: { enumerable: false },
-    size: { enumerable: false },
-    toJSON: { enumerable: false },
-  })
-  Object.seal(mapProxy)
-
-  return mapProxy as unknown as Map<K, V> & {
-    $$valtioSnapshot: Omit<Map<K, V>, 'set' | 'delete' | 'clear'>
+    keys() {
+      return mapProxy.keys()
+    },
+    [Symbol.iterator]() {
+      return mapProxy[Symbol.iterator]()
+    },
   }
+
+  Object.defineProperties(vObject, {
+    size: { enumerable: false },
+    [versionSymbol]: { enumerable: false },
+  })
+
+  Object.seal(vObject)
+
+  return proxy(vObject)
 }
