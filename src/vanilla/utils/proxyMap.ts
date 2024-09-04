@@ -47,16 +47,17 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
     },
     [versionSymbol]: 0,
     set(key, value) {
-      this[versionSymbol]++
       mapProxy.set(key, value)
+      this[versionSymbol]++
       return this
     },
     get(key) {
       return mapProxy.get(key)
     },
     clear() {
+      mapProxy.clear()
       this[versionSymbol]++
-      return mapProxy.clear()
+      return
     },
     entries() {
       return mapProxy.entries()
@@ -67,8 +68,13 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
       })
     },
     delete(key) {
-      this[versionSymbol]++
-      return mapProxy.delete(key)
+      const result = mapProxy.delete(key)
+      if (result) {
+        this[versionSymbol]++
+        return true
+      } else {
+        return false
+      }
     },
     has(key) {
       return mapProxy.has(key)

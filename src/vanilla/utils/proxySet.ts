@@ -61,17 +61,23 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     },
     [versionSymbol]: 0,
     add(value) {
-      this[versionSymbol]++
       setProxy.add(value)
+      this[versionSymbol]++
       return this
     },
     clear() {
+      setProxy.clear()
       this[versionSymbol]++
-      return setProxy.clear()
+      return
     },
     delete(value) {
-      this[versionSymbol]++
-      return set.delete(value)
+      const result = set.delete(value)
+      if (result) {
+        this[versionSymbol]++
+        return true
+      } else {
+        return false
+      }
     },
     entries() {
       return set.entries()
