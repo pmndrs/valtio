@@ -139,11 +139,11 @@ const createHandlerDefault = <T extends object>(
 })
 
 // internal states
-const proxyStateMap = new WeakMap<ProxyObject, ProxyState>()
-const refSet = new WeakSet()
-const snapCache = new WeakMap<object, [version: number, snap: unknown]>()
-const versionHolder = [1, 1] as [number, number]
-const proxyCache = new WeakMap<object, ProxyObject>()
+export const proxyStateMap = new WeakMap<ProxyObject, ProxyState>()
+export const refSet = new WeakSet()
+export const snapCache = new WeakMap<object, [version: number, snap: unknown]>()
+export const versionHolder = [1, 1] as [number, number]
+export const proxyCache = new WeakMap<object, ProxyObject>()
 
 // internal functions
 let objectIs = Object.is
