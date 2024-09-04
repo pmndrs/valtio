@@ -66,7 +66,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     },
     clear() {
       this[versionSymbol]++
-      setProxy.clear()
+      return setProxy.clear()
     },
     delete(value) {
       this[versionSymbol]++
@@ -116,7 +116,9 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   })
   Object.seal(setObject)
 
-  return proxy(setProxy) as unknown as Set<T> & {
+  const proxiedObject = proxy(setObject)
+
+  return proxiedObject as unknown as Set<T> & {
     $$valtioSnapshot: Omit<Set<T>, 'add' | 'delete' | 'clear'>
   }
 }

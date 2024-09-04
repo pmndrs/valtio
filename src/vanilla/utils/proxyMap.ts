@@ -83,12 +83,14 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
     },
   }
 
-  Object.defineProperties(vObject, {
+  const proxiedObject = proxy(vObject)
+
+  Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     [versionSymbol]: { enumerable: false },
   })
 
-  Object.seal(vObject)
+  Object.seal(proxiedObject)
 
-  return proxy(vObject)
+  return proxiedObject
 }
