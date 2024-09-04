@@ -18,7 +18,8 @@ import { proxy, ref } from 'valtio'
 const versionSymbol = Symbol('version')
 
 type InternalProxyObject<K, V> = Map<K, V> & {
-  [versionSymbol]: number
+  [versionSymbol]: number,
+  toJSON(): Map<K, V>
 }
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
@@ -81,6 +82,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
     [Symbol.iterator]() {
       return mapProxy[Symbol.iterator]()
     },
+    toJSON() {
+      return new Map(mapProxy)
+    },
   }
 
   const proxiedObject = proxy(vObject)
@@ -88,6 +92,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     [versionSymbol]: { enumerable: false },
+    toJSON: { enumerable: false },
   })
 
   Object.seal(proxiedObject)

@@ -2,6 +2,7 @@ import { proxy } from '../../vanilla.ts'
 
 type InternalProxySet<T> = Set<T> & {
   [versionSymbol]: number
+  toJSON(): Set<T>
 }
 type SetMethods<O> = {
   intersection(other: Set<O>): Set<O>
@@ -89,6 +90,9 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     values() {
       return set.values()
     },
+    toJSON() {
+      return new Set(setProxy)
+    },
     // intersection(other: Set<T>): Set<T> {
     //   const resultSet = set.intersection(other)
     //   return proxySet(resultSet as Set<T>)
@@ -113,6 +117,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   Object.defineProperties(setObject, {
     [versionSymbol]: { enumerable: false },
     size: { enumerable: false },
+    toJSON: { enumerable: false },
   })
   Object.seal(setObject)
 
