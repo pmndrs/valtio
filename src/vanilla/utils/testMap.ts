@@ -2,7 +2,6 @@ import util from 'util'
 import { snapshot, getVersion } from '../../vanilla.ts'
 import { proxyMap } from './proxyMap.old.ts'
 import { proxySet } from './proxySet.ts'
-import { get } from 'http'
 
 const initialValues = [
   {
@@ -155,6 +154,12 @@ const dir = (v: any) =>
 
 // const state = proxyMap()
 
+const state = proxyMap()
+state.set('a', 1)
+const snap = snapshot(state)
+state.set('a', 2)
+console.log(snap.get('a')) // must be 1
+
 // state.set('a', 1)
 // console.log(state.get('a'))
 // console.log(getVersion(state))
@@ -194,111 +199,110 @@ const dir = (v: any) =>
 // console.log(snap.get('c'))
 // console.log(iter.next())
 
-initialValues.forEach(({ name, value }) => {
-  const map = proxyMap(value as any)
-  const nativeMap = new Map(value as any)
+// initialValues.forEach(({ name, value }) => {
+//   const map = proxyMap(value as any)
+//   const nativeMap = new Map(value as any)
 
-  if (map.size !== nativeMap.size) {
-    console.log(map.size, nativeMap.size)
-  }
+//   if (map.size !== nativeMap.size) {
+//     console.log(map.size, nativeMap.size)
+//   }
 
-  if (`${map}` !== `${nativeMap}`) {
-    console.log(map, nativeMap)
-  }
+//   if (`${map}` !== `${nativeMap}`) {
+//     console.log(map, nativeMap)
+//   }
 
-  // console.log(`${map}` === `${nativeMap}`)
-  // console.log(map.size === nativeMap.size)
+//   // console.log(`${map}` === `${nativeMap}`)
+//   // console.log(map.size === nativeMap.size)
 
-  const mapValuesArray = Array.from(map.values())
-  const nativeMapValuesArray = Array.from(nativeMap.values())
+//   const mapValuesArray = Array.from(map.values())
+//   const nativeMapValuesArray = Array.from(nativeMap.values())
 
-  if (mapValuesArray.length !== nativeMapValuesArray.length) {
-    console.log(mapValuesArray.length, nativeMapValuesArray.length)
-  }
+//   if (mapValuesArray.length !== nativeMapValuesArray.length) {
+//     console.log(mapValuesArray.length, nativeMapValuesArray.length)
+//   }
 
-  // console.log(mapValuesArray.length === nativeMapValuesArray.length)
-  mapValuesArray.forEach((v, i) => {
-    if (v !== nativeMapValuesArray[i]) {
-      console.log(v, nativeMapValuesArray[i])
-    }
-    // console.log(v === nativeMapValuesArray[i])
-  })
+//   // console.log(mapValuesArray.length === nativeMapValuesArray.length)
+//   mapValuesArray.forEach((v, i) => {
+//     if (v !== nativeMapValuesArray[i]) {
+//       console.log(v, nativeMapValuesArray[i])
+//     }
+//     // console.log(v === nativeMapValuesArray[i])
+//   })
 
-  const mapKeysArray = Array.from(map.keys())
-  const nativeMapKeysArray = Array.from(nativeMap.keys())
+//   const mapKeysArray = Array.from(map.keys())
+//   const nativeMapKeysArray = Array.from(nativeMap.keys())
 
-  if (mapKeysArray.length !== nativeMapKeysArray.length) {
-    console.log(mapKeysArray.length, nativeMapKeysArray.length)
-  }
+//   if (mapKeysArray.length !== nativeMapKeysArray.length) {
+//     console.log(mapKeysArray.length, nativeMapKeysArray.length)
+//   }
 
-  // console.log(mapKeysArray.length === nativeMapKeysArray.length)
-  mapKeysArray.forEach((v, i) => {
-    // console.log(v === nativeMapKeysArray[i])
-    if (v !== nativeMapKeysArray[i]) {
-      console.log(v, nativeMapKeysArray[i])
-    }
-  })
+//   // console.log(mapKeysArray.length === nativeMapKeysArray.length)
+//   mapKeysArray.forEach((v, i) => {
+//     // console.log(v === nativeMapKeysArray[i])
+//     if (v !== nativeMapKeysArray[i]) {
+//       console.log(v, nativeMapKeysArray[i])
+//     }
+//   })
 
-  const mapEntriesArray = Array.from(map.entries()).sort((a, b) => a[0] - b[0])
-  const nativeMapEntriesArray = Array.from(nativeMap.entries()).sort(
-    (a, b) => a[0] - b[0],
-  )
+//   const mapEntriesArray = Array.from(map.entries()).sort((a, b) => a[0] - b[0])
+//   const nativeMapEntriesArray = Array.from(nativeMap.entries()).sort(
+//     (a, b) => a[0] - b[0],
+//   )
 
-  // console.log(mapEntriesArray.length === nativeMapEntriesArray.length)
+//   // console.log(mapEntriesArray.length === nativeMapEntriesArray.length)
 
-  if (
-    !JSON.stringify(mapEntriesArray) === JSON.stringify(nativeMapEntriesArray)
-  ) {
-    console.log(mapEntriesArray, nativeMapEntriesArray)
-  }
+//   if (
+//     !JSON.stringify(mapEntriesArray) === JSON.stringify(nativeMapEntriesArray)
+//   ) {
+//     console.log(mapEntriesArray, nativeMapEntriesArray)
+//   }
 
-  mapEntriesArray.forEach(([k, v]) => {
-    // console.log(k === nativeMapEntriesArray[0][?1])
-    if (k !== nativeMapEntriesArray[0][0]) {
-      console.log(k, nativeMapEntriesArray[0][0])
-    }
-  })
+//   mapEntriesArray.forEach(([k, v]) => {
+//     // console.log(k === nativeMapEntriesArray[0][?1])
+//     if (k !== nativeMapEntriesArray[0][0]) {
+//       console.log(k, nativeMapEntriesArray[0][0])
+//     }
+//   })
 
-  let i = 0
-  for (const _ of map) {
-    i++
-    // console.log(map.size === nativeMap.size)
-    // console.log(i === map.size)
-    if (map.size !== nativeMap.size) {
-      console.log(map.size, nativeMap.size)
-    }
-  }
+//   let i = 0
+//   for (const _ of map) {
+//     i++
+//     // console.log(map.size === nativeMap.size)
+//     // console.log(i === map.size)
+//     if (map.size !== nativeMap.size) {
+//       console.log(map.size, nativeMap.size)
+//     }
+//   }
 
-  const [firstElementFromMap] = map
-  const [firstElementFromNativeMap] = nativeMap
+//   const [firstElementFromMap] = map
+//   const [firstElementFromNativeMap] = nativeMap
 
-  if (firstElementFromMap !== firstElementFromNativeMap) {
-    console.log(firstElementFromMap, firstElementFromNativeMap)
-  }
+//   if (firstElementFromMap !== firstElementFromNativeMap) {
+//     console.log(firstElementFromMap, firstElementFromNativeMap)
+//   }
 
-  // console.log('first element from map', firstElementFromMap === firstElementFromNativeMap)
-  // console.log(firstElementFromMap?.keys(), firstElementFromNativeMap?.keys())
-  // console.log(firstElementFromMap)
-  // console.log(firstElementFromNativeMap)
+//   // console.log('first element from map', firstElementFromMap === firstElementFromNativeMap)
+//   // console.log(firstElementFromMap?.keys(), firstElementFromNativeMap?.keys())
+//   // console.log(firstElementFromMap)
+//   // console.log(firstElementFromNativeMap)
 
-  //   const keyFromMap = firstElementFromMap && firstElementFromMap[0]
-  //   const keyFromNativeMap =firstElementFromNativeMap && firstElementFromNativeMap[0]
-  //   console.log(keyFromMap === keyFromNativeMap)
-  //   console.log(keyFromMap, keyFromNativeMap)
-  //   console.log(map.get(keyFromMap))
-  //   console.log(nativeMap.get(keyFromNativeMap))
+//   //   const keyFromMap = firstElementFromMap && firstElementFromMap[0]
+//   //   const keyFromNativeMap =firstElementFromNativeMap && firstElementFromNativeMap[0]
+//   //   console.log(keyFromMap === keyFromNativeMap)
+//   //   console.log(keyFromMap, keyFromNativeMap)
+//   //   console.log(map.get(keyFromMap))
+//   //   console.log(nativeMap.get(keyFromNativeMap))
 
-  //   map.delete(keyFromMap)
-  //   nativeMap.delete(keyFromNativeMap)
-  //   console.log(map.size === nativeMap.size)
+//   //   map.delete(keyFromMap)
+//   //   nativeMap.delete(keyFromNativeMap)
+//   //   console.log(map.size === nativeMap.size)
 
-  //   map.set('newKey', {})
-  //   nativeMap.set('newKey', {})
+//   //   map.set('newKey', {})
+//   //   nativeMap.set('newKey', {})
 
-  //   console.log(map.size === nativeMap.size)
+//   //   console.log(map.size === nativeMap.size)
 
-  map.set('newKey', 'newValue')
-  nativeMap.set('newKey', 'newValue')
-  console.log(map.get('newKey'))
-  console.log(nativeMap.get('newKey'))
-})
+//   map.set('newKey', 'newValue')
+//   nativeMap.set('newKey', 'newValue')
+//   console.log(map.get('newKey'))
+//   console.log(nativeMap.get('newKey'))
