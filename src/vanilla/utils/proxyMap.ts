@@ -19,8 +19,7 @@ const versionSymbol = Symbol('version')
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   [versionSymbol]: number
-  toJSON(): Map<K, V>,
-  data: Array<[K, V]>
+  toJSON(): Map<K, V>
 }
 
 const subscriptions = new Map()
@@ -42,7 +41,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
   })
 
   const vObject: InternalProxyObject<K, V> = {
-    data: Array.from(map.entries()),
     get size() {
       return mapProxy.size
     },
@@ -51,22 +49,33 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
     },
     [versionSymbol]: 0,
     set(key, value) {
-      if (typeof value === 'object' && value !== null) {
-        const proxied = proxy(value)
-        mapProxy.set(key, proxied)
+      console.log(Object.getPrototypeOf(this))
+      if (!map.has(key) && typeof key === 'object' && key !== null) {
+        const proxiedKey = proxy(key)
         const unsub = subscribe(
-          proxied,
+          proxiedKey,
           () => {
             this[versionSymbol]++
           },
           true,
         )
         subscriptions.set(key, unsub)
+      }
+      if (typeof value === 'object' && value !== null) {
+        const proxiedValue = proxy(value)
+        mapProxy.set(key, proxiedValue)
+        const unsub = subscribe(
+          proxiedValue,
+          () => {
+            this[versionSymbol]++
+          },
+          true,
+        )
+        subscriptions.set(value, unsub)
       } else {
         mapProxy.set(key, value)
       }
       this[versionSymbol]++
-      this.data = Array.from(map.entries())
       return this
     },
     get(key) {
@@ -76,7 +85,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
       mapProxy.clear()
       subscriptions.clear()
       this[versionSymbol]++
-      this.data = Array.from(map.entries())
       return
     },
     entries() {
@@ -88,10 +96,13 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
       })
     },
     delete(key) {
-      const result = mapProxy.delete(key)
+      subscriptions.get(map.get(key))?.()
+      subscriptions.delete(map.get(key))
+
       subscriptions.get(key)?.()
       subscriptions.delete(key)
-      this.data = Array.from(map.entries())
+
+      const result = mapProxy.delete(key)
       if (result) {
         this[versionSymbol]++
         return true
@@ -122,7 +133,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
     size: { enumerable: false },
     [versionSymbol]: { enumerable: false },
     toJSON: { enumerable: false },
-    data: { enumerable: false },
   })
 
   Object.seal(proxiedObject)
