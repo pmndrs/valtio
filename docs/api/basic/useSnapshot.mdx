@@ -5,13 +5,13 @@ subSection: 'Basic'
 description: 'Create a local snapshot that catches changes.'
 ---
 
-# useSnapshot
+# `useSnapshot`
 
-Create a local snapshot that catches changes.
+Create a local `snapshot` that catches changes.
 
 Normally, Valtio's snapshots (created via <a href="/docs/api/advanced/snapshot">`snapshot()`</a>) are recreated on _any_ change to a proxy, or any of its child proxies.
 
-However `useSnapshot` wraps the Valtio snapshot in an access-tracking proxy, so your component is render optimized, i.e. it will only re-render if keys that it (or its child components) specifically accessed have changed, and not on every single change to the proxy.
+However `useSnapshot` wraps the Valtio snapshot in an access-tracking proxy. This is to make sure your component is render optimized, i.e. it will only re-render if keys that it (or its child components) specifically accessed has changed, and not on every single change to the proxy.
 
 ## Usage
 
@@ -129,10 +129,9 @@ function ProfileName() {
 }
 ```
 
-### Gotchas
+## Gotchas
 
-Beware of replacing the child proxy with something else, breaking your snapshot. You can see
-here what happens with the original proxy when you replace the child proxy.
+Beware of replacing the child proxy with something else, breaking your `snapshot`. This will replace the reference of the proxy with what you assign it to which removes the proxy's traps. You can see an example below.
 
 ```js
 console.log(state)
@@ -181,14 +180,14 @@ const { profile } = useSnapshot(state)
 return <div>{profile.name}</div>
 ```
 
-### Dev Mode Debug Values
+## Dev Mode Debug Values
 
 In dev mode, `useSnapshot` uses React's `useDebugValue` to output a list of fields that were accessed during rendering, i.e. which specific fields will trigger re-render when the tracking proxy changes.
 
-There are two disclaimers to the debug value:
-
-1. Due to the way `useSnapshot` uses a proxy to recorded accesses _after_ `useSnapshot` has returned, the fields listed in `useDebugValue` are technically from the _previous_ render.
-2. Object getter and class getter calls are not included in the `useDebugValue` output, but don't worry, they are actually correctly tracked internally and correctly trigger re-renders when changed.
+> [!IMPORTANT]There are two disclaimers to using the debug value
+>
+> 1. Due to the way `useSnapshot` uses a proxy to recorded accesses _after_ `useSnapshot` has returned, the fields listed in `useDebugValue` are technically from the _previous_ render.
+> 2. Object getter and class getter calls are not included in the `useDebugValue` output, but don't worry, they are actually correctly tracked internally and correctly trigger re-renders when changed.
 
 ## Codesandbox demo
 

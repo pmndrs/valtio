@@ -13,7 +13,7 @@ This is to describe the high level abstraction of valtio.
 - [How Valtio Proxy State Works (Vanilla Part)](https://blog.axlight.com/posts/how-valtio-proxy-state-works-vanilla-part/)
 - [How Valtio Proxy State Works (React Part)](https://blog.axlight.com/posts/how-valtio-proxy-state-works-react-part/)
 
-## By examples
+## Examples
 
 ### `proxy()` by examples
 
@@ -77,6 +77,63 @@ s7.obj === s8.obj // is true because obj is not changed
 ```
 
 ### `useSnapshot()` by examples
+
+> [!NOTE]
+> In the example below, we are bringing the state m
+
+```jsx
+import { proxy, useSnapshot } from 'valtio'
+
+const s1 = proxy({
+  counter: 0,
+  text: 'Good morning from valtio',
+  foo: {
+    boo: 'baz'
+  }
+})
+
+const MyComponent = () => {
+  // Using destructuring
+  const { text, counter } = useSnapshot(state)
+
+  // Multilevel destructiong works as well
+  const { text, counter, { foo }} = useSnapshot(state)
+
+  // Assigning to a snapshot obeject
+  const snap = useSnapshot(state)
+
+
+  return (() => {
+    <div id="main">
+      <h1>{ `${foo} - ${text}` }</h1>
+      {/* - or - */}
+      <h1>{ `${snap.foo.bar} = `${snap.text}}</h1>
+      <div>
+        <input
+          type="input"
+
+          {/* we use snapshot for reading */}
+          value={text}
+
+          {/* the line above equivalent to this */}
+          value={snap.text}
+
+          {/* we use the proxy (s1) for mutations */}
+          onChange={e => {
+            s1.text = e.target.value
+          }}
+        />
+      </div>
+      <div>
+        { counter }
+        <button onClick={() => s1.counter++}> + </button>
+        <button onClick={() => s1.counter--}> - </button>
+      </di>
+    </div>
+  })
+
+}
+```
 
 ## Unorganized Notes
 

@@ -8,7 +8,8 @@ description: 'Use object getters and setters'
 
 In Valtio you can use object & class getters and setters to create computed properties.
 
-⚠️ Note: Getters in JavaScript are a more advanced feature of the language, so Valtio recommends using them with caution. That said, if you are a more advanced JavaScript programmer, they should work as you expect; see the "Note about using `this`" section below.
+> [!NOTE]
+> Getters in JavaScript are a more advanced feature of the language, so Valtio recommends using them with caution. That said, if you are a more advanced JavaScript programmer, they should work as you expect; see the "Note about using `this`" section below.
 
 ## Simple object getter
 
@@ -35,7 +36,8 @@ When you call `state.doubled` on the `state` proxy, it is not cached, and will b
 
 However, when you make a snapshot, calls to `snap.doubled` are effectively cached, because the value of an object getter is copied during the snapshot process.
 
-⚠️ Note: In the current implementation a computed property should only reference _sibling_ properties, otherwise you'll encounter weird bugs. For example:
+> [!NOTE]
+> In the current implementation a computed property should only reference **_sibling_** properties, otherwise you'll encounter weird bugs. For example:
 
 ```js
 const user = proxy({
