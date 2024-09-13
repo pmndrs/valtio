@@ -43,7 +43,7 @@ type ProxyState = readonly [
   addListener: AddListener,
 ]
 
-const canProxyDefault = (x: unknown) =>
+const canProxyDefault = (x: unknown): boolean =>
   isObject(x) &&
   !refSet.has(x) &&
   (Array.isArray(x) || !(Symbol.iterator in x)) &&
@@ -139,19 +139,20 @@ const createHandlerDefault = <T extends object>(
 })
 
 // internal states
-const proxyStateMap = new WeakMap<ProxyObject, ProxyState>()
-const refSet = new WeakSet()
-const snapCache = new WeakMap<object, [version: number, snap: unknown]>()
+const proxyStateMap: WeakMap<ProxyObject, ProxyState> = new WeakMap()
+const refSet: WeakSet<object> = new WeakSet()
+const snapCache: WeakMap<object, [version: number, snap: unknown]> =
+  new WeakMap()
 const versionHolder = [1, 1] as [number, number]
-const proxyCache = new WeakMap<object, ProxyObject>()
+const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
 
 // internal functions
-let objectIs = Object.is
+let objectIs: (a: unknown, b: unknown) => boolean = Object.is
 let newProxy = <T extends object>(target: T, handler: ProxyHandler<T>): T =>
   new Proxy(target, handler)
-let canProxy = canProxyDefault
-let createSnapshot = createSnapshotDefault
-let createHandler = createHandlerDefault
+let canProxy: typeof canProxyDefault = canProxyDefault
+let createSnapshot: typeof createSnapshotDefault = createSnapshotDefault
+let createHandler: typeof createHandlerDefault = createHandlerDefault
 
 export function proxy<T extends object>(baseObject: T = {} as T): T {
   if (!isObject(baseObject)) {
@@ -322,7 +323,13 @@ export function ref<T extends object>(obj: T) {
 // unstable APIs (subject to change without notice)
 // ------------------------------------------------
 
-export const unstable_getInternalStates = () => ({
+export const unstable_getInternalStates = (): {
+  proxyStateMap: typeof proxyStateMap
+  refSet: typeof refSet
+  snapCache: typeof snapCache
+  versionHolder: typeof versionHolder
+  proxyCache: typeof proxyCache
+} => ({
   proxyStateMap,
   refSet,
   snapCache,
