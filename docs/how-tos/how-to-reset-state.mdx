@@ -53,7 +53,7 @@ const reset = () => {
 }
 ```
 
-In valtio v2, the `proxy` function [no longer clones the initial state]('../guides/migrating-to-v2.mdx'). Instead, it uses the original object directly. This means that `structuredClone` is no longer a drop in replacement for `_.cloneDeep` and will throw an error. To fix this, you can use `structuredClone` to clone the initial state that you pass to into `proxy`.
+In valtio v2, the `proxy` function [no longer clones the initial state]('../guides/migrating-to-v2.mdx'). Instead, it uses the original object directly. It is not recommended that you reuse the object that you pass into the proxy function. If you use `structuredClone` that object, it will throw an error. `_.cloneDeep` won't give you an error, but it could produce unwatned results. To fix this, you can clone the intial state object that you pass to into `proxy`. You can do this with `_.cloneDeep`, `structuredClone`, or the utility function `deepClone` from `valtio/utils`. Example below.
 
 ```js
 // v2
@@ -65,3 +65,5 @@ const reset = () => {
   state.obj = structuredClone(initialObj)
 }
 ```
+
+See also [title: 'How to Migrate to v2 from v1']('../guides/migrating-to-v2.mdx').
