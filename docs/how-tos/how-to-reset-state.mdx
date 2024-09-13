@@ -53,7 +53,7 @@ const reset = () => {
 }
 ```
 
-In valtio v2, the `proxy` function [no longer clones the initial state]('/docs/guides/migrating-to-v2.mdx'). Instead, it uses the original object directly. It is not recommended that you reuse the object that you pass into the proxy function. If you use `structuredClone` that object, it will throw an error. `_.cloneDeep` won't give you an error, but it could produce unwatned results. To fix this, you can clone the intial state object that you pass to into `proxy`. You can do this with `_.cloneDeep`, `structuredClone`, or the utility function `deepClone` from `valtio/utils`. Example below.
+In valtio v2, the `proxy` function [no longer clones the initial state](../guides/migrating-to-v2.mdx). Instead, it uses the original object directly. It is not recommended that you reuse the object that you pass into the proxy function. If you use `structuredClone` that object, it will throw an error. `_.cloneDeep` won't give you an error, but it could produce unwatned results. To fix this, you can clone the intial state object that you pass to into `proxy`. You can do this with `_.cloneDeep`, `structuredClone`, or the utility function `deepClone` from `valtio/utils`. Example below.
 
 ```js
 // v2
@@ -66,4 +66,4 @@ const reset = () => {
 }
 ```
 
-See also [title: 'How to Migrate to v2 from v1']('/docs/guides/migrating-to-v2.mdx#impure-proxyobj').
+See also [title: 'How to Migrate to v2 from v1'](../guides/migrating-to-v2.mdx#impure-proxyobj).
