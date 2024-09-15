@@ -7,23 +7,26 @@ title: 'How to reset state'
 In some cases, you might want to reset the state in your proxy instance to its initial values. For example, you are storing form values or some other ephemeral UI state that you want to reset. It turns out this is quite simple to do!
 
 ```js
+import { proxy } from 'valtio'
+import { deepClone } from 'valtio/utils'
+
 const initialObj = {
   text: 'hello',
   arr: [1, 2, 3],
   obj: { a: 'b' },
 }
 
-const state = proxy(initialObj)
+const state = proxy(deepClone(initialObj))
 
 const reset = () => {
-  const resetObj = _.cloneDeep(initialObj)
+  const resetObj = deepCLone(initialObj)
   Object.keys(resetObj).forEach((key) => {
     state[key] = resetObj[key]
   })
 }
 ```
 
-Note that we're using the [cloneDeep](https://lodash.com/docs/4.17.15#cloneDeep) utility function from `lodash` to copy the initial object in the `reset` function. This allows Valtio to update correctly when the value of a key is an object. If you prefer `underscore` or some similar JS utility library, feel free to use that instead.
+Note that we're using the `deepClone()` utility function from `valtio/utils` to copy the initial object in _both_ the `reset` function and the `state` proxy. Using deepClone in the proxy function is a new requirement in v2. Valtio no longer clones the initial state by default. If you reuse the object you pass into the proxy function, you may get unexpected results.
 
 Alternatively, you can store the object in another object, which make the reset logic easier:
 
@@ -31,6 +34,11 @@ Alternatively, you can store the object in another object, which make the reset 
 const state = proxy({ obj: initialObj })
 
 const reset = () => {
-  state.obj = _.cloneDeep(initialObj)
+  state.obj = cloneDeep(initialObj)
 }
 ```
+
+> [!NOTE]
+> Using `structuredClone()`
+
+In 2022, there was a new global function added called `structuredClone` that is widely available in most modern browsers. You can use `structuredClone` in the same way as `deepClone` above, however `deepClone` is preferred as it will be aware of any `ref`s in your state.
