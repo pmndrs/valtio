@@ -16,7 +16,7 @@ export function subscribeKey<T extends object, K extends keyof T>(
   key: K,
   callback: (value: T[K]) => void,
   notifyInSync?: boolean,
-) {
+): () => void {
   let prevValue = proxyObject[key]
   return subscribe(
     proxyObject,

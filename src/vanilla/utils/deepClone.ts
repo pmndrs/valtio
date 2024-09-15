@@ -11,7 +11,10 @@ const getDefaultRefSet = (): WeakSet<object> => {
   return defaultRefSet
 }
 
-export const deepClone = <T>(obj: T, getRefSet = getDefaultRefSet): T => {
+export const deepClone = <T>(
+  obj: T,
+  getRefSet: () => WeakSet<object> = getDefaultRefSet,
+): T => {
   if (!isObject(obj) || getRefSet().has(obj)) {
     return obj
   }
