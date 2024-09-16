@@ -19,7 +19,7 @@ const initialObj = {
 const state = proxy(deepClone(initialObj))
 
 const reset = () => {
-  const resetObj = deepCLone(initialObj)
+  const resetObj = deepClone(initialObj)
   Object.keys(resetObj).forEach((key) => {
     state[key] = resetObj[key]
   })
@@ -34,7 +34,7 @@ Alternatively, you can store the object in another object, which make the reset 
 const state = proxy({ obj: initialObj })
 
 const reset = () => {
-  state.obj = cloneDeep(initialObj)
+  state.obj = deepClone(initialObj)
 }
 ```
 
