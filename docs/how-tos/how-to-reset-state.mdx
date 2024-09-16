@@ -34,7 +34,7 @@ Alternatively, you can store the object in another object, which make the reset 
 const state = proxy({ obj: initialObj })
 
 const reset = () => {
-  state.obj = cloneDeep(initialObj)
+  state.obj = deepClone(initialObj)
 }
 ```
 
