@@ -170,31 +170,6 @@ importers:
         specifier: ^5.4.1
         version: 5.4.2(@types/node@22.5.1)(terser@5.33.0)
 
-  examples/counter-old:
-    dependencies:
-      prismjs:
-        specifier: ^1.23.0
-        version: 1.29.0
-      react:
-        specifier: ^17.0.1
-        version: 17.0.2
-      react-dom:
-        specifier: ^17.0.1
-        version: 17.0.2(react@17.0.2)
-      react-prism:
-        specifier: ^4.3.2
-        version: 4.3.2(prop-types@15.8.1)(react@17.0.2)
-      valtio:
-        specifier: ^1.0.0
-        version: 1.3.0(@babel/helper-module-imports@7.24.7)(@babel/types@7.25.6)(babel-plugin-macros@3.1.0)(react@17.0.2)
-    devDependencies:
-      react-scripts:
-        specifier: ^4.0.3
-        version: 4.0.3(@types/webpack@4.41.39)(eslint@9.11.0)(react@17.0.2)(sockjs-client@1.6.1)(typescript@4.4.2)
-      typescript:
-        specifier: ^4.2.3
-        version: 4.4.2
-
   examples/editor-proxyWithHistory:
     dependencies:
       react:
@@ -13803,11 +13778,7 @@ snapshots:
       pretty-format: 26.6.2
       throat: 5.0.0
     transitivePeerDependencies:
-      - bufferutil
-      - canvas
       - supports-color
-      - ts-node
-      - utf-8-validate
 
   jest-leak-detector@26.6.2:
     dependencies:
@@ -15610,11 +15581,6 @@ snapshots:
   react-is@17.0.2: {}
 
   react-is@18.3.1: {}
-
-  react-prism@4.3.2(prop-types@15.8.1)(react@17.0.2):
-    dependencies:
-      prop-types: 15.8.1
-      react: 17.0.2
 
   react-prism@4.3.2(prop-types@15.8.1)(react@18.3.1):
     dependencies:
