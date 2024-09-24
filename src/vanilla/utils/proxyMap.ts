@@ -3,22 +3,15 @@ import { proxy } from 'valtio'
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
-const canProxy = (x: unknown) =>
-  isObject(x) &&
-  (Array.isArray(x) || !(Symbol.iterator in x)) &&
-  !(x instanceof WeakMap) &&
-  !(x instanceof WeakSet) &&
-  !(x instanceof Error) &&
-  !(x instanceof Number) &&
-  !(x instanceof Date) &&
-  !(x instanceof String) &&
-  !(x instanceof RegExp) &&
-  !(x instanceof ArrayBuffer) &&
-  !(x instanceof Promise)
-
-const maybeProxify = (v: any) => (canProxy(v) ? proxy(v) : v)
-
-const tracker: [any, number][] = []
+const maybeProxify = (v: any) => {
+  if (isObject(v) && v !== null) {
+    const pv = proxy(v)
+    if (pv !== v) {
+      return pv
+    }
+  }
+  return v
+}
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<[K, V | undefined]>
@@ -26,10 +19,9 @@ type InternalProxyObject<K, V> = Map<K, V> & {
   toJSON: () => Map<K, V>
 }
 
-const indexMap = new Map()
-
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
   const map = new Map(entries ? [...entries] : [])
+  const indexMap = new Map()
 
   const data: Array<[K, V]> = []
   map.forEach((value, key) => {
@@ -43,7 +35,8 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
       return map.size
     },
     get(key: K) {
-      const index = indexMap.get(key)
+      const k = maybeProxify(key)
+      const index = indexMap.get(k)
       if (index === undefined) {
         return undefined
       }
