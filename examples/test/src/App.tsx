@@ -1,26 +1,56 @@
-import { useSnapshot, proxy } from '../../../dist/esm/index.mjs'
-import { proxyMap } from '../../../dist//esm/utils.mjs'
+import { useSnapshot } from '../../../dist/esm/index.mjs'
+import { proxyMap } from '../../../dist/esm/utils.mjs'
 
+// devtools(state, { enabled: true });
 
+const state = proxyMap([
+  ["test1", "hello"],
+  ["test2", "hello2"]
+]);
 
-const state = proxy({
-  map: proxyMap([[-10, 1]]),
-})
-
-const TestComponent = (e) => {
-  const snap = useSnapshot(state)
-
-  const handleClick = () => {
-    state.map.set(-10, 'foobar')
-    console.log(snap)
-  }
+function Comp1() {
+  const snap = useSnapshot(state);
+  console.log("COMP1 RERENDER");
+  console.log(snap)
 
   return (
+    <div>
+      <button
+        onClick={() => {
+          state.set("test1", "hello234");
+        }}
+      >
+        Test 1
+      </button>
+      <div>{snap.get("test1")}</div>
+    </div>
+  );
+}
+
+function Comp2() {
+  const snap = useSnapshot(state);
+  console.log("COMP2 RERENDER");
+  console.log(snap)
+
+  return (
+    <div>
+      <button
+        onClick={() => {
+          state.set("test2", "hello2432");
+        }}
+      >
+        Test 2
+      </button>
+      <div>{snap.get("test2")}</div>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
     <>
-      <div>size: {snap.map.size} {snap.map.get(-10)}</div>
-      <button onClick={handleClick}>button</button>
+      <Comp1 />
+      <Comp2 />
     </>
   )
 }
-
-export default TestComponent
