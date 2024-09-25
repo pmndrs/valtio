@@ -1,8 +1,5 @@
 import { proxy, unstable_replaceInternalFunction } from 'valtio'
 
-const isObject = (x: unknown): x is object =>
-  typeof x === 'object' && x !== null
-
 let canProxy: (x: unknown) => boolean
 unstable_replaceInternalFunction('canProxy', (prev) => {
   canProxy = prev
@@ -10,7 +7,7 @@ unstable_replaceInternalFunction('canProxy', (prev) => {
 })
 
 const maybeProxify = (v: any) => {
-  if (isObject(v) && v !== null && canProxy(v)) {
+  if (canProxy(v)) {
     const pv = proxy(v)
     if (pv !== v) {
       return pv
