@@ -1,20 +1,13 @@
-import { proxy } from 'valtio'
+import { proxy, unstable_replaceInternalFunction } from 'valtio'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
-const canProxy = (x: unknown) =>
-  isObject(x) &&
-  (Array.isArray(x) || !(Symbol.iterator in x)) &&
-  !(x instanceof WeakMap) &&
-  !(x instanceof WeakSet) &&
-  !(x instanceof Error) &&
-  !(x instanceof Number) &&
-  !(x instanceof Date) &&
-  !(x instanceof String) &&
-  !(x instanceof RegExp) &&
-  !(x instanceof ArrayBuffer) &&
-  !(x instanceof Promise)
+let canProxy: (x: unknown) => boolean
+unstable_replaceInternalFunction('canProxy', (prev) => {
+  canProxy = prev
+  return prev
+})
 
 const maybeProxify = (v: any) => {
   if (isObject(v) && v !== null && canProxy(v)) {
