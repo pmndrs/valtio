@@ -1,4 +1,4 @@
-import { getVersion, proxy } from 'valtio'
+import { proxy } from 'valtio'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -56,7 +56,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | []) {
       return this.data[index]![1]
     },
     has(key: K) {
-      if (getVersion(this) !== undefined) {
+      if (!indexMap.has(key)) {
         this.data.length
       }
       return indexMap.has(key)

@@ -4,8 +4,16 @@ import { proxyMap } from '../../../dist/esm/utils.mjs'
 const state = proxyMap([['test', 'test']])
 
 setTimeout(() => {
+  state.set('asdf', 'bar')
+}, 5000)
+
+setTimeout(() => {
+  state.set('bat', 'foo')
+}, 7000)
+
+setTimeout(() => {
   state.set('foo', 'bar')
-}, 10000)
+}, 9000)
 
 const Comp1 = () => {
   const snap = useSnapshot(state)
@@ -20,7 +28,7 @@ const Comp2 = () => {
 
   console.log('COMP2 RENDER')
 
-  return <p>{snap.has('bar') ? snap.get('bar') : ''}</p>
+  return <p>{state.has('bar') ? snap.get('bar') : ''}</p>
 }
 
 const Comp3 = () => {
@@ -28,7 +36,7 @@ const Comp3 = () => {
 
   console.log('COMP3 RENDER')
 
-  return <p>{snap.has('test') ? snap.get('test') : ''}</p>
+  return <p>{state.has('test') ? snap.get('test') : ''}</p>
 }
 
 const App = () => {
