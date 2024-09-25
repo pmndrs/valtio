@@ -307,6 +307,8 @@ describe('delete', () => {
   })
 })
 
+// TODO: initialize with no values and then set values and test snapshot
+
 describe('proxyMap internal', () => {
   it('should be sealed', () => {
     expect(Object.isSealed(proxySet())).toBe(true)

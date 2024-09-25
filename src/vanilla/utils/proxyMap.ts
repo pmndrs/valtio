@@ -49,10 +49,16 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | []) {
     },
     get(key: K) {
       const k = maybeProxify(key)
-      return map.get(k)
+      const index = indexMap.get(k)
+      if (index === undefined) {
+        return undefined
+      }
+      return this.data[index]![1]
     },
     has(key: K) {
-      this.data.length
+      if (!indexMap.has(key)) {
+        this.data.length
+      }
       return indexMap.has(key)
     },
     set(key: K, value: V) {
