@@ -19,37 +19,41 @@ type InternalProxyObject<K, V> = Map<K, V> & {
   toJSON: () => Map<K, V>
 }
 
-export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
-  const indexMap = new Map<K, number>()
+export function proxyMap<K, V>(entries?: Iterable<[K, V]> | []) {
   const data: Array<[K, V]> = []
+  const indexMap = new Map<K, number>()
+  const map = new Map()
 
-  const initialEntries: [K, V][] = entries
-    ? [...entries].map(([k, v], i) => {
-        const key = maybeProxify(k)
-        const value = maybeProxify(v)
-        indexMap.set(key, i)
-        data.push([key, value])
-        return [key, value]
-      })
-    : []
+  if (entries !== null && typeof entries !== 'undefined') {
+    if (typeof entries[Symbol.iterator] !== 'function') {
+      throw new Error(
+        'proxyMap:\n\tinitial state must be iterable\n\t\ttip: structure should be [[key, value]]',
+      )
+    }
+    for (const [k, v] of entries) {
+      const key = maybeProxify(k)
+      const value = maybeProxify(v)
+      map.set(key, value)
+      indexMap.set(key, data.length)
+      data.push([key, value])
+    }
+  }
 
-  const map = new Map(initialEntries)
-
-  const vObject: InternalProxyObject<K, V> = {
+  const vObject: InternalProxyObject<K, V> = proxy({
     data,
     get size() {
-      return map.size
+      return this.data.length
+    },
+    get [Symbol.toStringTag]() {
+      return 'Map'
     },
     get(key: K) {
       const k = maybeProxify(key)
-      const index = indexMap.get(k)
-      if (index === undefined) {
-        return undefined
-      }
-      return this.data[index]![1]
+      return map.get(k)
     },
     has(key: K) {
-      return map.has(key)
+      this.data.length
+      return indexMap.has(key)
     },
     set(key: K, value: V) {
       const k = maybeProxify(key)
@@ -99,16 +103,13 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
         yield value
       }
     },
-    [Symbol.toStringTag]: 'Map',
     [Symbol.iterator]() {
-      return map[Symbol.iterator]() as any
+      return this.entries()
     },
     toJSON(): Map<K, V> {
-      return new Map(map)
+      return map
     },
-  }
-
-  const proxiedObject = proxy(vObject)
+  })
 
   Object.defineProperties(vObject, {
     size: { enumerable: false },
@@ -116,9 +117,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
     toJSON: { enumerable: false },
   })
 
-  Object.seal(proxiedObject)
+  Object.seal(vObject)
 
-  return proxiedObject as unknown as Map<K, V> & {
+  return vObject as unknown as Map<K, V> & {
     $$valtioSnapshot: Omit<Map<K, V>, 'set' | 'delete' | 'clear'>
   }
 }

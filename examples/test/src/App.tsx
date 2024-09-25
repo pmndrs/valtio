@@ -4,30 +4,26 @@ import { proxyMap } from '../../../dist/esm/utils.mjs'
 
 // devtools(state, { enabled: true });
 
-const state = proxyMap([
-  ['test1', 'hello'],
-  ['test2', 'hello2'],
-])
+const state = proxyMap()
 
 function Comp1() {
   const snap = useSnapshot(state)
   console.log('COMP1 RERENDER')
   console.log(snap)
 
-  useEffect(() => {
-    console.log(snap)
-  }, [snap])
-
   return (
     <div>
       <button
         onClick={() => {
           state.set('test1', 'hello234')
+          console.log(state)
         }}
       >
         Test 1
       </button>
-      <div>{snap.get('test1')}</div>
+      <div>
+        {snap.has('test1') ? (snap.get('test1') as string | undefined) : ''}
+      </div>
     </div>
   )
 }
@@ -50,7 +46,9 @@ function Comp2() {
       >
         Test 2
       </button>
-      <div>{snap.get('test2')}</div>
+      <div>
+        {snap.has('test2') ? (snap.get('test2') as string | undefined) : ''}
+      </div>
     </div>
   )
 }
