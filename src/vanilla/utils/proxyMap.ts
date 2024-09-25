@@ -1,10 +1,16 @@
 import { proxy, unstable_replaceInternalFunction } from 'valtio'
 
-let canProxy: (x: unknown) => boolean
-unstable_replaceInternalFunction('canProxy', (prev) => {
-  canProxy = prev
-  return prev
-})
+// let canProxy: (x: unknown) => boolean
+// unstable_replaceInternalFunction('canProxy', (prev) => {
+//   canProxy = prev
+//   return prev
+// })
+
+const canProxy = (x: unknown): boolean => {
+  const p = proxy({} as { x: unknown })
+  p.x = x
+  return p.x !== x
+}
 
 const maybeProxify = (v: any) => {
   if (canProxy(v)) {
