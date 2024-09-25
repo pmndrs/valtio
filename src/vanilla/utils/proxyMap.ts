@@ -20,14 +20,20 @@ type InternalProxyObject<K, V> = Map<K, V> & {
 }
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
-  const map = new Map(entries ? [...entries] : [])
-  const indexMap = new Map()
-
+  const indexMap = new Map<K, number>()
   const data: Array<[K, V]> = []
-  map.forEach((value, key) => {
-    indexMap.set(key, data.length)
-    data.push([key, value])
-  })
+
+  const initialEntries: [K, V][] = entries
+    ? [...entries].map(([k, v], i) => {
+        const key = maybeProxify(k)
+        const value = maybeProxify(v)
+        indexMap.set(key, i)
+        data.push([key, value])
+        return [key, value]
+      })
+    : []
+
+  const map = new Map(initialEntries)
 
   const vObject: InternalProxyObject<K, V> = {
     data,
@@ -62,13 +68,15 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
       if (map.has(key)) {
         map.delete(key)
         const index = indexMap.get(key)
-        this.data.splice(index, 1)
+        this.data.splice(index!, 1)
+        indexMap.delete(key)
         return true
       }
       return false
     },
     clear() {
       map.clear()
+      indexMap.clear()
       this.data.splice(0)
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
@@ -110,5 +118,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | null) {
 
   Object.seal(proxiedObject)
 
-  return proxiedObject
+  return proxiedObject as unknown as Map<K, V> & {
+    $$valtioSnapshot: Omit<Map<K, V>, 'set' | 'delete' | 'clear'>
+  }
 }
