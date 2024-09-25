@@ -3,8 +3,21 @@ import { proxy } from 'valtio'
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
+const canProxy = (x: unknown) =>
+  isObject(x) &&
+  (Array.isArray(x) || !(Symbol.iterator in x)) &&
+  !(x instanceof WeakMap) &&
+  !(x instanceof WeakSet) &&
+  !(x instanceof Error) &&
+  !(x instanceof Number) &&
+  !(x instanceof Date) &&
+  !(x instanceof String) &&
+  !(x instanceof RegExp) &&
+  !(x instanceof ArrayBuffer) &&
+  !(x instanceof Promise)
+
 const maybeProxify = (v: any) => {
-  if (isObject(v) && v !== null) {
+  if (isObject(v) && v !== null && canProxy(v)) {
     const pv = proxy(v)
     if (pv !== v) {
       return pv
@@ -19,10 +32,10 @@ type InternalProxyObject<K, V> = Map<K, V> & {
   toJSON: () => Map<K, V>
 }
 
-export function proxyMap<K, V>(entries?: Iterable<[K, V]> | []) {
+export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const data: Array<[K, V]> = []
   const indexMap = new Map<K, number>()
-  const map = new Map()
+  const map = new Map<K, V>()
 
   if (entries !== null && typeof entries !== 'undefined') {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -39,13 +52,10 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | []) {
     }
   }
 
-  const vObject: InternalProxyObject<K, V> = proxy({
+  const vObject: InternalProxyObject<K, V> = {
     data,
     get size() {
-      return this.data.length
-    },
-    get [Symbol.toStringTag]() {
-      return 'Map'
+      return map.size
     },
     get(key: K) {
       const k = maybeProxify(key)
@@ -112,20 +122,25 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | []) {
     [Symbol.iterator]() {
       return this.entries()
     },
+    get [Symbol.toStringTag]() {
+      return 'Map'
+    },
     toJSON(): Map<K, V> {
       return map
     },
-  })
+  }
 
-  Object.defineProperties(vObject, {
+  const proxiedObject = proxy(vObject)
+
+  Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     data: { enumerable: false },
     toJSON: { enumerable: false },
   })
 
-  Object.seal(vObject)
+  Object.seal(proxiedObject)
 
-  return vObject as unknown as Map<K, V> & {
+  return proxiedObject as unknown as Map<K, V> & {
     $$valtioSnapshot: Omit<Map<K, V>, 'set' | 'delete' | 'clear'>
   }
 }
