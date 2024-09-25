@@ -12,7 +12,7 @@ const Comp1 = () => {
 
   console.log('COMP1 RENDER')
 
-  return <p>{snap.has('foo') ? snap.get('foo') : ''}</p>
+  return <p>{state.has('foo') ? snap.get('foo') : ''}</p>
 }
 
 const Comp2 = () => {
