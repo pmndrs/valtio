@@ -1,30 +1,26 @@
 {
-  "name": "valtio-todo-example",
-  "version": "1.0.0",
+  "name": "counter",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
   "dependencies": {
-    "@types/react": "^17.0.3",
-    "@types/react-dom": "^17.0.2",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "valtio": "^1.0.0"
+    "prismjs": "^1.23.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-prism": "^4.3.2",
+    "valtio": "^2.0.0"
   },
   "devDependencies": {
-    "react-scripts": "^4.0.3",
-    "typescript": "^4.2.3"
-  },
-  "scripts": {
-    "start": "SKIP_PREFLIGHT_CHECK=true react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "root": true
-  },
-  "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
-  ]
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.1"
+  }
 }
