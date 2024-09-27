@@ -49,6 +49,7 @@ jobs:
           sed -i~ 's/"valtio": \["\.\/src\/index\.ts"\],/"valtio": [".\/dist\/index.d.ts"],/' tsconfig.json
           sed -i~ 's/"valtio\/\*": \["\.\/src\/\*\.ts"\]/"valtio\/*": [".\/dist\/*.d.ts"]/' tsconfig.json
           sed -i~ 's/"include": .*/"include": ["src\/types.d.ts", "dist\/**\/*", "tests\/**\/*"],/' tsconfig.json
+          pnpm add -D @types/node@22.2.0
       - name: Install old TypeScript
         run: pnpm add -D typescript@${{ matrix.typescript }}
       - name: Test ${{ matrix.typescript }}
