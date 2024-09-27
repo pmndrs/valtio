@@ -1,13 +1,92 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import url('https://rsms.me/inter/inter.css');
+html {
+  font-family: 'Inter', sans-serif;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  background: white;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  user-select: none;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+}
+
+svg {
+  pointer-events: none;
+}
+
+path {
+  pointer-events: auto;
+}
+
+.ticks {
+  position: absolute;
+  top: 50px;
+  left: 50px;
+  font-size: 12px;
+  font-weight: 200;
+  font-variant-numeric: tabular-nums;
+}
+
+.figure {
+  font-variant-numeric: tabular-nums;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate3d(-50%, -50%, 0);
+  font-weight: 800;
+  font-size: 30em;
+  letter-spacing: -20px;
+  pointer-events: none;
+  color: black;
+  -webkit-text-fill-color: white; /* Will override color (regardless of order) */
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: black;
+}
+
+.logo {
+  position: absolute;
+  right: 150px;
+  bottom: 150px;
+}
+
+.logo > svg {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  cursor: pointer;
+}
+
+.code {
+  padding: 10%;
+}
+
+pre {
+  font-size: 0.8em;
+  margin-left: -2.5rem !important;
+  margin-right: -2.5rem !important;
+  width: calc(100% + 5rem);
+  padding: 3em !important;
+  border: 1px solid #eee !important;
+  border-radius: 4px;
+}
+
+.src a * {
+  opacity: 0.5;
+  display: inline-block;
+  margin: 10px 5px;
 }
