@@ -1,9 +1,5 @@
 import { proxy } from '../../vanilla.ts'
 
-type InternalProxySet<T> = Set<T> & {
-  [versionSymbol]: number
-  toJSON(): Set<T>
-}
 type SetMethods<O> = {
   intersection(other: Set<O>): Set<O>
   isDisjointFrom(other: Set<O>): boolean
@@ -12,6 +8,31 @@ type SetMethods<O> = {
   symmetricDifference(other: Set<O>): Set<O>
   union(other: Set<O>): Set<O>
 }
+
+const canProxy = (x: unknown): boolean => {
+  const p = proxy({} as { x: unknown })
+  p.x = x
+  return p.x !== x
+}
+
+const maybeProxify = (v: any) => {
+  if (canProxy(v)) {
+    const pv = proxy(v)
+    if (pv !== v) {
+      return pv
+    }
+  }
+  return v
+}
+
+const sameValueZeroEqauals = (x: any, y: any) => {
+    if (typeof x === 'number' && typeof y === 'number') {
+      // x and y are equal (may be -0 and 0) or they are both NaN
+      return x === y || (x !== x && y !== y)
+    }
+    return x === y
+  },
+  eq = sameValueZeroEqauals
 
 // Set.prototype.add()
 // Set.prototype.clear()
@@ -31,39 +52,47 @@ type SetMethods<O> = {
 // Set.prototype.values()
 // Set.prototype.size
 
-const versionSymbol = Symbol('version')
+type InternalProxySet<T> = Set<T> & {
+  data: Array<[T]>
+  size: number
+  toJSON: () => Set<T>
+}
 
 export function proxySet<T>(initialValues?: Iterable<T> | null) {
-  const set = new Set(initialValues ? [...initialValues] : [])
+  const indexMap = new Map<T, number>()
+  const data = []
 
-  const setProxy = new Proxy(set, {
-    get(target, prop) {
-      let value = Reflect.get(target, prop)
-      if (typeof value === 'function') {
-        value = value.bind(set)
+  if (initialValues !== null && typeof initialValues !== 'undefined') {
+    if (typeof initialValues[Symbol.iterator] !== 'function') {
+      throw new Error(
+        'proxySet: initial state must be iterable\n\t\ttip: structure should be [value]',
+      )
+    }
+    for (const v of initialValues) {
+      const value = maybeProxify(v)
+      if (!indexMap.has(value)) {
+        console.warn('proxySet: duplicate value')
       }
-      return value
-    },
-    set(target, prop, value, _receiver) {
-      return Reflect.set(target, prop, value)
-    },
-  })
+      indexMap.set(value, data.length)
+      data.push(value)
+    }
+  } else {
+    throw new Error('proxySet: initial state must be iterable')
+  }
+  // Remove this closing brace }
 
-  const setObject: InternalProxySet<T> = {
+  const sObject: InternalProxySet<T> = {
+    data,
+    get size() {
+      return this.data.length
+    },
     get [Symbol.toStringTag]() {
       return 'Set'
     },
-    get size() {
-      return setProxy.size
-    },
-    [Symbol.iterator]() {
-      return setProxy[Symbol.iterator]()
-    },
-    [versionSymbol]: 0,
-    add(value) {
-      setProxy.add(value)
-      this[versionSymbol]++
-      return this
+    add(value: T) {
+      if (!indexMap.has(value)) {
+        this.data.push(value)
+      }
     },
     clear() {
       setProxy.clear()
@@ -120,14 +149,14 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     // },
   }
 
-  Object.defineProperties(setObject, {
-    [versionSymbol]: { enumerable: false },
+  Object.defineProperties(sObject, {
     size: { enumerable: false },
+    data: { enumerable: false },
     toJSON: { enumerable: false },
   })
-  Object.seal(setObject)
+  Object.seal(sObject)
 
-  const proxiedObject = proxy(setObject)
+  const proxiedObject = proxy(sObject)
 
   return proxiedObject as unknown as Set<T> & {
     $$valtioSnapshot: Omit<Set<T>, 'add' | 'delete' | 'clear'>
