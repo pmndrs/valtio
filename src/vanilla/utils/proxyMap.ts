@@ -1,4 +1,4 @@
-import { proxy, unstable_replaceInternalFunction } from 'valtio'
+import { proxy } from 'valtio'
 
 // let canProxy: (x: unknown) => boolean
 // unstable_replaceInternalFunction('canProxy', (prev) => {
