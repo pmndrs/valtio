@@ -1,98 +1,169 @@
-import { proxy } from '../../vanilla.ts'
+import { proxy } from 'valtio'
 
-// properties that we don't want to expose to the end-user
+const canProxy = (x: unknown): boolean => {
+  const p = proxy({} as { x: unknown })
+  p.x = x
+  return p.x !== x
+}
+
+const maybeProxify = (v: any) => {
+  if (canProxy(v)) {
+    const pv = proxy(v)
+    if (pv !== v) {
+      return pv
+    }
+  }
+  return v
+}
+
 type InternalProxySet<T> = Set<T> & {
   data: T[]
   toJSON: object
+  intersection: (other: Set<T>) => Set<T>
+  isDisjointFrom: (other: Set<T>) => boolean
+  isSubsetOf: (other: Set<T>) => boolean
+  isSupersetOf: (other: Set<T>) => boolean
+  symmetricDifference: (other: Set<T>) => Set<T>
+  union: (other: Set<T>) => Set<T>
 }
 
-/**
- * proxySet
- *
- * This is to create a proxy which mimic the native Set behavior.
- * The API is the same as Set API
- *
- * @example
- * import { proxySet } from 'valtio/utils'
- * const state = proxySet([1,2,3])
- * //can be used inside a proxy as well
- * const state = proxy({
- *   count: 1,
- *   set: proxySet()
- * })
- */
 export function proxySet<T>(initialValues?: Iterable<T> | null) {
-  const set: InternalProxySet<T> = proxy({
-    data: Array.from(new Set(initialValues)),
-    has(value) {
-      return this.data.indexOf(value) !== -1
-    },
-    add(value) {
-      let hasProxy = false
-      if (typeof value === 'object' && value !== null) {
-        hasProxy = this.data.indexOf(proxy(value as T & object)) !== -1
+  const data: T[] = []
+  const indexMap = new Map<T, number>()
+
+  if (initialValues !== null && typeof initialValues !== 'undefined') {
+    if (typeof initialValues[Symbol.iterator] !== 'function') {
+      throw new Error('proxySet:\n\tinitial state must be iterable')
+    }
+    for (const v of initialValues) {
+      if (!indexMap.has(v)) {
+        const value = maybeProxify(v)
+        indexMap.set(value, data.length)
+        data.push(value)
       }
-      if (this.data.indexOf(value) === -1 && !hasProxy) {
-        this.data.push(value)
+    }
+  }
+
+  const vObject: InternalProxySet<T> = {
+    data: [],
+    get size() {
+      return indexMap.size
+    },
+    add(value: T) {
+      if (!indexMap.has(value)) {
+        const index = data.length
+        data.push(value)
+        indexMap.set(value, index)
       }
       return this
     },
-    delete(value) {
-      const index = this.data.indexOf(value)
-      if (index === -1) {
-        return false
+    delete(value: T) {
+      const index = indexMap.get(value)
+      if (index !== undefined) {
+        delete data[index]
+        indexMap.delete(value)
+        return true
       }
-      this.data.splice(index, 1)
-      return true
+      return false
     },
     clear() {
-      this.data.splice(0)
-    },
-    get size() {
-      return this.data.length
+      data.splice(0)
+      indexMap.clear()
     },
     forEach(cb) {
-      this.data.forEach((value) => {
-        cb(value, value, this)
+      indexMap.forEach((index) => {
+        cb(data[index]!, data[index]!, this)
       })
+    },
+    has(value: T) {
+      return indexMap.has(value)
+    },
+    *values(): IterableIterator<T> {
+      for (const index of indexMap.values()) {
+        yield data[index]!
+      }
+    },
+    keys(): IterableIterator<T> {
+      return this.values()
+    },
+    *entries(): IterableIterator<[T, T]> {
+      for (const index of indexMap.values()) {
+        const value = data[index]!
+        yield [value, value]
+      }
+    },
+    toJSON(): Set<T> {
+      return new Set(data.filter((v) => v !== undefined) as T[])
+    },
+    [Symbol.iterator]() {
+      return this.values()
     },
     get [Symbol.toStringTag]() {
       return 'Set'
     },
-    toJSON() {
-      return new Set(this.data)
+    intersection(other: Set<T>): Set<T> {
+      const resultSet = new Set<T>()
+      for (const value of this.values()) {
+        if (other.has(value)) {
+          resultSet.add(value)
+        }
+      }
+      return proxySet(resultSet)
     },
-    [Symbol.iterator]() {
-      return this.data[Symbol.iterator]()
+    isDisjointFrom(other: Set<T>): boolean {
+      return (
+        this.size === other.size &&
+        [...this.values()].every((value) => !other.has(value))
+      )
     },
-    values() {
-      return this.data.values()
+    isSubsetOf(other: Set<T>) {
+      return (
+        this.size <= other.size &&
+        [...this.values()].every((value) => other.has(value))
+      )
     },
-    keys() {
-      // for Set.keys is an alias for Set.values()
-      return this.data.values()
+    isSupersetOf(other: Set<T>) {
+      return (
+        this.size >= other.size && [...other].every((value) => this.has(value))
+      )
     },
-    entries() {
-      // array.entries returns [index, value] while Set [value, value]
-      return new Set(this.data).entries()
+    symmetricDifference(other: Set<T>) {
+      const resultSet = new Set<T>()
+      for (const value of this.values()) {
+        if (!other.has(value)) {
+          resultSet.add(value)
+        }
+      }
+      for (const value of other) {
+        if (!this.has(value)) {
+          resultSet.add(value)
+        }
+      }
+      return proxySet(resultSet)
     },
+    union(other: Set<T>) {
+      const resultSet = new Set<T>()
+      for (const value of this.values()) {
+        resultSet.add(value)
+      }
+      for (const value of other) {
+        resultSet.add(value)
+      }
+      return proxySet(resultSet)
+    },
+  }
+
+  const proxiedObject = proxy(vObject)
+
+  Object.defineProperties(proxiedObject, {
+    size: { enumerable: false },
+    data: { enumerable: false },
+    toJSON: { enumerable: false },
   })
 
-  Object.defineProperties(set, {
-    data: {
-      enumerable: false,
-    },
-    size: {
-      enumerable: false,
-    },
-    toJSON: {
-      enumerable: false,
-    },
-  })
+  Object.seal(proxiedObject)
 
-  Object.seal(set)
-
-  return set as unknown as Set<T> & {
-    $$valtioSnapshot: Omit<Set<T>, 'add' | 'delete' | 'clear'>
+  return proxiedObject as unknown as Set<T> & {
+    $$valtioSnapshot: Omit<Set<T>, 'set' | 'delete' | 'clear'>
   }
 }
