@@ -1,16 +1,13 @@
 import { getVersion, snapshot } from '../../vanilla.ts'
-import { proxyMap } from './proxyMap.ts'
-import { createProxy, isChanged } from 'proxy-compare'
+import { proxySet } from './proxySet.ts'
 
-const p = proxyMap()
-p.set('k', { c: 1 })
-const s1 = snapshot(p)
-const v1 = getVersion(s1)
-p.get('k').c++
-const s2 = snapshot(p)
-const v2 = getVersion(s2)
-const v3 = getVersion(p)
+const state = proxySet()
+state.add('hello')
+state.add('world')
+state.add('world')
 
-console.log(v1)
-console.log(v2)
-console.log(v3)
+console.log(state.size)
+
+console.log(getVersion(state))
+
+console.log(snapshot(state))

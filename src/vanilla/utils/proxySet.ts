@@ -33,7 +33,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
 
   if (initialValues !== null && typeof initialValues !== 'undefined') {
     if (typeof initialValues[Symbol.iterator] !== 'function') {
-      throw new Error('proxySet:\n\tinitial state must be iterable')
+      throw new TypeError('not iterable')
     }
     for (const v of initialValues) {
       if (!indexMap.has(v)) {
@@ -45,42 +45,50 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   }
 
   const vObject: InternalProxySet<T> = {
-    data: [],
+    data,
     get size() {
       return indexMap.size
     },
-    add(value: T) {
+    add(v: T) {
+      const value = maybeProxify(v)
       if (!indexMap.has(value)) {
-        const index = data.length
-        data.push(value)
+        const index = this.data.length
+        this.data.push(value)
         indexMap.set(value, index)
       }
       return this
     },
-    delete(value: T) {
+    delete(v: T) {
+      const value = maybeProxify(v)
       const index = indexMap.get(value)
       if (index !== undefined) {
-        delete data[index]
+        this.data.length
+        delete this.data[index]
         indexMap.delete(value)
         return true
       }
       return false
     },
     clear() {
-      data.splice(0)
+      this.data.splice(0)
       indexMap.clear()
     },
     forEach(cb) {
       indexMap.forEach((index) => {
-        cb(data[index]!, data[index]!, this)
+        cb(this.data[index]!, this.data[index]!, this)
       })
     },
-    has(value: T) {
-      return indexMap.has(value)
+    has(v: T) {
+      const value = maybeProxify(v)
+      if (indexMap.has(value)) {
+        this.data.length
+        return true
+      }
+      return false
     },
     *values(): IterableIterator<T> {
       for (const index of indexMap.values()) {
-        yield data[index]!
+        yield this.data[index]!
       }
     },
     keys(): IterableIterator<T> {
@@ -88,12 +96,12 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     },
     *entries(): IterableIterator<[T, T]> {
       for (const index of indexMap.values()) {
-        const value = data[index]!
+        const value = this.data[index]!
         yield [value, value]
       }
     },
     toJSON(): Set<T> {
-      return new Set(data.filter((v) => v !== undefined) as T[])
+      return new Set(this.data.filter((v) => v !== undefined) as T[])
     },
     [Symbol.iterator]() {
       return this.values()
@@ -102,35 +110,41 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return 'Set'
     },
     intersection(other: Set<T>): Set<T> {
-      const resultSet = new Set<T>()
+      const otherSet = proxySet<T>(other)
+      const resultSet = proxySet<T>()
       for (const value of this.values()) {
-        if (other.has(value)) {
+        if (otherSet.has(value)) {
           resultSet.add(value)
         }
       }
       return proxySet(resultSet)
     },
     isDisjointFrom(other: Set<T>): boolean {
+      const otherSet = proxySet<T>(other)
       return (
         this.size === other.size &&
-        [...this.values()].every((value) => !other.has(value))
+        [...this.values()].every((value) => !otherSet.has(value))
       )
     },
     isSubsetOf(other: Set<T>) {
+      const otherSet = proxySet<T>(other)
       return (
         this.size <= other.size &&
-        [...this.values()].every((value) => other.has(value))
+        [...this.values()].every((value) => otherSet.has(value))
       )
     },
     isSupersetOf(other: Set<T>) {
+      const otherSet = proxySet<T>(other)
       return (
-        this.size >= other.size && [...other].every((value) => this.has(value))
+        this.size >= other.size &&
+        [...otherSet].every((value) => this.has(value))
       )
     },
     symmetricDifference(other: Set<T>) {
-      const resultSet = new Set<T>()
+      const resultSet = proxySet<T>()
+      const otherSet = proxySet<T>(other)
       for (const value of this.values()) {
-        if (!other.has(value)) {
+        if (!otherSet.has(value)) {
           resultSet.add(value)
         }
       }
@@ -142,11 +156,12 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return proxySet(resultSet)
     },
     union(other: Set<T>) {
-      const resultSet = new Set<T>()
+      const resultSet = proxySet<T>()
+      const otherSet = proxySet<T>(other)
       for (const value of this.values()) {
         resultSet.add(value)
       }
-      for (const value of other) {
+      for (const value of otherSet) {
         resultSet.add(value)
       }
       return proxySet(resultSet)

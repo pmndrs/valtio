@@ -28,7 +28,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
 
   if (entries !== null && typeof entries !== 'undefined') {
     if (typeof entries[Symbol.iterator] !== 'function') {
-      throw new Error(
+      throw new TypeError(
         'proxyMap:\n\tinitial state must be iterable\n\t\ttip: structure should be [[key, value]]',
       )
     }
