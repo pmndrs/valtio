@@ -1,5 +1,11 @@
 import { proxy } from 'valtio'
 
+// let canProxy: (x: unknown) => boolean
+// unstable_replaceInternalFunction('canProxy', (prev) => {
+//   canProxy = prev
+//   return prev
+// })
+
 const canProxy = (x: unknown): boolean => {
   const p = proxy({} as { x: unknown })
   p.x = x
@@ -25,6 +31,7 @@ type InternalProxyObject<K, V> = Map<K, V> & {
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const data: Array<[K, V]> = []
   const indexMap = new Map<K, number>()
+  const map = new Map<K, V>()
 
   if (entries !== null && typeof entries !== 'undefined') {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -35,6 +42,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     for (const [k, v] of entries) {
       const key = maybeProxify(k)
       const value = maybeProxify(v)
+      map.set(key, value)
       indexMap.set(key, data.length)
       data.push([key, value])
     }
@@ -43,14 +51,17 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const vObject: InternalProxyObject<K, V> = {
     data,
     get size() {
-      return indexMap.size
+      return map.size
     },
     get(key: K) {
       const k = maybeProxify(key)
+      console.log(k)
       const index = indexMap.get(k)
+      console.log('index', index)
       if (index === undefined) {
         return undefined
       }
+      console.log('IM', indexMap.get(k))
       if (this.data[index] !== undefined) {
         return this.data[index]![1]
       }
@@ -66,6 +77,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const k = maybeProxify(key)
       const v = maybeProxify(value)
       const index = indexMap.get(k)
+      map.set(k, v)
       if (index !== undefined) {
         this.data[index] = [k, v]
       } else {
@@ -75,36 +87,38 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return this
     },
     delete(key: K) {
-      if (indexMap.has(key)) {
+      if (map.has(key)) {
+        map.delete(key)
         const index = indexMap.get(key)
-        delete this.data[index!]
+        this.data.splice(index!, 1)
         indexMap.delete(key)
         return true
       }
       return false
     },
     clear() {
+      map.clear()
       indexMap.clear()
       this.data.splice(0)
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
-      indexMap.forEach((index) => {
-        cb(this.data[index]![1]!, this.data[index]![0]!, this)
+      map.forEach((value, key, _map) => {
+        cb(value, key, this)
       })
     },
     *entries(): MapIterator<[K, V]> {
-      for (const index of indexMap.values()) {
-        yield this.data[index] as [K, V]
+      for (const [key, value] of map.entries()) {
+        yield [key, value]
       }
     },
     *keys(): IterableIterator<K> {
-      for (const key of indexMap.keys()) {
+      for (const key of map.keys()) {
         yield key
       }
     },
     *values(): IterableIterator<V> {
-      for (const index of indexMap.values()) {
-        yield this.data[index]![1]!
+      for (const value of map.values()) {
+        yield value
       }
     },
     [Symbol.iterator]() {
@@ -114,9 +128,10 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return 'Map'
     },
     toJSON(): Map<K, V> {
-      return new Map(this.data.filter((v) => v !== undefined) as [K, V][])
+      return map
     },
   }
+
   const proxiedObject = proxy(vObject)
 
   Object.defineProperties(proxiedObject, {
