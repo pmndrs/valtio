@@ -6,15 +6,7 @@ const canProxy = (x: unknown): boolean => {
   return p.x !== x
 }
 
-const maybeProxify = (v: any) => {
-  if (canProxy(v)) {
-    const pv = proxy(v)
-    if (pv !== v) {
-      return pv
-    }
-  }
-  return v
-}
+const maybeProxify = (x: any) => (canProxy(x) ? proxy({ x }).x : x)
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<[K, V | undefined]>
