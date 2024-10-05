@@ -6,15 +6,7 @@ const canProxy = (x: unknown): boolean => {
   return p.x !== x
 }
 
-const maybeProxify = (v: any) => {
-  if (canProxy(v)) {
-    const pv = proxy(v)
-    if (pv !== v) {
-      return pv
-    }
-  }
-  return v
-}
+const maybeProxify = (x: any) => (canProxy(x) ? proxy({ x }).x : x)
 
 type InternalProxySet<T> = Set<T> & {
   data: T[]
@@ -178,7 +170,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
 
   Object.seal(proxiedObject)
 
-  return proxiedObject as unknown as Set<T> & {
-    $$valtioSnapshot: Omit<Set<T>, 'set' | 'delete' | 'clear'>
+  return proxiedObject as unknown as InternalProxySet<T> & {
+    $$valtioSnapshot: Omit<InternalProxySet<T>, 'set' | 'delete' | 'clear'>
   }
 }
