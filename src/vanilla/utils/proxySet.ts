@@ -1,4 +1,4 @@
-import { getVersion, proxy } from 'valtio'
+import { getVersion, proxy } from '../../vanilla.ts'
 
 const maybeProxify = (x: any) => proxy({ x }).x
 
