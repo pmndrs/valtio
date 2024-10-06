@@ -1,9 +1,6 @@
 import { getVersion, proxy } from 'valtio'
 
-const maybeProxify = (x: any) => {
-  const p = proxy({ x })
-  return p.x !== x ? p.x : x
-}
+const maybeProxify = (x: any) => proxy({ x }).x
 
 type InternalProxySet<T> = Set<T> & {
   data: T[]
