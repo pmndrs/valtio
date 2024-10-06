@@ -1,12 +1,6 @@
-import { proxy } from 'valtio'
+import { getVersion, proxy } from 'valtio'
 
-const canProxy = (x: unknown): boolean => {
-  const p = proxy({} as { x: unknown })
-  p.x = x
-  return p.x !== x
-}
-
-const maybeProxify = (x: any) => (canProxy(x) ? proxy({ x }).x : x)
+const maybeProxify = (x: any) => proxy({ x }).x
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<[K, V | undefined]>
@@ -17,6 +11,7 @@ type InternalProxyObject<K, V> = Map<K, V> & {
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const data: Array<[K, V]> = []
   const indexMap = new Map<K, number>()
+  const emptyIndexes: number[] = []
 
   if (entries !== null && typeof entries !== 'undefined') {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -49,34 +44,66 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     has(key: K) {
       if (!indexMap.has(key)) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.data.length
       }
       return indexMap.has(key)
     },
     set(key: K, value: V) {
+      if (getVersion(this) === undefined) {
+        if (import.meta.env?.MODE !== 'production') {
+          throw new Error('Cannot perform mutations on a snapshot')
+        } else {
+          return this
+        }
+      }
       const k = maybeProxify(key)
       const v = maybeProxify(value)
       if (indexMap.has(k)) {
         const index = indexMap.get(k)
         this.data[index!] = [k, v]
       } else {
-        indexMap.set(k, this.data.length)
-        this.data.push([k, v])
+        if (emptyIndexes.length > 0) {
+          const index = emptyIndexes.shift()!
+          this.data[index] = [k, v]
+          indexMap.set(k, index)
+        } else {
+          // push to this.data first to throw error before accidentally mutating
+          // the indexMap when snapshot is used to mutate
+          this.data.push([k, v])
+          indexMap.set(k, this.data.length - 1)
+        }
       }
       return this
     },
     delete(key: K) {
+      if (getVersion(this) === undefined) {
+        if (import.meta.env?.MODE !== 'production') {
+          throw new Error('Cannot perform mutations on a snapshot')
+        } else {
+          return false
+        }
+      }
       if (indexMap.has(key)) {
         const index = indexMap.get(key)
         delete this.data[index!]
         indexMap.delete(key)
+        emptyIndexes.push(index!)
         return true
       }
       return false
     },
     clear() {
+      if (getVersion(this) === undefined) {
+        if (import.meta.env?.MODE !== 'production') {
+          throw new Error('Cannot perform mutations on a snapshot')
+        } else {
+          return
+        }
+      }
       indexMap.clear()
       this.data.splice(0)
+      emptyIndexes.splice(0)
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
       indexMap.forEach((index) => {

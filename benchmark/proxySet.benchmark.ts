@@ -1,6 +1,5 @@
-import { proxySet as originalProxySet } from '../src/vanilla/utils/proxySet.old'
-import { proxySet as newProxySet } from '../src/vanilla/utils/proxySet'
 import Benchmark from 'benchmark'
+import { proxySet as newProxySet } from '../src/vanilla/utils/proxySet.ts'
 
 // Helper function to generate test data
 function generateTestData(size: number): number[] {
@@ -28,13 +27,6 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  suite.add(`Insertion - Original proxySet (${size} items)`, () => {
-    const set = originalProxySet<number>()
-    testData.forEach((value) => {
-      set.add(value)
-    })
-  })
-
   suite.add(`Insertion - New proxySet (${size} items)`, () => {
     const set = newProxySet<number>()
     testData.forEach((value) => {
@@ -44,18 +36,11 @@ TEST_SIZES.forEach((size) => {
 
   // Benchmark for checking existence
   const nativeSet = new Set<number>(testData)
-  const origProxySet = originalProxySet<number>(testData)
   const nProxySet = newProxySet(testData)
 
   suite.add(`Has Check - Native Set (${size} items)`, () => {
     testData.forEach((value) => {
       nativeSet.has(value)
-    })
-  })
-
-  suite.add(`Has Check - Original proxySet (${size} items)`, () => {
-    testData.forEach((value) => {
-      origProxySet.has(value)
     })
   })
 
@@ -73,13 +58,6 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  suite.add(`Deletion - Original proxySet (${size} items)`, () => {
-    const set = originalProxySet<number>(testData)
-    testData.forEach((value) => {
-      set.delete(value)
-    })
-  })
-
   suite.add(`Deletion - New proxySet (${size} items)`, () => {
     const set = newProxySet<number>(testData)
     testData.forEach((value) => {
@@ -90,12 +68,6 @@ TEST_SIZES.forEach((size) => {
   // Benchmark for iteration
   suite.add(`Iteration - Native Set (${size} items)`, () => {
     for (const value of nativeSet) {
-      // No-op
-    }
-  })
-
-  suite.add(`Iteration - Original proxySet (${size} items)`, () => {
-    for (const value of origProxySet) {
       // No-op
     }
   })

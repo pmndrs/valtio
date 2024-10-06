@@ -1,6 +1,5 @@
-import { proxyMap as originalProxyMap } from '../src/vanilla/utils/proxyMap.old.ts'
-import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap.ts'
 import Benchmark from 'benchmark'
+import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap.ts'
 
 // Helper function to generate test data
 function generateTestData(size: number): [number, number][] {
@@ -28,13 +27,6 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  // suite.add(`Insertion - Original proxyMap (${size} items)`, () => {
-  //   const map = originalProxyMap<number, number>()
-  //   testData.forEach(([key, value]) => {
-  //     map.set(key, value)
-  //   })
-  // })
-
   suite.add(`Insertion - New proxyMap (${size} items)`, () => {
     const map = newProxyMap<number, number>()
     testData.forEach(([key, value]) => {
@@ -44,7 +36,6 @@ TEST_SIZES.forEach((size) => {
 
   // Benchmark for retrieval
   const nativeMap = new Map<number, number>(testData)
-  const origProxyMap = originalProxyMap<number, number>(testData)
   const nProxyMap = newProxyMap<number, number>(testData)
 
   suite.add(`Retrieval - Native Map (${size} items)`, () => {
@@ -52,12 +43,6 @@ TEST_SIZES.forEach((size) => {
       nativeMap.get(key)
     })
   })
-
-  // suite.add(`Retrieval - Original proxyMap (${size} items)`, () => {
-  //   testData.forEach(([key]) => {
-  //     origProxyMap.get(key)
-  //   })
-  // })
 
   suite.add(`Retrieval - New proxyMap (${size} items)`, () => {
     testData.forEach(([key]) => {
@@ -73,13 +58,6 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  // suite.add(`Deletion - Original proxyMap (${size} items)`, () => {
-  //   const map = originalProxyMap<number, number>(testData)
-  //   testData.forEach(([key]) => {
-  //     map.delete(key)
-  //   })
-  // })
-
   suite.add(`Deletion - New proxyMap (${size} items)`, () => {
     const map = newProxyMap<number, number>(testData)
     testData.forEach(([key]) => {
@@ -93,12 +71,6 @@ TEST_SIZES.forEach((size) => {
       // No-op
     }
   })
-
-  // suite.add(`Iteration - Original proxyMap (${size} items)`, () => {
-  //   for (const [key, value] of origProxyMap) {
-  //     // No-op
-  //   }
-  // })
 
   suite.add(`Iteration - New proxyMap (${size} items)`, () => {
     for (const [key, value] of nProxyMap) {

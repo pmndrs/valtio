@@ -1,12 +1,9 @@
-import { proxy } from 'valtio'
+import { getVersion, proxy } from 'valtio'
 
-const canProxy = (x: unknown): boolean => {
-  const p = proxy({} as { x: unknown })
-  p.x = x
-  return p.x !== x
+const maybeProxify = (x: any) => {
+  const p = proxy({ x })
+  return p.x !== x ? p.x : x
 }
-
-const maybeProxify = (x: any) => (canProxy(x) ? proxy({ x }).x : x)
 
 type InternalProxySet<T> = Set<T> & {
   data: T[]
@@ -42,6 +39,13 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return indexMap.size
     },
     add(v: T) {
+      if (getVersion(this) === undefined) {
+        if (import.meta.env?.MODE !== 'production') {
+          throw new Error('Cannot perform mutations on a snapshot')
+        } else {
+          return this
+        }
+      }
       const value = maybeProxify(v)
       if (!indexMap.has(value)) {
         const index = this.data.length
@@ -51,9 +55,17 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return this
     },
     delete(v: T) {
+      if (getVersion(this) === undefined) {
+        if (import.meta.env?.MODE !== 'production') {
+          throw new Error('Cannot perform mutations on a snapshot')
+        } else {
+          return false
+        }
+      }
       const value = maybeProxify(v)
       const index = indexMap.get(value)
       if (index !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.data.length
         delete this.data[index]
         indexMap.delete(value)
@@ -62,6 +74,13 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return false
     },
     clear() {
+      if (getVersion(this) === undefined) {
+        if (import.meta.env?.MODE !== 'production') {
+          throw new Error('Cannot perform mutations on a snapshot')
+        } else {
+          return
+        }
+      }
       this.data.splice(0)
       indexMap.clear()
     },
@@ -73,6 +92,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     has(v: T) {
       const value = maybeProxify(v)
       if (indexMap.has(value)) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.data.length
         return true
       }
