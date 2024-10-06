@@ -5,9 +5,9 @@ subSection: 'Utils'
 description: 'watch for changes.'
 ---
 
-# watch
+# `watch`
 
-#### subscription via a getter
+## Subscription via a getter
 
 This utility supports subscribing to multiple proxy objects (unlike `subscribe` which listens to only a single proxy). Proxy objects are subscribed with a `get` function passed to the callback.
 
@@ -35,7 +35,7 @@ sessionState.expired = true
 // 'Juuso's session is expired'
 ```
 
-#### cleanup
+## Cleanup
 
 You may return a cleanup function that runs both:
 
@@ -72,11 +72,11 @@ setTimeout(() => {
 // 'Cleaning up' logged
 ```
 
-#### gotchas
+## Gotchas
 
-If you remove the setTimeout in the example above, 'Juuso's session is expired' will become 'Anonymous's session is expired', logged twice. Valtio will batch updates by default. You may pass `{sync: true}` as a second argument to `watch` to disable batching.
+If you remove the setTimeout in the example above, `'Juuso's session is expired'` will become `'Anonymous's session is expired'` and it will be logged twice. Valtio will batch updates by default. You may pass `{sync: true}` as a second argument to `watch` to disable batching.
 
-#### no usage tracking
+## No usage tracking
 
 `watch` currently does not implement the usage tracking of `useSnapshot`, so the callback will rerun anytime a watched proxy (or child proxy) has any fields mutated, regardless of the fields accessed within the `callback`'s code.
 

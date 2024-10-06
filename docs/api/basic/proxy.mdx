@@ -5,9 +5,9 @@ subSection: 'Basic'
 description: 'Create a proxy object.'
 ---
 
-# proxy
+# `proxy`
 
-The proxy tracks changes to the original object and all nested objects, notifying listeners when an object is modified.
+The `proxy` tracks changes to the original object and all nested objects, notifying listeners when an object is modified.
 
 ```js
 import { proxy } from 'valtio'
@@ -15,7 +15,7 @@ import { proxy } from 'valtio'
 const state = proxy({ count: 0, text: 'hello' })
 ```
 
-#### Mutate from anywhere
+## Mutate from anywhere
 
 You can make changes to it in the same way you would to a normal js-object.
 
@@ -25,7 +25,7 @@ setInterval(() => {
 }, 1000)
 ```
 
-#### Optimizations: Noop and batching
+## Optimizations: noop and batching
 
 Updates that set the value of a property to the same value are ignored. Subscribers will not be informed of a version change.
 
@@ -44,9 +44,9 @@ state.count = 1
 state.text = 'world'
 ```
 
-#### Nested proxies
+## Nested proxies
 
-Proxies can be nested in other proxy objects and updated as a whole.
+Proxies can be nested in other `proxy` objects and updated as a whole.
 
 ```jsx
 import { proxy, useSnapshot } from 'valtio'
@@ -57,7 +57,7 @@ const authState = proxy({ status: 'loggedIn', user: personState })
 authState.user.name = 'Nina'
 ```
 
-#### Promises in proxies
+## Promises in proxies
 
 See [`async`](../../guides/async) for more details.
 
@@ -69,9 +69,9 @@ const bombState = proxy({
 })
 ```
 
-#### Gotchas
+## Gotchas
 
-If you reassign the proxy to an entirely new object, it will stop working.
+If you reassign the proxy to an entirely new object, it will stop working because you are replacing the proxied object with a new object reference.
 
 ```jsx
 let state = proxy({ user: { name: 'Timo' } })

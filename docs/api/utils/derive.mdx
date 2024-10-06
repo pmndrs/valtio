@@ -5,7 +5,7 @@ subSection: 'Utils'
 description: 'create a new proxy derived from others'
 ---
 
-# derive
+## `derive`
 
 ## Installation
 
@@ -41,9 +41,9 @@ derive(
 )
 ```
 
-## underive
+## `underive`
 
-#### stop evaluating
+## Stop evaluating
 
 In some cases you may want to unsubscribe after deriving a proxy. To do so, use the `underive` util. You may also pass keys to indicate which properties you want to unsubscribe. If you specify `delete` option, it will delete the properties
 and you can attach new derived properties.
@@ -63,7 +63,7 @@ underive(derivedState)
 
 ## Usage patterns
 
-## Re-computes when unrelated properties change
+### Re-computes when unrelated properties change
 
 With `derive`, the computation will occur if any property of the base proxy changes. Example:
 
@@ -82,7 +82,7 @@ const countersOneAndTwoSelectors = derive({
 
 In this example if `baseProxy.counter3` or `baseProxy.counter4` are changed, `countersOneAndTwoSelectors` will re-compute all of the keys in it.
 
-## get sub-objects due to update of unrelated proxies on parent proxy
+### `get` sub-objects due to update of unrelated proxies on parent proxy
 
 As noted on this page, re-computation occurs when unrelated properties change. It is possible to use `get` on sub-objects. This has the benefit of not re-computing when properties of the parent object are updated. Example:
 

@@ -6,7 +6,7 @@ title: 'Some gotchas'
 
 ## `useSnapshot(state)` without property access will always trigger re-render
 
-https://github.com/pmndrs/valtio/issues/209#issuecomment-896859395
+Ref: https://github.com/pmndrs/valtio/issues/209#issuecomment-896859395
 
 Suppose we have this state (or store).
 
@@ -60,11 +60,16 @@ Side note: [react-tracked](https://react-tracked.js.org) has a special `memo` ex
 
 We have some options:
 
-a. Do not use `React.memo`.
-
-b. Do not pass objects to components with `React.memo` (pass primitive values instead).
-
-c. Pass in the proxy of that element, and then `useSnapshot` on that proxy.
+<ol type="a">
+  <li>Do not use `React.memo`.</li>
+  <li>
+    Do not pass objects to components with `React.memo` (pass primitive values
+    instead).
+  </li>
+  <li>
+    Pass in the proxy of that element, and then `useSnapshot` on that proxy.
+  </li>
+</ol>
 
 ### Example of (b)
 
@@ -143,7 +148,7 @@ subscribe(state.subscribeData, async () => {
 })
 ```
 
-## Issue with array proxy
+## Issue with `array` `proxy`
 
 The following use case can occur unexpected results on `arr` subscription:
 
@@ -160,17 +165,14 @@ Object.keys(byId).forEach((key) => arr.push(byId[key]))
 
 [Issues](https://github.com/pmndrs/valtio/issues/712) may arise when handling the array proxy reference in the subsequent steps:
 
-a. Subscribe array proxy
-
-b. Use the proxy as snapshot
-
-c. Assign temp variable for updating
-
-d. Remove proxy from the array
-
-e. Update temp
-
-f. Push temp in the original array
+<ol type="a">
+  <li>Subscribe array proxy</li>
+  <li>Use the proxy as snapshot</li>
+  <li>Assign temp variable for updating</li>
+  <li>Remove proxy from the array</li>
+  <li>Update temp</li>
+  <li>Push temp in the original array</li>
+</ol>
 
 **Example issue case:**
 

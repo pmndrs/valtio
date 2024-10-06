@@ -5,13 +5,13 @@ subSection: 'Advanced'
 description: 'Create a snapshot of current state'
 ---
 
-# snapshot
+# `snapshot`
 
-snapshot takes a proxy and returns an immutable object, unwrapped from the proxy.
+`snapshot` takes a proxy and returns an immutable object, unwrapped from the proxy.
 
-Immutability is achieved by _efficiently_ deep copying & freezing the object (see the "Copy on Write" section for details).
+Immutability is achieved by _efficiently_ deep copying & freezing the object (see the [Copy on Write](#copy-on-write) section for details).
 
-Briefly, in sequential snapshot calls, when the values in the proxy have not changed, a pointer to the same previous snapshot object is returned. This allows for shallow comparison in render functions, preventing spurious renders.
+Briefly, in sequential `snapshot` calls, when the values in the proxy have not changed, the previous snapshot's object reference is returned. This allows for shallow comparison in render functions, preventing spurious renders.
 
 Snapshots also throw promises, making them work with React Suspense.
 
@@ -30,7 +30,7 @@ console.log(snap1 === snap3) // false, should re-render
 
 ## Copy on Write
 
-Even though snapshots are a deep copy of the entire state, they use a lazy copy-on-write mechanism for updates, so in practice are quick to maintain.
+Even though snapshots are a deep copy of the entire state, they use a lazy copy-on-write mechanism for updates, so in practice they are quick to maintain.
 
 For example, if we have a nested object of:
 
@@ -105,4 +105,9 @@ This should be fine, because the expectation is that they execute very quickly (
 
 In VanillaJS, `snapshot` is not necessary to access proxied object values, inside or outside of subscribe. However, it is useful, for example, to keep a serializable list of unproxied objects or check if objects have changed. It also resolves promises.
 
-If you are using valtio outside without React, import proxy and snapshot from 'valtio/vanilla'.
+> [!TIP]
+> If you are using valtio outside of react, import from `valtio/vanilla`
+>
+> ```js
+> import { proxy, snapshot } from 'valtio/vanilla'
+> ```
