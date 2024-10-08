@@ -110,6 +110,8 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
     },
     toJSON(): Set<T> {
+      // filtering is about twice as fast as creating a new set and deleting
+      // the undefined value because filter actually skips empty slots
       return new Set(this.data.filter((v) => v !== undefined) as T[])
     },
     [Symbol.iterator]() {
