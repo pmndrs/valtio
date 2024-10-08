@@ -1,4 +1,5 @@
 import Benchmark from 'benchmark'
+import { proxyMap as btreeProxyMap } from '../src/vanilla/utils/proxyMap-Btree.ts'
 import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap.ts'
 
 // Helper function to generate test data
@@ -27,8 +28,15 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  suite.add(`Insertion - New proxyMap (${size} items)`, () => {
-    const map = newProxyMap<number, number>()
+  // suite.add(`Insertion - New proxyMap (${size} items)`, () => {
+  //   const map = newProxyMap<number, number>()
+  //   testData.forEach(([key, value]) => {
+  //     map.set(key, value)
+  //   })
+  // })
+
+  suite.add(`Insertion - Btree proxyMap (${size} items)`, () => {
+    const map = btreeProxyMap<number, number>()
     testData.forEach(([key, value]) => {
       map.set(key, value)
     })
@@ -37,6 +45,7 @@ TEST_SIZES.forEach((size) => {
   // Benchmark for retrieval
   const nativeMap = new Map<number, number>(testData)
   const nProxyMap = newProxyMap<number, number>(testData)
+  const bProxyMap = btreeProxyMap<number, number>(testData)
 
   suite.add(`Retrieval - Native Map (${size} items)`, () => {
     testData.forEach(([key]) => {
@@ -44,9 +53,15 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  suite.add(`Retrieval - New proxyMap (${size} items)`, () => {
+  // suite.add(`Retrieval - New proxyMap (${size} items)`, () => {
+  //   testData.forEach(([key]) => {
+  //     nProxyMap.get(key)
+  //   })
+  // })
+
+  suite.add(`Retrieval - BTree proxyMap (${size} items)`, () => {
     testData.forEach(([key]) => {
-      nProxyMap.get(key)
+      bProxyMap.get(key)
     })
   })
 
@@ -58,8 +73,15 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  suite.add(`Deletion - New proxyMap (${size} items)`, () => {
-    const map = newProxyMap<number, number>(testData)
+  // suite.add(`Deletion - New proxyMap (${size} items)`, () => {
+  //   const map = newProxyMap<number, number>(testData)
+  //   testData.forEach(([key]) => {
+  //     map.delete(key)
+  //   })
+  // })
+
+  suite.add(`Deletion - BTree proxyMap (${size} items)`, () => {
+    const map = btreeProxyMap<number, number>(testData)
     testData.forEach(([key]) => {
       map.delete(key)
     })
@@ -72,8 +94,14 @@ TEST_SIZES.forEach((size) => {
     }
   })
 
-  suite.add(`Iteration - New proxyMap (${size} items)`, () => {
-    for (const [key, value] of nProxyMap) {
+  // suite.add(`Iteration - New proxyMap (${size} items)`, () => {
+  //   for (const [key, value] of nProxyMap) {
+  //     // No-op
+  //   }
+  // })
+
+  suite.add(`Iteration - Btree proxyMap (${size} items)`, () => {
+    for (const [key, value] of bProxyMap) {
       // No-op
     }
   })
