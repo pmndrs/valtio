@@ -1,7 +1,7 @@
 lockfileVersion: '6.0'
 
 settings:
-  autoInstallPeers: true
+  autoInstallPeers: false
   excludeLinksFromLockfile: false
 
 dependencies:
@@ -11,6 +11,9 @@ dependencies:
   sorted-btree:
     specifier: ^1.8.1
     version: 1.8.1
+  valtio-dev-tools:
+    specifier: link:/Users/msweeney/Projects/Personal/valtio-dev-tools
+    version: link:../valtio-dev-tools
 
 devDependencies:
   '@redux-devtools/extension':
@@ -58,6 +61,9 @@ devDependencies:
   benchmark:
     specifier: ^2.1.4
     version: 2.1.4
+  dom^10.0.0:
+    specifier: link:@testing-library/dom^10.0.0
+    version: link:@testing-library/dom^10.0.0
   esbuild:
     specifier: ^0.23.1
     version: 0.23.1
