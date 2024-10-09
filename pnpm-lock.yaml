@@ -61,9 +61,6 @@ devDependencies:
   benchmark:
     specifier: ^2.1.4
     version: 2.1.4
-  dom^10.0.0:
-    specifier: link:@testing-library/dom^10.0.0
-    version: link:@testing-library/dom^10.0.0
   esbuild:
     specifier: ^0.23.1
     version: 0.23.1

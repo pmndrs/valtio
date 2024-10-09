@@ -123,7 +123,6 @@
     "@vitest/coverage-v8": "^2.0.5",
     "@vitest/ui": "^2.0.5",
     "benchmark": "^2.1.4",
-    "dom^10.0.0": "link:@testing-library/dom^10.0.0",
     "esbuild": "^0.23.1",
     "eslint": "8.57.0",
     "eslint-config-prettier": "^9.1.0",
