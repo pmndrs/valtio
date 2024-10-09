@@ -63,8 +63,8 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const k = maybeProxify(key)
       const v = maybeProxify(value)
       if (indexMap.has(k)) {
-        const index = indexMap.get(k)
-        this.data[index!] = [k, v]
+        const index = indexMap.get(k)!
+        this.data[index] = [k, v]
       } else {
         if (emptyIndexes.length > 0) {
           const index = emptyIndexes.pop()!
