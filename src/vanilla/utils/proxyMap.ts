@@ -2,6 +2,8 @@ import { getVersion, proxy } from '../../vanilla.ts'
 
 const maybeProxify = (x: any) => proxy({ x }).x
 
+const isProxy = (x: any) => getVersion(x) !== undefined
+
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<[K, V | undefined]>
   size: number
@@ -44,14 +46,14 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     has(k: K) {
       const key = maybeProxify(k)
-      if (!indexMap.has(key) && shouldAbortMutation()) {
+      if (!indexMap.has(key) && !isProxy(this)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.data.length
       }
       return indexMap.has(key)
     },
     set(key: K, value: V) {
-      if (shouldAbortMutation()) {
+      if (!isProxy(this)) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {
@@ -76,7 +78,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return this
     },
     delete(key: K) {
-      if (shouldAbortMutation()) {
+      if (!isProxy(this)) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {
@@ -93,7 +95,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return false
     },
     clear() {
-      if (shouldAbortMutation()) {
+      if (!isProxy(this)) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {
@@ -136,10 +138,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   }
 
   const proxiedObject = proxy(vObject)
-
-  function shouldAbortMutation() {
-    return getVersion(proxiedObject) !== undefined
-  }
 
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
