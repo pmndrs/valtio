@@ -2,8 +2,6 @@ import { getVersion, proxy } from '../../vanilla.ts'
 
 const maybeProxify = (x: any) => proxy({ x }).x
 
-const isSnapshot = (context: any) => getVersion(context) === undefined
-
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<[K, V | undefined]>
   size: number
@@ -46,14 +44,14 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     has(k: K) {
       const key = maybeProxify(k)
-      if (!indexMap.has(key) && isSnapshot(this)) {
+      if (!indexMap.has(key) && shouldAbortMutation()) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.data.length
       }
       return indexMap.has(key)
     },
     set(key: K, value: V) {
-      if (isSnapshot(this)) {
+      if (shouldAbortMutation()) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {
@@ -78,7 +76,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return this
     },
     delete(key: K) {
-      if (isSnapshot(this)) {
+      if (shouldAbortMutation()) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {
@@ -95,7 +93,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return false
     },
     clear() {
-      if (isSnapshot(this)) {
+      if (shouldAbortMutation()) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {
@@ -136,7 +134,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return new Map([...indexMap].map(([k, v]) => [k, this.data[v]![1]!]))
     },
   }
+
   const proxiedObject = proxy(vObject)
+
+  function shouldAbortMutation() {
+    return getVersion(proxiedObject) !== undefined
+  }
 
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },

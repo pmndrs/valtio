@@ -3,6 +3,8 @@ import { getVersion, proxy } from '../../vanilla.ts'
 
 const maybeProxify = (x: any) => proxy({ x }).x
 
+const isImmutable = (x: any) => getVersion(x) === undefined
+
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: BTree<K, V>
   size: number
@@ -39,9 +41,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return btree.has(k)
     },
     set(key: K, value: V) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      this.data.length // trigger re-render
-      if (getVersion(this) === undefined) {
+      if (isImmutable(this)) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {
@@ -54,7 +54,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return this
     },
     delete(key: K) {
-      if (getVersion(this) === undefined) {
+      if (isImmutable(this)) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {
@@ -65,7 +65,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return btree.delete(k)
     },
     clear() {
-      if (getVersion(this) === undefined) {
+      if (isImmutable(this)) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {

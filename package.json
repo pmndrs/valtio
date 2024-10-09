@@ -104,8 +104,7 @@
   "packageManager": "pnpm@8.15.0",
   "dependencies": {
     "proxy-compare": "^3.0.0",
-    "sorted-btree": "^1.8.1",
-    "valtio-dev-tools": "link:/Users/msweeney/Projects/Personal/valtio-dev-tools"
+    "sorted-btree": "^1.8.1"
   },
   "devDependencies": {
     "@redux-devtools/extension": "^3.3.0",
