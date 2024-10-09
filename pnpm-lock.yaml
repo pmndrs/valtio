@@ -11,9 +11,6 @@ dependencies:
   sorted-btree:
     specifier: ^1.8.1
     version: 1.8.1
-  valtio-dev-tools:
-    specifier: link:/Users/msweeney/Projects/Personal/valtio-dev-tools
-    version: link:../valtio-dev-tools
 
 devDependencies:
   '@redux-devtools/extension':
