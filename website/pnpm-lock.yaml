@@ -3725,10 +3725,6 @@ packages:
     engines: {node: '>=0.4.0'}
     dev: false
 
-  /denodeify@1.2.1:
-    resolution: {integrity: sha512-KNTihKNmQENUZeKu5fzfpzRqR5S2VMp4gl9RFHiWzj9DfvYQPMJ6XHKNaQxaGCXwPk6y9yme3aUoaiAe+KX+vg==}
-    dev: false
-
   /depd@2.0.0:
     resolution: {integrity: sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==}
     engines: {node: '>= 0.8'}
@@ -6383,7 +6379,6 @@ packages:
       ci-info: 2.0.0
       connect: 3.7.0
       debug: 2.6.9
-      denodeify: 1.2.1
       error-stack-parser: 2.1.4
       graceful-fs: 4.2.11
       hermes-parser: 0.20.1

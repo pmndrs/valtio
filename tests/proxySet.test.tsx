@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import { proxy, snapshot, useSnapshot } from 'valtio'
 import { proxySet } from 'valtio/utils'
 
 // used to initialize proxySet during tests
@@ -333,5 +333,22 @@ describe('proxySet internal', () => {
     expect(
       Object.keys(proxySet()).some((k) => notEnumerableProps.includes(k)),
     ).toBe(false)
+  })
+})
+
+describe('snapshot behavior', () => {
+  it('should error when trying to mutate a snapshot', () => {
+    const state = proxySet()
+    const snap = snapshot(state)
+
+    expect(() => snap.add('foo')).toThrow(
+      'Cannot perform mutations on a snapshot',
+    )
+    // @ts-expect-error - snapshot should not be able to mutate
+    expect(() => snap.delete('foo')).toThrow(
+      'Cannot perform mutations on a snapshot',
+    )
+    // @ts-expect-error - snapshot should not be able to mutate
+    expect(() => snap.clear()).toThrow('Cannot perform mutations on a snapshot')
   })
 })
