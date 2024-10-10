@@ -1,6 +1,19 @@
 import { getVersion, proxy } from '../../vanilla.ts'
 
-const maybeProxify = (x: any) => proxy({ x }).x
+const canProxy = (x: unknown): boolean => {
+  const p = proxy({} as { x: unknown })
+  p.x = x
+  return p.x !== x
+}
+const maybeProxify = (v: any) => {
+  if (canProxy(v)) {
+    const pv = proxy(v)
+    if (pv !== v) {
+      return pv
+    }
+  }
+  return v
+}
 
 const isProxy = (x: any) => getVersion(x) !== undefined
 
@@ -37,20 +50,15 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     get(key: K) {
       const k = maybeProxify(key)
       if (indexMap.has(k)) {
-        const index = indexMap.get(k)
-        if (this.data[index!] !== undefined) {
-          return this.data[index!]![1]
+        const index = indexMap.get(k)!
+        if (this.data[index] !== undefined) {
+          return this.data[index]![1]
         }
       }
       return undefined
     },
-    has(k: K) {
-      const key = maybeProxify(k)
-      if (!indexMap.has(key) && !isProxy(this)) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.data.length
-      }
-      return indexMap.has(key)
+    has(key: K) {
+      return this.get(key) !== undefined
     },
     set(key: K, value: V) {
       if (!isProxy(this)) {
@@ -66,14 +74,10 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         const index = indexMap.get(k)!
         this.data[index] = [k, v]
       } else {
-        if (emptyIndexes.length > 0) {
-          const index = emptyIndexes.pop()!
-          this.data[index] = [k, v]
-          indexMap.set(k, index)
-        } else {
-          indexMap.set(k, this.data.length)
-          this.data.push([k, v])
-        }
+        const index =
+          emptyIndexes.length > 0 ? emptyIndexes.pop()! : this.data.length
+        indexMap.set(k, index)
+        this.data[index] = [k, v]
       }
       return this
     },
@@ -86,10 +90,10 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         }
       }
       if (indexMap.has(key)) {
-        const index = indexMap.get(key)
-        delete this.data[index!]
+        const index = indexMap.get(key)!
+        delete this.data[index]
         indexMap.delete(key)
-        emptyIndexes.push(index!)
+        emptyIndexes.push(index)
         return true
       }
       return false

@@ -2,6 +2,8 @@ import { getVersion, proxy } from '../../vanilla.ts'
 
 const maybeProxify = (x: any) => proxy({ x }).x
 
+const isProxy = (x: any) => getVersion(x) !== undefined
+
 type InternalProxySet<T> = Set<T> & {
   data: T[]
   toJSON: object
@@ -36,7 +38,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return indexMap.size
     },
     add(v: T) {
-      if (getVersion(this) === undefined) {
+      if (!isProxy(this)) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {
@@ -52,7 +54,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return this
     },
     delete(v: T) {
-      if (getVersion(this) === undefined) {
+      if (!isProxy(this)) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {
@@ -71,7 +73,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return false
     },
     clear() {
-      if (getVersion(this) === undefined) {
+      if (!isProxy(this)) {
         if (import.meta.env?.MODE !== 'production') {
           throw new Error('Cannot perform mutations on a snapshot')
         } else {
