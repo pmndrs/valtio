@@ -1,6 +1,7 @@
 import Benchmark from 'benchmark'
-import { proxyMap as btreeProxyMap } from '../src/vanilla/utils/proxyMap-Btree.ts'
-import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap.ts'
+import { deepClone } from '../src/vanilla/utils/deepClone.ts'
+import { proxyMap as btreeProxyMap } from '../src/vanilla/utils/proxyMap-btree.ts'
+import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap.ts'
 
 // Helper function to generate test data
 function generateTestData(size: number): [number, number][] {
@@ -15,7 +16,7 @@ function generateTestData(size: number): [number, number][] {
 const suite = new Benchmark.Suite()
 
 // Test parameters
-const TEST_SIZES = [1000, 10000, 100000]
+const TEST_SIZES = [1000, 10000, 30000]
 
 TEST_SIZES.forEach((size) => {
   const testData = generateTestData(size)
@@ -28,12 +29,12 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  // suite.add(`Insertion - New proxyMap (${size} items)`, () => {
-  //   const map = newProxyMap<number, number>()
-  //   testData.forEach(([key, value]) => {
-  //     map.set(key, value)
-  //   })
-  // })
+  suite.add(`Insertion - New proxyMap (${size} items)`, () => {
+    const map = newProxyMap<number, number>()
+    testData.forEach(([key, value]) => {
+      map.set(key, value)
+    })
+  })
 
   suite.add(`Insertion - Btree proxyMap (${size} items)`, () => {
     const map = btreeProxyMap<number, number>()
@@ -53,11 +54,11 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  // suite.add(`Retrieval - New proxyMap (${size} items)`, () => {
-  //   testData.forEach(([key]) => {
-  //     nProxyMap.get(key)
-  //   })
-  // })
+  suite.add(`Retrieval - New proxyMap (${size} items)`, () => {
+    testData.forEach(([key]) => {
+      nProxyMap.get(key)
+    })
+  })
 
   suite.add(`Retrieval - BTree proxyMap (${size} items)`, () => {
     testData.forEach(([key]) => {
@@ -67,21 +68,21 @@ TEST_SIZES.forEach((size) => {
 
   // Benchmark for deletion
   suite.add(`Deletion - Native Map (${size} items)`, () => {
-    const map = new Map<number, number>(testData)
+    const map = new Map<number, number>(deepClone(testData))
     testData.forEach(([key]) => {
       map.delete(key)
     })
   })
 
-  // suite.add(`Deletion - New proxyMap (${size} items)`, () => {
-  //   const map = newProxyMap<number, number>(testData)
-  //   testData.forEach(([key]) => {
-  //     map.delete(key)
-  //   })
-  // })
+  suite.add(`Deletion - New proxyMap (${size} items)`, () => {
+    const map = newProxyMap<number, number>(deepClone(testData))
+    testData.forEach(([key]) => {
+      map.delete(key)
+    })
+  })
 
   suite.add(`Deletion - BTree proxyMap (${size} items)`, () => {
-    const map = btreeProxyMap<number, number>(testData)
+    const map = btreeProxyMap<number, number>(deepClone(testData))
     testData.forEach(([key]) => {
       map.delete(key)
     })
@@ -94,16 +95,43 @@ TEST_SIZES.forEach((size) => {
     }
   })
 
-  // suite.add(`Iteration - New proxyMap (${size} items)`, () => {
-  //   for (const [key, value] of nProxyMap) {
-  //     // No-op
-  //   }
-  // })
+  suite.add(`Iteration - New proxyMap (${size} items)`, () => {
+    for (const [key, value] of nProxyMap) {
+      // No-op
+    }
+  })
 
   suite.add(`Iteration - Btree proxyMap (${size} items)`, () => {
     for (const [key, value] of bProxyMap) {
       // No-op
     }
+  })
+
+  suite.add('Insertion, Retrieval, and Deletion - Native Map', () => {
+    const map = new Map<number, number>(deepClone(testData))
+    testData.forEach(([key, value]) => {
+      map.set(key, value)
+      map.get(key)
+      map.delete(key)
+    })
+  })
+
+  suite.add('Insertion, Retrieval, and Deletion - Native Map', () => {
+    const map = newProxyMap<number, number>(deepClone(testData))
+    testData.forEach(([key, value]) => {
+      map.set(key, value)
+      map.get(key)
+      map.delete(key)
+    })
+  })
+
+  suite.add('Insertion, Retrieval, and Deletion - Native Map', () => {
+    const map = btreeProxyMap<number, number>(deepClone(testData))
+    testData.forEach(([key, value]) => {
+      map.set(key, value)
+      map.get(key)
+      map.delete(key)
+    })
   })
 })
 

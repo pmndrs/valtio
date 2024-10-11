@@ -1,4 +1,4 @@
-import BTree from 'sorted-btree'
+import BTree, { type DefaultComparable, defaultComparator } from 'sorted-btree'
 import { getVersion, proxy } from '../../vanilla.ts'
 
 const maybeProxify = (x: any) => proxy({ x }).x
@@ -12,7 +12,12 @@ type InternalProxyObject<K, V> = Map<K, V> & {
 }
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
-  const btree = new BTree<K, V>()
+  const btree = new BTree<K, V>(undefined, (a, b) => {
+    if (typeof a === 'symbol' || typeof b === 'symbol') {
+      return 0
+    }
+    return defaultComparator(a as DefaultComparable, b as DefaultComparable)
+  })
   const tree = proxy(btree)
 
   if (entries !== null && typeof entries !== 'undefined') {

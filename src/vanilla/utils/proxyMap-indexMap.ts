@@ -1,19 +1,6 @@
 import { getVersion, proxy } from '../../vanilla.ts'
 
-const canProxy = (x: unknown): boolean => {
-  const p = proxy({} as { x: unknown })
-  p.x = x
-  return p.x !== x
-}
-const maybeProxify = (v: any) => {
-  if (canProxy(v)) {
-    const pv = proxy(v)
-    if (pv !== v) {
-      return pv
-    }
-  }
-  return v
-}
+const maybeProxify = (x: any) => proxy({ x }).x
 
 const isProxy = (x: any) => getVersion(x) !== undefined
 
