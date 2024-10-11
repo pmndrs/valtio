@@ -1,11 +1,11 @@
-import { getVersion, proxy } from '../../vanilla.ts'
-
-const maybeProxify = (x: any) => proxy({ x }).x
-
-const isProxy = (x: any) => getVersion(x) !== undefined
+import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
+const { proxyStateMap } = unstable_getInternalStates()
+const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
+const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<[K, V | undefined]>
+  dataLen: number
   size: number
   toJSON: () => Map<K, V>
 }
@@ -31,6 +31,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
 
   const vObject: InternalProxyObject<K, V> = {
     data,
+    dataLen: data.length,
     get size() {
       return indexMap.size
     },
@@ -38,7 +39,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const k = maybeProxify(key)
       if (!indexMap.has(k) && !isProxy(this)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.data.length
+        this.dataLen
       }
       if (indexMap.has(k)) {
         const index = indexMap.get(k)!
@@ -52,7 +53,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const k = maybeProxify(key)
       if (!indexMap.has(k) && !isProxy(this)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.data.length
+        this.dataLen
       }
       return indexMap.has(k)
     },
@@ -66,13 +67,16 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
       const k = maybeProxify(key)
       const v = maybeProxify(value)
-      if (indexMap.has(k)) {
-        const index = indexMap.get(k)!
-        this.data[index] = [k, v]
-      } else {
-        const index =
-          emptyIndexes.length > 0 ? emptyIndexes.pop()! : this.data.length
+      let index = indexMap.get(k)
+      if (index === undefined) {
+        index = emptyIndexes.length ? emptyIndexes.pop()! : this.dataLen
         indexMap.set(k, index)
+      }
+      const pair = this.data[index]
+      if (pair) {
+        pair[1] = v
+      } else {
+        // Allocate a new array only if necessary
         this.data[index] = [k, v]
       }
       return this
@@ -143,6 +147,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     data: { enumerable: false },
+    dataLen: { enumerable: false },
     toJSON: { enumerable: false },
   })
 

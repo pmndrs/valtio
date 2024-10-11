@@ -4,7 +4,7 @@ import { proxyMap } from '../../../dist/esm/utils.mjs'
 
 const state = proxyMap()
 const k1 = {}
-state.set(0, {
+state.set(k1, {
   foo: 'bar',
 })
 
