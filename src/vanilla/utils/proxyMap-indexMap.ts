@@ -36,11 +36,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     get(key: K) {
       const k = maybeProxify(key)
-      if (!indexMap.has(k) && !isProxy(this)) {
+      const index = indexMap.get(k)
+      if (index !== undefined && !isProxy(this)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.data.length
       }
-      if (indexMap.has(k)) {
+      if (index !== undefined) {
         const index = indexMap.get(k)!
         if (this.data[index] !== undefined) {
           return this.data[index]![1]
@@ -50,11 +51,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     has(key: K) {
       const k = maybeProxify(key)
-      if (!indexMap.has(k) && !isProxy(this)) {
+      const index = indexMap.get(k)
+      if (index !== undefined && !isProxy(this)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.data.length
       }
-      return indexMap.has(k)
+      return index !== undefined
     },
     set(key: K, value: V) {
       if (!isProxy(this)) {
