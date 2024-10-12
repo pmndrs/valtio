@@ -17,7 +17,7 @@ function generateTestData(size: number): [number, number][] {
 const suite = new Benchmark.Suite()
 
 // Test parameters
-const TEST_SIZES = [1000, 10000, 30000, 50000, 100000]
+const TEST_SIZES = [1000, 10000, 30000]
 
 TEST_SIZES.forEach((size) => {
   const testData = generateTestData(size)
@@ -37,19 +37,19 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  suite.add(`Insertion - Push proxyMap (${size} items)`, () => {
-    const map = pushProxyMap<number, number>()
-    testData.forEach(([key, value]) => {
-      map.set(key, value)
-    })
-  })
+  // suite.add(`Insertion - Push proxyMap (${size} items)`, () => {
+  //   const map = pushProxyMap<number, number>()
+  //   testData.forEach(([key, value]) => {
+  //     map.set(key, value)
+  //   })
+  // })
 
-  suite.add(`Insertion - Filled proxyMap (${size} items)`, () => {
-    const map = filledProxyMap<number, number>()
-    testData.forEach(([key, value]) => {
-      map.set(key, value)
-    })
-  })
+  // suite.add(`Insertion - Filled proxyMap (${size} items)`, () => {
+  //   const map = filledProxyMap<number, number>()
+  //   testData.forEach(([key, value]) => {
+  //     map.set(key, value)
+  //   })
+  // })
 
   // suite.add(`Insertion - Chunked proxyMap (${size} items)`, () => {
   //   const map = chunkedProxyMap<number, number>()

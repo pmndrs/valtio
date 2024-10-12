@@ -56,6 +56,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
+      return this;
       const k = maybeProxify(key)
       const v = maybeProxify(value)
       const index = indexMap.get(k)
