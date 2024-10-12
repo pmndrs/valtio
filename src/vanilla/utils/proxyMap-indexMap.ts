@@ -11,7 +11,7 @@ type InternalProxyObject<K, V> = Map<K, V> & {
 }
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
-  const data: Array<[K, V]> = []
+  const data: Array<[K, V]> = new Array(1000).fill(undefined)
   const indexMap = new Map<K, number>()
   const emptyIndexes: number[] = []
 
