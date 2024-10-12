@@ -4,13 +4,15 @@ const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxyObject<K, V> = Map<K, V> & {
-  data: Array<K | V>
+  dataKeys: Array<K>
+  dataValues: Array<V>
   index: number
   toJSON: () => Map<K, V>
 }
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
-  const initialData: Array<K | V> = []
+  const initialDataKeys: Array<K> = []
+  const initialDataValues: Array<V> = []
   let initialIndex = 0
   const indexMap = new Map<K, number>()
 
@@ -24,13 +26,15 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const key = maybeProxify(k)
       const value = maybeProxify(v)
       indexMap.set(key, initialIndex)
-      initialData[initialIndex++] = key
-      initialData[initialIndex++] = value
+      initialDataKeys[initialIndex] = key
+      initialDataValues[initialIndex] = value
+      initialIndex++
     }
   }
 
   const vObject: InternalProxyObject<K, V> = {
-    data: initialData,
+    dataKeys: initialDataKeys,
+    dataValues: initialDataValues,
     index: initialIndex,
     get size() {
       return indexMap.size
@@ -43,7 +47,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         this.index
       }
       if (index !== undefined) {
-        return this.data[index + 1] as V
+        return this.dataValues[index]
       }
       return undefined
     },
@@ -65,10 +69,11 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const index = indexMap.get(k)
       if (index === undefined) {
         indexMap.set(k, this.index)
-        this.data[this.index++] = k
-        this.data[this.index++] = v
+        this.dataKeys[this.index] = k
+        this.dataValues[this.index] = v
+        this.index++
       } else {
-        this.data[index + 1] = v
+        this.dataValues[index] = v
       }
       return this
     },
@@ -79,8 +84,8 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const k = maybeProxify(key)
       const index = indexMap.get(k)
       if (index !== undefined) {
-        delete this.data[index]
-        delete this.data[index + 1]
+        delete this.dataKeys[index]
+        delete this.dataValues[index]
         indexMap.delete(k)
         return true
       }
@@ -91,16 +96,17 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       indexMap.clear()
-      this.data.splice(0)
+      this.dataKeys.splice(0)
+      this.dataValues.splice(0)
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
       indexMap.forEach((index) => {
-        cb(this.data[index + 1] as V, this.data[index] as K, this)
+        cb(this.dataValues[index]!, this.dataKeys[index]!, this)
       })
     },
     *entries(): MapIterator<[K, V]> {
       for (const index of indexMap.values()) {
-        yield [this.data[index], this.data[index + 1]] as [K, V]
+        yield [this.dataKeys[index], this.dataValues[index]] as [K, V]
       }
     },
     *keys(): IterableIterator<K> {
@@ -110,7 +116,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     *values(): IterableIterator<V> {
       for (const index of indexMap.values()) {
-        yield this.data[index + 1] as V
+        yield this.dataValues[index]!
       }
     },
     [Symbol.iterator]() {
@@ -120,7 +126,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return 'Map'
     },
     toJSON(): Map<K, V> {
-      return new Map([...indexMap].map(([k, i]) => [k, this.data[i + 1] as V]))
+      return new Map([...indexMap].map(([k, v]) => [k, this.dataValues[v]!]))
     },
   }
 

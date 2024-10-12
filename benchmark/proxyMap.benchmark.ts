@@ -1,6 +1,7 @@
 import Benchmark from 'benchmark'
 import { deepClone } from '../src/vanilla/utils/deepClone.ts'
-import { proxyMap as keyValProxyMap } from '../src/vanilla/utils/proxyMap-indexMap.ts'
+import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap.ts'
+import { proxyMap as keyValProxyMap } from '../src/vanilla/utils/proxyMap-indexMap-keyval.ts'
 import { proxyMap as pushProxyMap } from '../src/vanilla/utils/proxyMap-indexMap-push.ts'
 import { proxyMap as filledProxyMap } from '../src/vanilla/utils/proxyMap-indexMap-filled.ts'
 
@@ -30,6 +31,13 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
+  suite.add(`Insertion - New proxyMap (${size} items)`, () => {
+    const map = keyValProxyMap<number, number>()
+    testData.forEach(([key, value]) => {
+      map.set(key, value)
+    })
+  })
+
   suite.add(`Insertion - KeyVal proxyMap (${size} items)`, () => {
     const map = keyValProxyMap<number, number>()
     testData.forEach(([key, value]) => {
@@ -37,19 +45,19 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  suite.add(`Insertion - Push proxyMap (${size} items)`, () => {
-    const map = pushProxyMap<number, number>()
-    testData.forEach(([key, value]) => {
-      map.set(key, value)
-    })
-  })
+  // suite.add(`Insertion - Push proxyMap (${size} items)`, () => {
+  //   const map = pushProxyMap<number, number>()
+  //   testData.forEach(([key, value]) => {
+  //     map.set(key, value)
+  //   })
+  // })
 
-  suite.add(`Insertion - Filled proxyMap (${size} items)`, () => {
-    const map = filledProxyMap<number, number>()
-    testData.forEach(([key, value]) => {
-      map.set(key, value)
-    })
-  })
+  // suite.add(`Insertion - Filled proxyMap (${size} items)`, () => {
+  //   const map = filledProxyMap<number, number>()
+  //   testData.forEach(([key, value]) => {
+  //     map.set(key, value)
+  //   })
+  // })
 
   // suite.add(`Insertion - Chunked proxyMap (${size} items)`, () => {
   //   const map = chunkedProxyMap<number, number>()
