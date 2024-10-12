@@ -21,7 +21,7 @@ const TEST_SIZES = [1000, 10000, 30000]
 TEST_SIZES.forEach((size) => {
   const testData = generateTestData(size)
 
-  // Benchmark for insertion
+  // // Benchmark for insertion
   suite.add(`Insertion - Native Map (${size} items)`, () => {
     const map = new Map<number, number>()
     testData.forEach(([key, value]) => {
@@ -107,25 +107,31 @@ TEST_SIZES.forEach((size) => {
   //     }
   //   })
 
-  //   suite.add('Insertion, Retrieval, and Deletion - Native Map', () => {
+  // suite.add(
+  //   `Insertion, Retrieval, and Deletion - Native Map (${size} items)`,
+  //   () => {
   //     const map = new Map<number, number>(deepClone(testData))
   //     testData.forEach(([key, value]) => {
   //       map.set(key, value)
   //       map.get(key)
   //       map.delete(key)
   //     })
-  //   })
+  //   },
+  // )
 
-  //   suite.add('Insertion, Retrieval, and Deletion - Native Map', () => {
+  // suite.add(
+  //   `Insertion, Retrieval, and Deletion - New ProxyMap (${size} items)`,
+  //   () => {
   //     const map = newProxyMap<number, number>(deepClone(testData))
   //     testData.forEach(([key, value]) => {
   //       map.set(key, value)
   //       map.get(key)
   //       map.delete(key)
   //     })
-  //   })
+  //   },
+  // )
 
-  //   suite.add('Insertion, Retrieval, and Deletion - Native Map', () => {
+  //   suite.add('Insertion, Retrieval, and Deletion - Btree ProxyMap', () => {
   //     const map = btreeProxyMap<number, number>(deepClone(testData))
   //     testData.forEach(([key, value]) => {
   //       map.set(key, value)

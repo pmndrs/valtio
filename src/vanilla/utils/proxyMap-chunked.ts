@@ -2,17 +2,18 @@ import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
 const { proxyStateMap } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
+const CHUNK_SIZE = 1000
 
 type InternalProxyObject<K, V> = Map<K, V> & {
-  data: Array<[K, V | undefined]>
+  data: Array<Array<[K, V] | undefined>>
   size: number
   toJSON: () => Map<K, V>
 }
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
-  const data: Array<[K, V]> = []
-  const indexMap = new Map<K, number>()
-  const emptyIndexes: number[] = []
+  const data: Array<Array<[K, V] | undefined>> = []
+  const indexMap = new Map<K, { chunkIndex: number; position: number }>()
+  const emptyIndexes: { chunkIndex: number; position: number }[] = []
 
   if (entries !== null && typeof entries !== 'undefined') {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -23,8 +24,24 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     for (const [k, v] of entries) {
       const key = maybeProxify(k)
       const value = maybeProxify(v)
-      indexMap.set(key, data.length)
-      data.push([key, value])
+      let currentChunkIndex = 0
+      if (data.length === 0) {
+        // create new chunk if none exist
+        data.push([])
+      } else {
+        const lastChunk = data[data.length - 1]!
+        if (lastChunk.length === CHUNK_SIZE) {
+          // create new chunk if the last chunk is full
+          data.push([])
+          currentChunkIndex = data.length - 1
+        }
+      }
+
+      indexMap.set(key, {
+        chunkIndex: currentChunkIndex,
+        position: data[currentChunkIndex]!.length,
+      })
+      data[currentChunkIndex]!.push([key, value])
     }
   }
 
@@ -40,9 +57,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         this.data.length
       }
       if (indexMap.has(k)) {
-        const index = indexMap.get(k)!
-        if (this.data[index] !== undefined) {
-          return this.data[index]![1]
+        const { chunkIndex, position } = indexMap.get(k)!
+        if (this.data[chunkIndex]![position] !== undefined) {
+          return this.data[chunkIndex]![position]![1]
         }
       }
       return undefined
@@ -65,12 +82,39 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
       const k = maybeProxify(key)
       const v = maybeProxify(value)
-      let index = indexMap.get(k)
-      if (index === undefined) {
-        index = emptyIndexes.length ? emptyIndexes.pop()! : this.data.length
-        indexMap.set(k, index)
+      const indices = indexMap.get(k)
+
+      if (indices) {
+        // Key exists, update the value
+        const { chunkIndex, position } = indices
+        this.data[chunkIndex]![position]![1] = v
+      } else {
+        // Key does not exist, insert it
+        let chunkIndex: number
+        let position: number
+
+        if (emptyIndexes.length > 0) {
+          // Reuse an empty position
+          const emptyIndex = emptyIndexes.pop()!
+          chunkIndex = emptyIndex.chunkIndex
+          position = emptyIndex.position
+          this.data[chunkIndex]![position] = [k, v]
+        } else {
+          // No empty positions, add to the last chunk or create a new one
+          if (
+            this.data.length === 0 ||
+            this.data[this.data.length - 1]!.length === CHUNK_SIZE
+          ) {
+            // Need to create a new chunk
+            this.data.push(proxy([]))
+          }
+          chunkIndex = this.data.length - 1
+          position = this.data[chunkIndex]!.length
+          this.data[chunkIndex]!.push([k, v])
+        }
+        // Update the index map with new indices
+        indexMap.set(k, { chunkIndex, position })
       }
-      this.data[index] = [k, v]
       return this
     },
     delete(key: K) {
@@ -83,10 +127,10 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
       const k = maybeProxify(key)
       if (indexMap.has(k)) {
-        const index = indexMap.get(k)!
-        delete this.data[index]
+        const { chunkIndex, position } = indexMap.get(k)!
+        delete this.data[chunkIndex]![position]
+        emptyIndexes.push({ chunkIndex, position })
         indexMap.delete(k)
-        emptyIndexes.push(index)
         return true
       }
       return false
@@ -104,13 +148,14 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       emptyIndexes.splice(0)
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
-      indexMap.forEach((index) => {
-        cb(this.data[index]![1]!, this.data[index]![0]!, this)
+      indexMap.forEach(({ chunkIndex, position }) => {
+        const item = this.data[chunkIndex]![position]!
+        cb(item[1]!, item[0]!, this)
       })
     },
     *entries(): MapIterator<[K, V]> {
-      for (const index of indexMap.values()) {
-        yield this.data[index] as [K, V]
+      for (const { chunkIndex, position } of indexMap.values()) {
+        yield this.data[chunkIndex]![position] as [K, V]
       }
     },
     *keys(): IterableIterator<K> {
@@ -119,8 +164,8 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
     },
     *values(): IterableIterator<V> {
-      for (const index of indexMap.values()) {
-        yield this.data[index]![1]!
+      for (const { chunkIndex, position } of indexMap.values()) {
+        yield this.data[chunkIndex]![position]![1]!
       }
     },
     [Symbol.iterator]() {
@@ -130,7 +175,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return 'Map'
     },
     toJSON(): Map<K, V> {
-      return new Map([...indexMap].map(([k, v]) => [k, this.data[v]![1]!]))
+      return new Map(
+        [...indexMap].map(([k, { chunkIndex, position }]) => [
+          k,
+          this.data[chunkIndex]![position]![1]!,
+        ]),
+      )
     },
   }
 
