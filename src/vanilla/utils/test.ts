@@ -1,5 +1,5 @@
 import { snapshot } from '../../vanilla.ts'
-import { proxyMap } from './proxyMap.ts'
+import { proxyMap } from './proxyMap-indexMap.ts'
 const state = proxyMap([['foo', 'bar']])
 console.log('test proxy')
 const snap = snapshot(state)
