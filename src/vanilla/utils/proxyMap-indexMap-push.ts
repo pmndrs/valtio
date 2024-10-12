@@ -4,13 +4,14 @@ const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxyObject<K, V> = Map<K, V> & {
-  data: Array<[K, V]>
+  data: Array<[K, V] | undefined>
   toJSON: () => Map<K, V>
 }
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const initialData: Array<[K, V]> = []
   const indexMap = new Map<K, number>()
+  const emptyIndexes: number[] = []
 
   if (entries !== null && typeof entries !== 'undefined') {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -60,8 +61,14 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const v = maybeProxify(value)
       const index = indexMap.get(k)
       if (index === undefined) {
-        indexMap.set(k, this.data.length)
-        this.data.push([k, v])
+        if (emptyIndexes.length) {
+          const i = emptyIndexes.pop()!
+          indexMap.set(k, i)
+          this.data[i] = [k, v]
+        } else {
+          indexMap.set(k, this.data.length)
+          this.data.push([k, v])
+        }
       } else {
         this.data[index]![1] = v
       }
@@ -74,8 +81,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const k = maybeProxify(key)
       const index = indexMap.get(k)
       if (index !== undefined) {
-        delete this.data[index]
+        this.data[index] = undefined
         indexMap.delete(k)
+        emptyIndexes.push(index)
         return true
       }
       return false
@@ -86,6 +94,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
       indexMap.clear()
       this.data.splice(0)
+      emptyIndexes.splice(0)
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
       indexMap.forEach((index) => {
