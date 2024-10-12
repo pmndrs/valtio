@@ -3,26 +3,19 @@ import { useSnapshot, proxy, subscribe } from '../../../dist/esm/index.mjs'
 import { proxyMap } from '../../../dist/esm/utils.mjs'
 
 const state = proxyMap()
-const k1 = {}
-state.set(k1, {
-  foo: 'bar',
-})
+const k1 = 'k1'
+const k2 = 'k2'
+state.set(k1, 'hello')
 
 const App = () => {
   const snap = useSnapshot(state)
   const handleClick = () => {
-    state.delete(k1)
-    state.set('foo', 'asdf')
+    //state.delete(k1);
+    state.set(k2, 'hey')
   }
-
-  useEffect(() => {
-    console.log(snap)
-  }, [snap])
-  console.log(snap.get(k1) === k1)
   return (
     <>
-      <p>{snap.has(k1) ? 'yes k1' : 'no k1'}</p>
-      <p>{snap.has('foo') ? 'foo' : 'no foo'}</p>
+      <p>{snap.has(k2) ? 'yes' : 'no'}</p>
       <button onClick={handleClick}>Click Me</button>
       <div>{Math.random()}</div>
     </>
@@ -30,6 +23,35 @@ const App = () => {
 }
 
 export default App
+
+// const state = proxyMap()
+// const k1 = {}
+// state.set(k1, {
+//   foo: 'bar',
+// })
+
+// const App = () => {
+//   const snap = useSnapshot(state)
+//   const handleClick = () => {
+//     state.delete(k1)
+//     state.set('foo', 'asdf')
+//   }
+
+//   useEffect(() => {
+//     console.log(snap)
+//   }, [snap])
+//   console.log(snap.get(k1) === k1)
+//   return (
+//     <>
+//       <p>{snap.has(k1) ? 'yes k1' : 'no k1'}</p>
+//       <p>{snap.has('foo') ? 'foo' : 'no foo'}</p>
+//       <button onClick={handleClick}>Click Me</button>
+//       <div>{Math.random()}</div>
+//     </>
+//   )
+// }
+
+// export default App
 
 // const state = proxyMap([
 //   ['first', 0],
