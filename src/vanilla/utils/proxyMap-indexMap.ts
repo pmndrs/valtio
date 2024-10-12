@@ -40,7 +40,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const k = maybeProxify(key)
       if (!indexMap.has(k) && !isProxy(this)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.data.length
+        this.nextIndex
       }
       if (indexMap.has(k)) {
         const index = indexMap.get(k)!
@@ -54,7 +54,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const k = maybeProxify(key)
       if (!indexMap.has(k) && !isProxy(this)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.data.length
+        this.nextIndex
       }
       return indexMap.has(k)
     },
