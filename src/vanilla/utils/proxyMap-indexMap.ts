@@ -13,6 +13,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const data: Array<[K, V]> = []
   const indexMap = new Map<K, number>()
   const emptyIndexes: number[] = []
+  let nextIndex = 0
 
   if (entries !== null && typeof entries !== 'undefined') {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -27,6 +28,8 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       data.push([key, value])
     }
   }
+
+  nextIndex = data.length
 
   const vObject: InternalProxyObject<K, V> = {
     data,
@@ -67,10 +70,16 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const v = maybeProxify(value)
       let index = indexMap.get(k)
       if (index === undefined) {
-        index = emptyIndexes.length ? emptyIndexes.pop()! : this.data.length
+        index = emptyIndexes.length ? emptyIndexes.pop()! : nextIndex++
         indexMap.set(k, index)
       }
-      this.data[index] = [k, v]
+      const pair = this.data[index]
+      if (pair) {
+        pair[1] = v
+      } else {
+        // Allocate a new array only if necessary
+        this.data[index] = [k, v]
+      }
       return this
     },
     delete(key: K) {
