@@ -2,6 +2,7 @@ import Benchmark from 'benchmark'
 import { deepClone } from '../src/vanilla/utils/deepClone.ts'
 import { proxyMap as btreeProxyMap } from '../src/vanilla/utils/proxyMap-btree.ts'
 import { proxyMap as chunkedProxyMap } from '../src/vanilla/utils/proxyMap-chunked.ts'
+import { proxyMap as newProxyMapFilled } from '../src/vanilla/utils/proxyMap-indexMap-filled.ts'
 import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap.ts'
 
 // Helper function to generate test data
@@ -37,12 +38,19 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  suite.add(`Insertion - Chunked proxyMap (${size} items)`, () => {
-    const map = chunkedProxyMap<number, number>()
+  suite.add(`Insertion - New proxyMap filled (${size} items)`, () => {
+    const map = newProxyMapFilled<number, number>()
     testData.forEach(([key, value]) => {
       map.set(key, value)
     })
   })
+
+  // suite.add(`Insertion - Chunked proxyMap (${size} items)`, () => {
+  //   const map = chunkedProxyMap<number, number>()
+  //   testData.forEach(([key, value]) => {
+  //     map.set(key, value)
+  //   })
+  // })
 
   // suite.add(`Insertion - Btree proxyMap (${size} items)`, () => {
   //   const map = btreeProxyMap<number, number>()
@@ -148,10 +156,22 @@ TEST_SIZES.forEach((size) => {
   //   })
   // })
 
+  // suite.add(
+  //   `Insertion, Retrieval, and Deletion - Chunked ProxyMap (${size} items)`,
+  //   () => {
+  //     const map = chunkedProxyMap<number, number>(deepClone(testData))
+  //     testData.forEach(([key, value]) => {
+  //       map.set(key, value)
+  //       map.get(key)
+  //       map.delete(key)
+  //     })
+  //   },
+  // )
+
   suite.add(
-    `Insertion, Retrieval, and Deletion - Chunked ProxyMap (${size} items)`,
+    `Insertion, Retrieval, and Deletion - New ProxyMap filled (${size} items)`,
     () => {
-      const map = chunkedProxyMap<number, number>(deepClone(testData))
+      const map = newProxyMapFilled<number, number>(deepClone(testData))
       testData.forEach(([key, value]) => {
         map.set(key, value)
         map.get(key)
