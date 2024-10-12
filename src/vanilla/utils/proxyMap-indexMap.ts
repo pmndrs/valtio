@@ -6,15 +6,14 @@ const isProxy = (x: any) => proxyStateMap.has(x)
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<[K, V | undefined]>
   nextIndex: number
-  size: number
   toJSON: () => Map<K, V>
 }
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
-  const data: Array<[K, V]> = []
+  const initialData: Array<[K, V]> = []
   const indexMap = new Map<K, number>()
   const emptyIndexes: number[] = []
-  let nextIndex = 0
+  let initialNextIndex = 0
 
   if (entries !== null && typeof entries !== 'undefined') {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -25,14 +24,14 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     for (const [k, v] of entries) {
       const key = maybeProxify(k)
       const value = maybeProxify(v)
-      indexMap.set(key, data.length)
-      data[nextIndex++] = [key, value]
+      indexMap.set(key, initialData.length)
+      initialData[initialNextIndex++] = [key, value]
     }
   }
 
   const vObject: InternalProxyObject<K, V> = {
-    data,
-    nextIndex,
+    data: initialData,
+    nextIndex: initialNextIndex,
     get size() {
       return indexMap.size
     },
@@ -66,7 +65,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const v = maybeProxify(value)
       let index = indexMap.get(k)
       if (index === undefined) {
-        index = emptyIndexes.length ? emptyIndexes.pop()! : nextIndex++
+        index = emptyIndexes.length ? emptyIndexes.pop()! : this.nextIndex++
         indexMap.set(k, index)
       }
       const pair = this.data[index]
