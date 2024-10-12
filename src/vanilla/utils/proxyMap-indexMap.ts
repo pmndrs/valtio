@@ -5,7 +5,6 @@ const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<[K, V | undefined]>
-  nextIndex: number
   size: number
   toJSON: () => Map<K, V>
 }
@@ -14,8 +13,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const data: Array<[K, V]> = new Array(1000).fill(undefined)
   const indexMap = new Map<K, number>()
   const emptyIndexes: number[] = []
+  let nextIndex = 0
 
-  if (entries !== null && typeof entries !== 'undefined') {
+  if (entries) {
     if (typeof entries[Symbol.iterator] !== 'function') {
       throw new TypeError(
         'proxyMap:\n\tinitial state must be iterable\n\t\ttip: structure should be [[key, value]]',
@@ -25,13 +25,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const key = maybeProxify(k)
       const value = maybeProxify(v)
       indexMap.set(key, data.length)
-      data.push([key, value])
+      data[nextIndex++] = [key, value]
     }
   }
 
   const vObject: InternalProxyObject<K, V> = {
     data,
-    nextIndex: data.length,
     get size() {
       return indexMap.size
     },
@@ -65,7 +64,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const v = maybeProxify(value)
       let index = indexMap.get(k)
       if (index === undefined) {
-        index = emptyIndexes.length ? emptyIndexes.pop()! : this.nextIndex++
+        index = emptyIndexes.length ? emptyIndexes.pop()! : nextIndex++
         indexMap.set(k, index)
       }
       const pair = this.data[index]
@@ -99,7 +98,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       indexMap.clear()
       this.data.splice(0)
       emptyIndexes.splice(0)
-      this.nextIndex = 0
+      nextIndex = 0
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
       indexMap.forEach((index) => {
@@ -137,7 +136,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     data: { enumerable: false },
-    nextIndex: { enumerable: false },
     toJSON: { enumerable: false },
   })
 
