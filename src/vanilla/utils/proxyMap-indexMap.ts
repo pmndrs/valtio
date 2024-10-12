@@ -38,12 +38,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     get(key: K) {
       const k = maybeProxify(key)
       const index = indexMap.get(k)
-      if (index === undefined && !isProxy(this)) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.index
-      }
       if (index !== undefined) {
         return this.data[index + 1] as V
+      }
+      if (!isProxy(this)) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        this.index
       }
       return undefined
     },
@@ -64,9 +64,11 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const v = maybeProxify(value)
       const index = indexMap.get(k)
       if (index === undefined) {
-        indexMap.set(k, this.index)
-        this.data[this.index++] = k
-        this.data[this.index++] = v
+        let nextIndex = this.index
+        indexMap.set(k, nextIndex)
+        this.data[nextIndex++] = k
+        this.data[nextIndex++] = v
+        this.index = nextIndex
       } else {
         this.data[index + 1] = v
       }
