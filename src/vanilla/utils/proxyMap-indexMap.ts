@@ -9,12 +9,15 @@ type InternalProxyObject<K, V> = Map<K, V> & {
   toJSON: () => Map<K, V>
 }
 
-const MIN_DATA_SIZE = 1000
-
-export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
-  const initialData: Array<[K, V] | undefined> = new Array(MIN_DATA_SIZE).fill(
+export function proxyMap<K, V>(
+  entries?: Iterable<[K, V]> | undefined | null,
+  options?: { minSize: number },
+) {
+  const minDataSize = options?.minSize ?? 1000
+  const initialData: Array<[K, V] | undefined> = new Array(minDataSize).fill(
     undefined,
   )
+
   let initialNextIndex = 0
   const indexMap = new Map<K, number>()
   const emptyIndexes: number[] = []
@@ -95,7 +98,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       indexMap.clear()
-      this.data.splice(MIN_DATA_SIZE).fill(undefined)
+      this.data.splice(minDataSize).fill(undefined)
       this.nextIndex = 0
       emptyIndexes.splice(0)
     },

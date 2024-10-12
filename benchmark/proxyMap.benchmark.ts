@@ -17,32 +17,38 @@ function generateTestData(size: number): [number, number][] {
 const suite = new Benchmark.Suite()
 
 // Test parameters
-const TEST_SIZES = [1000, 10000, 30000, 50000, 100000]
+const TEST_SIZES = [1000, 10000, 30000]
 
 TEST_SIZES.forEach((size) => {
   const testData = generateTestData(size)
 
-  // // Benchmark for insertion
-  // suite.add(`Insertion - Native Map (${size} items)`, () => {
-  //   const map = new Map<number, number>()
+  // Benchmark for insertion
+  suite.add(`Insertion - Native Map (${size} items)`, () => {
+    const map = new Map<number, number>()
+    testData.forEach(([key, value]) => {
+      map.set(key, value)
+    })
+  })
+
+  const MIN_SIZES = [0, 1000, 10000, 30000]
+  MIN_SIZES.forEach((minSize) => {
+    suite.add(
+      `Insertion - New proxyMap (${size} items) (minSize=${minSize})`,
+      () => {
+        const map = newProxyMap<number, number>(null, { minSize })
+        testData.forEach(([key, value]) => {
+          map.set(key, value)
+        })
+      },
+    )
+  })
+
+  // suite.add(`Insertion - Chunked proxyMap (${size} items)`, () => {
+  //   const map = chunkedProxyMap<number, number>()
   //   testData.forEach(([key, value]) => {
   //     map.set(key, value)
   //   })
   // })
-
-  suite.add(`Insertion - New proxyMap (${size} items)`, () => {
-    const map = newProxyMap<number, number>()
-    testData.forEach(([key, value]) => {
-      map.set(key, value)
-    })
-  })
-
-  suite.add(`Insertion - Chunked proxyMap (${size} items)`, () => {
-    const map = chunkedProxyMap<number, number>()
-    testData.forEach(([key, value]) => {
-      map.set(key, value)
-    })
-  })
 
   // suite.add(`Insertion - Btree proxyMap (${size} items)`, () => {
   //   const map = btreeProxyMap<number, number>()
@@ -127,17 +133,17 @@ TEST_SIZES.forEach((size) => {
   //   },
   // )
 
-  suite.add(
-    `Insertion, Retrieval, and Deletion - New ProxyMap (${size} items)`,
-    () => {
-      const map = newProxyMap<number, number>(deepClone(testData))
-      testData.forEach(([key, value]) => {
-        map.set(key, value)
-        map.get(key)
-        map.delete(key)
-      })
-    },
-  )
+  // suite.add(
+  //   `Insertion, Retrieval, and Deletion - New ProxyMap (${size} items)`,
+  //   () => {
+  //     const map = newProxyMap<number, number>(deepClone(testData))
+  //     testData.forEach(([key, value]) => {
+  //       map.set(key, value)
+  //       map.get(key)
+  //       map.delete(key)
+  //     })
+  //   },
+  // )
 
   // suite.add('Insertion, Retrieval, and Deletion - Btree ProxyMap', () => {
   //   const map = btreeProxyMap<number, number>(deepClone(testData))
@@ -148,17 +154,17 @@ TEST_SIZES.forEach((size) => {
   //   })
   // })
 
-  suite.add(
-    `Insertion, Retrieval, and Deletion - Chunked ProxyMap (${size} items)`,
-    () => {
-      const map = chunkedProxyMap<number, number>(deepClone(testData))
-      testData.forEach(([key, value]) => {
-        map.set(key, value)
-        map.get(key)
-        map.delete(key)
-      })
-    },
-  )
+  // suite.add(
+  //   `Insertion, Retrieval, and Deletion - Chunked ProxyMap (${size} items)`,
+  //   () => {
+  //     const map = chunkedProxyMap<number, number>(deepClone(testData))
+  //     testData.forEach(([key, value]) => {
+  //       map.set(key, value)
+  //       map.get(key)
+  //       map.delete(key)
+  //     })
+  //   },
+  // )
 })
 
 // Run the benchmarks
