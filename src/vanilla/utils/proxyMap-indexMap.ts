@@ -85,7 +85,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const k = maybeProxify(key)
       const index = indexMap.get(k)
       if (index !== undefined) {
-        const index = indexMap.get(k)!
         delete this.data[index]
         indexMap.delete(k)
         emptyIndexes.push(index)
