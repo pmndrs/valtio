@@ -5,6 +5,7 @@ const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<[K, V | undefined]>
+  nextIndex: number
   size: number
   toJSON: () => Map<K, V>
 }
@@ -13,7 +14,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const data: Array<[K, V]> = []
   const indexMap = new Map<K, number>()
   const emptyIndexes: number[] = []
-  let nextIndex = 0
 
   if (entries !== null && typeof entries !== 'undefined') {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -29,10 +29,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     }
   }
 
-  nextIndex = data.length
-
   const vObject: InternalProxyObject<K, V> = {
     data,
+    nextIndex: data.length,
     get size() {
       return indexMap.size
     },
@@ -60,17 +59,13 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     set(key: K, value: V) {
       if (!isProxy(this)) {
-        if (import.meta.env?.MODE !== 'production') {
-          throw new Error('Cannot perform mutations on a snapshot')
-        } else {
-          return this
-        }
+        throw new Error('Cannot perform mutations on a snapshot')
       }
       const k = maybeProxify(key)
       const v = maybeProxify(value)
       let index = indexMap.get(k)
       if (index === undefined) {
-        index = emptyIndexes.length ? emptyIndexes.pop()! : nextIndex++
+        index = emptyIndexes.length ? emptyIndexes.pop()! : this.nextIndex++
         indexMap.set(k, index)
       }
       const pair = this.data[index]
@@ -84,14 +79,11 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     delete(key: K) {
       if (!isProxy(this)) {
-        if (import.meta.env?.MODE !== 'production') {
-          throw new Error('Cannot perform mutations on a snapshot')
-        } else {
-          return false
-        }
+        throw new Error('Cannot perform mutations on a snapshot')
       }
       const k = maybeProxify(key)
-      if (indexMap.has(k)) {
+      const index = indexMap.get(k)
+      if (index !== undefined) {
         const index = indexMap.get(k)!
         delete this.data[index]
         indexMap.delete(k)
@@ -102,15 +94,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     clear() {
       if (!isProxy(this)) {
-        if (import.meta.env?.MODE !== 'production') {
-          throw new Error('Cannot perform mutations on a snapshot')
-        } else {
-          return
-        }
+        throw new Error('Cannot perform mutations on a snapshot')
       }
       indexMap.clear()
       this.data.splice(0)
       emptyIndexes.splice(0)
+      this.nextIndex = 0
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
       indexMap.forEach((index) => {
@@ -148,6 +137,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     data: { enumerable: false },
+    nextIndex: { enumerable: false },
     toJSON: { enumerable: false },
   })
 
