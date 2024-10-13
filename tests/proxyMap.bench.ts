@@ -2,6 +2,7 @@
 import { bench, describe } from 'vitest'
 import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap'
 import { proxyMap as newProxyMapKeyVals } from '../src/vanilla/utils/proxyMap-indexMap-keyvals'
+import { proxyMap as newProxyMapRawMap } from '../src/vanilla/utils/proxyMap-rawMap'
 import { proxyMap as newProxyMapTree1 } from '../src/vanilla/utils/proxyMap-tree1'
 
 // Helper function to generate test data
@@ -17,10 +18,10 @@ const TEST_SIZES = [1000, 10000]
 
 TEST_SIZES.forEach((size) => {
   describe(`Insertion -${size} items`, () => {
-    const testData = generateTestData(1000)
+    const testData = generateTestData(size)
 
-    bench('New proxyMap', () => {
-      const map = newProxyMap<number, number>()
+    bench('Native proxyMap', () => {
+      const map = new Map<number, number>()
       testData.forEach(([key, value]) => {
         map.set(key, value)
       })
@@ -33,6 +34,13 @@ TEST_SIZES.forEach((size) => {
       })
     })
 
+    bench('New proxyMapRawMap', () => {
+      const map = newProxyMapRawMap<number, number>()
+      testData.forEach(([key, value]) => {
+        map.set(key, value)
+      })
+    })
+
     bench('New proxyMapTree1', () => {
       const map = newProxyMapTree1<number, number>()
       testData.forEach(([key, value]) => {
@@ -40,6 +48,8 @@ TEST_SIZES.forEach((size) => {
       })
     })
   })
+
+  return
 
   describe(`Retrieval -${size} items`, () => {
     const testData = generateTestData(size)
