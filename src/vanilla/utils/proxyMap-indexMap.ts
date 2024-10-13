@@ -1,4 +1,5 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
+// eslint-disable-next-line import/extensions
+import { proxy, unstable_getInternalStates } from '../../vanilla'
 const { proxyStateMap } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
