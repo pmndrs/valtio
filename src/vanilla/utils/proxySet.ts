@@ -1,12 +1,12 @@
-import { getVersion, proxy } from '../../vanilla.ts'
-
-const maybeProxify = (x: any) => proxy({ x }).x
-
-const isProxy = (x: any) => getVersion(x) !== undefined
+import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
+const { proxyStateMap } = unstable_getInternalStates()
+const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
+const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxySet<T> = Set<T> & {
   data: T[]
   toJSON: object
+  index: number
   intersection: (other: Set<T>) => Set<T>
   isDisjointFrom: (other: Set<T>) => boolean
   isSubsetOf: (other: Set<T>) => boolean
@@ -16,8 +16,9 @@ type InternalProxySet<T> = Set<T> & {
 }
 
 export function proxySet<T>(initialValues?: Iterable<T> | null) {
-  const data: T[] = []
+  const initialData: T[] = []
   const indexMap = new Map<T, number>()
+  let initialIndex = 0
 
   if (initialValues !== null && typeof initialValues !== 'undefined') {
     if (typeof initialValues[Symbol.iterator] !== 'function') {
@@ -26,46 +27,39 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     for (const v of initialValues) {
       if (!indexMap.has(v)) {
         const value = maybeProxify(v)
-        indexMap.set(value, data.length)
-        data.push(value)
+        indexMap.set(value, initialIndex)
+        initialData[initialIndex++] = value
       }
     }
   }
 
   const vObject: InternalProxySet<T> = {
-    data,
+    data: initialData,
+    index: initialIndex,
     get size() {
       return indexMap.size
     },
     add(v: T) {
       if (!isProxy(this)) {
-        if (import.meta.env?.MODE !== 'production') {
-          throw new Error('Cannot perform mutations on a snapshot')
-        } else {
-          return this
-        }
+        throw new Error('Cannot perform mutations on a snapshot')
       }
       const value = maybeProxify(v)
       if (!indexMap.has(value)) {
-        const index = this.data.length
-        this.data.push(value)
-        indexMap.set(value, index)
+        let nextIndex = this.index
+        indexMap.set(value, nextIndex)
+        this.data[nextIndex++] = value
+        this.index = nextIndex
       }
       return this
     },
     delete(v: T) {
       if (!isProxy(this)) {
-        if (import.meta.env?.MODE !== 'production') {
-          throw new Error('Cannot perform mutations on a snapshot')
-        } else {
-          return false
-        }
+        throw new Error('Cannot perform mutations on a snapshot')
       }
       const value = maybeProxify(v)
       const index = indexMap.get(value)
       if (index !== undefined) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.data.length
         delete this.data[index]
         indexMap.delete(value)
         return true
@@ -74,13 +68,10 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     },
     clear() {
       if (!isProxy(this)) {
-        if (import.meta.env?.MODE !== 'production') {
-          throw new Error('Cannot perform mutations on a snapshot')
-        } else {
-          return
-        }
+        throw new Error('Cannot perform mutations on a snapshot')
       }
       this.data.splice(0)
+      this.index = 0
       indexMap.clear()
     },
     forEach(cb) {
@@ -92,7 +83,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       const value = maybeProxify(v)
       if (indexMap.has(value)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.data.length
+        this.index
         return true
       }
       return false
@@ -112,9 +103,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
     },
     toJSON(): Set<T> {
-      // filtering is about twice as fast as creating a new set and deleting
-      // the undefined value because filter actually skips empty slots
-      return new Set(this.data.filter((v) => v !== undefined) as T[])
+      return new Set(this.data)
     },
     [Symbol.iterator]() {
       return this.values()

@@ -1,12 +1,13 @@
 /* eslint-disable vitest/consistent-test-it */
 import { bench, describe } from 'vitest'
 import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap'
+import { proxyMap as newProxyMapKeyVals } from '../src/vanilla/utils/proxyMap-indexMap-keyvals'
 
 // Helper function to generate test data
 function generateTestData(size: number): [number, number][] {
-  const data: [number, number][] = []
+  const data: [any, any][] = []
   for (let i = 0; i < size; i++) {
-    data.push([i, i])
+    data.push([{ id: i }, { i }])
   }
   return data
 }
@@ -23,6 +24,13 @@ TEST_SIZES.forEach((size) => {
         map.set(key, value)
       })
     })
+
+    bench('New proxyMapKeyVals', () => {
+      const map = newProxyMapKeyVals<number, number>()
+      testData.forEach(([key, value]) => {
+        map.set(key, value)
+      })
+    })
   })
 
   describe(`Retrieval -${size} items`, () => {
@@ -30,6 +38,13 @@ TEST_SIZES.forEach((size) => {
 
     bench('New proxyMap', () => {
       const map = newProxyMap<number, number>(testData)
+      testData.forEach(([key]) => {
+        map.get(key)
+      })
+    })
+
+    bench('New proxyMapKeyVals', () => {
+      const map = newProxyMapKeyVals<number, number>(testData)
       testData.forEach(([key]) => {
         map.get(key)
       })
@@ -45,6 +60,13 @@ TEST_SIZES.forEach((size) => {
         map.delete(key)
       })
     })
+
+    bench('New proxyMapKeyVals', () => {
+      const map = newProxyMapKeyVals<number, number>(testData)
+      testData.forEach(([key]) => {
+        map.delete(key)
+      })
+    })
   })
 
   describe(`Iteration -${size} items`, () => {
@@ -54,6 +76,11 @@ TEST_SIZES.forEach((size) => {
       const map = newProxyMap<number, number>(testData)
       testData.forEach(([key, value]) => {})
     })
+
+    bench('New proxyMapKeyVals', () => {
+      const map = newProxyMapKeyVals<number, number>(testData)
+      testData.forEach(([key, value]) => {})
+    })
   })
 
   describe(`Insertion, Retrieval, and Deletion -${size} items`, () => {
@@ -61,6 +88,15 @@ TEST_SIZES.forEach((size) => {
 
     bench('New proxyMap', () => {
       const map = newProxyMap<number, number>(testData)
+      testData.forEach(([key, value]) => {
+        map.set(key, value)
+        map.get(key)
+        map.delete(key)
+      })
+    })
+
+    bench('New proxyMapKeyVals', () => {
+      const map = newProxyMapKeyVals<number, number>(testData)
       testData.forEach(([key, value]) => {
         map.set(key, value)
         map.get(key)
