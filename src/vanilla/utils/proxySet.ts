@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/extensions
 import { proxy, unstable_getInternalStates } from '../../vanilla'
 const { proxyStateMap } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
@@ -48,7 +49,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
         let nextIndex = this.index
         indexMap.set(value, nextIndex)
         this.data[nextIndex++] = value
-        this.index = nextIndex
       }
       return this
     },
@@ -59,7 +59,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       const value = maybeProxify(v)
       const index = indexMap.get(value)
       if (index !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         delete this.data[index]
         indexMap.delete(value)
         return true
@@ -83,7 +82,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       const value = maybeProxify(v)
       if (indexMap.has(value)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.index
+        this.data.length
         return true
       }
       return false
@@ -103,7 +102,9 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
     },
     toJSON(): Set<T> {
-      return new Set(this.data)
+      // filtering is about twice as fast as creating a new set and deleting
+      // the undefined value because filter actually skips empty slots
+      return new Set(this.data.filter((v) => v !== undefined) as T[])
     },
     [Symbol.iterator]() {
       return this.values()
