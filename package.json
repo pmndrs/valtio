@@ -114,7 +114,6 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "@testing-library/dom": "^10.0.0",
     "@testing-library/react": "^16.0.1",
-    "@types/benchmark": "^2.1.5",
     "@types/jsdom": "^21.1.7",
     "@types/react": "^18.3.4",
     "@types/react-dom": "^18.3.0",

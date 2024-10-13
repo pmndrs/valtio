@@ -34,9 +34,6 @@ devDependencies:
   '@testing-library/react':
     specifier: ^16.0.1
     version: 16.0.1(@testing-library/dom@10.4.0)(@types/react-dom@18.3.1)(@types/react@18.3.11)(react-dom@19.0.0-rc.0)(react@19.0.0-rc.0)
-  '@types/benchmark':
-    specifier: ^2.1.5
-    version: 2.1.5
   '@types/jsdom':
     specifier: ^21.1.7
     version: 21.1.7
@@ -1251,10 +1248,6 @@ packages:
 
   /@types/aria-query@5.0.4:
     resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
-    dev: true
-
-  /@types/benchmark@2.1.5:
-    resolution: {integrity: sha512-cKio2eFB3v7qmKcvIHLUMw/dIx/8bhWPuzpzRT4unCPRTD8VdA9Zb0afxpcxOqR4PixRS7yT42FqGS8BYL8g1w==}
     dev: true
 
   /@types/estree@1.0.6:
