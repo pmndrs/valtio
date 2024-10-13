@@ -1,7 +1,7 @@
 /* eslint-disable vitest/consistent-test-it */
 import { bench, describe } from 'vitest'
-import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap-filled.ts'
-import { proxyMap as newProxyMapKeyVals } from '../src/vanilla/utils/proxyMap-indexMap-keyvals.ts'
+import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap-filled'
+import { proxyMap as newProxyMapKeyVals } from '../src/vanilla/utils/proxyMap-indexMap-keyvals'
 
 // Helper function to generate test data
 function generateTestData(size: number): [number, number][] {
