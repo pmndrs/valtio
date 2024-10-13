@@ -93,6 +93,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       indexMap.clear()
+      this.index = 0
       this.data.splice(0)
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {

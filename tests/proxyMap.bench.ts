@@ -2,6 +2,7 @@
 import { bench, describe } from 'vitest'
 import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap'
 import { proxyMap as newProxyMapKeyVals } from '../src/vanilla/utils/proxyMap-indexMap-keyvals'
+import { proxyMap as newProxyMapTree1 } from '../src/vanilla/utils/proxyMap-tree1'
 
 // Helper function to generate test data
 function generateTestData(size: number): [number, number][] {
@@ -27,6 +28,13 @@ TEST_SIZES.forEach((size) => {
 
     bench('New proxyMapKeyVals', () => {
       const map = newProxyMapKeyVals<number, number>()
+      testData.forEach(([key, value]) => {
+        map.set(key, value)
+      })
+    })
+
+    bench('New proxyMapTree1', () => {
+      const map = newProxyMapTree1<number, number>()
       testData.forEach(([key, value]) => {
         map.set(key, value)
       })
