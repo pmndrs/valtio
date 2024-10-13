@@ -4,15 +4,20 @@ const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxyObject<K, V> = Map<K, V> & {
-  data: Array<K | V>
-  index: number
+  data: Array<[K, V] | undefined>
+  nextIndex: number
   toJSON: () => Map<K, V>
 }
 
+const MIN_DATA_SIZE = 0
+
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
-  const initialData: Array<K | V> = []
-  let initialIndex = 0
+  const initialData: Array<[K, V] | undefined> = new Array(MIN_DATA_SIZE).fill(
+    undefined,
+  )
+  let initialNextIndex = 0
   const indexMap = new Map<K, number>()
+  const emptyIndexes: number[] = []
 
   if (entries !== null && typeof entries !== 'undefined') {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -23,27 +28,26 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     for (const [k, v] of entries) {
       const key = maybeProxify(k)
       const value = maybeProxify(v)
-      indexMap.set(key, initialIndex)
-      initialData[initialIndex++] = key
-      initialData[initialIndex++] = value
+      indexMap.set(key, initialNextIndex)
+      initialData[initialNextIndex++] = [key, value]
     }
   }
 
   const vObject: InternalProxyObject<K, V> = {
     data: initialData,
-    index: initialIndex,
+    nextIndex: initialNextIndex,
     get size() {
       return indexMap.size
     },
     get(key: K) {
       const k = maybeProxify(key)
       const index = indexMap.get(k)
-      if (index !== undefined) {
-        return this.data[index + 1] as V
-      }
-      if (!isProxy(this)) {
+      if (index === undefined && !isProxy(this)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.index
+        this.nextIndex
+      }
+      if (index !== undefined) {
+        return this.data[index]![1]
       }
       return undefined
     },
@@ -52,7 +56,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const exists = indexMap.has(k)
       if (!exists && !isProxy(this)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.index
+        this.nextIndex
       }
       return exists
     },
@@ -64,13 +68,11 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const v = maybeProxify(value)
       const index = indexMap.get(k)
       if (index === undefined) {
-        let nextIndex = this.index
-        indexMap.set(k, nextIndex)
-        this.data[nextIndex++] = k
-        this.data[nextIndex++] = v
-        this.index = nextIndex
+        const i = emptyIndexes.length ? emptyIndexes.pop()! : this.nextIndex++
+        indexMap.set(k, i)
+        this.data[i] = [k, v]
       } else {
-        this.data[index + 1] = v
+        this.data[index]![1] = v
       }
       return this
     },
@@ -81,9 +83,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const k = maybeProxify(key)
       const index = indexMap.get(k)
       if (index !== undefined) {
-        delete this.data[index]
-        delete this.data[index + 1]
+        this.data[index] = undefined
         indexMap.delete(k)
+        emptyIndexes.push(index)
         return true
       }
       return false
@@ -93,16 +95,18 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       indexMap.clear()
-      this.data.splice(0)
+      this.data.splice(MIN_DATA_SIZE).fill(undefined)
+      this.nextIndex = 0
+      emptyIndexes.splice(0)
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
       indexMap.forEach((index) => {
-        cb(this.data[index + 1] as V, this.data[index] as K, this)
+        cb(this.data[index]![1]!, this.data[index]![0]!, this)
       })
     },
     *entries(): MapIterator<[K, V]> {
       for (const index of indexMap.values()) {
-        yield [this.data[index], this.data[index + 1]] as [K, V]
+        yield this.data[index] as [K, V]
       }
     },
     *keys(): IterableIterator<K> {
@@ -112,7 +116,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     *values(): IterableIterator<V> {
       for (const index of indexMap.values()) {
-        yield this.data[index + 1] as V
+        yield this.data[index]![1]!
       }
     },
     [Symbol.iterator]() {
@@ -122,7 +126,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return 'Map'
     },
     toJSON(): Map<K, V> {
-      return new Map([...indexMap].map(([k, i]) => [k, this.data[i + 1] as V]))
+      return new Map([...indexMap].map(([k, v]) => [k, this.data[v]![1]!]))
     },
   }
 
@@ -131,6 +135,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     data: { enumerable: false },
+    nextIndex: { enumerable: false },
     toJSON: { enumerable: false },
   })
 

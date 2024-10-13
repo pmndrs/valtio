@@ -9,7 +9,7 @@ type InternalProxyObject<K, V> = Map<K, V> & {
   toJSON: () => Map<K, V>
 }
 
-const MIN_DATA_SIZE = 0
+const MIN_DATA_SIZE = 1000
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const initialData: Array<[K, V] | undefined> = new Array(MIN_DATA_SIZE).fill(
