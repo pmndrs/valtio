@@ -65,7 +65,7 @@ export function proxyMap<K, V>() {
           if (isProxy(v)) {
             unsubValMap.set(
               v,
-              subscribe(v, () => void this.epoch++),
+              subscribe(v, () => void this.epoch++, true),
             )
           }
           this.epoch++
@@ -76,13 +76,13 @@ export function proxyMap<K, V>() {
       if (isProxy(k)) {
         unsubKeyMap.set(
           k,
-          subscribe(k, () => void this.epoch++),
+          subscribe(k, () => void this.epoch++, true),
         )
       }
       if (isProxy(v)) {
         unsubValMap.set(
           v,
-          subscribe(v, () => void this.epoch++),
+          subscribe(v, () => void this.epoch++, true),
         )
       }
       this.epoch++
