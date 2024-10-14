@@ -1,10 +1,11 @@
 /* eslint-disable vitest/consistent-test-it */
-/* eslint-disable import/extensions */
 import { bench, describe } from 'vitest'
-import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap-filled.ts'
-import { proxyMap as newProxyMapKeyVals } from '../src/vanilla/utils/proxyMap-indexMap-keyvals.ts'
-import { proxyMap as newProxyMapRawMap } from '../src/vanilla/utils/proxyMap-rawMap.ts'
-import { proxyMap as newProxyMapTree1 } from '../src/vanilla/utils/proxyMap-tree1.ts'
+import {
+  newProxyMap,
+  newProxyMapKeyVals,
+  newProxyMapRawMap,
+  newProxyMapTree1,
+} from 'valtio/utils'
 
 // Helper function to generate test data
 function generateTestData(size: number): [number, number][] {
