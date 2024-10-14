@@ -3,7 +3,7 @@ import { bench, describe } from 'vitest'
 import {
   newProxyMap,
   newProxyMapKeyVals,
-  newProxyMapRawMap,
+  newProxyMapRawMap1,
   newProxyMapTree1,
 } from 'valtio/utils'
 
@@ -36,8 +36,8 @@ TEST_SIZES.forEach((size) => {
       })
     })
 
-    bench('New proxyMapRawMap', () => {
-      const map = newProxyMapRawMap<number, number>()
+    bench('New proxyMapRawMap1', () => {
+      const map = newProxyMapRawMap1<number, number>()
       testData.forEach(([key, value]) => {
         map.set(key, value)
       })
