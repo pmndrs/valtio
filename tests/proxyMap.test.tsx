@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import { proxy, snapshot, useSnapshot } from 'valtio'
 import { proxyMap, proxySet } from 'valtio/utils'
 
 const initialValues = [
@@ -317,5 +317,20 @@ describe('proxyMap internal', () => {
     expect(
       Object.keys(proxyMap()).some((k) => notEnumerableProps.includes(k)),
     ).toBe(false)
+  })
+})
+
+describe('snapshot', () => {
+  it('should not change snapshot with modifying the original proxy', async () => {
+    const state = proxyMap([
+      ['key1', {}],
+      ['key2', { nested: { count: 1 } }],
+    ])
+    const snap1 = snapshot(state)
+    expect(snap1.get('key1')).toBeDefined()
+    state.get('key2')!.nested!.count++
+    const snap2 = snapshot(state)
+    expect(snap1.get('key2')!.nested!.count).toBe(1)
+    expect(snap2.get('key2')!.nested!.count).toBe(2)
   })
 })
