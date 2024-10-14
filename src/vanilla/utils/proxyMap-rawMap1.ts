@@ -20,15 +20,18 @@ export function proxyMap<K, V>() {
   const unsubValMap = new WeakMap<object, () => void>()
 
   const snapMapCache = new WeakMap<object, Map<K, V>>()
-  const registerSnapMap = (x: any) => {
+  const registerSnapMap = () => {
     const cache = snapCache.get(vObject)
-    const isCurrentSnap = cache?.[1] === x
-    if (isCurrentSnap) {
+    const latestSnap = cache?.[1]
+    if (latestSnap && !snapMapCache.has(latestSnap)) {
       const snapMap = new Map<K, V>()
-      for (const [k, v] of x.entries()) {
-        snapMap.set(isProxy(k) ? snapshot(k) : k, isProxy(v) ? snapshot(v) : v)
+      for (const [k, v] of rawMap) {
+        snapMap.set(
+          isProxy(k) ? (snapshot(k as object) as K) : k,
+          isProxy(v) ? (snapshot(v as object) as V) : v,
+        )
       }
-      snapMapCache.set(x, snapMap)
+      snapMapCache.set(latestSnap, snapMap)
     }
   }
   const getSnapMap = (x: any) => snapMapCache.get(x)
@@ -36,12 +39,11 @@ export function proxyMap<K, V>() {
   const vObject: InternalProxyObject<K, V> = {
     epoch: 0,
     get size() {
-      registerSnapMap(this)
+      registerSnapMap()
       const map = getSnapMap(this) || rawMap
       return map.size
     },
     get(key: K) {
-      registerSnapMap(this)
       const map = getSnapMap(this) || rawMap
       const k = maybeProxify(key)
       if (!map.has(k)) {
@@ -61,7 +63,6 @@ export function proxyMap<K, V>() {
       return val
     },
     has(key: K) {
-      registerSnapMap(this)
       const map = getSnapMap(this) || rawMap
       const k = maybeProxify(key)
       const exists = map.has(k)
@@ -116,26 +117,22 @@ export function proxyMap<K, V>() {
       throw new Error('Not implemented')
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
-      registerSnapMap(this)
       const map = getSnapMap(this) || rawMap
       map.forEach(cb)
     },
     *entries(): MapIterator<[K, V]> {
-      registerSnapMap(this)
       const map = getSnapMap(this) || rawMap
       for (const [k, v] of map) {
         yield [k, v]
       }
     },
     *keys(): IterableIterator<K> {
-      registerSnapMap(this)
       const map = getSnapMap(this) || rawMap
       for (const k of map.keys()) {
         yield k
       }
     },
     *values(): IterableIterator<V> {
-      registerSnapMap(this)
       const map = getSnapMap(this) || rawMap
       for (const v of map.values()) {
         yield v
@@ -148,7 +145,6 @@ export function proxyMap<K, V>() {
       return 'Map'
     },
     toJSON(): Map<K, V> {
-      registerSnapMap(this)
       const map = getSnapMap(this) || rawMap
       return map
     },
