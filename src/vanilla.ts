@@ -93,7 +93,7 @@ const createSnapshotDefault = <T extends object>(
       const [target, ensureVersion] = proxyStateMap.get(
         value as object,
       ) as ProxyState
-      desc.value = createSnapshot(target, ensureVersion()) as Snapshot<T>
+      desc.value = createSnapshotDefault(target, ensureVersion()) as Snapshot<T>
     }
     Object.defineProperty(snap, key, desc)
   })
