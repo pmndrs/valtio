@@ -69,6 +69,16 @@ it('should create a new proxy from a snapshot', async () => {
   expect(state2.c).toBe(0)
 })
 
+it('should not change snapshot with modifying the original proxy', async () => {
+  const state = proxy({ obj1: {}, obj2: { nested: { count: 1 } } })
+  const snap1 = snapshot(state)
+  expect(snap1.obj1).toBeDefined()
+  state.obj2.nested.count++
+  const snap2 = snapshot(state)
+  expect(snap1.obj2.nested.count).toBe(1)
+  expect(snap2.obj2.nested.count).toBe(2)
+})
+
 describe('snapsoht typings', () => {
   it('converts object properties to readonly', () => {
     expectType<
