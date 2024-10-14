@@ -11,6 +11,7 @@ const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   epoch: number
+  _registerSnap: boolean
   toJSON: () => Map<K, V>
 }
 
@@ -32,14 +33,18 @@ export function proxyMap<K, V>() {
         )
       }
       snapMapCache.set(latestSnap, snapMap)
+      return true
     }
+    return false
   }
   const getSnapMap = (x: any) => snapMapCache.get(x)
 
   const vObject: InternalProxyObject<K, V> = {
     epoch: 0,
+    get _registerSnap() {
+      return registerSnapMap()
+    },
     get size() {
-      registerSnapMap()
       const map = getSnapMap(this) || rawMap
       return map.size
     },
