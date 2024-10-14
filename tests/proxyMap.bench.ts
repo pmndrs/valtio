@@ -1,7 +1,7 @@
 /* eslint-disable vitest/consistent-test-it */
 import { bench, describe, test } from 'vitest'
 import { snapshot } from 'valtio'
-import { newProxyMapKeyVals, newProxyMapKeyVals2 } from 'valtio/utils'
+import { newProxyMapKeyVals, proxyMapRawMap } from 'valtio/utils'
 
 // Helper function to generate test data
 function generateTestData(size: number): [number, number][] {
@@ -12,7 +12,7 @@ function generateTestData(size: number): [number, number][] {
   return data
 }
 
-const TEST_SIZES = [1000, 10000, 30000]
+const TEST_SIZES = [1000]
 
 TEST_SIZES.forEach((size) => {
   describe(`Insertion -${size} items`, () => {
@@ -32,10 +32,30 @@ TEST_SIZES.forEach((size) => {
       })
     })
 
-    bench('New proxyMapKeyVals2', () => {
-      const map = newProxyMapKeyVals2<number, number>()
+    bench('proxyMap Raw Map', () => {
+      const map = proxyMapRawMap<number, number>()
       testData.forEach(([key, value]) => {
         map.set(key, value)
+      })
+    })
+  })
+
+  describe(`Insertion and Update -${size} items`, () => {
+    const testData = generateTestData(size)
+
+    bench('New proxyMapKeyVals', () => {
+      const map = newProxyMapKeyVals<number, number>()
+      testData.forEach(([key, value]) => {
+        map.set(key, value)
+        map.set(key, -1)
+      })
+    })
+
+    bench('proxyMap Raw Map', () => {
+      const map = proxyMapRawMap<number, number>()
+      testData.forEach(([key, value]) => {
+        map.set(key, value)
+        map.set(key, -1)
       })
     })
   })
@@ -57,8 +77,8 @@ TEST_SIZES.forEach((size) => {
       })
     })
 
-    bench('New proxyMapKeyVals2', () => {
-      const map = newProxyMapKeyVals2<number, number>(testData)
+    bench('proxyMap Raw Map', () => {
+      const map = proxyMapRawMap<number, number>(testData)
       testData.forEach(([key]) => {
         map.get(key)
       })
@@ -82,8 +102,8 @@ TEST_SIZES.forEach((size) => {
       })
     })
 
-    bench('New proxyMapKeyVals2', () => {
-      const map = newProxyMapKeyVals2<number, number>(testData)
+    bench('proxyMap Raw Map', () => {
+      const map = proxyMapRawMap<number, number>(testData)
       testData.forEach(([key]) => {
         map.delete(key)
       })
@@ -103,8 +123,8 @@ TEST_SIZES.forEach((size) => {
       testData.forEach(([key, value]) => {})
     })
 
-    bench('New proxyMapKeyVals2', () => {
-      const map = newProxyMapKeyVals2<number, number>(testData)
+    bench('proxyMap Raw Map', () => {
+      const map = proxyMapRawMap<number, number>(testData)
       testData.forEach(([key, value]) => {})
     })
   })
@@ -130,8 +150,8 @@ TEST_SIZES.forEach((size) => {
       })
     })
 
-    bench('New proxyMapKeyVals2', () => {
-      const map = newProxyMapKeyVals2<number, number>(testData)
+    bench('proxyMap Raw Map', () => {
+      const map = proxyMapRawMap<number, number>(testData)
       testData.forEach(([key, value]) => {
         map.set(key, value)
         map.get(key)
@@ -151,8 +171,8 @@ TEST_SIZES.forEach((size) => {
       }
     })
 
-    bench('New proxyMapKeyVals2', () => {
-      const map = newProxyMapKeyVals2<number, number>(testData)
+    bench('proxyMap Raw Map', () => {
+      const map = proxyMapRawMap<number, number>(testData)
       for (const [k, v] of map.entries()) {
         const _k = k
         const _v = v
@@ -170,8 +190,8 @@ TEST_SIZES.forEach((size) => {
       }
     })
 
-    bench('New proxyMapKeyVals2', () => {
-      const map = newProxyMapKeyVals2<number, number>(testData)
+    bench('proxyMap Raw Map', () => {
+      const map = proxyMapRawMap<number, number>(testData)
       for (const k of map.keys()) {
         const _k = k
       }
@@ -187,15 +207,15 @@ TEST_SIZES.forEach((size) => {
         const _v = v
       }
     })
-    bench('New proxyMapKeyVals2', () => {
-      const map = newProxyMapKeyVals2<number, number>(testData)
+    bench('proxyMap Raw Map', () => {
+      const map = proxyMapRawMap<number, number>(testData)
       for (const v of map.values()) {
         const _v = v
       }
     })
   })
 
-  describe.only(`snapshot -${size} items`, () => {
+  describe(`snapshot -${size} items`, () => {
     const testData = generateTestData(size)
 
     bench('New proxyMapKeyVals', () => {
@@ -206,8 +226,8 @@ TEST_SIZES.forEach((size) => {
       })
     })
 
-    bench('New proxyMapKeyVals2', () => {
-      const map = newProxyMapKeyVals2<number, number>(testData)
+    bench('proxyMap Raw Map', () => {
+      const map = proxyMapRawMap<number, number>(testData)
       const snap = snapshot(map)
       testData.forEach(([key, value]) => {
         snap.get(key)

@@ -12,7 +12,6 @@ const isProxy = (x: any) => proxyStateMap.has(x)
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<K | V>
   index: number
-  _registerSnap: boolean
   toJSON: () => Map<K, V>
 }
 
@@ -61,10 +60,8 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const vObject: InternalProxyObject<K, V> = {
     data: initialData,
     index: initialIndex,
-    get _registerSnap() {
-      return registerSnapMap()
-    },
     get size() {
+      registerSnapMap()
       const map = getSnapMap(this) || indexMap
       return map.size
     },
@@ -180,9 +177,14 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       this.data.splice(0)
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
-      indexMap.forEach((index) => {
-        cb(this.data[index + 1] as V, this.data[index] as K, this)
-      })
+      const map = getSnapMap(this) || indexMap
+      if (map === indexMap) {
+        indexMap.forEach((index) => {
+          cb(this.data[index + 1] as V, this.data[index] as K, this)
+        })
+      } else {
+        return (map as Map<K, V>).forEach(cb)
+      }
     },
     *entries(): MapIterator<[K, V]> {
       const map = getSnapMap(this) || indexMap

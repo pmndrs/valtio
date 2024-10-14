@@ -7,3 +7,4 @@ export { proxyMap } from './utils/proxyMap-indexMap-keyval.ts'
 
 export { proxyMap as newProxyMapKeyVals } from './utils/proxyMap-indexMap-keyval.ts'
 export { proxyMap as newProxyMapKeyVals2 } from './utils/proxyMap-indexMap-key-val.ts'
+export { proxyMap as proxyMapRawMap } from './utils/proxyMap-rawMap1.ts'
