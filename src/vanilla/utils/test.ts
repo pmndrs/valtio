@@ -1,5 +1,5 @@
 import { snapshot } from '../../vanilla.ts'
-import { proxyMap } from './proxyMap-rawMap1.ts'
+import { proxyMap } from './proxyMap-indexMap-keyval.ts'
 
 const state = proxyMap([['key1', 'val1']])
 const snap1 = snapshot(state)
