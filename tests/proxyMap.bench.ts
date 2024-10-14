@@ -1,7 +1,7 @@
 /* eslint-disable vitest/consistent-test-it */
 import { bench, describe, test } from 'vitest'
 import { snapshot } from 'valtio'
-import { proxyMap } from 'valtio/utils'
+import { proxyMap, proxyMapTree2 } from 'valtio/utils'
 
 // Helper function to generate test data
 function generateTestData(size: number): [number, number][] {
@@ -12,10 +12,10 @@ function generateTestData(size: number): [number, number][] {
   return data
 }
 
-const TEST_SIZES = [1000]
+const TEST_SIZES = [1000, 10_000]
 
 TEST_SIZES.forEach((size) => {
-  describe(`Insertion -${size} items`, () => {
+  describe.skip(`Insertion -${size} items`, () => {
     const testData = generateTestData(size)
 
     bench('proxyMap', () => {
@@ -26,7 +26,7 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  describe(`Insertion and Update -${size} items`, () => {
+  describe.skip(`Insertion and Update -${size} items`, () => {
     const testData = generateTestData(size)
 
     bench('proxyMap', () => {
@@ -38,7 +38,7 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  describe(`Retrieval -${size} items`, () => {
+  describe.skip(`Retrieval -${size} items`, () => {
     const testData = generateTestData(size)
 
     bench('proxyMap', () => {
@@ -49,7 +49,7 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  describe(`Deletion -${size} items`, () => {
+  describe.skip(`Deletion -${size} items`, () => {
     const testData = generateTestData(size)
 
     bench('proxyMap', () => {
@@ -60,7 +60,7 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  describe(`Iteration -${size} items`, () => {
+  describe.skip(`Iteration -${size} items`, () => {
     const testData = generateTestData(size)
 
     bench('proxyMap', () => {
@@ -69,7 +69,7 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  describe(`Insertion, Retrieval, and Deletion -${size} items`, () => {
+  describe.skip(`Insertion, Retrieval, and Deletion -${size} items`, () => {
     const testData = generateTestData(size)
     bench('proxyMap', () => {
       const map = proxyMap<number, number>(testData)
@@ -81,7 +81,7 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  describe(`entries -${size} items`, () => {
+  describe.skip(`entries -${size} items`, () => {
     const testData = generateTestData(size)
 
     bench('proxyMap', () => {
@@ -93,7 +93,7 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  describe(`keys -${size} items`, () => {
+  describe.skip(`keys -${size} items`, () => {
     const testData = generateTestData(size)
 
     bench('proxyMap', () => {
@@ -104,7 +104,7 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  describe(`values -${size} items`, () => {
+  describe.skip(`values -${size} items`, () => {
     const testData = generateTestData(size)
 
     bench('proxyMap', () => {
@@ -115,7 +115,7 @@ TEST_SIZES.forEach((size) => {
     })
   })
 
-  describe(`snapshot -${size} items`, () => {
+  describe.skip(`snapshot -${size} items`, () => {
     const testData = generateTestData(size)
 
     bench('proxyMap', () => {
@@ -124,6 +124,24 @@ TEST_SIZES.forEach((size) => {
       testData.forEach(([key, value]) => {
         snap.get(key)
       })
+    })
+  })
+
+  describe(`snapshot & modify -${size} items`, () => {
+    const testData = generateTestData(size)
+    const oneData = generateTestData(1)[0]!
+
+    bench('proxyMap', () => {
+      const map = proxyMap<number, number>(testData)
+      const snap1 = snapshot(map)
+      map.set(oneData[0], oneData[1])
+      const snap2 = snapshot(map)
+    })
+    bench('proxyMapTree2', () => {
+      const map = proxyMapTree2<number, number>(testData)
+      const snap1 = snapshot(map)
+      map.set(oneData[0], oneData[1])
+      const snap2 = snapshot(map)
     })
   })
 })
