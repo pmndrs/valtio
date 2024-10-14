@@ -1,9 +1,4 @@
-import {
-  proxy,
-  snapshot,
-  subscribe,
-  unstable_getInternalStates,
-} from '../../vanilla.ts'
+import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
 
 const { proxyStateMap, snapCache } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
@@ -25,6 +20,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     const latestSnap = cache?.[1]
     if (latestSnap && !snapMapCache.has(latestSnap)) {
       const clonedMap = new Map(indexMap)
+      // TODO: should we support snapshot keys?
+      // for (const [k, i] of indexMap) {
+      //   if (isProxy(k)) {
+      //     clonedMap.set(snapshot(k as object) as K, i)
+      //   }
+      // }
       snapMapCache.set(latestSnap, clonedMap)
       return true
     }
@@ -58,16 +59,15 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     get(key: K) {
       const map = getSnapMap(this) || indexMap
       const k = maybeProxify(key)
-      if (!map.has(k)) {
+      const index = map.get(k)
+      if (index === undefined) {
         if (!isProxy(this)) {
           // eslint-disable-next-line @typescript-eslint/no-unused-expressions
           this.index
         }
         return undefined
       }
-
-      const index = map.get(k)
-      return index ? (this.data[index + 1] as V) : undefined
+      return this.data[index + 1] as V
     },
     has(key: K) {
       const map = getSnapMap(this) || indexMap
