@@ -5,7 +5,7 @@ import {
   unstable_getInternalStates,
 } from '../../vanilla.ts'
 
-const { proxyStateMap } = unstable_getInternalStates()
+const { proxyStateMap, snapCache } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
 
@@ -19,21 +19,39 @@ export function proxyMap<K, V>() {
   const unsubKeyMap = new WeakMap<object, () => void>()
   const unsubValMap = new WeakMap<object, () => void>()
 
+  const snapMapCache = new WeakMap<object, Map<K, V>>()
+  const registerSnapMap = (x: any) => {
+    const cache = snapCache.get(vObject)
+    const isCurrentSnap = cache?.[1] === x
+    if (isCurrentSnap) {
+      const snapMap = new Map<K, V>()
+      for (const [k, v] of x.entries()) {
+        snapMap.set(isProxy(k) ? snapshot(k) : k, isProxy(v) ? snapshot(v) : v)
+      }
+      snapMapCache.set(x, snapMap)
+    }
+  }
+  const getSnapMap = (x: any) => snapMapCache.get(x)
+
   const vObject: InternalProxyObject<K, V> = {
     epoch: 0,
     get size() {
-      return rawMap.size
+      registerSnapMap(this)
+      const map = getSnapMap(this) || rawMap
+      return map.size
     },
     get(key: K) {
+      registerSnapMap(this)
+      const map = getSnapMap(this) || rawMap
       const k = maybeProxify(key)
-      if (!rawMap.has(k)) {
+      if (!map.has(k)) {
         if (!isProxy(this)) {
           // eslint-disable-next-line @typescript-eslint/no-unused-expressions
           this.epoch
         }
         return undefined
       }
-      const val = rawMap.get(k) as V
+      const val = map.get(k) as V
       if (isProxy(this)) {
         return val
       }
@@ -43,8 +61,10 @@ export function proxyMap<K, V>() {
       return val
     },
     has(key: K) {
+      registerSnapMap(this)
+      const map = getSnapMap(this) || rawMap
       const k = maybeProxify(key)
-      const exists = rawMap.has(k)
+      const exists = map.has(k)
       if (!exists && !isProxy(this)) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.epoch
@@ -89,31 +109,37 @@ export function proxyMap<K, V>() {
       rawMap.set(k, v)
       return this
     },
-    delete(key: K) {
+    delete(_key: K) {
       throw new Error('Not implemented')
     },
     clear() {
       throw new Error('Not implemented')
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
-      //indexMap.forEach((index) => {
-      //  cb(this.data[index + 1] as V, this.data[index] as K, this)
-      //})
+      registerSnapMap(this)
+      const map = getSnapMap(this) || rawMap
+      map.forEach(cb)
     },
     *entries(): MapIterator<[K, V]> {
-      //for (const index of indexMap.values()) {
-      //  yield [this.data[index], this.data[index + 1]] as [K, V]
-      //}
+      registerSnapMap(this)
+      const map = getSnapMap(this) || rawMap
+      for (const [k, v] of map) {
+        yield [k, v]
+      }
     },
     *keys(): IterableIterator<K> {
-      //for (const key of indexMap.keys()) {
-      //  yield key
-      //}
+      registerSnapMap(this)
+      const map = getSnapMap(this) || rawMap
+      for (const k of map.keys()) {
+        yield k
+      }
     },
     *values(): IterableIterator<V> {
-      //for (const index of indexMap.values()) {
-      //  yield this.data[index + 1] as V
-      //}
+      registerSnapMap(this)
+      const map = getSnapMap(this) || rawMap
+      for (const v of map.values()) {
+        yield v
+      }
     },
     [Symbol.iterator]() {
       return this.entries()
@@ -122,8 +148,9 @@ export function proxyMap<K, V>() {
       return 'Map'
     },
     toJSON(): Map<K, V> {
-      throw new Error('Not implemented')
-      // return new Map([...indexMap].map(([k, i]) => [k, this.data[i + 1] as V]))
+      registerSnapMap(this)
+      const map = getSnapMap(this) || rawMap
+      return map
     },
   }
 
