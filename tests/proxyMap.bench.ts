@@ -16,7 +16,7 @@ const TEST_SIZES = [1000, 10000]
 
 TEST_SIZES.forEach((size) => {
   describe(`Insertion -${size} items`, () => {
-    const testData = generateTestData(1000)
+    const testData = generateTestData(size)
 
     bench('New proxyMap', () => {
       const map = newProxyMap<number, number>()
