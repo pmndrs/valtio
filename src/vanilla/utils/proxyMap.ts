@@ -19,23 +19,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const initialData: Array<K | V> = []
   let initialIndex = 0
   const indexMap = new Map<K, number>()
-  const unsubKeyMap = new Map<object, () => void>()
-  const unsubValMap = new Map<object, () => void>()
-  const snapMapCache = new WeakMap<object, Map<K, V>>()
+  const snapMapCache = new WeakMap<object, Map<K, number>>()
   const registerSnapMap = () => {
-    const cache = snapCache.get(vObject)
+    const cache = snapCache.get(indexMap)
     const latestSnap = cache?.[1]
     if (latestSnap && !snapMapCache.has(latestSnap)) {
-      const snapMap = new Map<K, V>()
-      for (let i = 0; i < vObject.data.length; i += 2) {
-        const k = vObject.data[i] as K
-        const v = vObject.data[i + 1] as V
-        snapMap.set(
-          isProxy(k) ? (snapshot(k as object) as K) : k,
-          isProxy(v) ? (snapshot(v as object) as V) : v,
-        )
-      }
-      snapMapCache.set(latestSnap, snapMap)
+      snapMapCache.set(latestSnap, indexMap)
       return true
     }
     return false
@@ -76,12 +65,8 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         return undefined
       }
 
-      if (map === indexMap) {
-        const index = indexMap.get(k)
-        return index ? (this.data[index + 1] as V) : undefined
-      }
-
-      return map.get(k) as V
+      const index = map.get(k)
+      return index ? (this.data[index + 1] as V) : undefined
     },
     has(key: K) {
       const map = getSnapMap(this) || indexMap
@@ -101,38 +86,14 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const v = maybeProxify(value)
       const index = indexMap.get(k)
       if (index !== undefined) {
-        const val = this.data[index + 1]
-        if (!Object.is(val, v)) {
-          unsubValMap.get(val as object)?.()
-          unsubValMap.delete(val as object)
-          if (isProxy(v)) {
-            unsubValMap.set(
-              v,
-              subscribe(v, () => void this.index++, true),
-            )
-          }
-          this.data[index + 1] = v
-        }
-        return this
+        this.data[index + 1] = v
+      } else {
+        let nextIndex = this.index
+        indexMap.set(k, nextIndex)
+        this.data[nextIndex++] = k
+        this.data[nextIndex++] = v
+        this.index = nextIndex
       }
-      if (isProxy(k)) {
-        unsubKeyMap.set(
-          k,
-          subscribe(k, () => void this.index++, true),
-        )
-      }
-      if (isProxy(v)) {
-        unsubValMap.set(
-          v,
-          subscribe(v, () => void this.index++, true),
-        )
-      }
-
-      let nextIndex = this.index
-      indexMap.set(k, nextIndex)
-      this.data[nextIndex++] = k
-      this.data[nextIndex++] = v
-      this.index = nextIndex
 
       return this
     },
@@ -145,12 +106,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (index === undefined) {
         return false
       }
-      unsubKeyMap.get(k)?.()
-      unsubKeyMap.delete(k)
-
-      const val = this.data[index + 1]
-      unsubValMap.get(val as object)?.()
-      unsubValMap.delete(val as object)
 
       delete this.data[index]
       delete this.data[index + 1]
@@ -161,41 +116,20 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-
-      for (const unsub of unsubKeyMap.values()) {
-        unsub()
-      }
-      unsubKeyMap.clear()
-
-      for (const unsub of unsubValMap.values()) {
-        unsub()
-      }
-      unsubValMap.clear()
-
       indexMap.clear()
       this.index = 0
       this.data.splice(0)
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
       const map = getSnapMap(this) || indexMap
-      if (map === indexMap) {
-        indexMap.forEach((index) => {
-          cb(this.data[index + 1] as V, this.data[index] as K, this)
-        })
-      } else {
-        return (map as Map<K, V>).forEach(cb)
-      }
+      map.forEach((index) => {
+        cb(this.data[index + 1] as V, this.data[index] as K, this)
+      })
     },
     *entries(): MapIterator<[K, V]> {
       const map = getSnapMap(this) || indexMap
-      if (map === indexMap) {
-        for (const index of indexMap.values()) {
-          yield [this.data[index], this.data[index + 1]] as [K, V]
-        }
-      } else {
-        for (const [k, v] of map) {
-          yield [k, v as V]
-        }
+      for (const index of map.values()) {
+        yield [this.data[index], this.data[index + 1]] as [K, V]
       }
     },
     *keys(): IterableIterator<K> {
@@ -206,14 +140,8 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     *values(): IterableIterator<V> {
       const map = getSnapMap(this) || indexMap
-      if (map === indexMap) {
-        for (const index of indexMap.values()) {
-          yield this.data[index + 1] as V
-        }
-      } else {
-        for (const v of map.values()) {
-          yield v as V
-        }
+      for (const index of map.values()) {
+        yield this.data[index + 1] as V
       }
     },
     [Symbol.iterator]() {
@@ -224,12 +152,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     toJSON(): Map<K, V> {
       const map = getSnapMap(this) || indexMap
-      if (map === indexMap) {
-        return new Map(
-          [...indexMap].map(([k, i]) => [k, this.data[i + 1] as V]),
-        )
-      }
-      return new Map(map as Map<K, V>)
+      return new Map([...map].map(([k, i]) => [k, this.data[i + 1] as V]))
     },
   }
 
