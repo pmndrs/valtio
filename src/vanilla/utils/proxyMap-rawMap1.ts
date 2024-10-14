@@ -153,7 +153,6 @@ export function proxyMap<K, V>() {
   const proxiedObject = proxy(vObject)
 
   Object.defineProperties(proxiedObject, {
-    size: { enumerable: false },
     epoch: { enumerable: false },
     toJSON: { enumerable: false },
   })
