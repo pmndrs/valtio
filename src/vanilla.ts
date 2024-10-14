@@ -90,10 +90,8 @@ const createSnapshotDefault = <T extends object>(
     if (refSet.has(value as object)) {
       markToTrack(value as object, false) // mark not to track
     } else if (proxyStateMap.has(value as object)) {
-      const [target, ensureVersion] = proxyStateMap.get(
-        value as object,
-      ) as ProxyState
-      desc.value = createSnapshotDefault(target, ensureVersion()) as Snapshot<T>
+      const [target] = proxyStateMap.get(value as object) as ProxyState
+      desc.value = createSnapshotDefault(target, version) as Snapshot<T>
     }
     Object.defineProperty(snap, key, desc)
   })
