@@ -4,3 +4,5 @@ export { devtools } from './utils/devtools.ts'
 export { deepClone } from './utils/deepClone.ts'
 export { proxySet } from './utils/proxySet.ts'
 export { proxyMap } from './utils/proxyMap.ts'
+
+export { proxyMap as proxyMapTree2 } from './utils/proxyMap-tree2.ts'

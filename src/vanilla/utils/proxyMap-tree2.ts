@@ -1,94 +1,138 @@
 import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
 
 const { proxyStateMap } = unstable_getInternalStates()
-const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
 
-let nextKey = 0
+let nextIndex = 0
 const objectKeyMap = new WeakMap<object, number>()
 const primitiveKeyMap = new Map<unknown, number>()
-const getKey = (x: unknown) => {
-  let key: number | undefined
+const getKeyIndex = (x: unknown) => {
+  let index: number | undefined
   if (typeof x === 'object' && x !== null) {
-    key = objectKeyMap.get(x)
-    if (key === undefined) {
-      key = nextKey++
-      objectKeyMap.set(x as object, key)
+    index = objectKeyMap.get(x)
+    if (index === undefined) {
+      index = nextIndex++
+      objectKeyMap.set(x as object, index)
     }
   } else {
-    key = primitiveKeyMap.get(x)
-    if (key === undefined) {
-      key = nextKey++
-      primitiveKeyMap.set(x, key)
+    index = primitiveKeyMap.get(x)
+    if (index === undefined) {
+      index = nextIndex++
+      primitiveKeyMap.set(x, index)
     }
   }
-  return key as number
+  return index as number
 }
 
-const TREE_BASE = 1000
+const TREE_BASE = 100
 
 type TreeNode = [
-  keys: (number | undefined)[],
-  values: (unknown | undefined)[],
+  indexes: (number | undefined)[],
   children: (TreeNode | undefined)[],
+  values: (unknown | undefined)[],
+  keys: (unknown | undefined)[],
   quotients: (number | undefined)[],
 ]
 
-const createNewTreeNode = (): TreeNode => [[], [], [], []]
+const createNewTreeNode = (): TreeNode => [[], [], [], [], []]
 
 const insertIntoTreeNode = (
   node: TreeNode,
-  key: number,
+  index: number,
+  key: unknown,
   value: unknown,
-  key2 = key,
+  index2 = index,
 ): boolean => {
-  const [keys, values, children, quotients] = node
-  const index = key2 % TREE_BASE
-  const quotient = Math.floor(key2 / TREE_BASE)
-  if (keys[index] === key) {
-    values[index] = value
+  const [indexes, children, values, keys, quotients] = node
+  const reminder = index2 % TREE_BASE
+  const quotient = Math.floor(index2 / TREE_BASE)
+  if (indexes[reminder] === index) {
+    values[reminder] = value
     return false
   }
-  let child = children[index]
-  if (keys[index] !== undefined && !child) {
+  let child = children[reminder]
+  if (indexes[reminder] !== undefined && !child) {
     child = createNewTreeNode()
-    insertIntoTreeNode(child, keys[index]!, values[index]!, quotients[index]!)
-    keys[index] = undefined
-    quotients[index] = undefined
-    values[index] = undefined
-    children[index] = child
+    insertIntoTreeNode(
+      child,
+      indexes[reminder]!,
+      keys[reminder]!,
+      values[reminder]!,
+      quotients[reminder]!,
+    )
+    indexes[reminder] = undefined
+    keys[reminder] = undefined
+    quotients[reminder] = undefined
+    values[reminder] = undefined
+    children[reminder] = child
   }
   if (child) {
-    return insertIntoTreeNode(child, key, value, quotient)
+    return insertIntoTreeNode(child, index, key, value, quotient)
   }
-  keys[index] = key
-  quotients[index] = quotient
-  values[index] = value
+  indexes[reminder] = index
+  keys[reminder] = key
+  values[reminder] = value
+  quotients[reminder] = quotient
   return true
 }
 
 const EMPTY = Symbol()
 
-const searchFromTreeNode = (node: TreeNode, key: number, key2 = key) => {
-  const [keys, values, children] = node
-  const index = key2 % TREE_BASE
-  const quotient = Math.floor(key2 / TREE_BASE)
-  if (keys[index] === key) {
-    return values[index]
+const searchValueFromTreeNode = (
+  node: TreeNode,
+  index: number,
+  index2 = index,
+) => {
+  const [indexes, children, values] = node
+  const reminder = index2 % TREE_BASE
+  const quotient = Math.floor(index2 / TREE_BASE)
+  if (indexes[reminder] === index) {
+    return values[reminder]
   }
-  const child = children[index]
+  const child = children[reminder]
   if (child) {
-    return searchFromTreeNode(child, key, quotient)
+    return searchValueFromTreeNode(child, index, quotient)
   }
   return EMPTY
 }
 
 const deleteFromTreeNode = (
-  _node: TreeNode,
-  key: number,
-  _key2 = key,
+  node: TreeNode,
+  index: number,
+  index2 = index,
 ): boolean => {
-  throw new Error('Not implemented')
+  // TODO shrink tree
+  const [indexes, children, values, keys, quotients] = node
+  const reminder = index2 % TREE_BASE
+  const quotient = Math.floor(index2 / TREE_BASE)
+  if (indexes[reminder] === index) {
+    indexes[reminder] = undefined
+    keys[reminder] = undefined
+    values[reminder] = undefined
+    quotients[reminder] = undefined
+    return true
+  }
+  const child = children[index]
+  if (child) {
+    return deleteFromTreeNode(child, index, quotient)
+  }
+  return false
+}
+
+const walkTreeNode = (
+  node: TreeNode,
+  callback: (key: unknown, value: unknown) => void,
+): void => {
+  const [indexes, children, values, keys] = node
+  for (let i = 0; i < TREE_BASE; i++) {
+    if (indexes[i] !== undefined) {
+      callback(keys[i], values[i])
+    }
+    const child = children[i]
+    if (child) {
+      walkTreeNode(child, callback)
+    }
+  }
 }
 
 type InternalProxyObject<K, V> = Map<K, V> & {
@@ -99,7 +143,7 @@ type InternalProxyObject<K, V> = Map<K, V> & {
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const initialRoot = createNewTreeNode()
-  let initialSize = 0
+  let size = 0
 
   if (entries !== null && typeof entries !== 'undefined') {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -108,40 +152,41 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       )
     }
     for (const [key, value] of entries) {
-      const k = maybeProxify(key)
-      const v = maybeProxify(value)
-      const added = insertIntoTreeNode(initialRoot, getKey(k), v)
+      const added = insertIntoTreeNode(
+        initialRoot,
+        getKeyIndex(key),
+        key,
+        value,
+      )
       if (added) {
-        initialSize++
+        size++
       }
     }
   }
 
   const vObject: InternalProxyObject<K, V> = {
     root: initialRoot,
-    size: initialSize,
+    get size() {
+      return size
+    },
     get(key: K) {
-      const k = maybeProxify(key)
-      const value = searchFromTreeNode(this.root, getKey(k))
+      const value = searchValueFromTreeNode(this.root, getKeyIndex(key))
       if (value === EMPTY) {
         return undefined
       }
       return value as V
     },
     has(key: K) {
-      const k = maybeProxify(key)
-      const value = searchFromTreeNode(this.root, getKey(k))
+      const value = searchValueFromTreeNode(this.root, getKeyIndex(key))
       return value !== EMPTY
     },
     set(key: K, value: V) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const k = maybeProxify(key)
-      const v = maybeProxify(value)
-      const added = insertIntoTreeNode(this.root, getKey(k), v)
+      const added = insertIntoTreeNode(this.root, getKeyIndex(key), key, value)
       if (added) {
-        this.size++
+        size++
       }
       return this
     },
@@ -149,10 +194,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const k = maybeProxify(key)
-      const deleted = deleteFromTreeNode(this.root, getKey(k))
+      const deleted = deleteFromTreeNode(this.root, getKeyIndex(key))
       if (deleted) {
-        this.size--
+        size--
         return true
       }
       return false
@@ -162,26 +206,42 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       this.root = createNewTreeNode()
+      size = 0
     },
-    forEach(_cb: (value: V, key: K, map: Map<K, V>) => void) {
-      // indexMap.forEach((index) => {
-      //   cb(this.data[index + 1] as V, this.data[index] as K, this)
-      // })
+    forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
+      walkTreeNode(this.root, (key, value) => {
+        cb(value as V, key as K, this)
+      })
     },
     *entries(): MapIterator<[K, V]> {
-      //for (const index of indexMap.values()) {
-      //  yield [this.data[index], this.data[index + 1]] as [K, V]
-      //}
+      // TODO improve with iterator
+      const map = new Map<K, V>()
+      walkTreeNode(this.root, (key, value) => {
+        map.set(key as K, value as V)
+      })
+      for (const [key, value] of map) {
+        yield [key, value]
+      }
     },
     *keys(): IterableIterator<K> {
-      // for (const key of indexMap.keys()) {
-      //   yield key
-      // }
+      // TODO improve with iterator
+      const map = new Map<K, V>()
+      walkTreeNode(this.root, (key, value) => {
+        map.set(key as K, value as V)
+      })
+      for (const key of map.keys()) {
+        yield key
+      }
     },
     *values(): IterableIterator<V> {
-      // for (const index of indexMap.values()) {
-      //   yield this.data[index + 1] as V
-      // }
+      // TODO improve with iterator
+      const map = new Map<K, V>()
+      walkTreeNode(this.root, (key, value) => {
+        map.set(key as K, value as V)
+      })
+      for (const value of map.values()) {
+        yield value
+      }
     },
     [Symbol.iterator]() {
       return this.entries()
@@ -190,8 +250,11 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return 'Map'
     },
     toJSON(): Map<K, V> {
-      // return new Map([...indexMap].map(([k, i]) => [k, this.data[i + 1] as V]))
-      return 'Not implemented' as never
+      const map = new Map<K, V>()
+      walkTreeNode(this.root, (key, value) => {
+        map.set(key as K, value as V)
+      })
+      return map
     },
   }
 
