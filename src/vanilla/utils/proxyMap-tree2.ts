@@ -3,25 +3,25 @@ import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
 const { proxyStateMap } = unstable_getInternalStates()
 const isProxy = (x: any) => proxyStateMap.has(x)
 
-let nextKey = 0
+let nextIndex = 0
 const objectKeyMap = new WeakMap<object, number>()
 const primitiveKeyMap = new Map<unknown, number>()
-const getKey = (x: unknown) => {
-  let key: number | undefined
+const getKeyIndex = (x: unknown) => {
+  let index: number | undefined
   if (typeof x === 'object' && x !== null) {
-    key = objectKeyMap.get(x)
-    if (key === undefined) {
-      key = nextKey++
-      objectKeyMap.set(x as object, key)
+    index = objectKeyMap.get(x)
+    if (index === undefined) {
+      index = nextIndex++
+      objectKeyMap.set(x as object, index)
     }
   } else {
-    key = primitiveKeyMap.get(x)
-    if (key === undefined) {
-      key = nextKey++
-      primitiveKeyMap.set(x, key)
+    index = primitiveKeyMap.get(x)
+    if (index === undefined) {
+      index = nextIndex++
+      primitiveKeyMap.set(x, index)
     }
   }
-  return key as number
+  return index as number
 }
 
 const TREE_BASE = 100
@@ -152,7 +152,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       )
     }
     for (const [key, value] of entries) {
-      const added = insertIntoTreeNode(initialRoot, getKey(key), key, value)
+      const added = insertIntoTreeNode(
+        initialRoot,
+        getKeyIndex(key),
+        key,
+        value,
+      )
       if (added) {
         size++
       }
@@ -165,21 +170,21 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return size
     },
     get(key: K) {
-      const value = searchValueFromTreeNode(this.root, getKey(key))
+      const value = searchValueFromTreeNode(this.root, getKeyIndex(key))
       if (value === EMPTY) {
         return undefined
       }
       return value as V
     },
     has(key: K) {
-      const value = searchValueFromTreeNode(this.root, getKey(key))
+      const value = searchValueFromTreeNode(this.root, getKeyIndex(key))
       return value !== EMPTY
     },
     set(key: K, value: V) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const added = insertIntoTreeNode(this.root, getKey(key), key, value)
+      const added = insertIntoTreeNode(this.root, getKeyIndex(key), key, value)
       if (added) {
         size++
       }
@@ -189,7 +194,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const deleted = deleteFromTreeNode(this.root, getKey(key))
+      const deleted = deleteFromTreeNode(this.root, getKeyIndex(key))
       if (deleted) {
         size--
         return true
