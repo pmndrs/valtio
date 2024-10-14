@@ -239,7 +239,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     size: { enumerable: false },
     index: { enumerable: false },
     data: { enumerable: false },
-    index: { enumerable: false },
     toJSON: { enumerable: false },
   })
 
