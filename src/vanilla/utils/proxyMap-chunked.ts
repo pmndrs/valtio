@@ -153,7 +153,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         cb(item[1]!, item[0]!, this)
       })
     },
-    *entries(): MapIterator<[K, V]> {
+    *entries(): IterableIterator<[K, V]> {
       for (const { chunkIndex, position } of indexMap.values()) {
         yield this.data[chunkIndex]![position] as [K, V]
       }

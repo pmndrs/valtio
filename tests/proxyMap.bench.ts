@@ -1,6 +1,6 @@
 /* eslint-disable vitest/consistent-test-it */
 import { bench, describe } from 'vitest'
-import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap'
+import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap-filled'
 import { proxyMap as newProxyMapKeyVals } from '../src/vanilla/utils/proxyMap-indexMap-keyvals'
 import { proxyMap as newProxyMapRawMap } from '../src/vanilla/utils/proxyMap-rawMap'
 import { proxyMap as newProxyMapTree1 } from '../src/vanilla/utils/proxyMap-tree1'

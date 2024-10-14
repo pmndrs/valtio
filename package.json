@@ -103,8 +103,7 @@
   "homepage": "https://github.com/pmndrs/valtio",
   "packageManager": "pnpm@8.15.0",
   "dependencies": {
-    "proxy-compare": "^3.0.0",
-    "sorted-btree": "^1.8.1"
+    "proxy-compare": "^3.0.0"
   },
   "devDependencies": {
     "@redux-devtools/extension": "^3.3.0",
@@ -112,9 +111,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-replace": "^5.0.7",
     "@rollup/plugin-typescript": "^11.1.6",
-    "@testing-library/dom": "^10.0.0",
     "@testing-library/react": "^16.0.1",
-    "@types/benchmark": "^2.1.5",
     "@types/jsdom": "^21.1.7",
     "@types/react": "^18.3.4",
     "@types/react-dom": "^18.3.0",
