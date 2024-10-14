@@ -132,6 +132,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     data: { enumerable: false },
+    index: { enumerable: false },
     toJSON: { enumerable: false },
   })
 
