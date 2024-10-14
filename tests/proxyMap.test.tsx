@@ -319,8 +319,7 @@ describe('proxyMap internal', () => {
     ).toBe(false)
   })
 })
-
-describe('snapshot behavior', () => {
+describe('snapshot', () => {
   it('should error when trying to mutate a snapshot', () => {
     const state = proxyMap()
     const snap = snapshot(state)
@@ -335,5 +334,44 @@ describe('snapshot behavior', () => {
     )
     // @ts-expect-error - snapshot should not be able to mutate
     expect(() => snap.clear()).toThrow('Cannot perform mutations on a snapshot')
+  })
+
+  it('should not change snapshot with modifying the original proxy', async () => {
+    const state = proxyMap([
+      ['key1', {}],
+      ['key2', { nested: { count: 1 } }],
+    ])
+    const snap1 = snapshot(state)
+    expect(snap1.get('key1')).toBeDefined()
+    state.get('key2')!.nested!.count++
+    const snap2 = snapshot(state)
+    expect(snap1.get('key2')!.nested!.count).toBe(1)
+    expect(snap2.get('key2')!.nested!.count).toBe(2)
+  })
+
+  it('should work with deleting a key', async () => {
+    const state = proxyMap([['key1', 'val1']])
+    const snap1 = snapshot(state)
+    expect(snap1.has('key1')).toBe(true)
+    expect(snap1.get('key1')).toBe('val1')
+    state.delete('key1')
+    const snap2 = snapshot(state)
+    expect(snap1.has('key1')).toBe(true)
+    expect(snap1.get('key1')).toBe('val1')
+    expect(snap2.has('key1')).toBe(false)
+    expect(snap2.get('key1')).toBe(undefined)
+  })
+
+  it('should work with deleting a key and adding it again', async () => {
+    const state = proxyMap()
+    state.set('key1', 'val1')
+    const snap1 = snapshot(state)
+    expect(snap1.get('key1')).toBe('val1')
+    state.delete('key1')
+    state.set('key2', 'val2')
+    state.set('key1', 'val1modified')
+    const snap2 = snapshot(state)
+    expect(snap1.get('key1')).toBe('val1')
+    expect(snap2.get('key1')).toBe('val1modified')
   })
 })
