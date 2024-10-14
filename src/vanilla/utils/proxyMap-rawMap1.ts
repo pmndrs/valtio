@@ -15,11 +15,10 @@ type InternalProxyObject<K, V> = Map<K, V> & {
   toJSON: () => Map<K, V>
 }
 
-export function proxyMap<K, V>() {
+export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const rawMap = new Map<K, V>()
   const unsubKeyMap = new WeakMap<object, () => void>()
   const unsubValMap = new WeakMap<object, () => void>()
-
   const snapMapCache = new WeakMap<object, Map<K, V>>()
   const registerSnapMap = () => {
     const cache = snapCache.get(vObject)
@@ -38,6 +37,19 @@ export function proxyMap<K, V>() {
     return false
   }
   const getSnapMap = (x: any) => snapMapCache.get(x)
+
+  if (entries !== null && typeof entries !== 'undefined') {
+    if (typeof entries[Symbol.iterator] !== 'function') {
+      throw new TypeError(
+        'proxyMap:\n\tinitial state must be iterable\n\t\ttip: structure should be [[key, value]]',
+      )
+    }
+    for (const [k, v] of entries) {
+      const key = maybeProxify(k)
+      const value = maybeProxify(v)
+      rawMap.set(key, value)
+    }
+  }
 
   const vObject: InternalProxyObject<K, V> = {
     epoch: 0,
@@ -115,8 +127,20 @@ export function proxyMap<K, V>() {
       rawMap.set(k, v)
       return this
     },
-    delete(_key: K) {
-      throw new Error('Not implemented')
+    delete(key: K) {
+      const k = maybeProxify(key)
+      if (!rawMap.has(k)) {
+        return false
+      }
+      const val = rawMap.get(k)
+      const unsubKey = unsubKeyMap.get(k)
+      rawMap.delete(k)
+      const unsubVal = unsubValMap.get(val as object)
+
+      unsubKey?.()
+      unsubVal?.()
+      this.epoch++
+      return true
     },
     clear() {
       throw new Error('Not implemented')

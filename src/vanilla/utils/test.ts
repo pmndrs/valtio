@@ -1,15 +1,13 @@
 import { snapshot } from '../../vanilla.ts'
-import { proxyMap } from './proxyMap-indexMap.ts'
-const state = proxyMap([['foo', 'bar']])
-console.log('test proxy')
-const snap = snapshot(state)
-console.log('test snapshot')
-state.set('bar', 'foo')
-console.log('test proxy')
-console.log(snap.get('bar'))
-console.log('test snapshot')
-console.log(snap.get('foo'))
-console.log('test snapshot')
+import { proxyMap } from './proxyMap-rawMap1.ts'
 
-console.log(snap)
-console.log('test snapshot')
+const state = proxyMap([['key1', 'val1']])
+const snap1 = snapshot(state)
+console.log(snap1.has('key1'), 'true')
+console.log(snap1.get('key1'), 'val1')
+state.delete('key1')
+const snap2 = snapshot(state)
+console.log(snap1.has('key1'), 'true')
+console.log(snap1.get('key1'), 'val1')
+console.log(snap2.has('key1'), 'false')
+console.log(snap2.get('key1'), 'undefined')
