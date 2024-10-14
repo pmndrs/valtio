@@ -103,7 +103,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const k = maybeProxify(key)
       const v = maybeProxify(value)
       const index = indexMap.get(k)
-      if (index) {
+      if (index !== undefined) {
         const val = this.data[index + 1]
         if (!Object.is(val, v)) {
           unsubValMap.get(val as object)?.()
@@ -145,7 +145,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
       const k = maybeProxify(key)
       const index = indexMap.get(k)
-      if (!index) {
+      if (index === undefined) {
         return false
       }
       unsubKeyMap.get(k)?.()
