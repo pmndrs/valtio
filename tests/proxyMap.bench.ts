@@ -1,7 +1,11 @@
 /* eslint-disable vitest/consistent-test-it */
 import { bench, describe } from 'vitest'
-import { proxyMap as newProxyMap } from '../src/vanilla/utils/proxyMap-indexMap-filled'
-import { proxyMap as newProxyMapKeyVals } from '../src/vanilla/utils/proxyMap-indexMap-keyvals'
+import {
+  newProxyMap,
+  newProxyMapKeyVals,
+  newProxyMapRawMap1,
+  newProxyMapTree1,
+} from 'valtio/utils'
 
 // Helper function to generate test data
 function generateTestData(size: number): [number, number][] {
@@ -18,8 +22,8 @@ TEST_SIZES.forEach((size) => {
   describe(`Insertion -${size} items`, () => {
     const testData = generateTestData(size)
 
-    bench('New proxyMap', () => {
-      const map = newProxyMap<number, number>()
+    bench('Native proxyMap', () => {
+      const map = new Map<number, number>()
       testData.forEach(([key, value]) => {
         map.set(key, value)
       })
@@ -31,7 +35,23 @@ TEST_SIZES.forEach((size) => {
         map.set(key, value)
       })
     })
+
+    bench('New proxyMapRawMap1', () => {
+      const map = newProxyMapRawMap1<number, number>()
+      testData.forEach(([key, value]) => {
+        map.set(key, value)
+      })
+    })
+
+    bench('New proxyMapTree1', () => {
+      const map = newProxyMapTree1<number, number>()
+      testData.forEach(([key, value]) => {
+        map.set(key, value)
+      })
+    })
   })
+
+  return
 
   describe(`Retrieval -${size} items`, () => {
     const testData = generateTestData(size)
