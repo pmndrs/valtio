@@ -84,9 +84,9 @@ const searchFromTreeNode = (node: TreeNode, key: number, key2 = key) => {
 }
 
 const deleteFromTreeNode = (
-  node: TreeNode,
+  _node: TreeNode,
   key: number,
-  key2 = key,
+  _key2 = key,
 ): boolean => {
   throw new Error('Not implemented')
 }
@@ -163,7 +163,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
       this.root = createNewTreeNode()
     },
-    forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
+    forEach(_cb: (value: V, key: K, map: Map<K, V>) => void) {
       // indexMap.forEach((index) => {
       //   cb(this.data[index + 1] as V, this.data[index] as K, this)
       // })
