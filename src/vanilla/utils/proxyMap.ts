@@ -52,7 +52,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     data: initialData,
     index: initialIndex,
     get size() {
-      registerSnapMap()
+      if (!isProxy(this)) {
+        registerSnapMap()
+      }
       const map = getSnapMap(this) || indexMap
       return map.size
     },
@@ -119,7 +121,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
       indexMap.clear()
       this.index = 0
-      this.data.splice(0)
+      this.data.length = 0
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
       const map = getSnapMap(this) || indexMap
