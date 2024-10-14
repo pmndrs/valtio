@@ -351,4 +351,17 @@ describe('snapshot behavior', () => {
     // @ts-expect-error - snapshot should not be able to mutate
     expect(() => snap.clear()).toThrow('Cannot perform mutations on a snapshot')
   })
+
+  it('should work with deleting a key', async () => {
+    const state = proxySet(['val1', 'val2'])
+    const snap1 = snapshot(state)
+    expect(snap1.has('val1')).toBe(true)
+    expect(snap1.has('val2')).toBe(true)
+    state.delete('val1')
+    const snap2 = snapshot(state)
+    expect(snap1.has('val1')).toBe(true)
+    expect(snap1.has('val2')).toBe(true)
+    expect(snap2.has('val1')).toBe(false)
+    expect(snap2.has('val2')).toBe(true)
+  })
 })
