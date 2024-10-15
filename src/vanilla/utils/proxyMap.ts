@@ -14,6 +14,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const initialData: Array<K | V> = []
   let initialIndex = 0
   const indexMap = new Map<K, number>()
+
   const snapMapCache = new WeakMap<object, Map<K, number>>()
   const registerSnapMap = () => {
     const cache = snapCache.get(vObject)
@@ -33,7 +34,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   }
   const getSnapMap = (x: any) => snapMapCache.get(x)
 
-  if (entries !== null && typeof entries !== 'undefined') {
+  if (entries) {
     if (typeof entries[Symbol.iterator] !== 'function') {
       throw new TypeError(
         'proxyMap:\n\tinitial state must be iterable\n\t\ttip: structure should be [[key, value]]',
@@ -97,7 +98,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         this.data[nextIndex++] = v
         this.index = nextIndex
       }
-
       return this
     },
     delete(key: K) {
@@ -109,7 +109,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (index === undefined) {
         return false
       }
-
       delete this.data[index]
       delete this.data[index + 1]
       indexMap.delete(k)
@@ -119,9 +118,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      indexMap.clear()
+      this.data.length = 0 // empty array
       this.index = 0
-      this.data.length = 0
+      indexMap.clear()
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
       const map = getSnapMap(this) || indexMap
@@ -154,20 +153,17 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return 'Map'
     },
     toJSON(): Map<K, V> {
-      const map = getSnapMap(this) || indexMap
-      return new Map([...map].map(([k, i]) => [k, this.data[i + 1] as V]))
+      return new Map(this.entries())
     },
   }
 
   const proxiedObject = proxy(vObject)
-
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     index: { enumerable: false },
     data: { enumerable: false },
     toJSON: { enumerable: false },
   })
-
   Object.seal(proxiedObject)
 
   return proxiedObject as unknown as Map<K, V> & {
