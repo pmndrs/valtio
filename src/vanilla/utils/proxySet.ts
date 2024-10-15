@@ -1,7 +1,6 @@
 import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
 
 const { proxyStateMap, snapCache } = unstable_getInternalStates()
-const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxySet<T> = Set<T> & {
@@ -36,9 +35,8 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     if (typeof initialValues[Symbol.iterator] !== 'function') {
       throw new TypeError('not iterable')
     }
-    for (const v of initialValues) {
-      if (!indexMap.has(v)) {
-        const value = maybeProxify(v)
+    for (const value of initialValues) {
+      if (!indexMap.has(value)) {
         indexMap.set(value, initialIndex)
         initialData[initialIndex++] = value
       }
@@ -54,9 +52,8 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
       return indexMap.size
     },
-    has(v: T) {
+    has(value: T) {
       const map = getMapForThis(this)
-      const value = maybeProxify(v)
       const exists = map.has(value)
       if (!exists) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -68,11 +65,10 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const v = maybeProxify(value)
-      if (!indexMap.has(v)) {
+      if (!indexMap.has(value)) {
         let nextIndex = this.index
-        indexMap.set(v, nextIndex)
-        this.data[nextIndex++] = v
+        indexMap.set(value, nextIndex)
+        this.data[nextIndex++] = value
         this.index = nextIndex
       }
       return this
@@ -81,13 +77,12 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const v = maybeProxify(value)
-      const index = indexMap.get(v)
+      const index = indexMap.get(value)
       if (index === undefined) {
         return false
       }
       delete this.data[index]
-      indexMap.delete(v)
+      indexMap.delete(value)
       return true
     },
     clear() {
