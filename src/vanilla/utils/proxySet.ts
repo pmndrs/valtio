@@ -20,6 +20,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   const initialData: T[] = []
   const indexMap = new Map<T, number>()
   let initialIndex = 0
+
   const snapMapCache = new WeakMap<object, Map<T, number>>()
   const registerSnapMap = () => {
     const cache = snapCache.get(vObject)
@@ -33,7 +34,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   }
   const getSnapMap = (x: any) => snapMapCache.get(x)
 
-  if (initialValues !== null && typeof initialValues !== 'undefined') {
+  if (initialValues) {
     if (typeof initialValues[Symbol.iterator] !== 'function') {
       throw new TypeError('not iterable')
     }
@@ -55,6 +56,16 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
       return indexMap.size
     },
+    has(v: T) {
+      const map = getSnapMap(this) || indexMap
+      const value = maybeProxify(v)
+      const exists = map.has(value)
+      if (!exists && !isProxy(this)) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        this.index
+      }
+      return exists
+    },
     add(value: T) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
@@ -64,6 +75,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
         let nextIndex = this.index
         indexMap.set(v, nextIndex)
         this.data[nextIndex++] = v
+        this.index = nextIndex
       }
       return this
     },
@@ -76,7 +88,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (index === undefined) {
         return false
       }
-
       delete this.data[index]
       indexMap.delete(v)
       return true
@@ -85,29 +96,19 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      this.data.length = 0
+      this.data.length = 0 // empty array
       this.index = 0
       indexMap.clear()
     },
     forEach(cb) {
-      const set = getSnapMap(this) || indexMap
-      set.forEach((index) => {
+      const map = getSnapMap(this) || indexMap
+      map.forEach((index) => {
         cb(this.data[index]!, this.data[index]!, this)
       })
     },
-    has(v: T) {
-      const iMap = getSnapMap(this) || indexMap
-      const value = maybeProxify(v)
-      const exists = iMap.has(value)
-      if (!exists && !isProxy(this)) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.index
-      }
-      return exists
-    },
     *values(): IterableIterator<T> {
-      const iMap = getSnapMap(this) || indexMap
-      for (const index of iMap.values()) {
+      const map = getSnapMap(this) || indexMap
+      for (const index of map.values()) {
         yield this.data[index]!
       }
     },
@@ -115,16 +116,14 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return this.values()
     },
     *entries(): IterableIterator<[T, T]> {
-      const iMap = getSnapMap(this) || indexMap
-      for (const index of iMap.values()) {
+      const map = getSnapMap(this) || indexMap
+      for (const index of map.values()) {
         const value = this.data[index]!
         yield [value, value]
       }
     },
     toJSON(): Set<T> {
-      // filtering is about twice as fast as creating a new set and deleting
-      // the undefined value because filter actually skips empty slots
-      return new Set(this.data.filter((v) => v !== undefined) as T[])
+      return new Set(this.values())
     },
     [Symbol.iterator]() {
       return this.values()
@@ -135,13 +134,11 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     intersection(other: Set<T>): Set<T> {
       const otherSet = proxySet<T>(other)
       const resultSet = proxySet<T>()
-
       for (const value of this.values()) {
         if (otherSet.has(value)) {
           resultSet.add(value)
         }
       }
-
       return proxySet(resultSet)
     },
     isDisjointFrom(other: Set<T>): boolean {
@@ -168,38 +165,32 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     symmetricDifference(other: Set<T>) {
       const resultSet = proxySet<T>()
       const otherSet = proxySet<T>(other)
-
       for (const value of this.values()) {
         if (!otherSet.has(value)) {
           resultSet.add(value)
         }
       }
-
       return proxySet(resultSet)
     },
     union(other: Set<T>) {
       const resultSet = proxySet<T>()
       const otherSet = proxySet<T>(other)
-
       for (const value of this.values()) {
         resultSet.add(value)
       }
       for (const value of otherSet) {
         resultSet.add(value)
       }
-
       return proxySet(resultSet)
     },
   }
 
   const proxiedObject = proxy(vObject)
-
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     data: { enumerable: false },
     toJSON: { enumerable: false },
   })
-
   Object.seal(proxiedObject)
 
   return proxiedObject as unknown as InternalProxySet<T> & {
