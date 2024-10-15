@@ -4,13 +4,13 @@ const { proxyStateMap, snapCache } = unstable_getInternalStates()
 const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxyObject<K, V> = Map<K, V> & {
-  data: Array<K | V>
+  data: Array<V>
   index: number
   toJSON: () => Map<K, V>
 }
 
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
-  const initialData: Array<K | V> = []
+  const initialData: Array<V> = []
   let initialIndex = 0
   const indexMap = new Map<K, number>()
 
@@ -33,7 +33,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     }
     for (const [key, value] of entries) {
       indexMap.set(key, initialIndex)
-      initialData[initialIndex++] = key
       initialData[initialIndex++] = value
     }
   }
@@ -56,7 +55,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         this.index
         return undefined
       }
-      return this.data[index + 1] as V
+      return this.data[index]
     },
     has(key: K) {
       const map = getMapForThis(this)
@@ -73,13 +72,10 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
       const index = indexMap.get(key)
       if (index !== undefined) {
-        this.data[index + 1] = value
+        this.data[index] = value
       } else {
-        let nextIndex = this.index
-        indexMap.set(key, nextIndex)
-        this.data[nextIndex++] = key
-        this.data[nextIndex++] = value
-        this.index = nextIndex
+        indexMap.set(key, this.index)
+        this.data[this.index++] = value
       }
       return this
     },
@@ -92,7 +88,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         return false
       }
       delete this.data[index]
-      delete this.data[index + 1]
       indexMap.delete(key)
       return true
     },
@@ -107,13 +102,13 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
       const map = getMapForThis(this)
       map.forEach((index, key) => {
-        cb(this.data[index + 1] as V, key, this)
+        cb(this.data[index]!, key, this)
       })
     },
     *entries(): MapIterator<[K, V]> {
       const map = getMapForThis(this)
       for (const [key, index] of map) {
-        yield [key, this.data[index + 1]] as [K, V]
+        yield [key, this.data[index]!]
       }
     },
     *keys(): IterableIterator<K> {
@@ -125,7 +120,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     *values(): IterableIterator<V> {
       const map = getMapForThis(this)
       for (const index of map.values()) {
-        yield this.data[index + 1] as V
+        yield this.data[index]!
       }
     },
     [Symbol.iterator]() {
