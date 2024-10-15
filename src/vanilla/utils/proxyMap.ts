@@ -22,11 +22,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     if (latestSnap && !snapMapCache.has(latestSnap)) {
       const clonedMap = new Map(indexMap)
       snapMapCache.set(latestSnap, clonedMap)
-      return true
     }
-    return false
   }
-  const getSnapMap = (x: any) => snapMapCache.get(x)
+  const getMapForThis = (x: any) => snapMapCache.get(x) || indexMap
 
   if (entries) {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -50,24 +48,22 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (!isProxy(this)) {
         registerSnapMap()
       }
-      const map = getSnapMap(this) || indexMap
+      const map = getMapForThis(this)
       return map.size
     },
     get(key: K) {
-      const map = getSnapMap(this) || indexMap
+      const map = getMapForThis(this)
       const k = maybeProxify(key)
       const index = map.get(k)
       if (index === undefined) {
-        if (!isProxy(this)) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-          this.index
-        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        this.index
         return undefined
       }
       return this.data[index + 1] as V
     },
     has(key: K) {
-      const map = getSnapMap(this) || indexMap
+      const map = getMapForThis(this)
       const k = maybeProxify(key)
       const exists = map.has(k)
       if (!exists && !isProxy(this)) {
@@ -117,25 +113,25 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       indexMap.clear()
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
-      const map = getSnapMap(this) || indexMap
+      const map = getMapForThis(this)
       map.forEach((index) => {
         cb(this.data[index + 1] as V, this.data[index] as K, this)
       })
     },
     *entries(): MapIterator<[K, V]> {
-      const map = getSnapMap(this) || indexMap
+      const map = getMapForThis(this)
       for (const index of map.values()) {
         yield [this.data[index], this.data[index + 1]] as [K, V]
       }
     },
     *keys(): IterableIterator<K> {
-      const map = getSnapMap(this) || indexMap
+      const map = getMapForThis(this)
       for (const key of map.keys()) {
         yield key
       }
     },
     *values(): IterableIterator<V> {
-      const map = getSnapMap(this) || indexMap
+      const map = getMapForThis(this)
       for (const index of map.values()) {
         yield this.data[index + 1] as V
       }
