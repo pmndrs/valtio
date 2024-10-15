@@ -58,7 +58,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       const map = getMapForThis(this)
       const value = maybeProxify(v)
       const exists = map.has(value)
-      if (!exists && !isProxy(this)) {
+      if (!exists) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.index
       }

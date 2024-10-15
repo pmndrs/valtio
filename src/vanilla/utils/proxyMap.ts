@@ -66,7 +66,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const map = getMapForThis(this)
       const k = maybeProxify(key)
       const exists = map.has(k)
-      if (!exists && !isProxy(this)) {
+      if (!exists) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.index
       }
