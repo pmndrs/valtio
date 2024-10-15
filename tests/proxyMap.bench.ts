@@ -1,7 +1,7 @@
 /* eslint-disable vitest/consistent-test-it */
 import { bench, describe, test } from 'vitest'
 import { proxy, snapshot } from 'valtio'
-import { proxyMap, proxyMapTree2 } from 'valtio/utils'
+import { proxyMap } from 'valtio/utils'
 
 // Helper function to generate test data
 function generateTestData(size: number): [number, number][] {
@@ -133,12 +133,6 @@ TEST_SIZES.forEach((size) => {
 
     bench('proxyMap', () => {
       const map = proxyMap<number, number>(testData)
-      const snap1 = snapshot(map)
-      map.set(oneData[0], oneData[1])
-      const snap2 = snapshot(map)
-    })
-    bench('proxyMapTree2', () => {
-      const map = proxyMapTree2<number, number>(testData)
       const snap1 = snapshot(map)
       map.set(oneData[0], oneData[1])
       const snap2 = snapshot(map)
