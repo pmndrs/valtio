@@ -21,12 +21,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     const latestSnap = cache?.[1]
     if (latestSnap && !snapMapCache.has(latestSnap)) {
       const clonedMap = new Map(indexMap)
-      // TODO: should we support snapshot keys?
-      // for (const [k, i] of indexMap) {
-      //   if (isProxy(k)) {
-      //     clonedMap.set(snapshot(k as object) as K, i)
-      //   }
-      // }
       snapMapCache.set(latestSnap, clonedMap)
       return true
     }
