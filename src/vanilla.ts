@@ -13,6 +13,8 @@ type Op =
   | [op: 'delete', path: Path, prevValue: unknown]
 type Listener = (op: Op, nextVersion: number) => void
 
+export type INTERNAL_Op = Op
+
 type Primitive = string | number | boolean | null | undefined | symbol | bigint
 
 type SnapshotIgnore =
@@ -269,7 +271,7 @@ export function getVersion(proxyObject: unknown): number | undefined {
 
 export function subscribe<T extends object>(
   proxyObject: T,
-  callback: (ops: Op[]) => void,
+  callback: (unstable_ops: Op[]) => void,
   notifyInSync?: boolean,
 ): () => void {
   const proxyState = proxyStateMap.get(proxyObject as object)
