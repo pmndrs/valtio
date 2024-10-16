@@ -25,7 +25,7 @@ type InternalProxySet<T> = Set<T> & {
  * @example
  * import { proxySet } from 'valtio/utils'
  * const state = proxySet([1,2,3])
- * //can be used inside a proxy as well
+ * // can be used inside a proxy as well
  * const state = proxy({
  *   count: 1,
  *   set: proxySet()

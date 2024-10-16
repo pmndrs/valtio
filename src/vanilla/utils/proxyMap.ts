@@ -19,7 +19,7 @@ type InternalProxyObject<K, V> = Map<K, V> & {
  * import { proxyMap } from 'valtio/utils'
  * const state = proxyMap([["key", "value"]])
  *
- * //can be used inside a proxy as well
+ * // can be used inside a proxy as well
  * const state = proxy({
  *   count: 1,
  *   map: proxyMap()
