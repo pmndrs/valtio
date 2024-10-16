@@ -3,6 +3,15 @@ import { fireEvent, render, waitFor } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 import { proxy, snapshot, useSnapshot } from 'valtio'
 
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  // eslint-disable-next-line react-compiler/react-compiler
+  return commitCountRef.current
+}
+
 it('simple counter', async () => {
   const obj = proxy({ count: 0 })
 
@@ -34,14 +43,10 @@ it('no extra re-renders (commits)', async () => {
 
   const Counter = () => {
     const snap = useSnapshot(obj)
-    const commitsRef = useRef(1)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <>
         <div>
-          count: {snap.count} ({commitsRef.current})
+          count: {snap.count} ({useCommitCount()})
         </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
@@ -50,14 +55,10 @@ it('no extra re-renders (commits)', async () => {
 
   const Counter2 = () => {
     const snap = useSnapshot(obj)
-    const commitsRef = useRef(1)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <>
         <div>
-          count2: {snap.count2} ({commitsRef.current})
+          count2: {snap.count2} ({useCommitCount()})
         </div>
         <button onClick={() => ++obj.count2}>button2</button>
       </>
@@ -402,14 +403,10 @@ it('counter with sync option', async () => {
 
   const Counter = () => {
     const snap = useSnapshot(obj, { sync: true })
-    const commitsRef = useRef(1)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <>
         <div>
-          count: {snap.count} ({commitsRef.current})
+          count: {snap.count} ({useCommitCount()})
         </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
