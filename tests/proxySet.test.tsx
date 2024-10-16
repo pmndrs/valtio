@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import { proxy, snapshot, useSnapshot } from 'valtio'
 import { proxySet } from 'valtio/utils'
 
 // used to initialize proxySet during tests
@@ -333,5 +333,35 @@ describe('proxySet internal', () => {
     expect(
       Object.keys(proxySet()).some((k) => notEnumerableProps.includes(k)),
     ).toBe(false)
+  })
+})
+
+describe('snapshot behavior', () => {
+  it('should error when trying to mutate a snapshot', () => {
+    const state = proxySet()
+    const snap = snapshot(state)
+
+    expect(() => snap.add('foo')).toThrow(
+      'Cannot perform mutations on a snapshot',
+    )
+    // @ts-expect-error - snapshot should not be able to mutate
+    expect(() => snap.delete('foo')).toThrow(
+      'Cannot perform mutations on a snapshot',
+    )
+    // @ts-expect-error - snapshot should not be able to mutate
+    expect(() => snap.clear()).toThrow('Cannot perform mutations on a snapshot')
+  })
+
+  it('should work with deleting a key', async () => {
+    const state = proxySet(['val1', 'val2'])
+    const snap1 = snapshot(state)
+    expect(snap1.has('val1')).toBe(true)
+    expect(snap1.has('val2')).toBe(true)
+    state.delete('val1')
+    const snap2 = snapshot(state)
+    expect(snap1.has('val1')).toBe(true)
+    expect(snap1.has('val2')).toBe(true)
+    expect(snap2.has('val1')).toBe(false)
+    expect(snap2.has('val2')).toBe(true)
   })
 })

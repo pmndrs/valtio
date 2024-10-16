@@ -1,98 +1,195 @@
-import { proxy } from '../../vanilla.ts'
+import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
 
-// properties that we don't want to expose to the end-user
+const { proxyStateMap, snapCache } = unstable_getInternalStates()
+const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
+const isProxy = (x: any) => proxyStateMap.has(x)
+
 type InternalProxySet<T> = Set<T> & {
   data: T[]
   toJSON: object
+  index: number
+  intersection: (other: Set<T>) => Set<T>
+  isDisjointFrom: (other: Set<T>) => boolean
+  isSubsetOf: (other: Set<T>) => boolean
+  isSupersetOf: (other: Set<T>) => boolean
+  symmetricDifference: (other: Set<T>) => Set<T>
+  union: (other: Set<T>) => Set<T>
 }
 
-/**
- * proxySet
- *
- * This is to create a proxy which mimic the native Set behavior.
- * The API is the same as Set API
- *
- * @example
- * import { proxySet } from 'valtio/utils'
- * const state = proxySet([1,2,3])
- * //can be used inside a proxy as well
- * const state = proxy({
- *   count: 1,
- *   set: proxySet()
- * })
- */
 export function proxySet<T>(initialValues?: Iterable<T> | null) {
-  const set: InternalProxySet<T> = proxy({
-    data: Array.from(new Set(initialValues)),
-    has(value) {
-      return this.data.indexOf(value) !== -1
-    },
-    add(value) {
-      let hasProxy = false
-      if (typeof value === 'object' && value !== null) {
-        hasProxy = this.data.indexOf(proxy(value as T & object)) !== -1
+  const initialData: T[] = []
+  const indexMap = new Map<T, number>()
+  let initialIndex = 0
+
+  const snapMapCache = new WeakMap<object, Map<T, number>>()
+  const registerSnapMap = () => {
+    const cache = snapCache.get(vObject)
+    const latestSnap = cache?.[1]
+    if (latestSnap && !snapMapCache.has(latestSnap)) {
+      const clonedMap = new Map(indexMap)
+      snapMapCache.set(latestSnap, clonedMap)
+    }
+  }
+  const getMapForThis = (x: any) => snapMapCache.get(x) || indexMap
+
+  if (initialValues) {
+    if (typeof initialValues[Symbol.iterator] !== 'function') {
+      throw new TypeError('not iterable')
+    }
+    for (const value of initialValues) {
+      if (!indexMap.has(value)) {
+        const v = maybeProxify(value)
+        indexMap.set(v, initialIndex)
+        initialData[initialIndex++] = v
       }
-      if (this.data.indexOf(value) === -1 && !hasProxy) {
-        this.data.push(value)
+    }
+  }
+
+  const vObject: InternalProxySet<T> = {
+    data: initialData,
+    index: initialIndex,
+    get size() {
+      if (!isProxy(this)) {
+        registerSnapMap()
+      }
+      return indexMap.size
+    },
+    has(value: T) {
+      const map = getMapForThis(this)
+      const v = maybeProxify(value)
+      const exists = map.has(v)
+      if (!exists) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        this.index // touch property for tracking
+      }
+      return exists
+    },
+    add(value: T) {
+      if (!isProxy(this)) {
+        throw new Error('Cannot perform mutations on a snapshot')
+      }
+      const v = maybeProxify(value)
+      if (!indexMap.has(v)) {
+        indexMap.set(v, this.index)
+        this.data[this.index++] = v
       }
       return this
     },
-    delete(value) {
-      const index = this.data.indexOf(value)
-      if (index === -1) {
+    delete(value: T) {
+      if (!isProxy(this)) {
+        throw new Error('Cannot perform mutations on a snapshot')
+      }
+      const v = maybeProxify(value)
+      const index = indexMap.get(v)
+      if (index === undefined) {
         return false
       }
-      this.data.splice(index, 1)
+      delete this.data[index]
+      indexMap.delete(v)
       return true
     },
     clear() {
-      this.data.splice(0)
-    },
-    get size() {
-      return this.data.length
+      if (!isProxy(this)) {
+        throw new Error('Cannot perform mutations on a snapshot')
+      }
+      this.data.length = 0 // empty array
+      this.index = 0
+      indexMap.clear()
     },
     forEach(cb) {
-      this.data.forEach((value) => {
-        cb(value, value, this)
+      const map = getMapForThis(this)
+      map.forEach((index) => {
+        cb(this.data[index]!, this.data[index]!, this)
       })
+    },
+    *values(): IterableIterator<T> {
+      const map = getMapForThis(this)
+      for (const index of map.values()) {
+        yield this.data[index]!
+      }
+    },
+    keys(): IterableIterator<T> {
+      return this.values()
+    },
+    *entries(): IterableIterator<[T, T]> {
+      const map = getMapForThis(this)
+      for (const index of map.values()) {
+        const value = this.data[index]!
+        yield [value, value]
+      }
+    },
+    toJSON(): Set<T> {
+      return new Set(this.values())
+    },
+    [Symbol.iterator]() {
+      return this.values()
     },
     get [Symbol.toStringTag]() {
       return 'Set'
     },
-    toJSON() {
-      return new Set(this.data)
+    intersection(other: Set<T>): Set<T> {
+      const otherSet = proxySet<T>(other)
+      const resultSet = proxySet<T>()
+      for (const value of this.values()) {
+        if (otherSet.has(value)) {
+          resultSet.add(value)
+        }
+      }
+      return proxySet(resultSet)
     },
-    [Symbol.iterator]() {
-      return this.data[Symbol.iterator]()
+    isDisjointFrom(other: Set<T>): boolean {
+      const otherSet = proxySet<T>(other)
+      return (
+        this.size === other.size &&
+        [...this.values()].every((value) => !otherSet.has(value))
+      )
     },
-    values() {
-      return this.data.values()
+    isSubsetOf(other: Set<T>) {
+      const otherSet = proxySet<T>(other)
+      return (
+        this.size <= other.size &&
+        [...this.values()].every((value) => otherSet.has(value))
+      )
     },
-    keys() {
-      // for Set.keys is an alias for Set.values()
-      return this.data.values()
+    isSupersetOf(other: Set<T>) {
+      const otherSet = proxySet<T>(other)
+      return (
+        this.size >= other.size &&
+        [...otherSet].every((value) => this.has(value))
+      )
     },
-    entries() {
-      // array.entries returns [index, value] while Set [value, value]
-      return new Set(this.data).entries()
+    symmetricDifference(other: Set<T>) {
+      const resultSet = proxySet<T>()
+      const otherSet = proxySet<T>(other)
+      for (const value of this.values()) {
+        if (!otherSet.has(value)) {
+          resultSet.add(value)
+        }
+      }
+      return proxySet(resultSet)
     },
+    union(other: Set<T>) {
+      const resultSet = proxySet<T>()
+      const otherSet = proxySet<T>(other)
+      for (const value of this.values()) {
+        resultSet.add(value)
+      }
+      for (const value of otherSet) {
+        resultSet.add(value)
+      }
+      return proxySet(resultSet)
+    },
+  }
+
+  const proxiedObject = proxy(vObject)
+  Object.defineProperties(proxiedObject, {
+    size: { enumerable: false },
+    data: { enumerable: false },
+    toJSON: { enumerable: false },
   })
+  Object.seal(proxiedObject)
 
-  Object.defineProperties(set, {
-    data: {
-      enumerable: false,
-    },
-    size: {
-      enumerable: false,
-    },
-    toJSON: {
-      enumerable: false,
-    },
-  })
-
-  Object.seal(set)
-
-  return set as unknown as Set<T> & {
-    $$valtioSnapshot: Omit<Set<T>, 'add' | 'delete' | 'clear'>
+  return proxiedObject as unknown as InternalProxySet<T> & {
+    $$valtioSnapshot: Omit<InternalProxySet<T>, 'set' | 'delete' | 'clear'>
   }
 }
