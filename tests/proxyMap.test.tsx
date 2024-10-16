@@ -319,8 +319,23 @@ describe('proxyMap internal', () => {
     ).toBe(false)
   })
 })
-
 describe('snapshot', () => {
+  it('should error when trying to mutate a snapshot', () => {
+    const state = proxyMap()
+    const snap = snapshot(state)
+
+    // @ts-expect-error - snapshot should not be able to mutate
+    expect(() => snap.set('foo', 'bar')).toThrow(
+      'Cannot perform mutations on a snapshot',
+    )
+    // @ts-expect-error - snapshot should not be able to mutate
+    expect(() => snap.delete('foo')).toThrow(
+      'Cannot perform mutations on a snapshot',
+    )
+    // @ts-expect-error - snapshot should not be able to mutate
+    expect(() => snap.clear()).toThrow('Cannot perform mutations on a snapshot')
+  })
+
   it('should not change snapshot with modifying the original proxy', async () => {
     const state = proxyMap([
       ['key1', {}],
