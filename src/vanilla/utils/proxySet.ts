@@ -28,11 +28,9 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     if (latestSnap && !snapMapCache.has(latestSnap)) {
       const clonedMap = new Map(indexMap)
       snapMapCache.set(latestSnap, clonedMap)
-      return true
     }
-    return false
   }
-  const getSnapMap = (x: any) => snapMapCache.get(x)
+  const getMapForThis = (x: any) => snapMapCache.get(x) || indexMap
 
   if (initialValues) {
     if (typeof initialValues[Symbol.iterator] !== 'function') {
@@ -57,10 +55,10 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return indexMap.size
     },
     has(v: T) {
-      const map = getSnapMap(this) || indexMap
+      const map = getMapForThis(this)
       const value = maybeProxify(v)
       const exists = map.has(value)
-      if (!exists && !isProxy(this)) {
+      if (!exists) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.index
       }
@@ -101,13 +99,13 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       indexMap.clear()
     },
     forEach(cb) {
-      const map = getSnapMap(this) || indexMap
+      const map = getMapForThis(this)
       map.forEach((index) => {
         cb(this.data[index]!, this.data[index]!, this)
       })
     },
     *values(): IterableIterator<T> {
-      const map = getSnapMap(this) || indexMap
+      const map = getMapForThis(this)
       for (const index of map.values()) {
         yield this.data[index]!
       }
@@ -116,7 +114,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return this.values()
     },
     *entries(): IterableIterator<[T, T]> {
-      const map = getSnapMap(this) || indexMap
+      const map = getMapForThis(this)
       for (const index of map.values()) {
         const value = this.data[index]!
         yield [value, value]
