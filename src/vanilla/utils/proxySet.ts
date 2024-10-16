@@ -36,11 +36,11 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     if (typeof initialValues[Symbol.iterator] !== 'function') {
       throw new TypeError('not iterable')
     }
-    for (const v of initialValues) {
-      if (!indexMap.has(v)) {
-        const value = maybeProxify(v)
-        indexMap.set(value, initialIndex)
-        initialData[initialIndex++] = value
+    for (const value of initialValues) {
+      if (!indexMap.has(value)) {
+        const v = maybeProxify(value)
+        indexMap.set(v, initialIndex)
+        initialData[initialIndex++] = v
       }
     }
   }
@@ -54,13 +54,13 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
       return indexMap.size
     },
-    has(v: T) {
+    has(value: T) {
       const map = getMapForThis(this)
-      const value = maybeProxify(v)
-      const exists = map.has(value)
+      const v = maybeProxify(value)
+      const exists = map.has(v)
       if (!exists) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.index
+        this.index // touch property for tracking
       }
       return exists
     },
@@ -70,10 +70,8 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
       const v = maybeProxify(value)
       if (!indexMap.has(v)) {
-        let nextIndex = this.index
-        indexMap.set(v, nextIndex)
-        this.data[nextIndex++] = v
-        this.index = nextIndex
+        indexMap.set(v, this.index)
+        this.data[this.index++] = v
       }
       return this
     },

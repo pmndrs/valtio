@@ -52,7 +52,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const index = map.get(key)
       if (index === undefined) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.index
+        this.index // touch property for tracking
         return undefined
       }
       return this.data[index]
@@ -62,7 +62,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const exists = map.has(key)
       if (!exists) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.index
+        this.index // touch property for tracking
       }
       return exists
     },
@@ -71,11 +71,11 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       const index = indexMap.get(key)
-      if (index !== undefined) {
-        this.data[index] = value
-      } else {
+      if (index === undefined) {
         indexMap.set(key, this.index)
         this.data[this.index++] = value
+      } else {
+        this.data[index] = value
       }
       return this
     },
