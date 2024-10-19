@@ -7,6 +7,14 @@ description: ''
 
 # `proxyMap`
 
+## Reasoning
+
+Native `Maps` store their data in internal slots which are not observable. This means that `valtio` cannot track changes to the data inside of a native `Map`. `proxyMap` is a utility that allows you to create a proxy that mimics the behavior of a `Map` while still allowing valtio to track changes to the data.
+
+## When to use `proxyMap`
+
+`proxyMap` is useful when you need the flexibility of a `Map` but still want to track changes to the data. It can be useful if you don't know the structure of the data you'll be working with and this data may have non-primitive values as keys (e.g. objects, arrays, etc.). In this case, you can use `proxyMap` to create a proxy that mimics the behavior of a `Map` while still allowing valtio to track changes to the data. If your data can be represented as a simple object, you should use `proxy` with a simple object instead. It is more performant and easier to use.
+
 ## Use a js Map with Valtio
 
 This utility creates a proxy which mimics the native Map behavior. The API is the same as the Map API.
