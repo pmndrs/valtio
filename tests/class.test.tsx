@@ -3,6 +3,15 @@ import { fireEvent, render, waitFor } from '@testing-library/react'
 import { it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
+const useCommitCount = () => {
+  const commitCountRef = useRef(0)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  // eslint-disable-next-line react-compiler/react-compiler
+  return commitCountRef.current
+}
+
 it('simple class without methods', async () => {
   class CountClass {
     public count: number
@@ -49,14 +58,10 @@ it('no extra re-renders with class', async () => {
 
   const Counter = () => {
     const snap = useSnapshot(obj)
-    const commitsRef = useRef(0)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <>
         <div>
-          count: {snap.count} ({commitsRef.current})
+          count: {snap.count} ({useCommitCount()})
         </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
@@ -65,14 +70,10 @@ it('no extra re-renders with class', async () => {
 
   const Counter2 = () => {
     const snap = useSnapshot(obj)
-    const commitsRef = useRef(0)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <>
         <div>
-          count2: {snap.count2} ({commitsRef.current})
+          count2: {snap.count2} ({useCommitCount()})
         </div>
         <button onClick={() => ++obj.count2}>button2</button>
       </>
@@ -158,14 +159,10 @@ it('class with a method', async () => {
 
   const Counter = () => {
     const snap = useSnapshot(obj)
-    const commitsRef = useRef(0)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <>
         <div>
-          doubled: {snap.doubled()} ({commitsRef.current})
+          doubled: {snap.doubled()} ({useCommitCount()})
         </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
@@ -174,13 +171,9 @@ it('class with a method', async () => {
 
   const Counter2 = () => {
     const snap = useSnapshot(obj)
-    const commitsRef = useRef(0)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <div>
-        count: {snap.count} ({commitsRef.current})
+        count: {snap.count} ({useCommitCount()})
       </div>
     )
   }
@@ -226,14 +219,10 @@ it('inherited class with a method', async () => {
 
   const Counter = () => {
     const snap = useSnapshot(obj)
-    const commitsRef = useRef(0)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <>
         <div>
-          doubled: {snap.doubled()} ({commitsRef.current})
+          doubled: {snap.doubled()} ({useCommitCount()})
         </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
@@ -242,14 +231,10 @@ it('inherited class with a method', async () => {
 
   const Counter2 = () => {
     const snap = useSnapshot(obj)
-    const commitsRef = useRef(0)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <>
         <div>
-          count2: {snap.count2} ({commitsRef.current})
+          count2: {snap.count2} ({useCommitCount()})
         </div>
         <button onClick={() => ++obj.count2}>button2</button>
       </>
@@ -301,14 +286,10 @@ it('no extra re-renders with getters', async () => {
 
   const Counter = () => {
     const snap = useSnapshot(obj)
-    const commitsRef = useRef(0)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <>
         <div>
-          count: {snap.count1} ({commitsRef.current})
+          count: {snap.count1} ({useCommitCount()})
         </div>
         <button onClick={() => ++obj.count}>button</button>
       </>
@@ -317,14 +298,10 @@ it('no extra re-renders with getters', async () => {
 
   const Counter2 = () => {
     const snap = useSnapshot(obj)
-    const commitsRef = useRef(0)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <>
         <div>
-          sum: {snap.sum} ({commitsRef.current})
+          sum: {snap.sum} ({useCommitCount()})
         </div>
         <button onClick={() => ++obj.count2}>button2</button>
       </>

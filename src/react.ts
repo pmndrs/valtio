@@ -23,6 +23,8 @@ const useAffectedDebugValue = (
   useEffect(() => {
     pathList.current = affectedToPathList(state, affected, true)
   })
+  // TODO consider if we can remove this eslint rule exception
+  // eslint-disable-next-line react-compiler/react-compiler
   useDebugValue(pathList.current)
 }
 const condUseAffectedDebugValue = useAffectedDebugValue

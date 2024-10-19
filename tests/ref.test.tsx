@@ -3,19 +3,24 @@ import { fireEvent, render } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
 
+const useCommitCount = () => {
+  const commitCountRef = useRef(1)
+  useEffect(() => {
+    commitCountRef.current += 1
+  })
+  // eslint-disable-next-line react-compiler/react-compiler
+  return commitCountRef.current
+}
+
 it('should trigger re-render setting objects with ref wrapper', async () => {
   const obj = proxy({ nested: ref({ count: 0 }) })
 
   const Counter = () => {
     const snap = useSnapshot(obj)
-    const commitsRef = useRef(1)
-    useEffect(() => {
-      commitsRef.current += 1
-    })
     return (
       <>
         <div>
-          count: {snap.nested.count} ({commitsRef.current})
+          count: {snap.nested.count} ({useCommitCount()})
         </div>
         <button onClick={() => (obj.nested = ref({ count: 0 }))}>button</button>
       </>

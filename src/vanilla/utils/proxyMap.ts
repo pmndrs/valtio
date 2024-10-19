@@ -9,6 +9,34 @@ type InternalProxyObject<K, V> = Map<K, V> & {
   toJSON: () => Map<K, V>
 }
 
+/**
+ * proxyMap
+ *
+ * This is to create a proxy which mimic the native Map behavior.
+ * The API is the same as Map API
+ *
+ * @example
+ * import { proxyMap } from 'valtio/utils'
+ * const state = proxyMap([["key", "value"]])
+ *
+ * // can be used inside a proxy as well
+ * const state = proxy({
+ *   count: 1,
+ *   map: proxyMap()
+ * })
+ *
+ * // When using an object as a key, you can wrap it with `ref` so it's not proxied
+ * // this is useful if you want to preserve the key equality
+ * import { ref } from 'valtio'
+ *
+ * const key = ref({})
+ * state.set(key, "value")
+ * state.get(key) //value
+ *
+ * const key = {}
+ * state.set(key, "value")
+ * state.get(key) //undefined
+ */
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const initialData: Array<V> = []
   let initialIndex = 0
@@ -52,7 +80,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const index = map.get(key)
       if (index === undefined) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.index
+        this.index // touch property for tracking
         return undefined
       }
       return this.data[index]
@@ -62,7 +90,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const exists = map.has(key)
       if (!exists) {
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.index
+        this.index // touch property for tracking
       }
       return exists
     },
@@ -71,11 +99,11 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       const index = indexMap.get(key)
-      if (index !== undefined) {
-        this.data[index] = value
-      } else {
+      if (index === undefined) {
         indexMap.set(key, this.index)
         this.data[this.index++] = value
+      } else {
+        this.data[index] = value
       }
       return this
     },
