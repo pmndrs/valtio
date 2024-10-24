@@ -378,7 +378,7 @@ describe('snapshot', () => {
 })
 
 describe('ui updates - useSnapshot', async () => {
-  it('should update ui when calling has before and after deleting a key', async () => {
+  it('should update ui when calling has before and after setting and deleting a key', async () => {
     const state = proxyMap()
     const TestComponent = () => {
       const snap = useSnapshot(state)
@@ -410,6 +410,59 @@ describe('ui updates - useSnapshot', async () => {
     fireEvent.click(getByText('delete key'))
     await waitFor(() => {
       getByText('has key: false')
+    })
+  })
+
+  it('should update ui when calling has before and after settiing and deleting multiple keys', async () => {
+    const state = proxyMap()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>has key: {`${snap.has('key')}`}</p>
+          <p>has key2: {`${snap.has('key2')}`}</p>
+          <button
+            onClick={() => {
+              state.set('key', 'value')
+              state.set('key2', 'value')
+            }}
+          >
+            set keys
+          </button>
+          <button
+            onClick={() => {
+              state.delete('key')
+              state.delete('key2')
+            }}
+          >
+            delete keys
+          </button>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      getByText('has key: false')
+      getByText('has key2: false')
+    })
+
+    fireEvent.click(getByText('set keys'))
+    await waitFor(() => {
+      getByText('has key: true')
+      getByText('has key2: true')
+    })
+
+    fireEvent.click(getByText('delete keys'))
+    await waitFor(() => {
+      getByText('has key: false')
+      getByText('has key2: false')
     })
   })
 })

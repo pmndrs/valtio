@@ -367,7 +367,7 @@ describe('snapshot behavior', () => {
 })
 
 describe('ui updates - useSnapshot', async () => {
-  it('should update ui when calling has before and after deleting a value', async () => {
+  it('should update ui when calling has before and after setting anddeleting a value', async () => {
     const state = proxySet()
     const TestComponent = () => {
       const snap = useSnapshot(state)
@@ -375,7 +375,14 @@ describe('ui updates - useSnapshot', async () => {
       return (
         <>
           <p>has value: {`${snap.has('value')}`}</p>
-          <button onClick={() => state.add('value')}>add value</button>
+          <button
+            onClick={() => {
+              state.add('value')
+              state.add('value2')
+            }}
+          >
+            add value
+          </button>
           <button onClick={() => state.delete('value')}>delete value</button>
         </>
       )
@@ -399,6 +406,59 @@ describe('ui updates - useSnapshot', async () => {
     fireEvent.click(getByText('delete value'))
     await waitFor(() => {
       getByText('has value: false')
+    })
+  })
+
+  it('should update ui when calling has before and after settiing and deleting multiple values', async () => {
+    const state = proxySet()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>has value: {`${snap.has('value')}`}</p>
+          <p>has value2: {`${snap.has('value2')}`}</p>
+          <button
+            onClick={() => {
+              state.add('value')
+              state.add('value2')
+            }}
+          >
+            add values
+          </button>
+          <button
+            onClick={() => {
+              state.delete('value')
+              state.delete('value2')
+            }}
+          >
+            delete values
+          </button>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      getByText('has value: false')
+      getByText('has value2: false')
+    })
+
+    fireEvent.click(getByText('add values'))
+    await waitFor(() => {
+      getByText('has value: true')
+      getByText('has value2: true')
+    })
+
+    fireEvent.click(getByText('delete values'))
+    await waitFor(() => {
+      getByText('has value: false')
+      getByText('has value2: false')
     })
   })
 })
