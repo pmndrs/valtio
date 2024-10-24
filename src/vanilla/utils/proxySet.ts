@@ -8,6 +8,7 @@ type InternalProxySet<T> = Set<T> & {
   data: T[]
   toJSON: object
   index: number
+  epoch: number
   intersection: (other: Set<T>) => Set<T>
   isDisjointFrom: (other: Set<T>) => boolean
   isSubsetOf: (other: Set<T>) => boolean
@@ -63,6 +64,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   const vObject: InternalProxySet<T> = {
     data: initialData,
     index: initialIndex,
+    epoch: 0,
     get size() {
       if (!isProxy(this)) {
         registerSnapMap()
@@ -72,12 +74,9 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     has(value: T) {
       const map = getMapForThis(this)
       const v = maybeProxify(value)
-      const exists = map.has(v)
-      if (!exists) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        this.index // touch property for tracking
-      }
-      return exists
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      this.epoch // touch property for tracking
+      return map.has(v)
     },
     add(value: T) {
       if (!isProxy(this)) {
@@ -87,6 +86,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (!indexMap.has(v)) {
         indexMap.set(v, this.index)
         this.data[this.index++] = v
+        this.epoch++
       }
       return this
     },
@@ -101,6 +101,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
       delete this.data[index]
       indexMap.delete(v)
+      this.epoch++
       return true
     },
     clear() {
@@ -109,6 +110,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
       this.data.length = 0 // empty array
       this.index = 0
+      this.epoch++
       indexMap.clear()
     },
     forEach(cb) {
@@ -200,6 +202,8 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     data: { enumerable: false },
+    index: { enumerable: false },
+    epoch: { enumerable: false },
     toJSON: { enumerable: false },
   })
   Object.seal(proxiedObject)
