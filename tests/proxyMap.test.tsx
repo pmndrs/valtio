@@ -385,7 +385,7 @@ describe('ui updates - useSnapshot', async () => {
 
       return (
         <>
-          <p>has key1: {`${snap.has('key')}`}</p>
+          <p>has key: {`${snap.has('key')}`}</p>
           <button onClick={() => state.set('key', 'value')}>set key</button>
           <button onClick={() => state.delete('key')}>delete key</button>
         </>
@@ -399,7 +399,7 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      getByText('has key1: false')
+      getByText('has key: false')
     })
 
     fireEvent.click(getByText('set key'))
