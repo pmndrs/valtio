@@ -72,10 +72,9 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     has(value: T) {
       const map = getMapForThis(this)
       const v = maybeProxify(value)
-      const exists = map.has(v)
       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       this.data.length // touch property for tracking
-      return exists
+      return map.has(v)
     },
     add(value: T) {
       if (!isProxy(this)) {

@@ -87,10 +87,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     has(key: K) {
       const map = getMapForThis(this)
-      const exists = map.has(key)
       // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       this.data.length // touch property for tracking
-      return exists
+      return map.has(key)
     },
     set(key: K, value: V) {
       if (!isProxy(this)) {
