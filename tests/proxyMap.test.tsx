@@ -319,6 +319,7 @@ describe('proxyMap internal', () => {
     ).toBe(false)
   })
 })
+
 describe('snapshot', () => {
   it('should error when trying to mutate a snapshot', () => {
     const state = proxyMap()
@@ -373,5 +374,42 @@ describe('snapshot', () => {
     const snap2 = snapshot(state)
     expect(snap1.get('key1')).toBe('val1')
     expect(snap2.get('key1')).toBe('val1modified')
+  })
+})
+
+describe('ui updates - useSnapshot', async () => {
+  it('should update ui when calling has before and after deleting a key', async () => {
+    const state = proxyMap()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>has key1: {`${snap.has('key')}`}</p>
+          <button onClick={() => state.set('key', 'value')}>set key</button>
+          <button onClick={() => state.delete('key')}>delete key</button>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      getByText('has key1: false')
+    })
+
+    fireEvent.click(getByText('set key'))
+    await waitFor(() => {
+      getByText('has key: true')
+    })
+
+    fireEvent.click(getByText('delete key'))
+    await waitFor(() => {
+      getByText('has key: false')
+    })
   })
 })

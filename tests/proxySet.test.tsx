@@ -365,3 +365,40 @@ describe('snapshot behavior', () => {
     expect(snap2.has('val2')).toBe(true)
   })
 })
+
+describe('ui updates - useSnapshot', async () => {
+  it('should update ui when calling has before and after deleting a value', async () => {
+    const state = proxySet()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>has value: {`${snap.has('value')}`}</p>
+          <button onClick={() => state.add('value')}>add value</button>
+          <button onClick={() => state.delete('value')}>delete value</button>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      getByText('has value: false')
+    })
+
+    fireEvent.click(getByText('add value'))
+    await waitFor(() => {
+      getByText('has value: true')
+    })
+
+    fireEvent.click(getByText('delete value'))
+    await waitFor(() => {
+      getByText('has value: false')
+    })
+  })
+})
