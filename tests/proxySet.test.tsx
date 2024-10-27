@@ -365,3 +365,256 @@ describe('snapshot behavior', () => {
     expect(snap2.has('val2')).toBe(true)
   })
 })
+
+describe('ui updates - useSnapshot', async () => {
+  it('should update ui when calling has before and after setting anddeleting a value', async () => {
+    const state = proxySet()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>has value: {`${snap.has('value')}`}</p>
+          <button
+            onClick={() => {
+              state.add('value')
+              state.add('value2')
+            }}
+          >
+            add value
+          </button>
+          <button onClick={() => state.delete('value')}>delete value</button>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      getByText('has value: false')
+    })
+
+    fireEvent.click(getByText('add value'))
+    await waitFor(() => {
+      getByText('has value: true')
+    })
+
+    fireEvent.click(getByText('delete value'))
+    await waitFor(() => {
+      getByText('has value: false')
+    })
+  })
+
+  it('should update ui when calling has before and after settiing and deleting multiple values', async () => {
+    const state = proxySet()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>has value: {`${snap.has('value')}`}</p>
+          <p>has value2: {`${snap.has('value2')}`}</p>
+          <button
+            onClick={() => {
+              state.add('value')
+              state.add('value2')
+            }}
+          >
+            add values
+          </button>
+          <button
+            onClick={() => {
+              state.delete('value')
+              state.delete('value2')
+            }}
+          >
+            delete values
+          </button>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      getByText('has value: false')
+      getByText('has value2: false')
+    })
+
+    fireEvent.click(getByText('add values'))
+    await waitFor(() => {
+      getByText('has value: true')
+      getByText('has value2: true')
+    })
+
+    fireEvent.click(getByText('delete values'))
+    await waitFor(() => {
+      getByText('has value: false')
+      getByText('has value2: false')
+    })
+  })
+
+  it('should update ui when calling has before and after settiing multiple values and deleting a single one (first item)', async () => {
+    const state = proxySet()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>has value: {`${snap.has('value')}`}</p>
+          <p>has value2: {`${snap.has('value2')}`}</p>
+          <button
+            onClick={() => {
+              state.add('value')
+              state.add('value2')
+            }}
+          >
+            add values
+          </button>
+          <button
+            onClick={() => {
+              state.delete('value')
+            }}
+          >
+            delete values
+          </button>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      getByText('has value: false')
+      getByText('has value2: false')
+    })
+
+    fireEvent.click(getByText('add values'))
+    await waitFor(() => {
+      getByText('has value: true')
+      getByText('has value2: true')
+    })
+
+    fireEvent.click(getByText('delete values'))
+    await waitFor(() => {
+      getByText('has value: false')
+      getByText('has value2: true')
+    })
+  })
+
+  it('should update ui when calling has before and after settiing multiple values and deleting a single one (second item)', async () => {
+    const state = proxySet()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>has value: {`${snap.has('value')}`}</p>
+          <p>has value2: {`${snap.has('value2')}`}</p>
+          <button
+            onClick={() => {
+              state.add('value')
+              state.add('value2')
+            }}
+          >
+            add values
+          </button>
+          <button
+            onClick={() => {
+              state.delete('value2')
+            }}
+          >
+            delete values
+          </button>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      getByText('has value: false')
+      getByText('has value2: false')
+    })
+
+    fireEvent.click(getByText('add values'))
+    await waitFor(() => {
+      getByText('has value: true')
+      getByText('has value2: true')
+    })
+
+    fireEvent.click(getByText('delete values'))
+    await waitFor(() => {
+      getByText('has value: true')
+      getByText('has value2: false')
+    })
+  })
+
+  it('should update ui when clearing the set', async () => {
+    const state = proxySet()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>has value: {`${snap.has('value')}`}</p>
+          <p>has value2: {`${snap.has('value2')}`}</p>
+          <button
+            onClick={() => {
+              state.add('value')
+              state.add('value2')
+            }}
+          >
+            add values
+          </button>
+          <button
+            onClick={() => {
+              state.clear()
+            }}
+          >
+            clear set
+          </button>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      getByText('has value: false')
+      getByText('has value2: false')
+    })
+
+    fireEvent.click(getByText('add values'))
+    await waitFor(() => {
+      getByText('has value: true')
+      getByText('has value2: true')
+    })
+
+    fireEvent.click(getByText('clear set'))
+    await waitFor(() => {
+      getByText('has value: false')
+      getByText('has value2: false')
+    })
+  })
+})
