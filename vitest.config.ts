@@ -13,6 +13,7 @@ export default defineConfig({
     name: 'valtio',
     setupFiles: './tests/setup.ts',
     coverage: {
+      include: ['src/**/'],
       reporter: ['text', 'json', 'html', 'text-summary'],
       reportsDirectory: './coverage/',
     },
