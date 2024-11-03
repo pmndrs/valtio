@@ -130,24 +130,32 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       indexMap.clear()
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       map.forEach((index, key) => {
         cb(this.data[index]!, key, this)
       })
     },
     *entries(): MapIterator<[K, V]> {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const [key, index] of map) {
         yield [key, this.data[index]!]
       }
     },
     *keys(): IterableIterator<K> {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const key of map.keys()) {
         yield key
       }
     },
     *values(): IterableIterator<V> {
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         yield this.data[index]!
