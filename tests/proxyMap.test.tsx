@@ -621,4 +621,137 @@ describe('ui updates - useSnapshot', async () => {
       getByText('has key2: false')
     })
   })
+
+  it('should be reactive to changes when using values method', async () => {
+    const state = proxyMap<number, MapItem>()
+
+    interface MapItem {
+      id: number
+      name: string
+    }
+
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      const addItem = () => {
+        const item: MapItem = {
+          id: 1,
+          name: `item 1`,
+        }
+        state.set(item.id, item)
+      }
+
+      return (
+        <>
+          <button onClick={addItem}>Add Item</button>
+          <ul>
+            {Array.from(snap.values()).map((mapitem) => (
+              <li key={mapitem.id}>{`${mapitem.name} ${mapitem.id}`}</li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    fireEvent.click(getByText('Add Item'))
+    await waitFor(() => {
+      getByText('item 1 1')
+    })
+  })
+
+  it('should be reactive to changes when using keys method', async () => {
+    const state = proxyMap<number, MapItem>()
+
+    interface MapItem {
+      id: number
+      name: string
+    }
+
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      const addItem = () => {
+        const item: MapItem = {
+          id: 1,
+          name: `item 1`,
+        }
+        state.set(item.id, item)
+      }
+
+      return (
+        <>
+          <button onClick={addItem}>Add Item</button>
+          <ul>
+            {Array.from(snap.keys()).map(
+              (mapkey) =>
+                snap.has(mapkey) && (
+                  <li key={mapkey}>{`item key: ${mapkey}`}</li>
+                ),
+            )}
+          </ul>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    fireEvent.click(getByText('Add Item'))
+    await waitFor(() => {
+      getByText('item key: 1')
+    })
+  })
+
+  it('should be reactive to changes when using entries method', async () => {
+    const state = proxyMap<number, MapItem>()
+    interface MapItem {
+      id: number
+      name: string
+    }
+
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      const addItem = () => {
+        const item: MapItem = {
+          id: 1,
+          name: `item 1`,
+        }
+        state.set(item.id, item)
+      }
+
+      return (
+        <>
+          <button onClick={addItem}>Add Item</button>
+          <ul>
+            {Array.from(snap.entries()).map(([mapkey, mapvalue]) => (
+              <li
+                key={mapvalue.id}
+              >{`key: ${mapkey}; value.name: ${mapvalue.name}; value.id:${mapvalue.id}`}</li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    fireEvent.click(getByText('Add Item'))
+    await waitFor(() => {
+      getByText('key: 1; value.name: item 1; value.id:1')
+    })
+  })
 })

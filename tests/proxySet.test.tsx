@@ -617,4 +617,109 @@ describe('ui updates - useSnapshot', async () => {
       getByText('has value2: false')
     })
   })
+
+  it('should be reactive to changes when using values method', async () => {
+    const state = proxySet<number>()
+
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      const addItem = () => {
+        const item = 1
+        state.add(item)
+      }
+
+      return (
+        <>
+          <button onClick={addItem}>Add Item</button>
+          <ul>
+            {Array.from(snap.values()).map((setItem) => (
+              <li key={setItem}>{`${setItem}`}</li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    fireEvent.click(getByText('Add Item'))
+    await waitFor(() => {
+      getByText('1')
+    })
+  })
+
+  it('should be reactive to changes when using keys method', async () => {
+    const state = proxySet<number>()
+
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      const addItem = () => {
+        const item = 1
+        state.add(item)
+      }
+
+      return (
+        <>
+          <button onClick={addItem}>Add Item</button>
+          <ul>
+            {Array.from(snap.keys()).map((setKey) => (
+              <li key={setKey}>{`item key: ${setKey}`}</li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    fireEvent.click(getByText('Add Item'))
+    await waitFor(() => {
+      getByText('item key: 1')
+    })
+  })
+
+  it('should be reactive to changes when using entries method', async () => {
+    const state = proxySet<number>()
+
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      const addItem = () => {
+        const item = 1
+        state.add(item)
+      }
+
+      return (
+        <>
+          <button onClick={addItem}>Add Item</button>
+          <ul>
+            {Array.from(snap.entries()).map(([setKey, setValue]) => (
+              <li key={setValue}>{`key: ${setKey}; value: ${setValue}`}</li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    fireEvent.click(getByText('Add Item'))
+    await waitFor(() => {
+      getByText('key: 1; value: 1')
+    })
+  })
 })
