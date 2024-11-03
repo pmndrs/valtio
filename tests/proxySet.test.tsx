@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, useSnapshot } from 'valtio'
 import { proxySet } from 'valtio/utils'
@@ -221,17 +221,17 @@ describe('clear set', () => {
         )
       }
 
-      const { getByText } = render(
+      render(
         <StrictMode>
           <TestComponent />
         </StrictMode>,
       )
 
-      getByText(`size: ${state.set.size}`)
+      screen.getByText(`size: ${state.set.size}`)
 
-      fireEvent.click(getByText('button'))
+      fireEvent.click(screen.getByText('button'))
       await waitFor(() => {
-        getByText('size: 0')
+        screen.getByText('size: 0')
       })
     })
   })
@@ -255,17 +255,17 @@ describe('add value', () => {
         )
       }
 
-      const { getByText } = render(
+      render(
         <StrictMode>
           <TestComponent />
         </StrictMode>,
       )
 
-      getByText('size: 0')
-      fireEvent.click(getByText('button'))
+      screen.getByText('size: 0')
+      fireEvent.click(screen.getByText('button'))
 
       await waitFor(() => {
-        getByText('size: 1')
+        screen.getByText('size: 1')
       })
     })
   })
@@ -296,20 +296,20 @@ describe('delete', () => {
         )
       }
 
-      const { getByText } = render(
+      render(
         <StrictMode>
           <TestComponent />
         </StrictMode>,
       )
 
-      getByText(`size: ${state.set.size}`)
+      screen.getByText(`size: ${state.set.size}`)
 
       const expectedSizeAfterDelete =
         state.set.size > 1 ? state.set.size - 1 : 0
 
-      fireEvent.click(getByText('button'))
+      fireEvent.click(screen.getByText('button'))
       await waitFor(() => {
-        getByText(`size: ${expectedSizeAfterDelete}`)
+        screen.getByText(`size: ${expectedSizeAfterDelete}`)
       })
     })
   })
@@ -388,24 +388,24 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
     await waitFor(() => {
-      getByText('has value: false')
+      screen.getByText('has value: false')
     })
 
-    fireEvent.click(getByText('add value'))
+    fireEvent.click(screen.getByText('add value'))
     await waitFor(() => {
-      getByText('has value: true')
+      screen.getByText('has value: true')
     })
 
-    fireEvent.click(getByText('delete value'))
+    fireEvent.click(screen.getByText('delete value'))
     await waitFor(() => {
-      getByText('has value: false')
+      screen.getByText('has value: false')
     })
   })
 
@@ -438,27 +438,27 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
     await waitFor(() => {
-      getByText('has value: false')
-      getByText('has value2: false')
+      screen.getByText('has value: false')
+      screen.getByText('has value2: false')
     })
 
-    fireEvent.click(getByText('add values'))
+    fireEvent.click(screen.getByText('add values'))
     await waitFor(() => {
-      getByText('has value: true')
-      getByText('has value2: true')
+      screen.getByText('has value: true')
+      screen.getByText('has value2: true')
     })
 
-    fireEvent.click(getByText('delete values'))
+    fireEvent.click(screen.getByText('delete values'))
     await waitFor(() => {
-      getByText('has value: false')
-      getByText('has value2: false')
+      screen.getByText('has value: false')
+      screen.getByText('has value2: false')
     })
   })
 
@@ -490,27 +490,27 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
     await waitFor(() => {
-      getByText('has value: false')
-      getByText('has value2: false')
+      screen.getByText('has value: false')
+      screen.getByText('has value2: false')
     })
 
-    fireEvent.click(getByText('add values'))
+    fireEvent.click(screen.getByText('add values'))
     await waitFor(() => {
-      getByText('has value: true')
-      getByText('has value2: true')
+      screen.getByText('has value: true')
+      screen.getByText('has value2: true')
     })
 
-    fireEvent.click(getByText('delete values'))
+    fireEvent.click(screen.getByText('delete values'))
     await waitFor(() => {
-      getByText('has value: false')
-      getByText('has value2: true')
+      screen.getByText('has value: false')
+      screen.getByText('has value2: true')
     })
   })
 
@@ -542,27 +542,27 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
     await waitFor(() => {
-      getByText('has value: false')
-      getByText('has value2: false')
+      screen.getByText('has value: false')
+      screen.getByText('has value2: false')
     })
 
-    fireEvent.click(getByText('add values'))
+    fireEvent.click(screen.getByText('add values'))
     await waitFor(() => {
-      getByText('has value: true')
-      getByText('has value2: true')
+      screen.getByText('has value: true')
+      screen.getByText('has value2: true')
     })
 
-    fireEvent.click(getByText('delete values'))
+    fireEvent.click(screen.getByText('delete values'))
     await waitFor(() => {
-      getByText('has value: true')
-      getByText('has value2: false')
+      screen.getByText('has value: true')
+      screen.getByText('has value2: false')
     })
   })
 
@@ -594,27 +594,27 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
     await waitFor(() => {
-      getByText('has value: false')
-      getByText('has value2: false')
+      screen.getByText('has value: false')
+      screen.getByText('has value2: false')
     })
 
-    fireEvent.click(getByText('add values'))
+    fireEvent.click(screen.getByText('add values'))
     await waitFor(() => {
-      getByText('has value: true')
-      getByText('has value2: true')
+      screen.getByText('has value: true')
+      screen.getByText('has value2: true')
     })
 
-    fireEvent.click(getByText('clear set'))
+    fireEvent.click(screen.getByText('clear set'))
     await waitFor(() => {
-      getByText('has value: false')
-      getByText('has value2: false')
+      screen.getByText('has value: false')
+      screen.getByText('has value2: false')
     })
   })
 })

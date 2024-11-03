@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, useSnapshot } from 'valtio'
 import { proxyMap, proxySet } from 'valtio/utils'
@@ -205,18 +205,18 @@ describe('clear map', () => {
         )
       }
 
-      const { getByText } = render(
+      render(
         <StrictMode>
           <TestComponent />
         </StrictMode>,
       )
 
       expect(state.size).toBeGreaterThan(0)
-      getByText(`size: ${state.size}`)
+      screen.getByText(`size: ${state.size}`)
 
-      fireEvent.click(getByText('button'))
+      fireEvent.click(screen.getByText('button'))
       await waitFor(() => {
-        getByText('size: 0')
+        screen.getByText('size: 0')
       })
     })
   })
@@ -240,17 +240,17 @@ describe('add value', () => {
         )
       }
 
-      const { getByText } = render(
+      render(
         <StrictMode>
           <TestComponent />
         </StrictMode>,
       )
 
-      getByText('size: 0')
-      fireEvent.click(getByText('button'))
+      screen.getByText('size: 0')
+      fireEvent.click(screen.getByText('button'))
 
       await waitFor(() => {
-        getByText('size: 1')
+        screen.getByText('size: 1')
       })
     })
   })
@@ -288,20 +288,20 @@ describe('delete', () => {
         )
       }
 
-      const { getByText } = render(
+      render(
         <StrictMode>
           <TestComponent />
         </StrictMode>,
       )
 
-      getByText(`size: ${state.map.size}`)
+      screen.getByText(`size: ${state.map.size}`)
 
       const expectedSizeAfterDelete =
         state.map.size > 1 ? state.map.size - 1 : 0
 
-      fireEvent.click(getByText('button'))
+      fireEvent.click(screen.getByText('button'))
       await waitFor(() => {
-        getByText(`size: ${expectedSizeAfterDelete}`)
+        screen.getByText(`size: ${expectedSizeAfterDelete}`)
       })
     })
   })
@@ -392,24 +392,24 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
     await waitFor(() => {
-      getByText('has key: false')
+      screen.getByText('has key: false')
     })
 
-    fireEvent.click(getByText('set key'))
+    fireEvent.click(screen.getByText('set key'))
     await waitFor(() => {
-      getByText('has key: true')
+      screen.getByText('has key: true')
     })
 
-    fireEvent.click(getByText('delete key'))
+    fireEvent.click(screen.getByText('delete key'))
     await waitFor(() => {
-      getByText('has key: false')
+      screen.getByText('has key: false')
     })
   })
 
@@ -442,27 +442,27 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
     await waitFor(() => {
-      getByText('has key: false')
-      getByText('has key2: false')
+      screen.getByText('has key: false')
+      screen.getByText('has key2: false')
     })
 
-    fireEvent.click(getByText('set keys'))
+    fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
-      getByText('has key: true')
-      getByText('has key2: true')
+      screen.getByText('has key: true')
+      screen.getByText('has key2: true')
     })
 
-    fireEvent.click(getByText('delete keys'))
+    fireEvent.click(screen.getByText('delete keys'))
     await waitFor(() => {
-      getByText('has key: false')
-      getByText('has key2: false')
+      screen.getByText('has key: false')
+      screen.getByText('has key2: false')
     })
   })
 
@@ -494,27 +494,27 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
     await waitFor(() => {
-      getByText('has key: false')
-      getByText('has key2: false')
+      screen.getByText('has key: false')
+      screen.getByText('has key2: false')
     })
 
-    fireEvent.click(getByText('set keys'))
+    fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
-      getByText('has key: true')
-      getByText('has key2: true')
+      screen.getByText('has key: true')
+      screen.getByText('has key2: true')
     })
 
-    fireEvent.click(getByText('delete keys'))
+    fireEvent.click(screen.getByText('delete keys'))
     await waitFor(() => {
-      getByText('has key: false')
-      getByText('has key2: true')
+      screen.getByText('has key: false')
+      screen.getByText('has key2: true')
     })
   })
 
@@ -546,27 +546,27 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
     await waitFor(() => {
-      getByText('has key: false')
-      getByText('has key2: false')
+      screen.getByText('has key: false')
+      screen.getByText('has key2: false')
     })
 
-    fireEvent.click(getByText('set keys'))
+    fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
-      getByText('has key: true')
-      getByText('has key2: true')
+      screen.getByText('has key: true')
+      screen.getByText('has key2: true')
     })
 
-    fireEvent.click(getByText('delete keys'))
+    fireEvent.click(screen.getByText('delete keys'))
     await waitFor(() => {
-      getByText('has key: true')
-      getByText('has key2: false')
+      screen.getByText('has key: true')
+      screen.getByText('has key2: false')
     })
   })
 
@@ -598,27 +598,27 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
     await waitFor(() => {
-      getByText('has key: false')
-      getByText('has key2: false')
+      screen.getByText('has key: false')
+      screen.getByText('has key2: false')
     })
 
-    fireEvent.click(getByText('set keys'))
+    fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
-      getByText('has key: true')
-      getByText('has key2: true')
+      screen.getByText('has key: true')
+      screen.getByText('has key2: true')
     })
 
-    fireEvent.click(getByText('clear map'))
+    fireEvent.click(screen.getByText('clear map'))
     await waitFor(() => {
-      getByText('has key: false')
-      getByText('has key2: false')
+      screen.getByText('has key: false')
+      screen.getByText('has key2: false')
     })
   })
 })
