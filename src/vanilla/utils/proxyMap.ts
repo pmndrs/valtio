@@ -81,7 +81,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const map = getMapForThis(this)
       const index = map.get(key)
       if (index === undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         this.epoch // touch property for tracking
         return undefined
       }
@@ -89,7 +88,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
     has(key: K) {
       const map = getMapForThis(this)
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       this.epoch // touch property for tracking
       return map.has(key)
     },
@@ -130,7 +128,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       indexMap.clear()
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       map.forEach((index, key) => {
@@ -138,7 +135,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       })
     },
     *entries(): MapIterator<[K, V]> {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const [key, index] of map) {
@@ -146,7 +142,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
     },
     *keys(): IterableIterator<K> {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const key of map.keys()) {
@@ -154,7 +149,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
     },
     *values(): IterableIterator<V> {
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {

@@ -621,137 +621,159 @@ describe('ui updates - useSnapshot', async () => {
       screen.getByText('has key2: false')
     })
   })
+})
 
-  it('should be reactive to changes when using values method', async () => {
-    const state = proxyMap<number, MapItem>()
+describe('ui updates - useSnapshot - iterator methods', () => {
+  const iteratorMethods = ['keys', 'values', 'entries'] as const
 
-    interface MapItem {
-      id: number
-      name: string
-    }
+  iteratorMethods.forEach((iteratorMethod) => {
+    it(`should be reactive to changes when using ${iteratorMethod} method`, async () => {
+      interface MapItem {
+        id: number
+        name: string
+      }
+      const state = proxyMap<number, MapItem>()
+      const TestComponent = () => {
+        const snap = useSnapshot(state)
 
-    const TestComponent = () => {
-      const snap = useSnapshot(state)
-
-      const addItem = () => {
-        const item: MapItem = {
-          id: 1,
-          name: `item 1`,
+        const addItem = (id: number) => {
+          const item: MapItem = {
+            id,
+            name: `item ${id}`,
+          }
+          state.set(item.id, item)
         }
-        state.set(item.id, item)
+
+        const methods = {
+          entries: Array.from(snap.entries()).map(([id, item]) => (
+            <li key={id}>{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+          )),
+          values: Array.from(snap.values()).map((item) => (
+            <li
+              key={item.id}
+            >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+          )),
+          keys: Array.from(snap.keys()).map((id) => {
+            const item = snap.get(id)!
+            return (
+              <li key={id}>{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+            )
+          }),
+        }
+
+        return (
+          <>
+            <button
+              onClick={() => {
+                state.set(1, { name: 'item 1 updated', id: 1 })
+              }}
+            >
+              Update
+            </button>
+            <button onClick={() => addItem(1)}>Add</button>
+            <ul>{methods[iteratorMethod]}</ul>
+          </>
+        )
       }
 
-      return (
-        <>
-          <button onClick={addItem}>Add Item</button>
-          <ul>
-            {Array.from(snap.values()).map((mapitem) => (
-              <li key={mapitem.id}>{`${mapitem.name} ${mapitem.id}`}</li>
-            ))}
-          </ul>
-        </>
+      render(
+        <StrictMode>
+          <TestComponent />
+        </StrictMode>,
       )
-    }
 
-    const { getByText } = render(
-      <StrictMode>
-        <TestComponent />
-      </StrictMode>,
-    )
+      fireEvent.click(screen.getByText('Add'))
+      await waitFor(() => {
+        screen.getByText(`item.name: item 1; item.id: 1`)
+      })
 
-    fireEvent.click(getByText('Add Item'))
-    await waitFor(() => {
-      getByText('item 1 1')
+      fireEvent.click(screen.getByText('Update'))
+      await waitFor(() => {
+        screen.getByText(`item.name: item 1 updated; item.id: 1`)
+      })
     })
-  })
 
-  it('should be reactive to changes when using keys method', async () => {
-    const state = proxyMap<number, MapItem>()
+    it(`should be reactive to changes when using ${iteratorMethod} method when setting multiple values`, async () => {
+      interface MapItem {
+        id: number
+        name: string
+      }
+      const state = proxyMap<number, MapItem>()
+      let id = 0
 
-    interface MapItem {
-      id: number
-      name: string
-    }
+      const TestComponent = () => {
+        const snap = useSnapshot(state)
 
-    const TestComponent = () => {
-      const snap = useSnapshot(state)
-
-      const addItem = () => {
-        const item: MapItem = {
-          id: 1,
-          name: `item 1`,
+        const addItem = () => {
+          const item: MapItem = {
+            id: ++id,
+            name: `item ${id}`,
+          }
+          state.set(item.id, item)
         }
-        state.set(item.id, item)
+
+        return (
+          <>
+            <button
+              onClick={() => {
+                state.forEach((value, key) => {
+                  state.set(key, { ...value, name: `${value.name} updated` })
+                })
+              }}
+            >
+              Update
+            </button>
+            <button
+              onClick={() => {
+                addItem(1)
+                addItem(2)
+              }}
+            >
+              Add
+            </button>
+            <ul>
+              {iteratorMethod === 'entries'
+                ? Array.from(snap[iteratorMethod]()).map(([id, item]) => (
+                    <li
+                      key={id}
+                    >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+                  ))
+                : iteratorMethod === 'values'
+                  ? Array.from(snap[iteratorMethod]()).map((item) => (
+                      <li
+                        key={item.id}
+                      >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+                    ))
+                  : Array.from(snap[iteratorMethod]()).map((id) => {
+                      const item = snap.get(id)!
+                      return (
+                        <li
+                          key={id}
+                        >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+                      )
+                    })}
+            </ul>
+          </>
+        )
       }
 
-      return (
-        <>
-          <button onClick={addItem}>Add Item</button>
-          <ul>
-            {Array.from(snap.keys()).map(
-              (mapkey) =>
-                snap.has(mapkey) && (
-                  <li key={mapkey}>{`item key: ${mapkey}`}</li>
-                ),
-            )}
-          </ul>
-        </>
+      render(
+        <StrictMode>
+          <TestComponent />
+        </StrictMode>,
       )
-    }
 
-    const { getByText } = render(
-      <StrictMode>
-        <TestComponent />
-      </StrictMode>,
-    )
+      fireEvent.click(screen.getByText('Add'))
+      await waitFor(() => {
+        screen.getByText(`item.name: item 1; item.id: 1`)
+        screen.getByText(`item.name: item 2; item.id: 2`)
+      })
 
-    fireEvent.click(getByText('Add Item'))
-    await waitFor(() => {
-      getByText('item key: 1')
-    })
-  })
-
-  it('should be reactive to changes when using entries method', async () => {
-    const state = proxyMap<number, MapItem>()
-    interface MapItem {
-      id: number
-      name: string
-    }
-
-    const TestComponent = () => {
-      const snap = useSnapshot(state)
-
-      const addItem = () => {
-        const item: MapItem = {
-          id: 1,
-          name: `item 1`,
-        }
-        state.set(item.id, item)
-      }
-
-      return (
-        <>
-          <button onClick={addItem}>Add Item</button>
-          <ul>
-            {Array.from(snap.entries()).map(([mapkey, mapvalue]) => (
-              <li
-                key={mapvalue.id}
-              >{`key: ${mapkey}; value.name: ${mapvalue.name}; value.id:${mapvalue.id}`}</li>
-            ))}
-          </ul>
-        </>
-      )
-    }
-
-    const { getByText } = render(
-      <StrictMode>
-        <TestComponent />
-      </StrictMode>,
-    )
-
-    fireEvent.click(getByText('Add Item'))
-    await waitFor(() => {
-      getByText('key: 1; value.name: item 1; value.id:1')
+      fireEvent.click(screen.getByText('Update'))
+      await waitFor(() => {
+        screen.getByText(`item.name: item 1 updated; item.id: 1`)
+        screen.getByText(`item.name: item 2 updated; item.id: 2`)
+      })
     })
   })
 })
