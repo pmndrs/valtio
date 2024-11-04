@@ -1,5 +1,5 @@
 import { StrictMode, Suspense } from 'react'
-import { act, fireEvent, render } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 import { devtools } from 'valtio/utils'
@@ -163,18 +163,19 @@ it('updating state should call devtools.send', async () => {
   }
 
   extension.send.mockClear()
-  const { getByText, findByText } = render(
+
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
   expect(extension.send).toBeCalledTimes(0)
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1')
   expect(extension.send).toBeCalledTimes(1)
-  fireEvent.click(getByText('button'))
-  await findByText('count: 2')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 2')
   expect(extension.send).toBeCalledTimes(2)
 })
 
@@ -194,7 +195,8 @@ describe('when it receives an message of type...', () => {
     }
 
     extension.send.mockClear()
-    const { getByText, findByText } = render(
+
+    render(
       <StrictMode>
         <Suspense fallback={'loading'}>
           <Counter />
@@ -203,8 +205,8 @@ describe('when it receives an message of type...', () => {
     )
 
     expect(extension.send).toBeCalledTimes(0)
-    fireEvent.click(getByText('button'))
-    await findByText('count: 1')
+    fireEvent.click(screen.getByText('button'))
+    await screen.findByText('count: 1')
     expect(extension.send).toBeCalledTimes(1)
     act(() =>
       (extensionSubscriber as (message: any) => void)({
@@ -212,7 +214,7 @@ describe('when it receives an message of type...', () => {
         payload: JSON.stringify({ count: 0 }),
       }),
     )
-    await findByText('count: 0')
+    await screen.findByText('count: 0')
     expect(extension.send).toBeCalledTimes(2)
   })
 
@@ -232,25 +234,26 @@ describe('when it receives an message of type...', () => {
       }
 
       extension.send.mockClear()
-      const { getByText, findByText } = render(
+
+      render(
         <StrictMode>
           <Counter />
         </StrictMode>,
       )
 
       expect(extension.send).toBeCalledTimes(0)
-      fireEvent.click(getByText('button'))
-      await findByText('count: 1')
+      fireEvent.click(screen.getByText('button'))
+      await screen.findByText('count: 1')
       expect(extension.send).toBeCalledTimes(1)
-      fireEvent.click(getByText('button'))
-      await findByText('count: 2')
+      fireEvent.click(screen.getByText('button'))
+      await screen.findByText('count: 2')
       act(() =>
         (extensionSubscriber as (message: any) => void)({
           type: 'DISPATCH',
           payload: { type: 'COMMIT' },
         }),
       )
-      await findByText('count: 2')
+      await screen.findByText('count: 2')
       expect(extension.init).toBeCalledWith({ count: 2 })
     })
 
@@ -269,7 +272,8 @@ describe('when it receives an message of type...', () => {
       }
 
       extension.send.mockClear()
-      const { getByText, findByText } = render(
+
+      render(
         <StrictMode>
           <Counter />
         </StrictMode>,
@@ -281,11 +285,11 @@ describe('when it receives an message of type...', () => {
       }
 
       expect(extension.send).toBeCalledTimes(0)
-      fireEvent.click(getByText('button'))
-      await findByText('count: 1')
+      fireEvent.click(screen.getByText('button'))
+      await screen.findByText('count: 1')
       expect(extension.send).toBeCalledTimes(1)
-      fireEvent.click(getByText('button'))
-      await findByText('count: 2')
+      fireEvent.click(screen.getByText('button'))
+      await screen.findByText('count: 2')
       act(() =>
         (extensionSubscriber as (message: any) => void)({
           type: 'DISPATCH',
@@ -293,7 +297,7 @@ describe('when it receives an message of type...', () => {
         }),
       )
       expect(extension.init).toBeCalledWith({ count: 5 })
-      await findByText('count: 6')
+      await screen.findByText('count: 6')
     })
 
     describe('JUMP_TO_STATE | JUMP_TO_ACTION...', () => {
@@ -312,15 +316,16 @@ describe('when it receives an message of type...', () => {
         }
 
         extension.send.mockClear()
-        const { getByText, findByText } = render(
+
+        render(
           <StrictMode>
             <Counter />
           </StrictMode>,
         )
 
         expect(extension.send).toBeCalledTimes(0)
-        fireEvent.click(getByText('button'))
-        await findByText('count: 1')
+        fireEvent.click(screen.getByText('button'))
+        await screen.findByText('count: 1')
         expect(extension.send).toBeCalledTimes(1)
         act(() =>
           (extensionSubscriber as (message: any) => void)({
@@ -329,12 +334,12 @@ describe('when it receives an message of type...', () => {
             state: JSON.stringify({ count: 0 }),
           }),
         )
-        await findByText('count: 0')
+        await screen.findByText('count: 0')
         expect(extension.send).toBeCalledTimes(1)
-        fireEvent.click(getByText('button'))
-        await findByText('count: 1')
-        fireEvent.click(getByText('button'))
-        await findByText('count: 2')
+        fireEvent.click(screen.getByText('button'))
+        await screen.findByText('count: 1')
+        fireEvent.click(screen.getByText('button'))
+        await screen.findByText('count: 2')
         expect(extension.send).toBeCalledTimes(3)
       })
     })

@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
@@ -24,7 +24,7 @@ it('simple object getters', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <StrictMode>
       <Counter name="A" />
       <Counter name="B" />
@@ -32,15 +32,15 @@ it('simple object getters', async () => {
   )
 
   await waitFor(() => {
-    getByText('A count: 0')
-    getByText('B count: 0')
+    screen.getByText('A count: 0')
+    screen.getByText('B count: 0')
   })
 
   computeDouble.mockClear()
-  fireEvent.click(getByText('A button'))
+  fireEvent.click(screen.getByText('A button'))
   await waitFor(() => {
-    getByText('A count: 2')
-    getByText('B count: 2')
+    screen.getByText('A count: 2')
+    screen.getByText('B count: 2')
   })
   expect(computeDouble).toBeCalledTimes(1)
 })
@@ -66,7 +66,7 @@ it('object getters returning object', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <StrictMode>
       <Counter name="A" />
       <Counter name="B" />
@@ -74,15 +74,15 @@ it('object getters returning object', async () => {
   )
 
   await waitFor(() => {
-    getByText('A count: 0')
-    getByText('B count: 0')
+    screen.getByText('A count: 0')
+    screen.getByText('B count: 0')
   })
 
   computeDouble.mockClear()
-  fireEvent.click(getByText('A button'))
+  fireEvent.click(screen.getByText('A button'))
   await waitFor(() => {
-    getByText('A count: 2')
-    getByText('B count: 2')
+    screen.getByText('A count: 2')
+    screen.getByText('B count: 2')
   })
   expect(computeDouble).toBeCalledTimes(1)
 })
