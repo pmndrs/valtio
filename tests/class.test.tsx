@@ -1,5 +1,5 @@
 import { StrictMode, useEffect, useRef } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
@@ -32,16 +32,16 @@ it('simple class without methods', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1')
 })
 
 it('no extra re-renders with class', async () => {
@@ -80,7 +80,7 @@ it('no extra re-renders with class', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <>
       <Counter />
       <Counter2 />
@@ -88,20 +88,20 @@ it('no extra re-renders with class', async () => {
   )
 
   await waitFor(() => {
-    getByText('count: 0 (0)')
-    getByText('count2: 0 (0)')
+    screen.getByText('count: 0 (0)')
+    screen.getByText('count2: 0 (0)')
   })
 
-  fireEvent.click(getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    getByText('count: 1 (1)')
-    getByText('count2: 0 (0)')
+    screen.getByText('count: 1 (1)')
+    screen.getByText('count2: 0 (0)')
   })
 
-  fireEvent.click(getByText('button2'))
+  fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    getByText('count: 1 (1)')
-    getByText('count2: 1 (1)')
+    screen.getByText('count: 1 (1)')
+    screen.getByText('count2: 1 (1)')
   })
 })
 
@@ -132,16 +132,16 @@ it('inherited class without methods', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1')
 })
 
 it('class with a method', async () => {
@@ -178,7 +178,7 @@ it('class with a method', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <>
       <Counter />
       <Counter2 />
@@ -186,14 +186,14 @@ it('class with a method', async () => {
   )
 
   await waitFor(() => {
-    getByText('doubled: 0 (0)')
-    getByText('count: 0 (0)')
+    screen.getByText('doubled: 0 (0)')
+    screen.getByText('count: 0 (0)')
   })
 
-  fireEvent.click(getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    getByText('doubled: 2 (1)')
-    getByText('count: 1 (1)')
+    screen.getByText('doubled: 2 (1)')
+    screen.getByText('count: 1 (1)')
   })
 })
 
@@ -241,7 +241,7 @@ it('inherited class with a method', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <>
       <Counter />
       <Counter2 />
@@ -249,20 +249,20 @@ it('inherited class with a method', async () => {
   )
 
   await waitFor(() => {
-    getByText('doubled: 0 (0)')
-    getByText('count2: 0 (0)')
+    screen.getByText('doubled: 0 (0)')
+    screen.getByText('count2: 0 (0)')
   })
 
-  fireEvent.click(getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    getByText('doubled: 2 (1)')
-    getByText('count2: 0 (0)')
+    screen.getByText('doubled: 2 (1)')
+    screen.getByText('count2: 0 (0)')
   })
 
-  fireEvent.click(getByText('button2'))
+  fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    getByText('doubled: 2 (1)')
-    getByText('count2: 1 (1)')
+    screen.getByText('doubled: 2 (1)')
+    screen.getByText('count2: 1 (1)')
   })
 })
 
@@ -308,7 +308,7 @@ it('no extra re-renders with getters', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <>
       <Counter />
       <Counter2 />
@@ -316,19 +316,19 @@ it('no extra re-renders with getters', async () => {
   )
 
   await waitFor(() => {
-    getByText('count: 0 (0)')
-    getByText('sum: 0 (0)')
+    screen.getByText('count: 0 (0)')
+    screen.getByText('sum: 0 (0)')
   })
 
-  fireEvent.click(getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    getByText('count: 1 (1)')
-    getByText('sum: 1 (1)')
+    screen.getByText('count: 1 (1)')
+    screen.getByText('sum: 1 (1)')
   })
 
-  fireEvent.click(getByText('button2'))
+  fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    getByText('count: 1 (1)')
-    getByText('sum: 2 (2)')
+    screen.getByText('count: 1 (1)')
+    screen.getByText('sum: 2 (2)')
   })
 })

@@ -1,5 +1,5 @@
 import { StrictMode, useEffect, useRef } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
 
@@ -27,16 +27,16 @@ it('should trigger re-render setting objects with ref wrapper', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <>
       <Counter />
     </>,
   )
 
-  await findByText('count: 0 (1)')
+  await screen.findByText('count: 0 (1)')
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: 0 (2)')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 0 (2)')
 })
 
 it('should not track object wrapped in ref assigned to proxy state', async () => {
@@ -54,16 +54,16 @@ it('should not track object wrapped in ref assigned to proxy state', async () =>
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Component />
     </StrictMode>,
   )
 
-  await findByText('original')
+  await screen.findByText('original')
 
-  fireEvent.click(getByText('button'))
-  await findByText('replace')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('replace')
 })
 
 it('should not trigger re-render when mutating object wrapped in ref', async () => {
@@ -79,16 +79,16 @@ it('should not trigger re-render when mutating object wrapped in ref', async () 
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: 0')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 0')
 })
 
 it('should not update snapshot or notify subscription when mutating proxy wrapped in ref', async () => {
