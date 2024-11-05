@@ -1,5 +1,5 @@
 import { StrictMode, useEffect, useRef, useState } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 import { proxy, snapshot, useSnapshot } from 'valtio'
 
@@ -25,16 +25,16 @@ it('simple counter', async () => {
     )
   }
 
-  const { getByText, findByText, unmount } = render(
+  const { unmount } = render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1')
   unmount()
 })
 
@@ -65,7 +65,7 @@ it('no extra re-renders (commits)', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <>
       <Counter />
       <Counter2 />
@@ -73,20 +73,20 @@ it('no extra re-renders (commits)', async () => {
   )
 
   await waitFor(() => {
-    getByText('count: 0 (1)')
-    getByText('count2: 0 (1)')
+    screen.getByText('count: 0 (1)')
+    screen.getByText('count2: 0 (1)')
   })
 
-  fireEvent.click(getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    getByText('count: 1 (2)')
-    getByText('count2: 0 (1)')
+    screen.getByText('count: 1 (2)')
+    screen.getByText('count2: 0 (1)')
   })
 
-  fireEvent.click(getByText('button2'))
+  fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    getByText('count: 1 (2)')
-    getByText('count2: 1 (2)')
+    screen.getByText('count: 1 (2)')
+    screen.getByText('count2: 1 (2)')
   })
 })
 
@@ -117,7 +117,7 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <>
       <Counter />
       <Counter2 />
@@ -125,48 +125,48 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
   )
 
   await waitFor(() => {
-    getByText('count: 0')
-    getByText('count2: 0')
+    screen.getByText('count: 0')
+    screen.getByText('count2: 0')
   })
   expect(renderFn).toBeCalledTimes(1)
   expect(renderFn).lastCalledWith(0)
   expect(renderFn2).toBeCalledTimes(1)
   expect(renderFn2).lastCalledWith(0)
 
-  fireEvent.click(getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    getByText('count: 1')
-    getByText('count2: 0')
+    screen.getByText('count: 1')
+    screen.getByText('count2: 0')
   })
   expect(renderFn).toBeCalledTimes(2)
   expect(renderFn).lastCalledWith(1)
   expect(renderFn2).toBeCalledTimes(1)
   expect(renderFn2).lastCalledWith(0)
 
-  fireEvent.click(getByText('button2'))
+  fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    getByText('count: 1')
-    getByText('count2: 1')
+    screen.getByText('count: 1')
+    screen.getByText('count2: 1')
   })
   expect(renderFn).toBeCalledTimes(2)
   expect(renderFn).lastCalledWith(1)
   expect(renderFn2).toBeCalledTimes(2)
   expect(renderFn2).lastCalledWith(1)
 
-  fireEvent.click(getByText('button2'))
+  fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    getByText('count: 1')
-    getByText('count2: 2')
+    screen.getByText('count: 1')
+    screen.getByText('count2: 2')
   })
   expect(renderFn).toBeCalledTimes(2)
   expect(renderFn).lastCalledWith(1)
   expect(renderFn2).toBeCalledTimes(3)
   expect(renderFn2).lastCalledWith(2)
 
-  fireEvent.click(getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    getByText('count: 2')
-    getByText('count2: 2')
+    screen.getByText('count: 2')
+    screen.getByText('count2: 2')
   })
   expect(renderFn).toBeCalledTimes(3)
   expect(renderFn).lastCalledWith(2)
@@ -187,16 +187,16 @@ it('object in object', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1')
 })
 
 it('array in object', async () => {
@@ -214,16 +214,16 @@ it('array in object', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('counts: 0,1,2')
+  await screen.findByText('counts: 0,1,2')
 
-  fireEvent.click(getByText('button'))
-  await findByText('counts: 0,1,2,3')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('counts: 0,1,2,3')
 })
 
 it('array pop and splice', async () => {
@@ -240,19 +240,19 @@ it('array pop and splice', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('counts: 0,1,2')
+  await screen.findByText('counts: 0,1,2')
 
-  fireEvent.click(getByText('button'))
-  await findByText('counts: 0,1')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('counts: 0,1')
 
-  fireEvent.click(getByText('button2'))
-  await findByText('counts: 0,10,11,1')
+  fireEvent.click(screen.getByText('button2'))
+  await screen.findByText('counts: 0,10,11,1')
 })
 
 it('array length after direct assignment', async () => {
@@ -280,19 +280,19 @@ it('array length after direct assignment', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('counts: 0,1,2')
+  await screen.findByText('counts: 0,1,2')
 
-  fireEvent.click(getByText('increment'))
-  await findByText('counts: 0,1,2,3')
+  fireEvent.click(screen.getByText('increment'))
+  await screen.findByText('counts: 0,1,2,3')
 
-  fireEvent.click(getByText('jump'))
-  await findByText('counts: 0,1,2,3,,,,,,9')
+  fireEvent.click(screen.getByText('jump'))
+  await screen.findByText('counts: 0,1,2,3,,,,,,9')
 })
 
 it('deleting property', async () => {
@@ -308,16 +308,16 @@ it('deleting property', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: none')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: none')
 })
 
 it('circular object', async () => {
@@ -335,16 +335,16 @@ it('circular object', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1')
 })
 
 it('circular object with non-proxy object (#375)', async () => {
@@ -357,13 +357,13 @@ it('circular object with non-proxy object (#375)', async () => {
     return <div>count: {snap.obj ? 1 : snap.count}</div>
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 1')
+  await screen.findByText('count: 1')
 })
 
 it('render from outside', async () => {
@@ -385,17 +385,17 @@ it('render from outside', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('anotherCount: 0')
+  await screen.findByText('anotherCount: 0')
 
-  fireEvent.click(getByText('button'))
-  fireEvent.click(getByText('toggle'))
-  await findByText('count: 1')
+  fireEvent.click(screen.getByText('button'))
+  fireEvent.click(screen.getByText('toggle'))
+  await screen.findByText('count: 1')
 })
 
 it('counter with sync option', async () => {
@@ -413,19 +413,19 @@ it('counter with sync option', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <>
       <Counter />
     </>,
   )
 
-  await findByText('count: 0 (1)')
+  await screen.findByText('count: 0 (1)')
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1 (2)')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1 (2)')
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: 2 (3)')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 2 (3)')
 })
 
 it('support undefined property (#439)', async () => {
@@ -438,13 +438,13 @@ it('support undefined property (#439)', async () => {
     return <div>has prop: {JSON.stringify('prop' in snap)}</div>
   }
 
-  const { findByText } = render(
+  render(
     <StrictMode>
       <Component />
     </StrictMode>,
   )
 
-  await findByText('has prop: true')
+  await screen.findByText('has prop: true')
 })
 
 it('sync snapshot between nested components (#460)', async () => {
@@ -475,21 +475,21 @@ it('sync snapshot between nested components (#460)', async () => {
     )
   }
 
-  const { getByText } = render(
+  render(
     <StrictMode>
       <Parent />
     </StrictMode>,
   )
 
   await waitFor(() => {
-    getByText('Parent: value1')
-    getByText('Child: value1')
+    screen.getByText('Parent: value1')
+    screen.getByText('Child: value1')
   })
 
-  fireEvent.click(getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    getByText('Parent: value2')
-    getByText('Child: value2')
+    screen.getByText('Parent: value2')
+    screen.getByText('Child: value2')
   })
 })
 

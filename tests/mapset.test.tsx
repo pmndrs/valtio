@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
@@ -16,17 +16,17 @@ it('unsupported map', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   await new Promise((resolve) => setTimeout(resolve, 10)) // FIXME better way?
-  expect(() => getByText('count: 1')).toThrow()
+  expect(() => screen.getByText('count: 1')).toThrow()
 })
 
 it('unsupported set', async () => {
@@ -42,15 +42,15 @@ it('unsupported set', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Counter />
     </StrictMode>,
   )
 
-  await findByText('count: 1,2,3')
+  await screen.findByText('count: 1,2,3')
 
-  fireEvent.click(getByText('button'))
+  fireEvent.click(screen.getByText('button'))
   await new Promise((resolve) => setTimeout(resolve, 10)) // FIXME better way?
-  expect(() => getByText('count: 1,2,3,4')).toThrow()
+  expect(() => screen.getByText('count: 1,2,3,4')).toThrow()
 })

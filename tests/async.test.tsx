@@ -1,7 +1,7 @@
 /// <reference types="react/canary" />
 
 import ReactExports, { StrictMode, Suspense } from 'react'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
@@ -30,7 +30,7 @@ it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -38,11 +38,11 @@ it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
     </StrictMode>,
   )
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
 
-  fireEvent.click(getByText('button'))
-  await findByText('loading')
-  await findByText('count: 1')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
+  await screen.findByText('count: 1')
 })
 
 it.skipIf(typeof use === 'undefined')('delayed object', async () => {
@@ -61,7 +61,7 @@ it.skipIf(typeof use === 'undefined')('delayed object', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -69,11 +69,11 @@ it.skipIf(typeof use === 'undefined')('delayed object', async () => {
     </StrictMode>,
   )
 
-  await findByText('text: none')
+  await screen.findByText('text: none')
 
-  fireEvent.click(getByText('button'))
-  await findByText('loading')
-  await findByText('text: hello')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
+  await screen.findByText('text: hello')
 })
 
 it.skipIf(typeof use === 'undefined')(
@@ -99,7 +99,7 @@ it.skipIf(typeof use === 'undefined')(
       )
     }
 
-    const { getByText, findByText } = render(
+    render(
       <StrictMode>
         <Suspense fallback="loading">
           <Counter />
@@ -107,18 +107,18 @@ it.skipIf(typeof use === 'undefined')(
       </StrictMode>,
     )
 
-    await findByText('loading')
+    await screen.findByText('loading')
     await waitFor(() => {
-      getByText('text: counter')
-      getByText('count: 0')
+      screen.getByText('text: counter')
+      screen.getByText('count: 0')
     })
 
-    fireEvent.click(getByText('button'))
+    fireEvent.click(screen.getByText('button'))
 
-    await findByText('loading')
+    await screen.findByText('loading')
     await waitFor(() => {
-      getByText('text: counter')
-      getByText('count: 1')
+      screen.getByText('text: counter')
+      screen.getByText('count: 1')
     })
   },
 )
@@ -139,7 +139,7 @@ it.skipIf(typeof use === 'undefined')('delayed falsy value', async () => {
     )
   }
 
-  const { getByText, findByText } = render(
+  render(
     <StrictMode>
       <Suspense fallback="loading">
         <Counter />
@@ -147,9 +147,9 @@ it.skipIf(typeof use === 'undefined')('delayed falsy value', async () => {
     </StrictMode>,
   )
 
-  await findByText('value: true')
+  await screen.findByText('value: true')
 
-  fireEvent.click(getByText('button'))
-  await findByText('loading')
-  await findByText('value: null')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('loading')
+  await screen.findByText('value: null')
 })
