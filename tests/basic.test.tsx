@@ -497,3 +497,35 @@ it('respects property enumerability (#726)', async () => {
   const x = proxy(Object.defineProperty({ a: 1 }, 'b', { value: 2 }))
   expect(Object.keys(snapshot(x))).toEqual(Object.keys(x))
 })
+
+it('stable snapshot object (#985)', async () => {
+  const state = proxy({ count: 0, obj: {} })
+
+  let effectCount = 0
+
+  const TestComponent = () => {
+    const { count, obj } = useSnapshot(state)
+    useEffect(() => {
+      ++effectCount
+    }, [obj])
+    return (
+      <>
+        <div>count: {count}</div>
+        <button onClick={() => ++state.count}>button</button>
+      </>
+    )
+  }
+
+  const { getByText, findByText } = render(<TestComponent />)
+
+  await findByText('count: 0')
+  expect(effectCount).toBe(1)
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 1')
+  expect(effectCount).toBe(1)
+
+  fireEvent.click(getByText('button'))
+  await findByText('count: 2')
+  expect(effectCount).toBe(1)
+})
