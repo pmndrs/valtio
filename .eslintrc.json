@@ -49,7 +49,6 @@
       "warn",
       { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
     ],
-    "@typescript-eslint/no-unused-expressions": "off",
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-explicit-any": "off",
@@ -120,6 +119,15 @@
       "files": ["./*.js"],
       "rules": {
         "@typescript-eslint/no-require-imports": "off"
+      }
+    },
+    {
+      "files": [
+        "src/vanilla/utils/proxyMap.ts",
+        "src/vanilla/utils/proxySet.ts"
+      ],
+      "rules": {
+        "@typescript-eslint/no-unused-expressions": "off"
       }
     }
   ]
