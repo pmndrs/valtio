@@ -792,8 +792,6 @@ describe('ui updates - useSnapshot - iterator methods', () => {
       }
       const state = proxySet<MapItem>()
 
-      let id = 0
-
       const TestComponent = () => {
         const snap = useSnapshot(state)
 
