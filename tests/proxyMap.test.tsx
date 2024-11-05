@@ -466,6 +466,39 @@ describe('ui updates - useSnapshot', async () => {
     })
   })
 
+  it('should update ui when calling get with absent key that has been added later', async () => {
+    const state = proxyMap()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>value: {`${snap.get('key')}`}</p>
+          <button
+            onClick={() => {
+              state.set('key', 'value')
+            }}
+          >
+            set key
+          </button>
+        </>
+      )
+    }
+
+    render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    screen.getByText('value: undefined')
+
+    fireEvent.click(screen.getByText('set key'))
+    await waitFor(() => {
+      screen.getByText('value: value')
+    })
+  })
+
   it('should update ui when calling has before and after settiing multile keys and deleting a single one (first item)', async () => {
     const state = proxyMap()
     const TestComponent = () => {
@@ -518,15 +551,18 @@ describe('ui updates - useSnapshot', async () => {
     })
   })
 
-  it('should update ui when calling has before and after settiing multile keys and deleting a single one (first item)', async () => {
+  it('should update ui when calling has/get before and after settiing multile keys and deleting a single one multiple times', async () => {
     const state = proxyMap()
     const TestComponent = () => {
       const snap = useSnapshot(state)
 
       return (
         <>
-          <p>has key: {`${snap.has('key')}`}</p>
+          <p>has key1: {`${snap.has('key')}`}</p>
+          <p>value1: {`${snap.get('key')}`}</p>
           <p>has key2: {`${snap.has('key2')}`}</p>
+          <p>value2: {`${snap.get('key2')}`}</p>
+
           <button
             onClick={() => {
               state.set('key', 'value')
@@ -537,10 +573,17 @@ describe('ui updates - useSnapshot', async () => {
           </button>
           <button
             onClick={() => {
+              state.delete('key')
+            }}
+          >
+            delete key 1
+          </button>
+          <button
+            onClick={() => {
               state.delete('key2')
             }}
           >
-            delete keys
+            delete key 2
           </button>
         </>
       )
@@ -553,20 +596,89 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has key: false')
+      screen.getByText('has key1: false')
+      screen.getByText('value1: undefined')
       screen.getByText('has key2: false')
+      screen.getByText('value2: undefined')
     })
 
     fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
-      screen.getByText('has key: true')
+      screen.getByText('has key1: true')
       screen.getByText('has key2: true')
+      screen.getByText('value1: value')
+      screen.getByText('value2: value')
     })
 
-    fireEvent.click(screen.getByText('delete keys'))
+    fireEvent.click(screen.getByText('delete key 1'))
     await waitFor(() => {
-      screen.getByText('has key: true')
+      screen.getByText('has key1: false')
+      screen.getByText('value1: undefined')
+      screen.getByText('has key2: true')
+      screen.getByText('value2: value')
+    })
+
+    fireEvent.click(screen.getByText('delete key 2'))
+    await waitFor(() => {
+      screen.getByText('has key1: false')
+      screen.getByText('value1: undefined')
       screen.getByText('has key2: false')
+      screen.getByText('value2: undefined')
+    })
+  })
+
+  it('should update ui when calling only one get with absent key added later', async () => {
+    const state = proxyMap()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <button
+            onClick={() => {
+              state.set('key', 'value')
+            }}
+          >
+            set key
+          </button>
+          <button
+            onClick={() => {
+              state.delete('key')
+            }}
+          >
+            delete key
+          </button>
+        </>
+      )
+    }
+
+    const SeparateComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>value: {`${snap.get('key')}`}</p>
+        </>
+      )
+    }
+
+    render(
+      <StrictMode>
+        <TestComponent />
+        <SeparateComponent />
+      </StrictMode>,
+    )
+
+    screen.getByText('value: undefined')
+
+    fireEvent.click(screen.getByText('set key'))
+    await waitFor(() => {
+      screen.getByText('value: value')
+    })
+
+    fireEvent.click(screen.getByText('delete key'))
+    await waitFor(() => {
+      screen.getByText('value: undefined')
     })
   })
 
@@ -579,6 +691,8 @@ describe('ui updates - useSnapshot', async () => {
         <>
           <p>has key: {`${snap.has('key')}`}</p>
           <p>has key2: {`${snap.has('key2')}`}</p>
+          <p>value1: {`${snap.get('key')}`}</p>
+          <p>value2: {`${snap.get('key2')}`}</p>
           <button
             onClick={() => {
               state.set('key', 'value')
@@ -607,18 +721,185 @@ describe('ui updates - useSnapshot', async () => {
     await waitFor(() => {
       screen.getByText('has key: false')
       screen.getByText('has key2: false')
+      screen.getByText('value1: undefined')
+      screen.getByText('value2: undefined')
     })
 
     fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
       screen.getByText('has key: true')
       screen.getByText('has key2: true')
+      screen.getByText('value1: value')
+      screen.getByText('value2: value')
     })
 
     fireEvent.click(screen.getByText('clear map'))
     await waitFor(() => {
       screen.getByText('has key: false')
       screen.getByText('has key2: false')
+      screen.getByText('value1: undefined')
+      screen.getByText('value2: undefined')
+    })
+  })
+})
+
+describe('ui updates - useSnapshot - iterator methods', () => {
+  const iteratorMethods = ['keys', 'values', 'entries'] as const
+
+  iteratorMethods.forEach((iteratorMethod) => {
+    it(`should be reactive to changes when using ${iteratorMethod} method`, async () => {
+      interface MapItem {
+        id: number
+        name: string
+      }
+      const state = proxyMap<number, MapItem>()
+      const TestComponent = () => {
+        const snap = useSnapshot(state)
+
+        const addItem = (id: number) => {
+          const item: MapItem = {
+            id,
+            name: `item ${id}`,
+          }
+          state.set(item.id, item)
+        }
+
+        const methods = {
+          entries: Array.from(snap.entries()).map(([id, item]) => (
+            <li key={id}>{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+          )),
+          values: Array.from(snap.values()).map((item) => (
+            <li
+              key={item.id}
+            >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+          )),
+          keys: Array.from(snap.keys()).map((id) => {
+            const item = snap.get(id)!
+            return (
+              <li key={id}>{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+            )
+          }),
+        }
+
+        return (
+          <>
+            <button
+              onClick={() => {
+                state.set(1, { name: 'item 1 updated', id: 1 })
+              }}
+            >
+              Update
+            </button>
+            <button onClick={() => addItem(1)}>Add</button>
+            <ul>{methods[iteratorMethod]}</ul>
+          </>
+        )
+      }
+
+      render(
+        <StrictMode>
+          <TestComponent />
+        </StrictMode>,
+      )
+
+      fireEvent.click(screen.getByText('Add'))
+      await waitFor(() => {
+        screen.getByText(`item.name: item 1; item.id: 1`)
+      })
+
+      fireEvent.click(screen.getByText('Update'))
+      await waitFor(() => {
+        screen.getByText(`item.name: item 1 updated; item.id: 1`)
+      })
+    })
+
+    it(`should be reactive to changes when using ${iteratorMethod} method when setting multiple values`, async () => {
+      interface MapItem {
+        id: number
+        name: string
+      }
+      const state = proxyMap<number, MapItem>()
+
+      const TestComponent = () => {
+        const snap = useSnapshot(state)
+
+        const addItem = (id: number) => {
+          const item: MapItem = {
+            id,
+            name: `item ${id}`,
+          }
+          state.set(item.id, item)
+        }
+
+        return (
+          <>
+            <button
+              onClick={() => {
+                state.forEach((value, key) => {
+                  state.set(key, { ...value, name: `${value.name} updated` })
+                })
+              }}
+            >
+              Update
+            </button>
+            <button
+              onClick={() => {
+                state.delete(1)
+              }}
+            >
+              Delete
+            </button>
+            <button
+              onClick={() => {
+                addItem(1)
+                addItem(2)
+              }}
+            >
+              Add
+            </button>
+            <ul>
+              {iteratorMethod === 'entries'
+                ? Array.from(snap[iteratorMethod]()).map(([id, item]) => (
+                    <li
+                      key={id}
+                    >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+                  ))
+                : iteratorMethod === 'values'
+                  ? Array.from(snap[iteratorMethod]()).map((item) => (
+                      <li
+                        key={item.id}
+                      >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+                    ))
+                  : Array.from(snap[iteratorMethod]()).map((id) => {
+                      const item = snap.get(id)!
+                      return (
+                        <li
+                          key={id}
+                        >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+                      )
+                    })}
+            </ul>
+          </>
+        )
+      }
+
+      render(
+        <StrictMode>
+          <TestComponent />
+        </StrictMode>,
+      )
+
+      fireEvent.click(screen.getByText('Add'))
+      await waitFor(() => {
+        screen.getByText(`item.name: item 1; item.id: 1`)
+        screen.getByText(`item.name: item 2; item.id: 2`)
+      })
+
+      fireEvent.click(screen.getByText('Update'))
+      await waitFor(() => {
+        screen.getByText(`item.name: item 1 updated; item.id: 1`)
+        screen.getByText(`item.name: item 2 updated; item.id: 2`)
+      })
     })
   })
 })

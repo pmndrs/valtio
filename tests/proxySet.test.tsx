@@ -617,4 +617,238 @@ describe('ui updates - useSnapshot', async () => {
       screen.getByText('has value2: false')
     })
   })
+
+  it('should be reactive to changes when using values method', async () => {
+    const state = proxySet<number>()
+
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      const addItem = () => {
+        const item = 1
+        state.add(item)
+      }
+
+      return (
+        <>
+          <button onClick={addItem}>Add Item</button>
+          <ul>
+            {Array.from(snap.values()).map((setItem) => (
+              <li key={setItem}>{`${setItem}`}</li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    fireEvent.click(getByText('Add Item'))
+    await waitFor(() => {
+      getByText('1')
+    })
+  })
+
+  it('should be reactive to changes when using keys method', async () => {
+    const state = proxySet<number>()
+
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      const addItem = () => {
+        const item = 1
+        state.add(item)
+      }
+
+      return (
+        <>
+          <button onClick={addItem}>Add Item</button>
+          <ul>
+            {Array.from(snap.keys()).map((setKey) => (
+              <li key={setKey}>{`item key: ${setKey}`}</li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    fireEvent.click(getByText('Add Item'))
+    await waitFor(() => {
+      getByText('item key: 1')
+    })
+  })
+
+  it('should be reactive to changes when using entries method', async () => {
+    const state = proxySet<number>()
+
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      const addItem = () => {
+        const item = 1
+        state.add(item)
+      }
+
+      return (
+        <>
+          <button onClick={addItem}>Add Item</button>
+          <ul>
+            {Array.from(snap.entries()).map(([setKey, setValue]) => (
+              <li key={setValue}>{`key: ${setKey}; value: ${setValue}`}</li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+
+    const { getByText } = render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    fireEvent.click(getByText('Add Item'))
+    await waitFor(() => {
+      getByText('key: 1; value: 1')
+    })
+  })
+})
+
+describe('ui updates - useSnapshot - iterator methods', () => {
+  const iteratorMethods = ['keys', 'values', 'entries'] as const
+  iteratorMethods.forEach((iteratorMethod) => {
+    it(`should be reactive to changes when using ${iteratorMethod} method`, async () => {
+      interface MapItem {
+        id: number
+        name: string
+      }
+      const state = proxySet<MapItem>()
+
+      const TestComponent = () => {
+        const snap = useSnapshot(state)
+
+        const addItem = (id: number) => {
+          const item: MapItem = {
+            id,
+            name: `item ${id}`,
+          }
+          state.add(item)
+        }
+
+        const methods = {
+          entries: Array.from(snap.entries()).map(([item]) => (
+            <li
+              key={item.id}
+            >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+          )),
+          values: Array.from(snap.values()).map((item) => (
+            <li
+              key={item.id}
+            >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+          )),
+          keys: Array.from(snap.keys()).map((item) => {
+            return (
+              <li
+                key={item.id}
+              >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+            )
+          }),
+        }
+
+        return (
+          <>
+            <button onClick={() => addItem(1)}>Add</button>
+            <ul>{methods[iteratorMethod]}</ul>
+          </>
+        )
+      }
+
+      render(
+        <StrictMode>
+          <TestComponent />
+        </StrictMode>,
+      )
+
+      fireEvent.click(screen.getByText('Add'))
+      await waitFor(() => {
+        screen.getByText(`item.name: item 1; item.id: 1`)
+      })
+    })
+
+    it(`should be reactive to changes when using ${iteratorMethod} method when setting multiple values`, async () => {
+      interface MapItem {
+        id: number
+        name: string
+      }
+      const state = proxySet<MapItem>()
+
+      const TestComponent = () => {
+        const snap = useSnapshot(state)
+
+        const addItem = (id: number) => {
+          const item: MapItem = {
+            id,
+            name: `item ${id}`,
+          }
+          state.add(item)
+        }
+
+        return (
+          <>
+            <button
+              onClick={() => {
+                addItem(1)
+                addItem(2)
+              }}
+            >
+              Add
+            </button>
+            <ul>
+              {iteratorMethod === 'entries'
+                ? Array.from(snap[iteratorMethod]()).map(([item]) => (
+                    <li
+                      key={item.id}
+                    >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+                  ))
+                : iteratorMethod === 'values'
+                  ? Array.from(snap[iteratorMethod]()).map((item) => (
+                      <li
+                        key={item.id}
+                      >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+                    ))
+                  : Array.from(snap[iteratorMethod]()).map((item) => {
+                      return (
+                        <li
+                          key={item.id}
+                        >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
+                      )
+                    })}
+            </ul>
+          </>
+        )
+      }
+
+      render(
+        <StrictMode>
+          <TestComponent />
+        </StrictMode>,
+      )
+
+      fireEvent.click(screen.getByText('Add'))
+      await waitFor(() => {
+        screen.getByText(`item.name: item 1; item.id: 1`)
+        screen.getByText(`item.name: item 2; item.id: 2`)
+      })
+    })
+  })
 })

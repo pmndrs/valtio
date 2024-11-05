@@ -74,7 +74,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     has(value: T) {
       const map = getMapForThis(this)
       const v = maybeProxify(value)
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
       this.epoch // touch property for tracking
       return map.has(v)
     },
@@ -114,21 +113,25 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       indexMap.clear()
     },
     forEach(cb) {
+      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       map.forEach((index) => {
         cb(this.data[index]!, this.data[index]!, this)
       })
     },
     *values(): IterableIterator<T> {
+      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         yield this.data[index]!
       }
     },
     keys(): IterableIterator<T> {
+      this.epoch // touch property for tracking
       return this.values()
     },
     *entries(): IterableIterator<[T, T]> {
+      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         const value = this.data[index]!
@@ -145,6 +148,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return 'Set'
     },
     intersection(other: Set<T>): Set<T> {
+      this.epoch // touch property for tracking
       const otherSet = proxySet<T>(other)
       const resultSet = proxySet<T>()
       for (const value of this.values()) {
@@ -155,6 +159,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return proxySet(resultSet)
     },
     isDisjointFrom(other: Set<T>): boolean {
+      this.epoch // touch property for tracking
       const otherSet = proxySet<T>(other)
       return (
         this.size === other.size &&
@@ -162,6 +167,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       )
     },
     isSubsetOf(other: Set<T>) {
+      this.epoch // touch property for tracking
       const otherSet = proxySet<T>(other)
       return (
         this.size <= other.size &&
@@ -169,6 +175,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       )
     },
     isSupersetOf(other: Set<T>) {
+      this.epoch // touch property for tracking
       const otherSet = proxySet<T>(other)
       return (
         this.size >= other.size &&
@@ -176,6 +183,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       )
     },
     symmetricDifference(other: Set<T>) {
+      this.epoch // touch property for tracking
       const resultSet = proxySet<T>()
       const otherSet = proxySet<T>(other)
       for (const value of this.values()) {
@@ -186,6 +194,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return proxySet(resultSet)
     },
     union(other: Set<T>) {
+      this.epoch // touch property for tracking
       const resultSet = proxySet<T>()
       const otherSet = proxySet<T>(other)
       for (const value of this.values()) {

@@ -120,6 +120,15 @@
       "rules": {
         "@typescript-eslint/no-require-imports": "off"
       }
+    },
+    {
+      "files": [
+        "src/vanilla/utils/proxyMap.ts",
+        "src/vanilla/utils/proxySet.ts"
+      ],
+      "rules": {
+        "@typescript-eslint/no-unused-expressions": "off"
+      }
     }
   ]
 }

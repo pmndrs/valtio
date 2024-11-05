@@ -14,7 +14,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-prism": "^4.3.2",
-    "valtio": "^2.0.0",
+    "valtio": "^2.1.1",
     "valtio-history": "^1.0.0"
   },
   "devDependencies": {
