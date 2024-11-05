@@ -551,7 +551,7 @@ describe('ui updates - useSnapshot', async () => {
     })
   })
 
-  it('should update ui when calling has before and after settiing multile keys and deleting a single one (first item)', async () => {
+  it('should update ui when calling has/get before and after settiing multile keys and deleting a single one multiple times', async () => {
     const state = proxyMap()
     const TestComponent = () => {
       const snap = useSnapshot(state)
@@ -624,6 +624,61 @@ describe('ui updates - useSnapshot', async () => {
       screen.getByText('value1: undefined')
       screen.getByText('has key2: false')
       screen.getByText('value2: undefined')
+    })
+  })
+
+  it('should update ui when calling only one get with absent key added later', async () => {
+    const state = proxyMap()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <button
+            onClick={() => {
+              state.set('key', 'value')
+            }}
+          >
+            set key
+          </button>
+          <button
+            onClick={() => {
+              state.delete('key')
+            }}
+          >
+            delete key
+          </button>
+        </>
+      )
+    }
+
+    const SeparateComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>value: {`${snap.get('key')}`}</p>
+        </>
+      )
+    }
+
+    render(
+      <StrictMode>
+        <TestComponent />
+        <SeparateComponent />
+      </StrictMode>,
+    )
+
+    screen.getByText('value: undefined')
+
+    fireEvent.click(screen.getByText('set key'))
+    await waitFor(() => {
+      screen.getByText('value: value')
+    })
+
+    fireEvent.click(screen.getByText('delete key'))
+    await waitFor(() => {
+      screen.getByText('value: undefined')
     })
   })
 
