@@ -466,6 +466,39 @@ describe('ui updates - useSnapshot', async () => {
     })
   })
 
+  it('should update ui when calling get with absent key that has been added later', async () => {
+    const state = proxyMap()
+    const TestComponent = () => {
+      const snap = useSnapshot(state)
+
+      return (
+        <>
+          <p>value: {`${snap.get('key')}`}</p>
+          <button
+            onClick={() => {
+              state.set('key', 'value')
+            }}
+          >
+            set key
+          </button>
+        </>
+      )
+    }
+
+    render(
+      <StrictMode>
+        <TestComponent />
+      </StrictMode>,
+    )
+
+    screen.getByText('value: undefined')
+
+    fireEvent.click(screen.getByText('set key'))
+    await waitFor(() => {
+      screen.getByText('value: value')
+    })
+  })
+
   it('should update ui when calling has before and after settiing multile keys and deleting a single one (first item)', async () => {
     const state = proxyMap()
     const TestComponent = () => {
