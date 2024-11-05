@@ -699,14 +699,13 @@ describe('ui updates - useSnapshot - iterator methods', () => {
         name: string
       }
       const state = proxyMap<number, MapItem>()
-      let id = 0
 
       const TestComponent = () => {
         const snap = useSnapshot(state)
 
-        const addItem = () => {
+        const addItem = (id: number) => {
           const item: MapItem = {
-            id: ++id,
+            id,
             name: `item ${id}`,
           }
           state.set(item.id, item)
