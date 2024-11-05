@@ -1,8 +1,8 @@
 import { StrictMode } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, useSnapshot } from '../src'
-import { proxyMap, proxySet } from '../src/vanilla/utils'
+import { proxy, snapshot, useSnapshot } from 'valtio'
+import { proxyMap, proxySet } from 'valtio/utils'
 
 const initialValues = [
   {
