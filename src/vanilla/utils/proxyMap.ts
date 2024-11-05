@@ -81,7 +81,6 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const map = getMapForThis(this)
       const index = map.get(key)
       if (index === undefined) {
-        this.epoch // touch property for tracking
         return undefined
       }
       return this.data[index]

@@ -1,8 +1,8 @@
 import { StrictMode } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, useSnapshot } from 'valtio'
-import { proxyMap, proxySet } from 'valtio/utils'
+import { proxy, snapshot, useSnapshot } from '../src'
+import { proxyMap, proxySet } from '../src/vanilla/utils'
 
 const initialValues = [
   {
@@ -525,8 +525,11 @@ describe('ui updates - useSnapshot', async () => {
 
       return (
         <>
-          <p>has key: {`${snap.has('key')}`}</p>
+          <p>has key1: {`${snap.has('key')}`}</p>
+          <p>value1: {`${snap.get('key')}`}</p>
           <p>has key2: {`${snap.has('key2')}`}</p>
+          <p>value2: {`${snap.get('key2')}`}</p>
+
           <button
             onClick={() => {
               state.set('key', 'value')
@@ -537,10 +540,17 @@ describe('ui updates - useSnapshot', async () => {
           </button>
           <button
             onClick={() => {
+              state.delete('key')
+            }}
+          >
+            delete key 1
+          </button>
+          <button
+            onClick={() => {
               state.delete('key2')
             }}
           >
-            delete keys
+            delete key 2
           </button>
         </>
       )
@@ -553,20 +563,34 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has key: false')
+      screen.getByText('has key1: false')
+      screen.getByText('value1: undefined')
       screen.getByText('has key2: false')
+      screen.getByText('value2: undefined')
     })
 
     fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
-      screen.getByText('has key: true')
+      screen.getByText('has key1: true')
       screen.getByText('has key2: true')
+      screen.getByText('value1: value')
+      screen.getByText('value2: value')
     })
 
-    fireEvent.click(screen.getByText('delete keys'))
+    fireEvent.click(screen.getByText('delete key 1'))
     await waitFor(() => {
-      screen.getByText('has key: true')
+      screen.getByText('has key1: false')
+      screen.getByText('value1: undefined')
+      screen.getByText('has key2: true')
+      screen.getByText('value2: value')
+    })
+
+    fireEvent.click(screen.getByText('delete key 2'))
+    await waitFor(() => {
+      screen.getByText('has key1: false')
+      screen.getByText('value1: undefined')
       screen.getByText('has key2: false')
+      screen.getByText('value2: undefined')
     })
   })
 
@@ -579,6 +603,8 @@ describe('ui updates - useSnapshot', async () => {
         <>
           <p>has key: {`${snap.has('key')}`}</p>
           <p>has key2: {`${snap.has('key2')}`}</p>
+          <p>value1: {`${snap.get('key')}`}</p>
+          <p>value2: {`${snap.get('key2')}`}</p>
           <button
             onClick={() => {
               state.set('key', 'value')
@@ -607,18 +633,24 @@ describe('ui updates - useSnapshot', async () => {
     await waitFor(() => {
       screen.getByText('has key: false')
       screen.getByText('has key2: false')
+      screen.getByText('value1: undefined')
+      screen.getByText('value2: undefined')
     })
 
     fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
       screen.getByText('has key: true')
       screen.getByText('has key2: true')
+      screen.getByText('value1: value')
+      screen.getByText('value2: value')
     })
 
     fireEvent.click(screen.getByText('clear map'))
     await waitFor(() => {
       screen.getByText('has key: false')
       screen.getByText('has key2: false')
+      screen.getByText('value1: undefined')
+      screen.getByText('value2: undefined')
     })
   })
 })
@@ -721,6 +753,13 @@ describe('ui updates - useSnapshot - iterator methods', () => {
               }}
             >
               Update
+            </button>
+            <button
+              onClick={() => {
+                state.delete(1)
+              }}
+            >
+              Delete
             </button>
             <button
               onClick={() => {
