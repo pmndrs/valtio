@@ -21,6 +21,7 @@
     "react-hooks",
     "import",
     "vitest",
+    "testing-library",
     "eslint-plugin-react-compiler"
   ],
   "parser": "@typescript-eslint/parser",
@@ -109,6 +110,7 @@
   },
   "overrides": [
     {
+      "extends": ["plugin:testing-library/react"],
       "files": ["tests/**/*.ts", "tests/**/*.tsx"],
       "rules": {
         "import/extensions": ["error", "never"],
