@@ -11,7 +11,9 @@ export default defineConfig({
   },
   test: {
     name: 'valtio',
-    setupFiles: './tests/setup.ts',
+    // Keeping globals to true triggers React Testing Library's auto cleanup
+    // https://vitest.dev/guide/migration.html
+    globals: true,
     coverage: {
       include: ['src/**/'],
       reporter: ['text', 'json', 'html', 'text-summary'],
