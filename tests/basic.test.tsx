@@ -516,16 +516,16 @@ it('stable snapshot object (#985)', async () => {
     )
   }
 
-  const { getByText, findByText } = render(<TestComponent />)
+  render(<TestComponent />)
 
-  await findByText('count: 0')
+  await screen.findByText('count: 0')
   expect(effectCount).toBe(1)
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: 1')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 1')
   expect(effectCount).toBe(1)
 
-  fireEvent.click(getByText('button'))
-  await findByText('count: 2')
+  fireEvent.click(screen.getByText('button'))
+  await screen.findByText('count: 2')
   expect(effectCount).toBe(1)
 })

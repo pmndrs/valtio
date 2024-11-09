@@ -641,16 +641,15 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
-    fireEvent.click(getByText('Add Item'))
-    await waitFor(() => {
-      getByText('1')
-    })
+    fireEvent.click(screen.getByText('Add Item'))
+
+    expect(await screen.findByText('1')).toBeDefined()
   })
 
   it('should be reactive to changes when using keys method', async () => {
@@ -676,16 +675,14 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
-    fireEvent.click(getByText('Add Item'))
-    await waitFor(() => {
-      getByText('item key: 1')
-    })
+    fireEvent.click(screen.getByText('Add Item'))
+    expect(await screen.findByText('item key: 1')).toBeDefined()
   })
 
   it('should be reactive to changes when using entries method', async () => {
@@ -711,16 +708,14 @@ describe('ui updates - useSnapshot', async () => {
       )
     }
 
-    const { getByText } = render(
+    render(
       <StrictMode>
         <TestComponent />
       </StrictMode>,
     )
 
-    fireEvent.click(getByText('Add Item'))
-    await waitFor(() => {
-      getByText('key: 1; value: 1')
-    })
+    fireEvent.click(screen.getByText('Add Item'))
+    expect(await screen.findByText('key: 1; value: 1')).toBeDefined()
   })
 })
 
