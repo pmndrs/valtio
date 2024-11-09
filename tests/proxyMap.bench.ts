@@ -1,6 +1,6 @@
-/* eslint-disable vitest/consistent-test-it */
-import { bench, describe, test } from 'vitest'
-import { proxy, snapshot } from 'valtio'
+/* eslint-disable @vitest/consistent-test-it */
+import { bench, describe } from 'vitest'
+import { snapshot } from 'valtio'
 import { proxyMap } from 'valtio/utils'
 
 // Helper function to generate test data
