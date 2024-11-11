@@ -14,6 +14,7 @@ export default defineConfig({
     // Keeping globals to true triggers React Testing Library's auto cleanup
     // https://vitest.dev/guide/migration.html
     globals: true,
+    setupFiles: ['tests/setup.ts'],
     coverage: {
       include: ['src/**/'],
       reporter: ['text', 'json', 'html', 'text-summary'],
