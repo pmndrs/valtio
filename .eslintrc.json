@@ -20,7 +20,8 @@
     "prettier",
     "react-hooks",
     "import",
-    "vitest",
+    "@vitest",
+    "jest-dom",
     "testing-library",
     "eslint-plugin-react-compiler"
   ],
@@ -53,10 +54,6 @@
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-explicit-any": "off",
-    "vitest/consistent-test-it": [
-      "error",
-      { "fn": "it", "withinDescribe": "it" }
-    ],
     "import/order": [
       "error",
       {
@@ -110,10 +107,19 @@
   },
   "overrides": [
     {
-      "extends": ["plugin:testing-library/react"],
+      "extends": [
+        "plugin:jest-dom/recommended",
+        "plugin:testing-library/react",
+        "plugin:@vitest/legacy-recommended"
+      ],
       "files": ["tests/**/*.ts", "tests/**/*.tsx"],
       "rules": {
         "import/extensions": ["error", "never"],
+        "@vitest/expect-expect": "off",
+        "@vitest/consistent-test-it": [
+          "error",
+          { "fn": "it", "withinDescribe": "it" }
+        ],
         "@typescript-eslint/no-unused-vars": "off"
       }
     },

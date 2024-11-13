@@ -41,7 +41,6 @@ jobs:
         if: ${{ startsWith(matrix.typescript, '4.') || startsWith(matrix.typescript, '3.') }}
         run: |
           sed -i~ 's/"verbatimModuleSyntax": true,//' tsconfig.json
-          sed -i~ 's/"lib": \["es2023"\],//' tsconfig.json
       - name: Patch for Old TS
         run: |
           sed -i~ 's/"moduleResolution": "bundler",/"moduleResolution": "node",/' tsconfig.json
