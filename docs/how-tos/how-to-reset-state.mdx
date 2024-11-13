@@ -38,7 +38,12 @@ const reset = () => {
 }
 ```
 
-> [!NOTE]
+<br />
+
+> ℹ️ &nbsp; Note
+>
 > Using `structuredClone()`
+
+<br />
 
 In 2022, there was a new global function added called `structuredClone` that is widely available in most modern browsers. You can use `structuredClone` in the same way as `deepClone` above, however `deepClone` is preferred as it will be aware of any `ref`s in your state.

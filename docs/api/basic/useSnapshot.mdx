@@ -184,10 +184,15 @@ return <div>{profile.name}</div>
 
 In dev mode, `useSnapshot` uses React's `useDebugValue` to output a list of fields that were accessed during rendering, i.e. which specific fields will trigger re-render when the tracking proxy changes.
 
-> [!IMPORTANT]There are two disclaimers to using the debug value
+<br />
+
+> !! &nbsp; There are two disclaimers to
+> using the debug value
 >
 > 1. Due to the way `useSnapshot` uses a proxy to recorded accesses _after_ `useSnapshot` has returned, the fields listed in `useDebugValue` are technically from the _previous_ render.
 > 2. Object getter and class getter calls are not included in the `useDebugValue` output, but don't worry, they are actually correctly tracked internally and correctly trigger re-renders when changed.
+
+<br />
 
 ## Codesandbox demo
 
