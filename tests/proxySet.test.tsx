@@ -649,7 +649,7 @@ describe('ui updates - useSnapshot', async () => {
 
     fireEvent.click(screen.getByText('Add Item'))
 
-    expect(await screen.findByText('1')).toBeDefined()
+    expect(await screen.findByText('1')).toBeInTheDocument()
   })
 
   it('should be reactive to changes when using keys method', async () => {
@@ -682,7 +682,7 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     fireEvent.click(screen.getByText('Add Item'))
-    expect(await screen.findByText('item key: 1')).toBeDefined()
+    expect(await screen.findByText('item key: 1')).toBeInTheDocument()
   })
 
   it('should be reactive to changes when using entries method', async () => {
@@ -715,7 +715,7 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     fireEvent.click(screen.getByText('Add Item'))
-    expect(await screen.findByText('key: 1; value: 1')).toBeDefined()
+    expect(await screen.findByText('key: 1; value: 1')).toBeInTheDocument()
   })
 })
 

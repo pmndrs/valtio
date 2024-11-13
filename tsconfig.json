@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "strict": true,
-    "lib": ["es2023"],
+    "lib": ["dom"],
     "jsx": "react-jsx",
     "esModuleInterop": true,
     "module": "esnext",
@@ -14,6 +14,7 @@
     "verbatimModuleSyntax": true,
     "declaration": true,
     "isolatedDeclarations": true,
+    "types": ["@testing-library/jest-dom"],
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
