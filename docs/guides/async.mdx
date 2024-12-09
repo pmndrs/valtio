@@ -28,7 +28,7 @@ subscribe(store, () => {
 })
 ```
 
-#### Suspend your components
+## Suspend your React components
 
 Valtio is compatible with React 19 `use` hook. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
 
@@ -45,7 +45,7 @@ function Post() {
 
 function App() {
   return (
-    <Suspense fallback={<span>waiting...</span>}>
+    <Suspense fallback="Loading...">
       <Post />
     </Suspense>
   )
