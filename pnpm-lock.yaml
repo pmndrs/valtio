@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       proxy-compare:
-        specifier: ^3.0.0
-        version: 3.0.0
+        specifier: https://pkg.csb.dev/dai-shi/proxy-compare/commit/42bb1fee/proxy-compare
+        version: '@pkg.csb.dev/dai-shi/proxy-compare/commit/42bb1fee/proxy-compare'
     devDependencies:
       '@redux-devtools/extension':
         specifier: ^3.3.0
@@ -12672,6 +12672,7 @@ packages:
 
   /proxy-compare@3.0.0:
     resolution: {integrity: sha512-y44MCkgtZUCT9tZGuE278fB7PWVf7fRYy0vbRXAts2o5F0EfC4fIQrvQQGBJo1WJbFcVLXzApOscyJuZqHQc1w==}
+    dev: true
 
   /proxy-memoize@3.0.1:
     resolution: {integrity: sha512-VDdG/VYtOgdGkWJx7y0o7p+zArSf2383Isci8C+BP3YXgMYDoPd3cCBjw0JdWb6YBb9sFiOPbAADDVTPJnh+9g==}
@@ -15889,3 +15890,9 @@ packages:
   /zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
     dev: true
+
+  '@pkg.csb.dev/dai-shi/proxy-compare/commit/42bb1fee/proxy-compare':
+    resolution: {tarball: https://pkg.csb.dev/dai-shi/proxy-compare/commit/42bb1fee/proxy-compare}
+    name: proxy-compare
+    version: 3.0.0
+    dev: false
