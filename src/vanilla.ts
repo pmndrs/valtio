@@ -72,6 +72,7 @@ const createSnapshotDefault = <T extends object>(
     : Object.create(Object.getPrototypeOf(target))
   markToTrack(snap, true) // mark to track
   snapCache.set(target, [version, snap])
+  Object.preventExtensions(snap)
   Reflect.ownKeys(target).forEach((key) => {
     if (Object.getOwnPropertyDescriptor(snap, key)) {
       // Only the known case is Array.length so far.
@@ -99,7 +100,7 @@ const createSnapshotDefault = <T extends object>(
     }
     Object.defineProperty(snap, key, desc)
   })
-  return Object.preventExtensions(snap)
+  return snap
 }
 
 const createHandlerDefault = <T extends object>(
