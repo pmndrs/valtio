@@ -8,22 +8,13 @@
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "prettier",
-    "plugin:prettier/recommended",
+    "plugin:react/jsx-runtime",
     "plugin:react-hooks/recommended",
     "plugin:import/errors",
-    "plugin:import/warnings"
+    "plugin:import/warnings",
+    "plugin:prettier/recommended"
   ],
-  "plugins": [
-    "@typescript-eslint",
-    "react",
-    "prettier",
-    "react-hooks",
-    "import",
-    "vitest",
-    "testing-library",
-    "eslint-plugin-react-compiler"
-  ],
+  "plugins": ["react-compiler"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2018,
@@ -53,10 +44,6 @@
     "@typescript-eslint/no-use-before-define": "off",
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-explicit-any": "off",
-    "vitest/consistent-test-it": [
-      "error",
-      { "fn": "it", "withinDescribe": "it" }
-    ],
     "import/order": [
       "error",
       {
@@ -81,8 +68,6 @@
         "pathGroupsExcludedImportTypes": ["builtin"]
       }
     ],
-    "react/jsx-uses-react": "off",
-    "react/react-in-jsx-scope": "off",
     "sort-imports": [
       "error",
       {
@@ -110,10 +95,19 @@
   },
   "overrides": [
     {
-      "extends": ["plugin:testing-library/react"],
+      "extends": [
+        "plugin:jest-dom/recommended",
+        "plugin:testing-library/react",
+        "plugin:@vitest/legacy-recommended"
+      ],
       "files": ["tests/**/*.ts", "tests/**/*.tsx"],
       "rules": {
         "import/extensions": ["error", "never"],
+        "@vitest/expect-expect": "off",
+        "@vitest/consistent-test-it": [
+          "error",
+          { "fn": "it", "withinDescribe": "it" }
+        ],
         "@typescript-eslint/no-unused-vars": "off"
       }
     },
