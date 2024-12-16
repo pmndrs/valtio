@@ -1,17 +1,19 @@
-// @ts-ignore
-import PrismCode from 'react-prism'
-import 'prismjs'
-import 'prismjs/components/prism-jsx.min'
-
-import React from 'react'
 import { proxy, useSnapshot } from 'valtio'
+import { common, createStarryNight } from '@wooorm/starry-night'
+import { toJsxRuntime } from 'hast-util-to-jsx-runtime'
+import { Fragment, jsx, jsxs } from 'react/jsx-runtime'
 
 // You wrap your state
-const state = proxy({ number: 0 })
+const state = proxy<{
+  number: number
+  nested?: {
+    ticks: number
+  }
+}>({ number: 0 })
 
 // You can freely mutate it from anywhere you want ...
 state.nested = { ticks: 0 }
-setInterval(() => state.nested.ticks++, 200)
+setInterval(() => state.nested && state.nested.ticks++, 200)
 
 const Figure = () => {
   const snap = useSnapshot(state)
@@ -22,7 +24,7 @@ const Figure = () => {
 const Ticks = () => {
   const snap = useSnapshot(state)
   // This component *only* renders when state.nested.ticks changes ...
-  return <div className="ticks">{snap.nested.ticks} —</div>
+  return <div className="ticks">{snap?.nested?.ticks} —</div>
 }
 
 const Controls = () => {
@@ -35,7 +37,7 @@ const Controls = () => {
   )
 }
 
-const ButtonUp = ({ onClick }) => (
+const ButtonUp = ({ onClick }: { onClick: () => void }) => (
   <svg viewBox="0 0 430 452" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       onClick={onClick}
@@ -45,7 +47,7 @@ const ButtonUp = ({ onClick }) => (
   </svg>
 )
 
-const ButtonDown = ({ onClick }) => (
+const ButtonDown = ({ onClick }: { onClick: () => void }) => (
   <svg viewBox="0 0 430 452" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       onClick={onClick}
@@ -107,6 +109,11 @@ const ButtonDown = ({ onClick }) => (
 )
 `
 
+const starryNight = await createStarryNight(common)
+
+const tree = starryNight.highlight(code, 'source.js')
+const reactNode = toJsxRuntime(tree, { Fragment, jsx, jsxs })
+
 export default function App() {
   return (
     <>
@@ -115,9 +122,7 @@ export default function App() {
         <Ticks />
         <Controls />
       </div>
-      <div className="code">
-        <PrismCode component="pre" className="language-jsx" children={code} />
-      </div>
+      <div className="code">{reactNode}</div>
     </>
   )
 }
