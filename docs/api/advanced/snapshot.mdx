@@ -103,14 +103,17 @@ This should be fine, because the expectation is that they execute very quickly (
 
 ## Vanilla JavaScript
 
-In VanillaJS, `snapshot` is not necessary to access proxied object values, inside or outside of subscribe. However, it is useful, for example, to keep a serializable list of unproxied objects or check if objects have changed. It also resolves promises.
+In VanillaJS, `snapshot` is not necessary to access proxied object values, inside or outside of subscribe. However, it is useful, for example, to keep a serializable list of un-proxied objects or check if objects have changed. It also resolves promises.
 
 <br />
 
-> 💡 Tip
->
-> If you are using valtio outside of react, import from `valtio/vanilla`
->
-> ```js
-> import { proxy, snapshot } from 'valtio/vanilla'
-> ```
+<blockquote className="tip">
+💡 Tip
+
+If you are using valtio outside of react, import from `valtio/vanilla`
+
+```js
+import { proxy, snapshot } from 'valtio/vanilla'
+```
+
+</blockquote>
