@@ -1,17 +1,18 @@
-// @ts-ignore
-import PrismCode from 'react-prism'
-import 'prismjs'
-import 'prismjs/components/prism-jsx.min'
-
-import React from 'react'
 import { proxy, useSnapshot } from 'valtio'
+import Lowlight from 'react-lowlight'
+import typescript from 'highlight.js/lib/languages/typescript'
 
 // You wrap your state
-const state = proxy({ number: 0 })
+const state = proxy<{
+  number: number
+  nested?: {
+    ticks: number
+  }
+}>({ number: 0 })
 
 // You can freely mutate it from anywhere you want ...
 state.nested = { ticks: 0 }
-setInterval(() => state.nested.ticks++, 200)
+setInterval(() => state.nested && state.nested.ticks++, 200)
 
 const Figure = () => {
   const snap = useSnapshot(state)
@@ -22,7 +23,7 @@ const Figure = () => {
 const Ticks = () => {
   const snap = useSnapshot(state)
   // This component *only* renders when state.nested.ticks changes ...
-  return <div className="ticks">{snap.nested.ticks} —</div>
+  return <div className="ticks">{snap?.nested?.ticks} —</div>
 }
 
 const Controls = () => {
@@ -35,7 +36,7 @@ const Controls = () => {
   )
 }
 
-const ButtonUp = ({ onClick }) => (
+const ButtonUp = ({ onClick }: { onClick: () => void }) => (
   <svg viewBox="0 0 430 452" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       onClick={onClick}
@@ -45,7 +46,7 @@ const ButtonUp = ({ onClick }) => (
   </svg>
 )
 
-const ButtonDown = ({ onClick }) => (
+const ButtonDown = ({ onClick }: { onClick: () => void }) => (
   <svg viewBox="0 0 430 452" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       onClick={onClick}
@@ -107,6 +108,8 @@ const ButtonDown = ({ onClick }) => (
 )
 `
 
+Lowlight.registerLanguage('tsx', typescript)
+
 export default function App() {
   return (
     <>
@@ -116,7 +119,7 @@ export default function App() {
         <Controls />
       </div>
       <div className="code">
-        <PrismCode component="pre" className="language-jsx" children={code} />
+        <Lowlight language="ts" value={code} />
       </div>
     </>
   )
