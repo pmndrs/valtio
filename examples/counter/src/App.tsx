@@ -1,7 +1,6 @@
 import { proxy, useSnapshot } from 'valtio'
-import { common, createStarryNight } from '@wooorm/starry-night'
-import { toJsxRuntime } from 'hast-util-to-jsx-runtime'
-import { Fragment, jsx, jsxs } from 'react/jsx-runtime'
+import Lowlight from 'react-lowlight'
+import typescript from 'highlight.js/lib/languages/typescript'
 
 // You wrap your state
 const state = proxy<{
@@ -109,10 +108,7 @@ const ButtonDown = ({ onClick }) => (
 )
 `
 
-const starryNight = await createStarryNight(common)
-
-const tree = starryNight.highlight(code, 'source.js')
-const reactNode = toJsxRuntime(tree, { Fragment, jsx, jsxs })
+Lowlight.registerLanguage('tsx', typescript)
 
 export default function App() {
   return (
@@ -122,7 +118,9 @@ export default function App() {
         <Ticks />
         <Controls />
       </div>
-      <div className="code">{reactNode}</div>
+      <div className="code">
+        <Lowlight language="ts" value={code} />
+      </div>
     </>
   )
 }
