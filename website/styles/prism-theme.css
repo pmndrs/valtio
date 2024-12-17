@@ -27,7 +27,7 @@ pre[class*="language-"] {
 }
 
 /* Code blocks */
-pre[class*="language-"] {
+pre {
   padding: 1em;
   margin: 0.5em 0;
   overflow: auto;
@@ -35,8 +35,18 @@ pre[class*="language-"] {
 }
 
 :not(pre) > code[class*="language-"],
-pre[class*="language-"] {
+code {
   background: #2e3440;
+  padding: 0.1em;
+}
+
+code {
+  font-family: "Fira Code", Consolas, Monaco, "Andale Mono", "Ubuntu Mono",
+    monospace;
+}
+
+code::before, code::after {
+  content: '' !important;
 }
 
 /* Inline code */
@@ -122,4 +132,39 @@ pre[class*="language-"] {
 
 .token.entity {
   cursor: help;
+}
+
+blockquote.tip p::before,
+blockquote.tip p::after,
+blockquote.note p::before,
+blockquote.note p::after,
+blockquote.warning p::before,
+blockquote.warning p::after,
+blockquote.important p::before,
+blockquote.important p::after {
+  content: '' !important;
+}
+
+blockquote {
+  padding-left: 1.5rem;
+}
+
+.tip {
+  border-left: 5px solid #88c0d0;
+}
+
+.note {
+  border-left: 5px solid #81a1c1;
+}
+
+.warning {
+  border-left: 5px solid #ebcb8b;
+}
+
+.important {
+  border-left: 5px solid #a3be8c;
+}
+
+code {
+
 }
