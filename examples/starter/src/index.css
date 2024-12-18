@@ -1,0 +1,14 @@
+html,
+body,
+#app {
+  height: 100%;
+}
+
+#app {
+  display: flex;
+  place-items: center;
+  justify-content: center;
+
+  color: #fff;
+  background-color: rgb(23 23 23)
+}
