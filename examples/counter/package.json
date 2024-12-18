@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@types/lowlight": "^0.0.7",
     "highlight.js": "^11.11.0",
+    "lowlight": "^3.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-lowlight": "^3.0.1",
