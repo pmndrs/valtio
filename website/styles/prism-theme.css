@@ -35,9 +35,14 @@ pre {
 }
 
 :not(pre) > code[class*="language-"],
-code {
+pre[class*="language-"] {
   background: #2e3440;
-  padding: 0.1em;
+  padding: 1em;
+}
+
+code:not([class*="language-"]) {
+  padding: 0.1em 0.3em;
+  background: #2e3440;
 }
 
 code {
@@ -163,8 +168,4 @@ blockquote {
 
 .important {
   border-left: 5px solid #a3be8c;
-}
-
-code {
-
 }
