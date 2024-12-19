@@ -1,4 +1,3 @@
-/* eslint-disable @vitest/consistent-test-it */
 import { bench, describe } from 'vitest'
 import { snapshot } from 'valtio'
 import { proxyMap } from 'valtio/utils'
