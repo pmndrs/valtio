@@ -26,10 +26,6 @@ export default tseslint.config(
       react: {
         version: 'detect',
       },
-      'import/extensions': ['.js', '.jsx', '.ts', '.tsx'],
-      'import/parsers': {
-        '@typescript-eslint/parser': ['.js', '.jsx', '.ts', '.tsx'],
-      },
       'import/resolver': {
         typescript: true,
       },
