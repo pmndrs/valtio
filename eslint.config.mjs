@@ -10,6 +10,9 @@ import globals from 'globals'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
+  {
+    ignores: ['dist/**', 'examples/**', 'website/**'],
+  },
   eslint.configs.recommended,
   tseslint.configs.recommended,
   react.configs.flat['jsx-runtime'],
