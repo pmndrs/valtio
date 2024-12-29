@@ -1,18 +1,15 @@
-const eslint = require('@eslint/js')
-const vitest = require('@vitest/eslint-plugin')
-const importPlugin = require('eslint-plugin-import')
-const jestDom = require('eslint-plugin-jest-dom')
-const prettierRecommended = require(
-  require.resolve('eslint-plugin-prettier/recommended'),
-)
-const react = require('eslint-plugin-react')
-const reactCompiler = require('eslint-plugin-react-compiler')
-const reactHooks = require('eslint-plugin-react-hooks')
-const testingLibrary = require('eslint-plugin-testing-library')
-const globals = require('globals')
-const tseslint = require('typescript-eslint')
+import eslint from '@eslint/js'
+import vitest from '@vitest/eslint-plugin'
+import importPlugin from 'eslint-plugin-import'
+import jestDom from 'eslint-plugin-jest-dom'
+import react from 'eslint-plugin-react'
+import reactCompiler from 'eslint-plugin-react-compiler'
+import reactHooks from 'eslint-plugin-react-hooks'
+import testingLibrary from 'eslint-plugin-testing-library'
+import globals from 'globals'
+import tseslint from 'typescript-eslint'
 
-module.exports = tseslint.config(
+export default tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommended,
   react.configs.flat['jsx-runtime'],
@@ -138,5 +135,4 @@ module.exports = tseslint.config(
       '@typescript-eslint/no-unused-expressions': 'off',
     },
   },
-  prettierRecommended,
 )
