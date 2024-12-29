@@ -13,10 +13,10 @@ export default tseslint.config(
     ignores: ['dist/**', 'examples/**', 'website/**'],
   },
   eslint.configs.recommended,
+  importPlugin.flatConfigs.recommended,
   tseslint.configs.recommended,
+  react.configs.flat.recommended,
   react.configs.flat['jsx-runtime'],
-  importPlugin.flatConfigs.errors,
-  importPlugin.flatConfigs.warnings,
   {
     languageOptions: {
       parser: tseslint.parser,
@@ -51,27 +51,20 @@ export default tseslint.config(
       },
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
-      'react-compiler/react-compiler': 'warn',
-      'import/namespace': 'off',
-      'import/named': 'off',
       eqeqeq: 'error',
-      'no-var': 'error',
-      'prefer-const': 'error',
       curly: ['warn', 'multi-line', 'consistent'],
-      'no-console': 'off',
-      'import/extensions': ['error', 'always'],
-      'import/no-unresolved': ['error', { commonjs: true, amd: true }],
-      'import/export': 'error',
-      'import/no-duplicates': ['error'],
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      'sort-imports': [
+        'error',
+        {
+          ignoreDeclarationSort: true,
+        },
       ],
-      '@typescript-eslint/no-use-before-define': 'off',
-      '@typescript-eslint/no-empty-function': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
+      'import/no-unresolved': ['error', { commonjs: true, amd: true }],
+      'import/named': 'off',
+      'import/namespace': 'off',
+      'import/no-named-as-default-member': 'off',
+      'import/no-duplicates': 'error',
+      'import/extensions': ['error', 'always'],
       'import/order': [
         'error',
         {
@@ -96,12 +89,13 @@ export default tseslint.config(
           pathGroupsExcludedImportTypes: ['builtin'],
         },
       ],
-      'sort-imports': [
-        'error',
-        {
-          ignoreDeclarationSort: true,
-        },
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      'react-compiler/react-compiler': 'warn',
+      ...reactHooks.configs.recommended.rules,
     },
   },
   {
@@ -111,24 +105,24 @@ export default tseslint.config(
     ...vitest.configs.recommended,
     rules: {
       'import/extensions': ['error', 'never'],
+      '@typescript-eslint/no-unused-vars': 'off',
       'vitest/expect-expect': 'off',
       'vitest/consistent-test-it': [
         'error',
         { fn: 'it', withinDescribe: 'it' },
       ],
-      '@typescript-eslint/no-unused-vars': 'off',
-    },
-  },
-  {
-    files: ['*.js'],
-    rules: {
-      '@typescript-eslint/no-require-imports': 'off',
     },
   },
   {
     files: ['src/vanilla/utils/proxyMap.ts', 'src/vanilla/utils/proxySet.ts'],
     rules: {
       '@typescript-eslint/no-unused-expressions': 'off',
+    },
+  },
+  {
+    files: ['*.js'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
 )
