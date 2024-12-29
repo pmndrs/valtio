@@ -130,7 +130,6 @@
     "eslint-plugin-react-compiler": "19.0.0-beta-201e55d-20241215",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-testing-library": "^7.1.1",
-    "globals": "^15.14.0",
     "jest-leak-detector": "^29.7.0",
     "jsdom": "^25.0.1",
     "json": "^11.0.0",
