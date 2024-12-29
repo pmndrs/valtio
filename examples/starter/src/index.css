@@ -1,0 +1,14 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+
+#root {
+  display: flex;
+  place-items: center;
+  justify-content: center;
+
+  color: #fff;
+  background-color: rgb(23 23 23)
+}
