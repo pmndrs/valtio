@@ -31,13 +31,7 @@ export default tseslint.config(
         '@typescript-eslint/parser': ['.js', '.jsx', '.ts', '.tsx'],
       },
       'import/resolver': {
-        alias: {
-          extensions: ['.js', '.jsx', '.ts', '.tsx'],
-          map: [
-            ['^valtio$', './src/index.ts'],
-            ['valtio', './src'],
-          ],
-        },
+        typescript: true,
       },
     },
     rules: {
