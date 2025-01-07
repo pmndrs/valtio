@@ -1,14 +1,14 @@
-/* eslint-disable no-undef */
-const path = require('path')
-const alias = require('@rollup/plugin-alias')
-const resolve = require('@rollup/plugin-node-resolve')
-const replace = require('@rollup/plugin-replace')
-const typescript = require('@rollup/plugin-typescript')
-const { default: esbuild } = require('rollup-plugin-esbuild')
+/*global process*/
+import path from 'path'
+import alias from '@rollup/plugin-alias'
+import resolve from '@rollup/plugin-node-resolve'
+import replace from '@rollup/plugin-replace'
+import typescript from '@rollup/plugin-typescript'
+import esbuild from 'rollup-plugin-esbuild'
 
 const extensions = ['.js', '.ts', '.tsx']
 const { root } = path.parse(process.cwd())
-const entries = [
+export const entries = [
   { find: /.*\/vanilla\/utils\.ts$/, replacement: 'valtio/vanilla/utils' },
   { find: /.*\/react\/utils\.ts$/, replacement: 'valtio/react/utils' },
   { find: /.*\/vanilla\.ts$/, replacement: 'valtio/vanilla' },
@@ -87,7 +87,7 @@ function createCommonJSConfig(input, output) {
   }
 }
 
-module.exports = function (args) {
+export default function (args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
   if (c) {
     c = c.slice('config-'.length).replace(/_/g, '/')
@@ -100,5 +100,3 @@ module.exports = function (args) {
     createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`),
   ]
 }
-
-module.exports.entries = entries
