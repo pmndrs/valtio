@@ -42,6 +42,10 @@ pre[class*="language-"] {
 
 code:not([class*="language-"]) {
   padding: 0.1em 0.3em;
+  background: #eee;
+}
+
+.dark code:not([class*="language-"]) {
   background: #2e3440;
 }
 
