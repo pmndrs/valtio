@@ -164,6 +164,9 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   if (found) {
     return found
   }
+  if (proxyStateMap.has(baseObject)) {
+    return baseObject
+  }
   let version = versionHolder[0]
   const listeners = new Set<Listener>()
   const notifyUpdate = (op: Op, nextVersion = ++versionHolder[0]) => {
