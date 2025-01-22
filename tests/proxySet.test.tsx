@@ -850,22 +850,6 @@ describe('ui updates - useSnapshot - iterator methods', () => {
 
 // https://github.com/tc39/proposal-set-methods
 describe('proposal set methods', () => {
-  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/symmetricDifference#examples
-  it('.symmetricDifference', () => {
-    const evens = proxySet([2, 4, 6, 8])
-    const squares = proxySet([1, 4, 9])
-    const result = evens.symmetricDifference(squares) // Set(5) { 2, 6, 8, 1, 9 }
-    expect(result).toEqual(proxySet([2, 6, 8, 1, 9]))
-  })
-
-  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/difference#examples
-  it('.difference', () => {
-    const odds = proxySet([1, 3, 5, 7, 9])
-    const squares = proxySet([1, 4, 9])
-    const result = odds.difference(squares) // Set(3) { 3, 5, 7 }
-    expect(result).toEqual(proxySet([3, 5, 7]))
-  })
-
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/intersection#examples
   it('.intersection', () => {
     const odds = proxySet([1, 3, 5, 7, 9])
@@ -882,21 +866,20 @@ describe('proposal set methods', () => {
     expect(result).toEqual(proxySet([2, 4, 6, 8, 1, 9]))
   })
 
-  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/isDisjointFrom#examples
-  describe('.isDisjointFrom', () => {
-    it('The set of perfect squares (<20) is disjoint from the set of prime numbers (<20)', () => {
-      // , because a perfect square is by definition decomposable into the product of two integers, while 1 is also not considered a prime number
-      const primes = proxySet([2, 3, 5, 7, 11, 13, 17, 19])
-      const squares = proxySet([1, 4, 9, 16])
-      expect(primes.isDisjointFrom(squares)).toBe(true) // true
-    })
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/difference#examples
+  it('.difference', () => {
+    const odds = proxySet([1, 3, 5, 7, 9])
+    const squares = proxySet([1, 4, 9])
+    const result = odds.difference(squares) // Set(3) { 3, 5, 7 }
+    expect(result).toEqual(proxySet([3, 5, 7]))
+  })
 
-    it('The set of perfect squares (<20) is not disjoint from the set of composite numbers (<20)', () => {
-      // , because all non-1 perfect squares are by definition composite numbers
-      const composites = proxySet([4, 6, 8, 9, 10, 12, 14, 15, 16, 18])
-      const squares = proxySet([1, 4, 9, 16])
-      expect(composites.isDisjointFrom(squares)).toBe(false) // false
-    })
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/symmetricDifference#examples
+  it('.symmetricDifference', () => {
+    const evens = proxySet([2, 4, 6, 8])
+    const squares = proxySet([1, 4, 9])
+    const result = evens.symmetricDifference(squares) // Set(5) { 2, 6, 8, 1, 9 }
+    expect(result).toEqual(proxySet([2, 6, 8, 1, 9]))
   })
 
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/isSubsetOf#examples
@@ -940,6 +923,23 @@ describe('proposal set methods', () => {
       const set2 = proxySet([1, 2, 3])
       expect(set1.isSupersetOf(set2)).toBe(true) // true
       expect(set2.isSupersetOf(set1)).toBe(true) // true
+    })
+  })
+
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/isDisjointFrom#examples
+  describe('.isDisjointFrom', () => {
+    it('The set of perfect squares (<20) is disjoint from the set of prime numbers (<20)', () => {
+      // , because a perfect square is by definition decomposable into the product of two integers, while 1 is also not considered a prime number
+      const primes = proxySet([2, 3, 5, 7, 11, 13, 17, 19])
+      const squares = proxySet([1, 4, 9, 16])
+      expect(primes.isDisjointFrom(squares)).toBe(true) // true
+    })
+
+    it('The set of perfect squares (<20) is not disjoint from the set of composite numbers (<20)', () => {
+      // , because all non-1 perfect squares are by definition composite numbers
+      const composites = proxySet([4, 6, 8, 9, 10, 12, 14, 15, 16, 18])
+      const squares = proxySet([1, 4, 9, 16])
+      expect(composites.isDisjointFrom(squares)).toBe(false) // false
     })
   })
 })
