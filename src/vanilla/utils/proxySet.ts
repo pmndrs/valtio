@@ -15,6 +15,7 @@ type InternalProxySet<T> = Set<T> & {
   isSupersetOf: (other: Set<T>) => boolean
   symmetricDifference: (other: Set<T>) => Set<T>
   union: (other: Set<T>) => Set<T>
+  difference: (other: Set<T>) => Set<T>
 }
 
 /**
@@ -161,10 +162,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     isDisjointFrom(other: Set<T>): boolean {
       this.epoch // touch property for tracking
       const otherSet = proxySet<T>(other)
-      return (
-        this.size === other.size &&
-        [...this.values()].every((value) => !otherSet.has(value))
-      )
+      return [...this.values()].every((value) => !otherSet.has(value))
     },
     isSubsetOf(other: Set<T>) {
       this.epoch // touch property for tracking
@@ -182,12 +180,28 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
         [...otherSet].every((value) => this.has(value))
       )
     },
+    difference(other: Set<T>) {
+      this.epoch // touch property for tracking
+      const resultSet = proxySet<T>()
+      const otherSet = proxySet<T>(other)
+      for (const value of this.values()) {
+        if (!otherSet.has(value)) {
+          resultSet.add(value)
+        }
+      }
+      return proxySet(resultSet)
+    },
     symmetricDifference(other: Set<T>) {
       this.epoch // touch property for tracking
       const resultSet = proxySet<T>()
       const otherSet = proxySet<T>(other)
       for (const value of this.values()) {
         if (!otherSet.has(value)) {
+          resultSet.add(value)
+        }
+      }
+      for (const value of otherSet.values()) {
+        if (!this.has(value)) {
           resultSet.add(value)
         }
       }

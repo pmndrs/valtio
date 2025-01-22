@@ -847,3 +847,99 @@ describe('ui updates - useSnapshot - iterator methods', () => {
     })
   })
 })
+
+// https://github.com/tc39/proposal-set-methods
+describe('proposal set methods', () => {
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/symmetricDifference#examples
+  it('.symmetricDifference', () => {
+    const evens = proxySet([2, 4, 6, 8])
+    const squares = proxySet([1, 4, 9])
+    const result = evens.symmetricDifference(squares) // Set(5) { 2, 6, 8, 1, 9 }
+    expect(result).toEqual(proxySet([2, 6, 8, 1, 9]))
+  })
+
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/difference#examples
+  it('.difference', () => {
+    const odds = proxySet([1, 3, 5, 7, 9])
+    const squares = proxySet([1, 4, 9])
+    const result = odds.difference(squares) // Set(3) { 3, 5, 7 }
+    expect(result).toEqual(proxySet([3, 5, 7]))
+  })
+
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/intersection#examples
+  it('.intersection', () => {
+    const odds = proxySet([1, 3, 5, 7, 9])
+    const squares = proxySet([1, 4, 9])
+    const result = odds.intersection(squares) // Set(2) { 1, 9 }
+    expect(result).toEqual(proxySet([1, 9]))
+  })
+
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/union#examples
+  it('.union', () => {
+    const evens = proxySet([2, 4, 6, 8])
+    const squares = proxySet([1, 4, 9])
+    const result = evens.union(squares) // Set(6) { 2, 4, 6, 8, 1, 9 }
+    expect(result).toEqual(proxySet([2, 4, 6, 8, 1, 9]))
+  })
+
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/isDisjointFrom#examples
+  describe('.isDisjointFrom', () => {
+    it('The set of perfect squares (<20) is disjoint from the set of prime numbers (<20)', () => {
+      // , because a perfect square is by definition decomposable into the product of two integers, while 1 is also not considered a prime number
+      const primes = proxySet([2, 3, 5, 7, 11, 13, 17, 19])
+      const squares = proxySet([1, 4, 9, 16])
+      expect(primes.isDisjointFrom(squares)).toBe(true) // true
+    })
+
+    it('The set of perfect squares (<20) is not disjoint from the set of composite numbers (<20)', () => {
+      // , because all non-1 perfect squares are by definition composite numbers
+      const composites = proxySet([4, 6, 8, 9, 10, 12, 14, 15, 16, 18])
+      const squares = proxySet([1, 4, 9, 16])
+      expect(composites.isDisjointFrom(squares)).toBe(false) // false
+    })
+  })
+
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/isSubsetOf#examples
+  describe('.isSubsetOf', () => {
+    it('The set of multiples of 4 (<20) is a subset of even numbers (<20)', () => {
+      const fours = proxySet([4, 8, 12, 16])
+      const evens = proxySet([2, 4, 6, 8, 10, 12, 14, 16, 18])
+      expect(fours.isSubsetOf(evens)).toBe(true) // true
+    })
+
+    it('The set of prime numbers (<20) is not a subset of all odd numbers (<20), because 2 is prime but not odd', () => {
+      const primes = proxySet([2, 3, 5, 7, 11, 13, 17, 19])
+      const odds = proxySet([3, 5, 7, 9, 11, 13, 15, 17, 19])
+      expect(primes.isSubsetOf(odds)).toBe(false) // false
+    })
+
+    it('Equivalent sets are subsets of each other', () => {
+      const set1 = proxySet([1, 2, 3])
+      const set2 = proxySet([1, 2, 3])
+      expect(set1.isSubsetOf(set2)).toBe(true) // true
+      expect(set2.isSubsetOf(set1)).toBe(true) // true
+    })
+  })
+
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/isSupersetOf#examples
+  describe('.isSupersetOf', () => {
+    it('The set of even numbers (<20) is a superset of multiples of 4 (<20)', () => {
+      const evens = proxySet([2, 4, 6, 8, 10, 12, 14, 16, 18])
+      const fours = proxySet([4, 8, 12, 16])
+      expect(evens.isSupersetOf(fours)).toBe(true) // true
+    })
+
+    it('The set of all odd numbers (<20) is not a superset of prime numbers (<20), because 2 is prime but not odd', () => {
+      const primes = proxySet([2, 3, 5, 7, 11, 13, 17, 19])
+      const odds = proxySet([3, 5, 7, 9, 11, 13, 15, 17, 19])
+      expect(odds.isSupersetOf(primes)).toBe(false) // false
+    })
+
+    it('Equivalent sets are supersets of each other', () => {
+      const set1 = proxySet([1, 2, 3])
+      const set2 = proxySet([1, 2, 3])
+      expect(set1.isSupersetOf(set2)).toBe(true) // true
+      expect(set2.isSupersetOf(set1)).toBe(true) // true
+    })
+  })
+})
