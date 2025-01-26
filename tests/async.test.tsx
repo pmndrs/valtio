@@ -1,7 +1,7 @@
 /// <reference types="react/canary" />
 
 import ReactExports, { StrictMode, Suspense } from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
@@ -99,13 +99,15 @@ it.skipIf(typeof use === 'undefined')(
       )
     }
 
-    render(
-      <StrictMode>
-        <Suspense fallback="loading">
-          <Counter />
-        </Suspense>
-      </StrictMode>,
-    )
+    await act(async () => {
+      render(
+        <StrictMode>
+          <Suspense fallback="loading">
+            <Counter />
+          </Suspense>
+        </StrictMode>,
+      )
+    })
 
     await screen.findByText('loading')
     await waitFor(() => {

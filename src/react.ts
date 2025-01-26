@@ -19,7 +19,7 @@ const useAffectedDebugValue = (
   state: object,
   affected: WeakMap<object, unknown>,
 ) => {
-  const pathList = useRef<(string | number | symbol)[][]>()
+  const pathList = useRef<(string | number | symbol)[][]>(undefined)
   useEffect(() => {
     pathList.current = affectedToPathList(state, affected, true)
   })
@@ -119,7 +119,7 @@ export function useSnapshot<T extends object>(
     () => proxyObject && new WeakMap<object, unknown>(),
     [proxyObject],
   )
-  const lastSnapshot = useRef<Snapshot<T>>()
+  const lastSnapshot = useRef<Snapshot<T>>(undefined)
   let inRender = true
   const currSnapshot = useSyncExternalStore(
     useCallback(
