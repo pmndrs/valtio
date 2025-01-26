@@ -16,11 +16,12 @@ Native `Sets` store their data in internal slots which are not observable. This 
 `proxySet` is useful when you need the functionality of a `Set` but still want to track changes to the data. `proxySet` can be useful if you're wanting to store unique values or if you want to perform mathematical `Set` operations on the data, such as union, intersection, or difference. `proxySet` supports all of the new methods introduced to `Set`:
 
 - `intersection`
-- `isDisjointFrom`
+- `union`
+- `difference`
+- `symmetricDifference`
 - `isSubsetOf`
 - `isSupersetOf`
-- `symmetricDifference`
-- `union`
+- `isDisjointFrom`
 
 You can see a full list of the methods supported by `proxySet` in the [MDN documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set).
 
