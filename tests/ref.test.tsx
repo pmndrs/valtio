@@ -1,4 +1,5 @@
 import { StrictMode, useEffect, useRef } from 'react'
+import type { ReactElement } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { expect, it, vi } from 'vitest'
 import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
@@ -40,7 +41,7 @@ it('should trigger re-render setting objects with ref wrapper', async () => {
 })
 
 it('should not track object wrapped in ref assigned to proxy state', async () => {
-  const obj = proxy<{ ui: JSX.Element | null }>({ ui: null })
+  const obj = proxy<{ ui: ReactElement | null }>({ ui: null })
 
   const Component = () => {
     const snap = useSnapshot(obj)
