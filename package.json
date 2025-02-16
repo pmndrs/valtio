@@ -102,7 +102,7 @@
     "url": "https://github.com/pmndrs/valtio/issues"
   },
   "homepage": "https://github.com/pmndrs/valtio",
-  "packageManager": "pnpm@8.15.0",
+  "packageManager": "pnpm@9.15.5",
   "dependencies": {
     "proxy-compare": "^3.0.1"
   },
