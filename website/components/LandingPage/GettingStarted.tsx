@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from 'next/link'
 
 export const GettingStarted = ({ className }: { className: string }) => (
   <div
@@ -15,4 +15,4 @@ export const GettingStarted = ({ className }: { className: string }) => (
       <p className="text-gray-700 font-medium pb-8">Proxy state made simple</p>
     </div>
   </div>
-);
+)

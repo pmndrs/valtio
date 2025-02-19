@@ -1,12 +1,12 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
 import { proxy, useSnapshot } from 'valtio'
 
-import banner from './assets/banner.svg';
+import banner from './assets/banner.svg'
 
-import './index.css';
+import './index.css'
 
-const state = proxy({ count: 0 });
+const state = proxy({ count: 0 })
 
 const Counter = () => {
   const snap = useSnapshot(state)
@@ -21,8 +21,8 @@ const Counter = () => {
         +1
       </button>
     </>
-  );
-};
+  )
+}
 
 function App() {
   return (
@@ -42,11 +42,11 @@ function App() {
 
       <Counter />
     </div>
-  );
+  )
 }
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
   </StrictMode>,
-);
+)

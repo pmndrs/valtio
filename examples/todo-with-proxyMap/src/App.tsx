@@ -1,8 +1,8 @@
-import { AddTodoInput } from "./AddTodoInput";
-import { TodoList } from "./TodoList";
-import { Filter } from "./Filter";
+import { AddTodoInput } from './AddTodoInput'
+import { TodoList } from './TodoList'
+import { Filter } from './Filter'
 
-import "./styles.css";
+import './styles.css'
 
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
       <TodoList />
       <Filter />
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

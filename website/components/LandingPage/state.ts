@@ -1,21 +1,21 @@
-import { proxy } from "valtio";
+import { proxy } from 'valtio'
 
 export const state = proxy({
   dur: 4,
   count: 0,
-});
+})
 
 export const incDuration = () => {
-  ++state.dur;
-};
+  ++state.dur
+}
 
 export const decDuration = () => {
-  --state.dur;
-};
+  --state.dur
+}
 
 const incrementCount = () => {
-  ++state.count;
-  setTimeout(incrementCount, 100 * state.dur);
-};
+  ++state.count
+  setTimeout(incrementCount, 100 * state.dur)
+}
 
-incrementCount();
+incrementCount()

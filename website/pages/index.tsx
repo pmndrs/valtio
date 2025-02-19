@@ -1,7 +1,7 @@
-import { AnimatedShapes } from "~/components/LandingPage/AnimatedShapes";
-import { GettingStarted } from "~/components/LandingPage/GettingStarted";
-import { CodeExample } from "~/components/LandingPage/CodeExample";
-import SEO from "~/components/SEO";
+import { AnimatedShapes } from '~/components/LandingPage/AnimatedShapes'
+import { GettingStarted } from '~/components/LandingPage/GettingStarted'
+import { CodeExample } from '~/components/LandingPage/CodeExample'
+import SEO from '~/components/SEO'
 
 const Home = () => {
   return (
@@ -11,7 +11,7 @@ const Home = () => {
       <AnimatedShapes />
       <GettingStarted className="large-screen" />
     </div>
-  );
-};
+  )
+}
 
-export default Home;
+export default Home

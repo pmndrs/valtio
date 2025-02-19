@@ -1,44 +1,44 @@
-import React, { forwardRef, useRef } from "react";
-import { Dialog } from "@headlessui/react";
-import Link from "next/link";
-import clsx from "clsx";
-import { Router, useRouter } from "next/router";
-import { useIsomorphicLayoutEffect } from "~/hooks";
-import { Header } from "~/components/layouts";
-import { createContext, useEffect, useState } from "react";
+import React, { forwardRef, useRef } from 'react'
+import { Dialog } from '@headlessui/react'
+import Link from 'next/link'
+import clsx from 'clsx'
+import { Router, useRouter } from 'next/router'
+import { useIsomorphicLayoutEffect } from '~/hooks'
+import { Header } from '~/components/layouts'
+import { createContext, useEffect, useState } from 'react'
 
 interface NavItemProps extends Partial<Navigation> {
-  fallbackHref: string;
-  isPublished?: boolean;
+  fallbackHref: string
+  isPublished?: boolean
 }
 
 const NavItem = forwardRef<HTMLElement, React.PropsWithChildren<NavItemProps>>(
   function NavItem(
     { href, children, isActive, isPublished, fallbackHref },
-    ref
+    ref,
   ) {
     return (
       //@ts-ignore
       <li ref={ref}>
         <Link href={isPublished ? href! : fallbackHref}>
           <a
-            className={clsx("block border-l pl-4 -ml-px font-normal text-md", {
-              "text-sky-500 border-current dark:text-sky-400 font-semibold":
+            className={clsx('block border-l pl-4 -ml-px font-normal text-md', {
+              'text-sky-500 border-current dark:text-sky-400 font-semibold':
                 isActive,
-              "border-transparent hover:border-gray-400 dark:hover:border-gray-500":
+              'border-transparent hover:border-gray-400 dark:hover:border-gray-500':
                 !isActive,
-              "text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300":
+              'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300':
                 !isActive && isPublished,
-              "text-gray-400": !isActive && !isPublished,
+              'text-gray-400': !isActive && !isPublished,
             })}
           >
             {children}
           </a>
         </Link>
       </li>
-    );
-  }
-);
+    )
+  },
+)
 
 /**
  * Find the nearst scrollable ancestor (or self if scrollable)
@@ -49,42 +49,42 @@ const NavItem = forwardRef<HTMLElement, React.PropsWithChildren<NavItemProps>>(
  * @param {Element} el
  */
 function nearestScrollableContainer(el?: Element) {
-  if (!el) return document.body;
+  if (!el) return document.body
   /**
    * indicates if an element can be scrolled
    *
    * @param {Node} el
    */
   function isScrollable(el: Element) {
-    const style = window.getComputedStyle(el);
-    const overflowX = style["overflowX"];
-    const overflowY = style["overflowY"];
-    const canScrollY = el.clientHeight < el.scrollHeight;
-    const canScrollX = el.clientWidth < el.scrollWidth;
+    const style = window.getComputedStyle(el)
+    const overflowX = style['overflowX']
+    const overflowY = style['overflowY']
+    const canScrollY = el.clientHeight < el.scrollHeight
+    const canScrollX = el.clientWidth < el.scrollWidth
 
     const isScrollableY =
-      canScrollY && (overflowY === "auto" || overflowY === "scroll");
+      canScrollY && (overflowY === 'auto' || overflowY === 'scroll')
     const isScrollableX =
-      canScrollX && (overflowX === "auto" || overflowX === "scroll");
+      canScrollX && (overflowX === 'auto' || overflowX === 'scroll')
 
-    return isScrollableY || isScrollableX;
+    return isScrollableY || isScrollableX
   }
 
   while (el !== document.body && isScrollable(el!) === false) {
     // @ts-ignore
-    el = el.parentNode || el.host;
+    el = el.parentNode || el.host
   }
 
-  return el;
+  return el
 }
 
 const isNavigationRecord = (obj: object): obj is Record<string, Navigation[]> =>
-  typeof obj === "object" && obj !== null && !Array.isArray(obj);
+  typeof obj === 'object' && obj !== null && !Array.isArray(obj)
 
 interface NavProps {
-  nav: Record<string, Navigation[]>;
-  fallbackHref: string;
-  mobile?: boolean;
+  nav: Record<string, Navigation[]>
+  fallbackHref: string
+  mobile?: boolean
 }
 
 function Nav({
@@ -93,41 +93,41 @@ function Nav({
   fallbackHref,
   mobile = false,
 }: React.PropsWithChildren<NavProps>) {
-  const router = useRouter();
-  const activeItemRef = useRef<HTMLElement | null>(null);
-  const previousActiveItemRef = useRef<HTMLElement | null>(null);
-  const scrollRef = useRef<HTMLElement | null>(null);
+  const router = useRouter()
+  const activeItemRef = useRef<HTMLElement | null>(null)
+  const previousActiveItemRef = useRef<HTMLElement | null>(null)
+  const scrollRef = useRef<HTMLElement | null>(null)
 
   useIsomorphicLayoutEffect(() => {
     function updatePreviousRef() {
-      previousActiveItemRef.current = activeItemRef.current;
+      previousActiveItemRef.current = activeItemRef.current
     }
 
     if (activeItemRef.current) {
       if (activeItemRef.current === previousActiveItemRef.current) {
-        updatePreviousRef();
-        return;
+        updatePreviousRef()
+        return
       }
 
-      updatePreviousRef();
+      updatePreviousRef()
 
       const scrollable = nearestScrollableContainer(
-        scrollRef.current ?? undefined
-      );
-      if (!scrollable) return;
+        scrollRef.current ?? undefined,
+      )
+      if (!scrollable) return
 
-      const scrollRect = scrollable.getBoundingClientRect();
-      const activeItemRect = activeItemRef.current.getBoundingClientRect();
+      const scrollRect = scrollable.getBoundingClientRect()
+      const activeItemRect = activeItemRef.current.getBoundingClientRect()
 
-      const top = activeItemRef.current.offsetTop;
-      const bottom = top - scrollRect.height + activeItemRect.height;
+      const top = activeItemRef.current.offsetTop
+      const bottom = top - scrollRect.height + activeItemRect.height
 
       if (scrollable.scrollTop > top || scrollable.scrollTop < bottom) {
         scrollable.scrollTop =
-          top - scrollRect.height / 2 + activeItemRect.height / 2;
+          top - scrollRect.height / 2 + activeItemRect.height / 2
       }
     }
-  }, [router.pathname]);
+  }, [router.pathname])
 
   return (
     <nav ref={scrollRef} id="nav" className="lg:text-sm lg:leading-6 relative">
@@ -136,8 +136,8 @@ function Nav({
         {nav &&
           Object.keys(nav)
             .map((category) => {
-              const items = nav[category];
-              const nestedMenu = isNavigationRecord(items);
+              const items = nav[category]
+              const nestedMenu = isNavigationRecord(items)
               if (nestedMenu) {
                 return (
                   <li key={category} className="mt-12 lg:mt-8">
@@ -146,38 +146,40 @@ function Nav({
                     </h5>
                     <ul
                       className={clsx(
-                        "block border-l pl-4 -ml-px",
-                        "space-y-6 lg:space-y-2 border-l border-gray-100",
-                        mobile ? "dark:border-gray-700" : "dark:border-gray-800"
+                        'block border-l pl-4 -ml-px',
+                        'space-y-6 lg:space-y-2 border-l border-gray-100',
+                        mobile
+                          ? 'dark:border-gray-700'
+                          : 'dark:border-gray-800',
                       )}
                     >
                       {Object.keys(items).map((subcategory) => {
                         const publishedSubItems = items[subcategory].filter(
-                          (item) => item.published !== false
-                        );
+                          (item) => item.published !== false,
+                        )
                         if (publishedSubItems.length === 0 && !fallbackHref)
-                          return null;
+                          return null
                         return (
                           <li key={subcategory} className="mt-12 lg:mt-4">
                             <h6
                               className={clsx(
-                                "mb-8 lg:mb-3 font-semibold uppercase",
+                                'mb-8 lg:mb-3 font-semibold uppercase',
                                 {
-                                  "text-gray-350 dark:text-gray-200":
+                                  'text-gray-350 dark:text-gray-200':
                                     publishedSubItems.length > 0,
-                                  "text-gray-400":
+                                  'text-gray-400':
                                     publishedSubItems.length === 0,
-                                }
+                                },
                               )}
                             >
                               {subcategory}
                             </h6>
                             <ul
                               className={clsx(
-                                "space-y-6 lg:space-y-2 border-l border-gray-100",
+                                'space-y-6 lg:space-y-2 border-l border-gray-100',
                                 mobile
-                                  ? "dark:border-gray-700"
-                                  : "dark:border-gray-800"
+                                  ? 'dark:border-gray-700'
+                                  : 'dark:border-gray-800',
                               )}
                             >
                               {(fallbackHref
@@ -186,7 +188,7 @@ function Nav({
                               ).map((item, i) => {
                                 let isActive = item.match
                                   ? item.match.test(router.asPath)
-                                  : item.href === router.asPath;
+                                  : item.href === router.asPath
                                 return (
                                   <NavItem
                                     key={i}
@@ -198,42 +200,42 @@ function Nav({
                                   >
                                     {item.title}
                                   </NavItem>
-                                );
+                                )
                               })}
                             </ul>
                           </li>
-                        );
+                        )
                       })}
                     </ul>
                   </li>
-                );
+                )
               }
               let publishedItems = items.filter(
-                (item) => item.published !== false
-              );
-              if (publishedItems.length === 0 && !fallbackHref) return null;
+                (item) => item.published !== false,
+              )
+              if (publishedItems.length === 0 && !fallbackHref) return null
               return (
                 <li key={category} className="mt-12 lg:mt-8">
                   <h5
-                    className={clsx("mb-8 lg:mb-3 font-medium", {
-                      "text-gray-900 dark:text-gray-200":
+                    className={clsx('mb-8 lg:mb-3 font-medium', {
+                      'text-gray-900 dark:text-gray-200':
                         publishedItems.length > 0,
-                      "text-gray-400": publishedItems.length === 0,
+                      'text-gray-400': publishedItems.length === 0,
                     })}
                   >
                     {category}
                   </h5>
                   <ul
                     className={clsx(
-                      "space-y-6 lg:space-y-2 border-l border-gray-100",
-                      mobile ? "dark:border-gray-700" : "dark:border-gray-800"
+                      'space-y-6 lg:space-y-2 border-l border-gray-100',
+                      mobile ? 'dark:border-gray-700' : 'dark:border-gray-800',
                     )}
                   >
                     {(fallbackHref ? nav[category] : publishedItems).map(
                       (item, i) => {
                         let isActive = item.match
                           ? item.match.test(router.asPath)
-                          : item.href === router.asPath;
+                          : item.href === router.asPath
                         return (
                           <NavItem
                             key={i}
@@ -245,21 +247,21 @@ function Nav({
                           >
                             {item.title}
                           </NavItem>
-                        );
-                      }
+                        )
+                      },
                     )}
                   </ul>
                 </li>
-              );
+              )
             })
             .filter(Boolean)}
       </ul>
     </nav>
-  );
+  )
 }
 
 interface WrapperProps {
-  allowOverflow?: boolean;
+  allowOverflow?: boolean
 }
 
 function Wrapper({
@@ -267,66 +269,66 @@ function Wrapper({
   children,
 }: React.PropsWithChildren<WrapperProps>) {
   return (
-    <div className={allowOverflow ? undefined : "overflow-hidden"}>
+    <div className={allowOverflow ? undefined : 'overflow-hidden'}>
       {children}
     </div>
-  );
+  )
 }
 
 interface Props {
-  frontMatter: Dict;
-  allowOverflow?: boolean;
-  fallbackHref?: string;
-  nav: Record<string, Navigation[]>;
+  frontMatter: Dict
+  allowOverflow?: boolean
+  fallbackHref?: string
+  nav: Record<string, Navigation[]>
 }
 
 interface ContextProps {
-  setNavIsOpen: (isOpen: boolean) => void;
-  navIsOpen: boolean;
-  nav: Record<string, Navigation[]>;
+  setNavIsOpen: (isOpen: boolean) => void
+  navIsOpen: boolean
+  nav: Record<string, Navigation[]>
 }
 
 export const DocLayoutContext = createContext<ContextProps>({
   setNavIsOpen: () => {},
   navIsOpen: false,
   nav: {},
-});
+})
 
 export default function DocLayout({
   nav,
   frontMatter,
   children,
   allowOverflow,
-  fallbackHref = "#",
+  fallbackHref = '#',
 }: React.PropsWithChildren<Props>) {
-  let [navIsOpen, setNavIsOpen] = useState(false);
-  const router = useRouter();
+  let [navIsOpen, setNavIsOpen] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
-    if (!navIsOpen) return;
+    if (!navIsOpen) return
     function handleRouteChange() {
-      setNavIsOpen(false);
+      setNavIsOpen(false)
     }
-    Router.events.on("routeChangeComplete", handleRouteChange);
+    Router.events.on('routeChangeComplete', handleRouteChange)
     return () => {
-      Router.events.off("routeChangeComplete", handleRouteChange);
-    };
-  }, [navIsOpen]);
+      Router.events.off('routeChangeComplete', handleRouteChange)
+    }
+  }, [navIsOpen])
   let section =
     frontMatter.section ||
     Object.entries(
       // @ts-ignore
-      nav ?? {}
+      nav ?? {},
     ).find(([, items]) => {
       if (isNavigationRecord(items)) {
         return Object.entries(items).find(([_, subItems]) =>
-          subItems.some((item) => item.href === router.asPath)
-        );
+          subItems.some((item) => item.href === router.asPath),
+        )
       }
       return (items ?? []).find(
-        ({ href }: { href: string }) => href === router.asPath
-      );
-    })?.[0];
+        ({ href }: { href: string }) => href === router.asPath,
+      )
+    })?.[0]
   return (
     <>
       <DocLayoutContext.Provider value={{ nav, navIsOpen, setNavIsOpen }}>
@@ -345,17 +347,17 @@ export default function DocLayout({
             <div className="lg:pl-[19.5rem]">
               <main
                 className={clsx(
-                  "prose prose-gray max-w-3xl mx-auto relative z-20 pt-10 xl:max-w-none dark:prose-invert dark:text-gray-400",
+                  'prose prose-gray max-w-3xl mx-auto relative z-20 pt-10 xl:max-w-none dark:prose-invert dark:text-gray-400',
                   // headings
-                  "prose-headings:scroll-mt-28 prose-headings:font-display prose-headings:font-normal lg:prose-headings:scroll-mt-[8.5rem]",
+                  'prose-headings:scroll-mt-28 prose-headings:font-display prose-headings:font-normal lg:prose-headings:scroll-mt-[8.5rem]',
                   // links
-                  "prose-a:font-semibold dark:prose-a:text-sky-400",
+                  'prose-a:font-semibold dark:prose-a:text-sky-400',
                   // link underline
-                  "prose-a:no-underline prose-a:shadow-[inset_0_-2px_0_0_var(--tw-prose-background,#fff),inset_0_calc(-1*(var(--tw-prose-underline-size,4px)+2px))_0_0_var(--tw-prose-underline,theme(colors.sky.300))] hover:prose-a:[--tw-prose-underline-size:6px] dark:[--tw-prose-background:theme(colors.gray.900)] dark:prose-a:shadow-[inset_0_calc(-1*var(--tw-prose-underline-size,2px))_0_0_var(--tw-prose-underline,theme(colors.sky.800))] dark:hover:prose-a:[--tw-prose-underline-size:6px]",
+                  'prose-a:no-underline prose-a:shadow-[inset_0_-2px_0_0_var(--tw-prose-background,#fff),inset_0_calc(-1*(var(--tw-prose-underline-size,4px)+2px))_0_0_var(--tw-prose-underline,theme(colors.sky.300))] hover:prose-a:[--tw-prose-underline-size:6px] dark:[--tw-prose-background:theme(colors.gray.900)] dark:prose-a:shadow-[inset_0_calc(-1*var(--tw-prose-underline-size,2px))_0_0_var(--tw-prose-underline,theme(colors.sky.800))] dark:hover:prose-a:[--tw-prose-underline-size:6px]',
                   // pre
-                  "prose-pre:rounded-xl prose-pre:bg-gray-900 prose-pre:shadow-lg dark:prose-pre:bg-gray-800/60 dark:prose-pre:shadow-none dark:prose-pre:ring-1 dark:prose-pre:ring-gray-300/10",
+                  'prose-pre:rounded-xl prose-pre:bg-gray-900 prose-pre:shadow-lg dark:prose-pre:bg-gray-800/60 dark:prose-pre:shadow-none dark:prose-pre:ring-1 dark:prose-pre:ring-gray-300/10',
                   // hr
-                  "dark:prose-hr:border-gray-800"
+                  'dark:prose-hr:border-gray-800',
                 )}
               >
                 {children}
@@ -392,5 +394,5 @@ export default function DocLayout({
         </Dialog>
       </DocLayoutContext.Provider>
     </>
-  );
+  )
 }

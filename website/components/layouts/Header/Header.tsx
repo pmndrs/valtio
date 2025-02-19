@@ -1,28 +1,28 @@
-import Link from "next/link";
-import Router from "next/router";
-import { Dialog } from "@headlessui/react";
-import React, { useEffect, useState } from "react";
-import clsx from "clsx";
-import SEO from "~/components/SEO";
-import ToggleTheme from "~/components/ToggleTheme";
+import Link from 'next/link'
+import Router from 'next/router'
+import { Dialog } from '@headlessui/react'
+import React, { useEffect, useState } from 'react'
+import clsx from 'clsx'
+import SEO from '~/components/SEO'
+import ToggleTheme from '~/components/ToggleTheme'
 
 export function NavPopover({
-  display = "md:hidden",
-  className = "",
+  display = 'md:hidden',
+  className = '',
   ...props
 }) {
-  let [isOpen, setIsOpen] = useState(false);
+  let [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return
     function handleRouteChange() {
-      setIsOpen(false);
+      setIsOpen(false)
     }
-    Router.events.on("routeChangeComplete", handleRouteChange);
+    Router.events.on('routeChangeComplete', handleRouteChange)
     return () => {
-      Router.events.off("routeChangeComplete", handleRouteChange);
-    };
-  }, [isOpen]);
+      Router.events.off('routeChangeComplete', handleRouteChange)
+    }
+  }, [isOpen])
 
   return (
     <div className={clsx(className, display)} {...props}>
@@ -44,7 +44,7 @@ export function NavPopover({
       </button>
       <Dialog
         as="div"
-        className={clsx("fixed z-50 inset-0", display)}
+        className={clsx('fixed z-50 inset-0', display)}
         open={isOpen}
         onClose={setIsOpen}
       >
@@ -87,7 +87,7 @@ export function NavPopover({
         </div>
       </Dialog>
     </div>
-  );
+  )
 }
 
 export function NavItems() {
@@ -99,16 +99,16 @@ export function NavItems() {
         </Link>
       </li>
     </>
-  );
+  )
 }
 
 interface HeaderProps {
-  hasNav?: boolean;
-  navIsOpen?: boolean;
-  onNavToggle?: (isOpen: boolean) => void;
-  title?: string;
-  section?: string;
-  subSection?: string;
+  hasNav?: boolean
+  navIsOpen?: boolean
+  onNavToggle?: (isOpen: boolean) => void
+  title?: string
+  section?: string
+  subSection?: string
 }
 
 export default function Header({
@@ -119,40 +119,40 @@ export default function Header({
   section,
   subSection,
 }: HeaderProps) {
-  let [isOpaque, setIsOpaque] = useState(false);
+  let [isOpaque, setIsOpaque] = useState(false)
 
   useEffect(() => {
-    let offset = 50;
+    let offset = 50
     function onScroll() {
       if (!isOpaque && window.scrollY > offset) {
-        setIsOpaque(true);
+        setIsOpaque(true)
       } else if (isOpaque && window.scrollY <= offset) {
-        setIsOpaque(false);
+        setIsOpaque(false)
       }
     }
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
     return () => {
-      window.removeEventListener("scroll", onScroll);
-    };
-  }, [isOpaque]);
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [isOpaque])
 
   return (
     <>
       <SEO title={title} />
       <div
         className={clsx(
-          "sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-gray-900/10 dark:border-gray-50/[0.06]",
+          'sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-gray-900/10 dark:border-gray-50/[0.06]',
           isOpaque
-            ? "bg-white supports-backdrop-blur:bg-white/95 dark:bg-gray-900/75"
-            : "bg-white/95 supports-backdrop-blur:bg-white/60 dark:bg-transparent"
+            ? 'bg-white supports-backdrop-blur:bg-white/95 dark:bg-gray-900/75'
+            : 'bg-white/95 supports-backdrop-blur:bg-white/60 dark:bg-transparent',
         )}
       >
         <div className="max-w-[90rem] mx-auto">
           <div
             className={clsx(
-              "py-4 border-b border-gray-900/10 lg:px-8 lg:border-0 dark:border-gray-300/10",
-              hasNav ? "mx-4 lg:mx-0" : "px-4"
+              'py-4 border-b border-gray-900/10 lg:px-8 lg:border-0 dark:border-gray-300/10',
+              hasNav ? 'mx-4 lg:mx-0' : 'px-4',
             )}
           >
             <div className="relative flex items-center">
@@ -160,8 +160,8 @@ export default function Header({
                 <a
                   className="mr-3 flex-none overflow-hidden md:w-auto text-gray-900 dark:text-gray-50"
                   onContextMenu={(e) => {
-                    e.preventDefault();
-                    Router.push("/");
+                    e.preventDefault()
+                    Router.push('/')
                   }}
                 >
                   Valtio
@@ -263,5 +263,5 @@ export default function Header({
         </div>
       </div>
     </>
-  );
+  )
 }

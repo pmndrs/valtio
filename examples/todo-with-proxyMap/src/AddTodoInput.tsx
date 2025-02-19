@@ -1,15 +1,15 @@
-import React from "react";
+import React from 'react'
 
-import { actions } from "./store";
+import { actions } from './store'
 
 export function AddTodoInput() {
-  const [value, setValue] = React.useState("");
+  const [value, setValue] = React.useState('')
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+    e.preventDefault()
     if (value.trim().length > 0) {
-      actions.addTodo({ name: value });
-      setValue("");
+      actions.addTodo({ name: value })
+      setValue('')
     }
   }
 
@@ -26,5 +26,5 @@ export function AddTodoInput() {
         />
       </form>
     </header>
-  );
+  )
 }

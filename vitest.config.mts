@@ -23,6 +23,8 @@ export default defineConfig({
     },
     environment: 'jsdom',
     dir: 'tests',
-    reporters: process.env.GITHUB_ACTIONS ? ['default', 'github-actions'] : ['default'],
+    reporters: process.env.GITHUB_ACTIONS
+      ? ['default', 'github-actions']
+      : ['default'],
   },
 })
