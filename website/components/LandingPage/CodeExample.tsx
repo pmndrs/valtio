@@ -1,7 +1,7 @@
-import { useSnapshot } from "valtio";
-import Highlight, { defaultProps } from "prism-react-renderer";
-import { GettingStarted } from "./GettingStarted";
-import { state, incDuration, decDuration } from "./state";
+import { useSnapshot } from 'valtio'
+import Highlight, { defaultProps } from 'prism-react-renderer'
+import { GettingStarted } from './GettingStarted'
+import { state, incDuration, decDuration } from './state'
 
 const exampleCode = (dur: number, count: number) => `
   const state = proxy({
@@ -34,10 +34,10 @@ const exampleCode = (dur: number, count: number) => `
       </button>
     </div>
   );
-`;
+`
 
 export const CodeExample = () => {
-  const snap = useSnapshot(state);
+  const snap = useSnapshot(state)
   return (
     <div className="code-container">
       <div className="code-container-inner">
@@ -81,5 +81,5 @@ export const CodeExample = () => {
         <GettingStarted className="small-screen" />
       </div>
     </div>
-  );
-};
+  )
+}

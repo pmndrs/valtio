@@ -1,1 +1,1 @@
-export { default } from "./MDXRenderer";
+export { default } from './MDXRenderer'

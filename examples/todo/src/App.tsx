@@ -58,7 +58,8 @@ function TodoRow({ todo }: { todo: Todo }) {
         display: 'flex',
         alignItems: 'center',
         textDecoration: todo.completed ? 'line-through' : 'initial',
-      }}>
+      }}
+    >
       <input type="checkbox" onChange={handleCheckBoxChange} />
       <h2>{todo.name}</h2>
       <h2 style={{ color: 'red', paddingLeft: 10 }} onClick={handleDeleteClick}>
@@ -80,7 +81,8 @@ function FilterRow() {
           }}
           onClick={() => {
             actions.toggleFilter(filter)
-          }}>
+          }}
+        >
           {filter}
         </button>
       ))}

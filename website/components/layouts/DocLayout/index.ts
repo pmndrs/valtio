@@ -1,1 +1,1 @@
-export { default } from "./DocLayout";
+export { default } from './DocLayout'

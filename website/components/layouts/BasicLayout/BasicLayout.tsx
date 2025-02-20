@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react'
 
 interface Props {}
 export default function BasicLayout({
@@ -10,5 +10,5 @@ export default function BasicLayout({
         {children}
       </main>
     </>
-  );
+  )
 }

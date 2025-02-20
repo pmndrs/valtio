@@ -1,8 +1,8 @@
-import { animated } from "react-spring";
-import { useFloatAnimation } from "./useFloatAnimation";
+import { animated } from 'react-spring'
+import { useFloatAnimation } from './useFloatAnimation'
 
 const Box = () => {
-  const style = useFloatAnimation("float-mid");
+  const style = useFloatAnimation('float-mid')
   return (
     <animated.svg
       viewBox="0 0 1920 1080"
@@ -58,11 +58,11 @@ const Box = () => {
         />
       </g>
     </animated.svg>
-  );
-};
+  )
+}
 
 const Donut = () => {
-  const style = useFloatAnimation("float-hi", -2500);
+  const style = useFloatAnimation('float-hi', -2500)
   return (
     <animated.svg
       viewBox="0 0 1920 1080"
@@ -80,11 +80,11 @@ const Donut = () => {
         stroke="var(--theme-blue)"
       />
     </animated.svg>
-  );
-};
+  )
+}
 
 const CenterText = () => {
-  const style = useFloatAnimation("float-mid", 1000);
+  const style = useFloatAnimation('float-mid', 1000)
   return (
     <svg
       viewBox="0 0 1920 1080"
@@ -98,11 +98,11 @@ const CenterText = () => {
         style={style}
       />
     </svg>
-  );
-};
+  )
+}
 
 const Circle = () => {
-  const style = useFloatAnimation("float-hi", -2000);
+  const style = useFloatAnimation('float-hi', -2000)
   return (
     <svg
       viewBox="0 0 1920 1080"
@@ -120,11 +120,11 @@ const Circle = () => {
         style={style}
       />
     </svg>
-  );
-};
+  )
+}
 
 const DotGrid = () => {
-  const style = useFloatAnimation("float-hi", -1000);
+  const style = useFloatAnimation('float-hi', -1000)
   return (
     <animated.svg
       viewBox="0 0 1920 1080"
@@ -159,11 +159,11 @@ const DotGrid = () => {
         </g>
       </g>
     </animated.svg>
-  );
-};
+  )
+}
 
 const ConcentricCircles = () => {
-  const style = useFloatAnimation("float-hi", -1000);
+  const style = useFloatAnimation('float-hi', -1000)
   return (
     <svg
       viewBox="0 0 1920 1080"
@@ -191,11 +191,11 @@ const ConcentricCircles = () => {
         <circle cx="-43" cy="1272" r="303" strokeWidth="6" />
       </animated.g>
     </svg>
-  );
-};
+  )
+}
 
 const Square = () => {
-  const style = useFloatAnimation("float-rotate-mid", -1000);
+  const style = useFloatAnimation('float-rotate-mid', -1000)
   return (
     <svg
       viewBox="0 0 1920 1080"
@@ -214,11 +214,11 @@ const Square = () => {
         style={style}
       />
     </svg>
-  );
-};
+  )
+}
 
 const Line1 = () => {
-  const style = useFloatAnimation("float-mid", 250);
+  const style = useFloatAnimation('float-mid', 250)
   return (
     <animated.svg
       viewBox="0 0 1920 1080"
@@ -237,11 +237,11 @@ const Line1 = () => {
         stroke="var(--theme-blue)"
       />
     </animated.svg>
-  );
-};
+  )
+}
 
 const Line2 = () => {
-  const style = useFloatAnimation("float-mid", 500);
+  const style = useFloatAnimation('float-mid', 500)
   return (
     <animated.svg
       viewBox="0 0 1920 1080"
@@ -260,11 +260,11 @@ const Line2 = () => {
         stroke="var(--theme-blue)"
       />
     </animated.svg>
-  );
-};
+  )
+}
 
 const Line3 = () => {
-  const style = useFloatAnimation("float-mid", 750);
+  const style = useFloatAnimation('float-mid', 750)
   return (
     <animated.svg
       viewBox="0 0 1920 1080"
@@ -283,8 +283,8 @@ const Line3 = () => {
         stroke="var(--theme-blue)"
       />
     </animated.svg>
-  );
-};
+  )
+}
 
 export const AnimatedShapes = () => {
   return (
@@ -300,5 +300,5 @@ export const AnimatedShapes = () => {
       <Line2 />
       <Line3 />
     </>
-  );
-};
+  )
+}

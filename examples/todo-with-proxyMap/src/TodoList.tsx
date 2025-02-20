@@ -1,15 +1,15 @@
-import { actions, useTodos } from "./store";
+import { actions, useTodos } from './store'
 
-import { TodoItem } from "./TodoItem";
+import { TodoItem } from './TodoItem'
 
 export function TodoList() {
-  const todos = useTodos();
+  const todos = useTodos()
 
   const handleToggleAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-    actions.toggleAll(e.target.checked);
-  };
+    actions.toggleAll(e.target.checked)
+  }
 
-  if (!todos.length) return null;
+  if (!todos.length) return null
 
   return (
     <section className="main">
@@ -26,5 +26,5 @@ export function TodoList() {
         ))}
       </ul>
     </section>
-  );
+  )
 }

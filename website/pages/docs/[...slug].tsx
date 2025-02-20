@@ -1,10 +1,10 @@
-import { GetStaticPaths, GetStaticProps } from "next";
-import { DocLayout } from "~/components/layouts";
-import MDXRenderer from "~/components/MDXRenderer";
-import { getSlugs, getAllDocs, getDocBySlug, getDocsNav } from "~/lib/mdx";
+import { GetStaticPaths, GetStaticProps } from 'next'
+import { DocLayout } from '~/components/layouts'
+import MDXRenderer from '~/components/MDXRenderer'
+import { getSlugs, getAllDocs, getDocBySlug, getDocsNav } from '~/lib/mdx'
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const docs = getAllDocs();
+  const docs = getAllDocs()
   return {
     paths: docs.map((p) => ({
       params: {
@@ -12,29 +12,29 @@ export const getStaticPaths: GetStaticPaths = async () => {
       },
     })),
     fallback: false,
-  };
-};
+  }
+}
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-  let slug = params?.slug!;
-  if (Array.isArray(slug)) slug = slug.join("/");
-  const doc = await getDocBySlug(slug);
-  const nav = getDocsNav();
+  let slug = params?.slug!
+  if (Array.isArray(slug)) slug = slug.join('/')
+  const doc = await getDocBySlug(slug)
+  const nav = getDocsNav()
   return {
     props: {
       doc,
       nav,
     },
-  };
-};
+  }
+}
 
 interface Props {
-  doc: Doc;
-  nav: Record<string, Navigation[]>;
+  doc: Doc
+  nav: Record<string, Navigation[]>
 }
 
 export default function Doc({ doc, nav }: Props) {
-  const { mdxSource, frontMatter } = doc;
+  const { mdxSource, frontMatter } = doc
 
   return (
     <>
@@ -42,5 +42,5 @@ export default function Doc({ doc, nav }: Props) {
         <MDXRenderer mdxSource={mdxSource} frontMatter={frontMatter} />
       </DocLayout>
     </>
-  );
+  )
 }

@@ -5,11 +5,11 @@
  * Ported for PrismJS by Zane Hitchcox (@zwhitchcox) and Gabriel Ramos (@gabrieluizramos)
  */
 
-code[class*="language-"],
-pre[class*="language-"] {
+code[class*='language-'],
+pre[class*='language-'] {
   color: #f8f8f2;
   background: none;
-  font-family: "Fira Code", Consolas, Monaco, "Andale Mono", "Ubuntu Mono",
+  font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono',
     monospace;
   text-align: left;
   white-space: pre;
@@ -34,32 +34,33 @@ pre {
   border-radius: 0.3em;
 }
 
-:not(pre) > code[class*="language-"],
-pre[class*="language-"] {
+:not(pre) > code[class*='language-'],
+pre[class*='language-'] {
   background: #2e3440;
   padding: 1em;
 }
 
-code:not([class*="language-"]) {
+code:not([class*='language-']) {
   padding: 0.1em 0.3em;
   background: #eee;
 }
 
-.dark code:not([class*="language-"]) {
+.dark code:not([class*='language-']) {
   background: #2e3440;
 }
 
 code {
-  font-family: "Fira Code", Consolas, Monaco, "Andale Mono", "Ubuntu Mono",
+  font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono',
     monospace;
 }
 
-code::before, code::after {
+code::before,
+code::after {
   content: '' !important;
 }
 
 /* Inline code */
-:not(pre) > code[class*="language-"] {
+:not(pre) > code[class*='language-'] {
   padding: 0.1em;
   border-radius: 0.3em;
   white-space: normal;

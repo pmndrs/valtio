@@ -20,7 +20,7 @@ const snapPicButton = document.getElementById('take-pic-btn')
 const acceptPicButton = document.getElementById('accept-pic-btn')
 const rejectPicButton = document.getElementById('reject-pic-btn')
 const candidateImgControlsContainer = document.getElementById(
-  'candidate-img-controls'
+  'candidate-img-controls',
 )
 
 const store = proxy({
@@ -96,7 +96,7 @@ function renderImages(images, selectedId) {
       </a>
     `
     })}
-  `
+  `,
   )
 }
 
@@ -121,7 +121,7 @@ function renderCanvasControls(hasCandidateImage) {
       <button id="accept-pic-btn" class=${className} onclick=${keepCandidateImage}>
         Keep picture</button>
       <button id="reject-pic-btn" class=${className} onclick=${removeCandidateImage}>Reject picture</button>
-    `
+    `,
   )
 }
 

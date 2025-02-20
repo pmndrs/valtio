@@ -1,4 +1,4 @@
-import { Head, Html, Main, NextScript } from "next/document";
+import { Head, Html, Main, NextScript } from 'next/document'
 
 const modeScript = `
   let darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -33,7 +33,7 @@ const modeScript = `
     disableTransitionsTemporarily()
     updateMode()
   }
-`;
+`
 
 export default function Document() {
   return (
@@ -46,5 +46,5 @@ export default function Document() {
         <NextScript />
       </body>
     </Html>
-  );
+  )
 }
