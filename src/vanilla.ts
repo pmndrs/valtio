@@ -325,19 +325,21 @@ export function ref<T extends object>(obj: T) {
 // unstable APIs (subject to change without notice)
 // ------------------------------------------------
 
-export const unstable_getInternalStates = (): {
+export function unstable_getInternalStates(): {
   proxyStateMap: typeof proxyStateMap
   refSet: typeof refSet
   snapCache: typeof snapCache
   versionHolder: typeof versionHolder
   proxyCache: typeof proxyCache
-} => ({
-  proxyStateMap,
-  refSet,
-  snapCache,
-  versionHolder,
-  proxyCache,
-})
+} {
+  return {
+    proxyStateMap,
+    refSet,
+    snapCache,
+    versionHolder,
+    proxyCache,
+  }
+}
 
 export function unstable_replaceInternalFunction(
   name: 'objectIs',
