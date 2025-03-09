@@ -43,6 +43,7 @@ type ProxyState = readonly [
   target: object,
   ensureVersion: (nextCheckVersion?: number) => number,
   addListener: AddListener,
+  listeners: Set<Listener>,
 ]
 
 const canProxyDefault = (x: unknown): boolean =>
@@ -251,7 +252,12 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   )
   const proxyObject = newProxy(baseObject, handler)
   proxyCache.set(baseObject, proxyObject)
-  const proxyState: ProxyState = [baseObject, ensureVersion, addListener]
+  const proxyState: ProxyState = [
+    baseObject,
+    ensureVersion,
+    addListener,
+    listeners,
+  ]
   proxyStateMap.set(proxyObject, proxyState)
   Reflect.ownKeys(baseObject).forEach((key) => {
     const desc = Object.getOwnPropertyDescriptor(
