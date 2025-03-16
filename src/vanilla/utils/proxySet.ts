@@ -18,7 +18,7 @@ type InternalProxySet<T> = Set<T> & {
   isDisjointFrom: (other: Set<T>) => boolean
 }
 
-export const isProxySet = (obj: {}): boolean => {
+export const isProxySet = (obj: object): boolean => {
   return (
     Symbol.toStringTag in obj &&
     obj[Symbol.toStringTag] === 'Set' &&

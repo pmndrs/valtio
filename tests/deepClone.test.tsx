@@ -1,6 +1,6 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy } from 'valtio'
-import { proxySet, proxyMap, deepClone } from 'valtio/utils'
+import { deepClone, proxyMap, proxySet } from 'valtio/utils'
 
 describe('deepClone', () => {
   // Basic data types
