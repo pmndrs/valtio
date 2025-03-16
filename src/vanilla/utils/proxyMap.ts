@@ -2,12 +2,22 @@ import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
 
 const { proxyStateMap, snapCache } = unstable_getInternalStates()
 const isProxy = (x: any) => proxyStateMap.has(x)
+const isObject = (x: unknown): x is object =>
+  typeof x === 'object' && x !== null
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<V>
   index: number
   epoch: number
   toJSON: () => Map<K, V>
+}
+
+export const isProxyMap = (obj: {}): boolean => {
+  return (
+    Symbol.toStringTag in obj &&
+    obj[Symbol.toStringTag] === 'Map' &&
+    proxyStateMap.has(obj)
+  )
 }
 
 /**

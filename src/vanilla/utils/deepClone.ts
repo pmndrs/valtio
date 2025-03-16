@@ -1,4 +1,6 @@
 import { unstable_getInternalStates } from '../../vanilla.ts'
+import { proxyMap, isProxyMap } from './proxyMap'
+import { proxySet, isProxySet } from './proxySet'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -18,6 +20,17 @@ export function deepClone<T>(
   if (!isObject(obj) || getRefSet().has(obj)) {
     return obj
   }
+
+  if (isProxySet(obj)) {
+    return proxySet([...(obj as unknown as Iterable<unknown>)]) as unknown as T
+  }
+
+  if (isProxyMap(obj)) {
+    return proxyMap([
+      ...(obj as unknown as Map<unknown, unknown>).entries(),
+    ]) as unknown as T
+  }
+
   const baseObject: T = Array.isArray(obj)
     ? []
     : Object.create(Object.getPrototypeOf(obj))
