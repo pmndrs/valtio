@@ -1,4 +1,4 @@
-name: Lint and Type
+name: Test
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        command: ['format', 'types', 'lint']
+        command: ['format', 'types', 'lint', 'spec', 'build']
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -21,4 +21,7 @@ jobs:
           node-version: 'lts/*'
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm run test:${{ matrix.command }}
+      - if: matrix.command == 'build'
+        run: pnpm run build
+      - if: matrix.command != 'build'
+        run: pnpm run test:${{ matrix.command }}
