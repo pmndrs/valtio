@@ -10,6 +10,14 @@ type InternalProxyObject<K, V> = Map<K, V> & {
   toJSON: () => Map<K, V>
 }
 
+export const isProxyMap = (obj: object): boolean => {
+  return (
+    Symbol.toStringTag in obj &&
+    obj[Symbol.toStringTag] === 'Map' &&
+    proxyStateMap.has(obj)
+  )
+}
+
 /**
  * proxyMap
  *
