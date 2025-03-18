@@ -11,7 +11,8 @@ const sleep = (ms: number) =>
   })
 
 const { use } = ReactExports
-const use2 = <T,>(x: T): Awaited<T> => (x instanceof Promise ? use(x) : x)
+const use2 = <T,>(x: T): Awaited<T> =>
+  x instanceof Promise ? use(x) : (x as Awaited<T>)
 
 it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
   const state = proxy<any>({ count: 0 })
