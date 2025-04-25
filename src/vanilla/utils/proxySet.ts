@@ -18,6 +18,12 @@ type InternalProxySet<T> = Set<T> & {
   isDisjointFrom: (other: Set<T>) => boolean
 }
 
+/**
+ * Determines if an object is a proxy Set created with proxySet
+ *
+ * @param {object} obj - The object to check
+ * @returns {boolean} True if the object is a proxy Set, false otherwise
+ */
 export const isProxySet = (obj: object): boolean => {
   return (
     Symbol.toStringTag in obj &&
@@ -27,14 +33,22 @@ export const isProxySet = (obj: object): boolean => {
 }
 
 /**
- * proxySet
+ * Creates a reactive Set that integrates with Valtio's proxy system
  *
- * This is to create a proxy which mimic the native Set behavior.
- * The API is the same as Set API
+ * This utility creates a Set-like object that works with Valtio's reactivity system,
+ * allowing you to track changes to the Set in the same way as regular proxy objects.
+ * The API extends the standard JavaScript Set with additional set operations like
+ * union, intersection, difference, etc.
+ *
+ * @template T - Type of the Set elements
+ * @param {Iterable<T>} [initialValues] - Initial values to populate the Set
+ * @returns {Set<T>} A reactive proxy Set with extended methods
+ * @throws {TypeError} If initialValues is not iterable
  *
  * @example
  * import { proxySet } from 'valtio/utils'
  * const state = proxySet([1,2,3])
+ *
  * // can be used inside a proxy as well
  * const state = proxy({
  *   count: 1,

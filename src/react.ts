@@ -15,6 +15,16 @@ import {
 import { snapshot, subscribe } from './vanilla.ts'
 import type { Snapshot } from './vanilla.ts'
 
+/**
+ * React hook to display affected paths in React DevTools for debugging
+ *
+ * This internal hook collects the paths that were accessed during render
+ * and displays them in React DevTools to help with debugging render optimizations.
+ *
+ * @param {object} state - The state object being tracked
+ * @param {WeakMap<object, unknown>} affected - WeakMap of accessed properties
+ * @private
+ */
 const useAffectedDebugValue = (
   state: object,
   affected: WeakMap<object, unknown>,
@@ -87,8 +97,9 @@ type Options = {
  * > console.log(state)
  * { profile: { name: "new name" } }
  *
- * `useSnapshot()` depends on the original reference of the child proxy so if you replace it with a new one, the component
- * that is subscribed to the old proxy won't receive new updates because it is still subscribed to the old one.
+ * `useSnapshot()` depends on the original reference of the child proxy so if you replace it with a new one, the 
+ * component that is subscribed to the old proxy won't receive new updates because it is still subscribed to 
+ * the old one.
  *
  * In this case we recommend the example C or D. On both examples you don't need to worry with re-render,
  * because it is render-optimized.
