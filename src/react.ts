@@ -97,8 +97,8 @@ type Options = {
  * > console.log(state)
  * { profile: { name: "new name" } }
  *
- * `useSnapshot()` depends on the original reference of the child proxy so if you replace it with a new one, the 
- * component that is subscribed to the old proxy won't receive new updates because it is still subscribed to 
+ * `useSnapshot()` depends on the original reference of the child proxy so if you replace it with a new one, the
+ * component that is subscribed to the old proxy won't receive new updates because it is still subscribed to
  * the old one.
  *
  * In this case we recommend the example C or D. On both examples you don't need to worry with re-render,
