@@ -228,18 +228,23 @@ Additionally, this issue involved not only updating devtools, but also triggerin
 ## Issue with imports when using a library other than `react` (i.e. solidjs)
 
 Valtio does not have to work within react, however it was built with react in mind. This being the case, the main `valtio` module exports the react modules alongside the vanilla modules for convenience. This can cause an error in Rollup that may look something like this:
+
 ```
  node_modules/.pnpm/valtio@2.1.4/node_modules/valtio/esm/react.mjs (2:18): "useRef" is not exported by "__vite-optional-peer-dep:react:valtio", imported by "node_modules/.pnpm/valtio@2.1.4/node_modules/valtio/esm/react.mjs".
- ```
- because the react modules being exported are expecting react and its hooks to be there.
+```
 
- There is a simple fix for this, however. Instead of importing this:
- ```ts
- import { proxy, snapshot, subscribe } from 'valtio'
- ```
- Instead, use the vanilla directory directly.
- ```ts
- import { proxy, snapshot, subsribe } from 'valtio/vanilla'
- // this also applies for the utils
- import { proxyMap, deepClone } from 'valtio/vanilla/utils'
- ```
+because the react modules being exported are expecting react and its hooks to be there.
+
+There is a simple fix for this, however. Instead of importing this:
+
+```ts
+import { proxy, snapshot, subscribe } from 'valtio'
+```
+
+Instead, use the vanilla directory directly.
+
+```ts
+import { proxy, snapshot, subsribe } from 'valtio/vanilla'
+// this also applies for the utils
+import { proxyMap, deepClone } from 'valtio/vanilla/utils'
+```
