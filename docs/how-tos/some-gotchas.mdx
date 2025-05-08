@@ -224,3 +224,27 @@ If the workaround is not applied and you are using react with [devtools()](https
 As a result, the devtools will not display any state change.
 
 Additionally, this issue involved not only updating devtools, but also triggering `re-render`.
+
+## Issue with imports when using a library other than `react` (i.e. solidjs)
+
+Valtio does not have to work within react, however it was built with react in mind. This being the case, the main `valtio` module exports the react modules alongside the vanilla modules for convenience. This means if you are attempting to import from the main `valtio` module or the `valtio/utils` submodule into a non-react project, you may end up with build errors like this:
+
+```
+ node_modules/.pnpm/valtio@2.1.4/node_modules/valtio/esm/react.mjs (2:18): "useRef" is not exported by "__vite-optional-peer-dep:react:valtio", imported by "node_modules/.pnpm/valtio@2.1.4/node_modules/valtio/esm/react.mjs".
+```
+
+This occurs because the main valtio module exports both framework-agnostic and React-specific functionality, causing build tools like Rollup to look for React dependencies even when they're not needed.
+
+There is a simple fix for this, however. Instead of importing from the main `valtio` module like this:
+
+```ts
+import { proxy, snapshot, subscribe } from 'valtio'
+```
+
+you can import directly from the framework-agnostic `vanilla` submodule:
+
+```ts
+import { proxy, snapshot, subsribe } from 'valtio/vanilla'
+// this also applies for the utils
+import { proxyMap, deepClone } from 'valtio/vanilla/utils'
+```

@@ -10,6 +10,12 @@ type InternalProxyObject<K, V> = Map<K, V> & {
   toJSON: () => Map<K, V>
 }
 
+/**
+ * Determines if an object is a proxy Map created with proxyMap
+ *
+ * @param {object} obj - The object to check
+ * @returns {boolean} True if the object is a proxy Map, false otherwise
+ */
 export const isProxyMap = (obj: object): boolean => {
   return (
     Symbol.toStringTag in obj &&
@@ -19,10 +25,17 @@ export const isProxyMap = (obj: object): boolean => {
 }
 
 /**
- * proxyMap
+ * Creates a reactive Map that integrates with Valtio's proxy system
  *
- * This is to create a proxy which mimic the native Map behavior.
- * The API is the same as Map API
+ * This utility creates a Map-like object that works with Valtio's reactivity system,
+ * allowing you to track changes to the Map in the same way as regular proxy objects.
+ * The API is the same as the standard JavaScript Map.
+ *
+ * @template K - Type of the Map keys
+ * @template V - Type of the Map values
+ * @param {Iterable<[K, V]>} [entries] - Initial key-value pairs to populate the Map
+ * @returns {Map<K, V>} A proxy Map object that tracks changes
+ * @throws {TypeError} If entries is not iterable
  *
  * @example
  * import { proxyMap } from 'valtio/utils'
