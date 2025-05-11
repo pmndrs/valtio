@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { proxy } from 'valtio'
 import { deepClone, proxyMap, proxySet } from 'valtio/utils'
 
