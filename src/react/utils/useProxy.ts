@@ -38,7 +38,7 @@ export function useProxy<T extends object>(
   useLayoutEffect(() => {
     // This is an intentional hack
     // It might not work with React Compiler
-    // eslint-disable-next-line react-compiler/react-compiler, react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/react-compiler, react-hooks/exhaustive-deps
     isRendering = false
   })
 
