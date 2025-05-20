@@ -94,10 +94,4 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-expressions': 'off',
     },
   },
-  {
-    files: ['*.js'],
-    rules: {
-      '@typescript-eslint/no-require-imports': 'off',
-    },
-  },
 )
