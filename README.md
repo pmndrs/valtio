@@ -10,6 +10,36 @@
 [![Downloads](https://img.shields.io/npm/dt/valtio.svg?style=flat&colorA=000000&colorB=000000)](https://www.npmjs.com/package/valtio)
 [![Discord Shield](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=ffffff)](https://discord.gg/poimandres)
 
+## Quick Start
+
+### UMD React Example
+
+```html
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="./dist/umd/index.js"></script>
+<div id="root"></div>
+<script>
+    // Use the complete Valtio build for both proxy and useSnapshot
+    const state = Valtio.proxy({ count: 0 });
+
+    function Counter() {
+        const snap = Valtio.useSnapshot(state);
+        return React.createElement('div', null,
+            React.createElement('p', null, `Count: ${snap.count}`),
+            React.createElement('button', {
+                onClick: () => state.count++
+            }, 'Increment')
+        );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(Counter));
+</script>
+```
+
+### Tutorial
+
 #### Wrap your state object
 
 Valtio turns the object you pass it into a self-aware proxy.

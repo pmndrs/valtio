@@ -87,6 +87,50 @@ function createCommonJSConfig(input, output) {
   }
 }
 
+function createUMDConfig(input, output, globalName) {
+  return {
+    input,
+    output: {
+      file: output,
+      format: 'umd',
+      name: globalName,
+      globals: {
+        'react': 'React'
+      }
+    },
+    external: (id) => {
+      // Always externalize React for UMD builds that use it
+      if (id === 'react') {
+        return true
+      }
+      // Bundle everything else including proxy-compare for UMD
+      return false
+    },
+    plugins: [
+      resolve({ extensions, browser: true, preferBuiltins: false }),
+      replace({
+        'import.meta.env?.MODE': 'typeof process !== "undefined" && process.env ? process.env.NODE_ENV : "development"',
+        delimiters: ['\\b', '\\b(?!(\\.|/))'],
+        preventAssignment: true,
+      }),
+      getEsbuild(),
+    ],
+  }
+}
+
+// Helper function to get the global name for UMD builds
+function getGlobalName(configName) {
+  const globalNames = {
+    'index': 'Valtio',
+    'vanilla': 'ValtioVanilla',
+    'react': 'ValtioReact',
+    'utils': 'ValtioUtils',
+    'vanilla/utils': 'ValtioVanillaUtils',
+    'react/utils': 'ValtioReactUtils'
+  }
+  return globalNames[configName] || 'Valtio'
+}
+
 export default function (args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
   if (c) {
@@ -94,9 +138,17 @@ export default function (args) {
   } else {
     c = 'index'
   }
-  return [
+
+  const configs = [
     ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
     createCommonJSConfig(`src/${c}.ts`, `dist/${c}.js`),
     createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`),
   ]
+
+  // Add UMD build for main entry points and utils
+  if (['index', 'vanilla', 'react', 'utils', 'vanilla/utils', 'react/utils'].includes(c)) {
+    configs.push(createUMDConfig(`src/${c}.ts`, `dist/umd/${c.replace('/', '_')}.js`, getGlobalName(c)))
+  }
+
+  return configs
 }

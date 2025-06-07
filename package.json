@@ -35,11 +35,14 @@
         "types": "./esm/index.d.mts",
         "default": "./esm/index.mjs"
       },
+      "umd": "./umd/index.js",
       "default": {
         "types": "./index.d.ts",
         "default": "./index.js"
       }
     },
+    "./umd": "./umd/index.js",
+    "./umd/*": "./umd/*.js",
     "./*": {
       "react-native": {
         "types": "./*.d.ts",
@@ -69,6 +72,7 @@
     "build:vanilla_utils": "rollup -c --config-vanilla_utils",
     "build:react": "rollup -c --config-react",
     "build:react_utils": "rollup -c --config-react_utils",
+    "build:umd": "npm run build:base && npm run build:vanilla && npm run build:react && npm run build:utils && npm run build:vanilla_utils && npm run build:react_utils",
     "postbuild": "pnpm run patch-d-ts && pnpm run copy && pnpm run patch-old-ts && pnpm run patch-esm-ts",
     "fix": "pnpm run fix:lint && pnpm run fix:format",
     "fix:format": "prettier . --write",
