@@ -212,11 +212,11 @@ describe('clear map', () => {
       )
 
       expect(state.size).toBeGreaterThan(0)
-      screen.getByText(`size: ${state.size}`)
+      expect(screen.getByText(`size: ${state.size}`)).toBeInTheDocument()
 
       fireEvent.click(screen.getByText('button'))
       await waitFor(() => {
-        screen.getByText('size: 0')
+        expect(screen.getByText('size: 0')).toBeInTheDocument()
       })
     })
   })
@@ -246,11 +246,11 @@ describe('add value', () => {
         </StrictMode>,
       )
 
-      screen.getByText('size: 0')
+      expect(screen.getByText('size: 0')).toBeInTheDocument()
       fireEvent.click(screen.getByText('button'))
 
       await waitFor(() => {
-        screen.getByText('size: 1')
+        expect(screen.getByText('size: 1')).toBeInTheDocument()
       })
     })
   })
@@ -294,14 +294,16 @@ describe('delete', () => {
         </StrictMode>,
       )
 
-      screen.getByText(`size: ${state.map.size}`)
+      expect(screen.getByText(`size: ${state.map.size}`)).toBeInTheDocument()
 
       const expectedSizeAfterDelete =
         state.map.size > 1 ? state.map.size - 1 : 0
 
       fireEvent.click(screen.getByText('button'))
       await waitFor(() => {
-        screen.getByText(`size: ${expectedSizeAfterDelete}`)
+        expect(
+          screen.getByText(`size: ${expectedSizeAfterDelete}`),
+        ).toBeInTheDocument()
       })
     })
   })
@@ -399,17 +401,17 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has key: false')
+      expect(screen.getByText('has key: false')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('set key'))
     await waitFor(() => {
-      screen.getByText('has key: true')
+      expect(screen.getByText('has key: true')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('delete key'))
     await waitFor(() => {
-      screen.getByText('has key: false')
+      expect(screen.getByText('has key: false')).toBeInTheDocument()
     })
   })
 
@@ -449,20 +451,20 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has key: false')
-      screen.getByText('has key2: false')
+      expect(screen.getByText('has key: false')).toBeInTheDocument()
+      expect(screen.getByText('has key2: false')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
-      screen.getByText('has key: true')
-      screen.getByText('has key2: true')
+      expect(screen.getByText('has key: true')).toBeInTheDocument()
+      expect(screen.getByText('has key2: true')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('delete keys'))
     await waitFor(() => {
-      screen.getByText('has key: false')
-      screen.getByText('has key2: false')
+      expect(screen.getByText('has key: false')).toBeInTheDocument()
+      expect(screen.getByText('has key2: false')).toBeInTheDocument()
     })
   })
 
@@ -491,11 +493,11 @@ describe('ui updates - useSnapshot', async () => {
       </StrictMode>,
     )
 
-    screen.getByText('value: undefined')
+    expect(screen.getByText('value: undefined')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('set key'))
     await waitFor(() => {
-      screen.getByText('value: value')
+      expect(screen.getByText('value: value')).toBeInTheDocument()
     })
   })
 
@@ -534,20 +536,20 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has key: false')
-      screen.getByText('has key2: false')
+      expect(screen.getByText('has key: false')).toBeInTheDocument()
+      expect(screen.getByText('has key2: false')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
-      screen.getByText('has key: true')
-      screen.getByText('has key2: true')
+      expect(screen.getByText('has key: true')).toBeInTheDocument()
+      expect(screen.getByText('has key2: true')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('delete keys'))
     await waitFor(() => {
-      screen.getByText('has key: false')
-      screen.getByText('has key2: true')
+      expect(screen.getByText('has key: false')).toBeInTheDocument()
+      expect(screen.getByText('has key2: true')).toBeInTheDocument()
     })
   })
 
@@ -596,34 +598,34 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has key1: false')
-      screen.getByText('value1: undefined')
-      screen.getByText('has key2: false')
-      screen.getByText('value2: undefined')
+      expect(screen.getByText('has key1: false')).toBeInTheDocument()
+      expect(screen.getByText('value1: undefined')).toBeInTheDocument()
+      expect(screen.getByText('has key2: false')).toBeInTheDocument()
+      expect(screen.getByText('value2: undefined')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
-      screen.getByText('has key1: true')
-      screen.getByText('has key2: true')
-      screen.getByText('value1: value')
-      screen.getByText('value2: value')
+      expect(screen.getByText('has key1: true')).toBeInTheDocument()
+      expect(screen.getByText('has key2: true')).toBeInTheDocument()
+      expect(screen.getByText('value1: value')).toBeInTheDocument()
+      expect(screen.getByText('value2: value')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('delete key 1'))
     await waitFor(() => {
-      screen.getByText('has key1: false')
-      screen.getByText('value1: undefined')
-      screen.getByText('has key2: true')
-      screen.getByText('value2: value')
+      expect(screen.getByText('has key1: false')).toBeInTheDocument()
+      expect(screen.getByText('value1: undefined')).toBeInTheDocument()
+      expect(screen.getByText('has key2: true')).toBeInTheDocument()
+      expect(screen.getByText('value2: value')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('delete key 2'))
     await waitFor(() => {
-      screen.getByText('has key1: false')
-      screen.getByText('value1: undefined')
-      screen.getByText('has key2: false')
-      screen.getByText('value2: undefined')
+      expect(screen.getByText('has key1: false')).toBeInTheDocument()
+      expect(screen.getByText('value1: undefined')).toBeInTheDocument()
+      expect(screen.getByText('has key2: false')).toBeInTheDocument()
+      expect(screen.getByText('value2: undefined')).toBeInTheDocument()
     })
   })
 
@@ -669,16 +671,16 @@ describe('ui updates - useSnapshot', async () => {
       </StrictMode>,
     )
 
-    screen.getByText('value: undefined')
+    expect(screen.getByText('value: undefined')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('set key'))
     await waitFor(() => {
-      screen.getByText('value: value')
+      expect(screen.getByText('value: value')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('delete key'))
     await waitFor(() => {
-      screen.getByText('value: undefined')
+      expect(screen.getByText('value: undefined')).toBeInTheDocument()
     })
   })
 
@@ -719,26 +721,26 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has key: false')
-      screen.getByText('has key2: false')
-      screen.getByText('value1: undefined')
-      screen.getByText('value2: undefined')
+      expect(screen.getByText('has key: false')).toBeInTheDocument()
+      expect(screen.getByText('has key2: false')).toBeInTheDocument()
+      expect(screen.getByText('value1: undefined')).toBeInTheDocument()
+      expect(screen.getByText('value2: undefined')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('set keys'))
     await waitFor(() => {
-      screen.getByText('has key: true')
-      screen.getByText('has key2: true')
-      screen.getByText('value1: value')
-      screen.getByText('value2: value')
+      expect(screen.getByText('has key: true')).toBeInTheDocument()
+      expect(screen.getByText('has key2: true')).toBeInTheDocument()
+      expect(screen.getByText('value1: value')).toBeInTheDocument()
+      expect(screen.getByText('value2: value')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('clear map'))
     await waitFor(() => {
-      screen.getByText('has key: false')
-      screen.getByText('has key2: false')
-      screen.getByText('value1: undefined')
-      screen.getByText('value2: undefined')
+      expect(screen.getByText('has key: false')).toBeInTheDocument()
+      expect(screen.getByText('has key2: false')).toBeInTheDocument()
+      expect(screen.getByText('value1: undefined')).toBeInTheDocument()
+      expect(screen.getByText('value2: undefined')).toBeInTheDocument()
     })
   })
 })
@@ -804,12 +806,16 @@ describe('ui updates - useSnapshot - iterator methods', () => {
 
       fireEvent.click(screen.getByText('Add'))
       await waitFor(() => {
-        screen.getByText(`item.name: item 1; item.id: 1`)
+        expect(
+          screen.getByText(`item.name: item 1; item.id: 1`),
+        ).toBeInTheDocument()
       })
 
       fireEvent.click(screen.getByText('Update'))
       await waitFor(() => {
-        screen.getByText(`item.name: item 1 updated; item.id: 1`)
+        expect(
+          screen.getByText(`item.name: item 1 updated; item.id: 1`),
+        ).toBeInTheDocument()
       })
     })
 
@@ -891,14 +897,22 @@ describe('ui updates - useSnapshot - iterator methods', () => {
 
       fireEvent.click(screen.getByText('Add'))
       await waitFor(() => {
-        screen.getByText(`item.name: item 1; item.id: 1`)
-        screen.getByText(`item.name: item 2; item.id: 2`)
+        expect(
+          screen.getByText(`item.name: item 1; item.id: 1`),
+        ).toBeInTheDocument()
+        expect(
+          screen.getByText(`item.name: item 2; item.id: 2`),
+        ).toBeInTheDocument()
       })
 
       fireEvent.click(screen.getByText('Update'))
       await waitFor(() => {
-        screen.getByText(`item.name: item 1 updated; item.id: 1`)
-        screen.getByText(`item.name: item 2 updated; item.id: 2`)
+        expect(
+          screen.getByText(`item.name: item 1 updated; item.id: 1`),
+        ).toBeInTheDocument()
+        expect(
+          screen.getByText(`item.name: item 2 updated; item.id: 2`),
+        ).toBeInTheDocument()
       })
     })
   })
