@@ -32,15 +32,15 @@ it('simple object getters', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('A count: 0')
-    screen.getByText('B count: 0')
+    expect(screen.getByText('A count: 0')).toBeInTheDocument()
+    expect(screen.getByText('B count: 0')).toBeInTheDocument()
   })
 
   computeDouble.mockClear()
   fireEvent.click(screen.getByText('A button'))
   await waitFor(() => {
-    screen.getByText('A count: 2')
-    screen.getByText('B count: 2')
+    expect(screen.getByText('A count: 2')).toBeInTheDocument()
+    expect(screen.getByText('B count: 2')).toBeInTheDocument()
   })
   expect(computeDouble).toBeCalledTimes(1)
 })
@@ -74,15 +74,15 @@ it('object getters returning object', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('A count: 0')
-    screen.getByText('B count: 0')
+    expect(screen.getByText('A count: 0')).toBeInTheDocument()
+    expect(screen.getByText('B count: 0')).toBeInTheDocument()
   })
 
   computeDouble.mockClear()
   fireEvent.click(screen.getByText('A button'))
   await waitFor(() => {
-    screen.getByText('A count: 2')
-    screen.getByText('B count: 2')
+    expect(screen.getByText('A count: 2')).toBeInTheDocument()
+    expect(screen.getByText('B count: 2')).toBeInTheDocument()
   })
   expect(computeDouble).toBeCalledTimes(1)
 })

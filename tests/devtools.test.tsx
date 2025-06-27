@@ -172,10 +172,10 @@ it('updating state should call devtools.send', async () => {
 
   expect(extension.send).toBeCalledTimes(0)
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
   expect(extension.send).toBeCalledTimes(1)
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
   expect(extension.send).toBeCalledTimes(2)
 })
 
@@ -206,7 +206,7 @@ describe('when it receives an message of type...', () => {
 
     expect(extension.send).toBeCalledTimes(0)
     fireEvent.click(screen.getByText('button'))
-    await screen.findByText('count: 1')
+    expect(await screen.findByText('count: 1')).toBeInTheDocument()
     expect(extension.send).toBeCalledTimes(1)
     act(() =>
       (extensionSubscriber as (message: any) => void)({
@@ -214,7 +214,7 @@ describe('when it receives an message of type...', () => {
         payload: JSON.stringify({ count: 0 }),
       }),
     )
-    await screen.findByText('count: 0')
+    expect(await screen.findByText('count: 0')).toBeInTheDocument()
     expect(extension.send).toBeCalledTimes(2)
   })
 
@@ -243,17 +243,17 @@ describe('when it receives an message of type...', () => {
 
       expect(extension.send).toBeCalledTimes(0)
       fireEvent.click(screen.getByText('button'))
-      await screen.findByText('count: 1')
+      expect(await screen.findByText('count: 1')).toBeInTheDocument()
       expect(extension.send).toBeCalledTimes(1)
       fireEvent.click(screen.getByText('button'))
-      await screen.findByText('count: 2')
+      expect(await screen.findByText('count: 2')).toBeInTheDocument()
       act(() =>
         (extensionSubscriber as (message: any) => void)({
           type: 'DISPATCH',
           payload: { type: 'COMMIT' },
         }),
       )
-      await screen.findByText('count: 2')
+      expect(await screen.findByText('count: 2')).toBeInTheDocument()
       expect(extension.init).toBeCalledWith({ count: 2 })
     })
 
@@ -286,10 +286,10 @@ describe('when it receives an message of type...', () => {
 
       expect(extension.send).toBeCalledTimes(0)
       fireEvent.click(screen.getByText('button'))
-      await screen.findByText('count: 1')
+      expect(await screen.findByText('count: 1')).toBeInTheDocument()
       expect(extension.send).toBeCalledTimes(1)
       fireEvent.click(screen.getByText('button'))
-      await screen.findByText('count: 2')
+      expect(await screen.findByText('count: 2')).toBeInTheDocument()
       act(() =>
         (extensionSubscriber as (message: any) => void)({
           type: 'DISPATCH',
@@ -297,7 +297,7 @@ describe('when it receives an message of type...', () => {
         }),
       )
       expect(extension.init).toBeCalledWith({ count: 5 })
-      await screen.findByText('count: 6')
+      expect(await screen.findByText('count: 6')).toBeInTheDocument()
     })
 
     describe('JUMP_TO_STATE | JUMP_TO_ACTION...', () => {
@@ -325,7 +325,7 @@ describe('when it receives an message of type...', () => {
 
         expect(extension.send).toBeCalledTimes(0)
         fireEvent.click(screen.getByText('button'))
-        await screen.findByText('count: 1')
+        expect(await screen.findByText('count: 1')).toBeInTheDocument()
         expect(extension.send).toBeCalledTimes(1)
         act(() =>
           (extensionSubscriber as (message: any) => void)({
@@ -334,12 +334,12 @@ describe('when it receives an message of type...', () => {
             state: JSON.stringify({ count: 0 }),
           }),
         )
-        await screen.findByText('count: 0')
+        expect(await screen.findByText('count: 0')).toBeInTheDocument()
         expect(extension.send).toBeCalledTimes(1)
         fireEvent.click(screen.getByText('button'))
-        await screen.findByText('count: 1')
+        expect(await screen.findByText('count: 1')).toBeInTheDocument()
         fireEvent.click(screen.getByText('button'))
-        await screen.findByText('count: 2')
+        expect(await screen.findByText('count: 2')).toBeInTheDocument()
         expect(extension.send).toBeCalledTimes(3)
       })
     })

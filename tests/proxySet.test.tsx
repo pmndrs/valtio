@@ -227,11 +227,11 @@ describe('clear set', () => {
         </StrictMode>,
       )
 
-      screen.getByText(`size: ${state.set.size}`)
+      expect(screen.getByText(`size: ${state.set.size}`)).toBeInTheDocument()
 
       fireEvent.click(screen.getByText('button'))
       await waitFor(() => {
-        screen.getByText('size: 0')
+        expect(screen.getByText('size: 0')).toBeInTheDocument()
       })
     })
   })
@@ -261,11 +261,11 @@ describe('add value', () => {
         </StrictMode>,
       )
 
-      screen.getByText('size: 0')
+      expect(screen.getByText('size: 0')).toBeInTheDocument()
       fireEvent.click(screen.getByText('button'))
 
       await waitFor(() => {
-        screen.getByText('size: 1')
+        expect(screen.getByText('size: 1')).toBeInTheDocument()
       })
     })
   })
@@ -302,14 +302,16 @@ describe('delete', () => {
         </StrictMode>,
       )
 
-      screen.getByText(`size: ${state.set.size}`)
+      expect(screen.getByText(`size: ${state.set.size}`)).toBeInTheDocument()
 
       const expectedSizeAfterDelete =
         state.set.size > 1 ? state.set.size - 1 : 0
 
       fireEvent.click(screen.getByText('button'))
       await waitFor(() => {
-        screen.getByText(`size: ${expectedSizeAfterDelete}`)
+        expect(
+          screen.getByText(`size: ${expectedSizeAfterDelete}`),
+        ).toBeInTheDocument()
       })
     })
   })
@@ -395,17 +397,17 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has value: false')
+      expect(screen.getByText('has value: false')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('add value'))
     await waitFor(() => {
-      screen.getByText('has value: true')
+      expect(screen.getByText('has value: true')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('delete value'))
     await waitFor(() => {
-      screen.getByText('has value: false')
+      expect(screen.getByText('has value: false')).toBeInTheDocument()
     })
   })
 
@@ -445,20 +447,20 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has value: false')
-      screen.getByText('has value2: false')
+      expect(screen.getByText('has value: false')).toBeInTheDocument()
+      expect(screen.getByText('has value2: false')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('add values'))
     await waitFor(() => {
-      screen.getByText('has value: true')
-      screen.getByText('has value2: true')
+      expect(screen.getByText('has value: true')).toBeInTheDocument()
+      expect(screen.getByText('has value2: true')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('delete values'))
     await waitFor(() => {
-      screen.getByText('has value: false')
-      screen.getByText('has value2: false')
+      expect(screen.getByText('has value: false')).toBeInTheDocument()
+      expect(screen.getByText('has value2: false')).toBeInTheDocument()
     })
   })
 
@@ -497,20 +499,20 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has value: false')
-      screen.getByText('has value2: false')
+      expect(screen.getByText('has value: false')).toBeInTheDocument()
+      expect(screen.getByText('has value2: false')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('add values'))
     await waitFor(() => {
-      screen.getByText('has value: true')
-      screen.getByText('has value2: true')
+      expect(screen.getByText('has value: true')).toBeInTheDocument()
+      expect(screen.getByText('has value2: true')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('delete values'))
     await waitFor(() => {
-      screen.getByText('has value: false')
-      screen.getByText('has value2: true')
+      expect(screen.getByText('has value: false')).toBeInTheDocument()
+      expect(screen.getByText('has value2: true')).toBeInTheDocument()
     })
   })
 
@@ -549,20 +551,20 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has value: false')
-      screen.getByText('has value2: false')
+      expect(screen.getByText('has value: false')).toBeInTheDocument()
+      expect(screen.getByText('has value2: false')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('add values'))
     await waitFor(() => {
-      screen.getByText('has value: true')
-      screen.getByText('has value2: true')
+      expect(screen.getByText('has value: true')).toBeInTheDocument()
+      expect(screen.getByText('has value2: true')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('delete values'))
     await waitFor(() => {
-      screen.getByText('has value: true')
-      screen.getByText('has value2: false')
+      expect(screen.getByText('has value: true')).toBeInTheDocument()
+      expect(screen.getByText('has value2: false')).toBeInTheDocument()
     })
   })
 
@@ -601,20 +603,20 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     await waitFor(() => {
-      screen.getByText('has value: false')
-      screen.getByText('has value2: false')
+      expect(screen.getByText('has value: false')).toBeInTheDocument()
+      expect(screen.getByText('has value2: false')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('add values'))
     await waitFor(() => {
-      screen.getByText('has value: true')
-      screen.getByText('has value2: true')
+      expect(screen.getByText('has value: true')).toBeInTheDocument()
+      expect(screen.getByText('has value2: true')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('clear set'))
     await waitFor(() => {
-      screen.getByText('has value: false')
-      screen.getByText('has value2: false')
+      expect(screen.getByText('has value: false')).toBeInTheDocument()
+      expect(screen.getByText('has value2: false')).toBeInTheDocument()
     })
   })
 
@@ -776,7 +778,9 @@ describe('ui updates - useSnapshot - iterator methods', () => {
 
       fireEvent.click(screen.getByText('Add'))
       await waitFor(() => {
-        screen.getByText(`item.name: item 1; item.id: 1`)
+        expect(
+          screen.getByText(`item.name: item 1; item.id: 1`),
+        ).toBeInTheDocument()
       })
     })
 
@@ -841,8 +845,12 @@ describe('ui updates - useSnapshot - iterator methods', () => {
 
       fireEvent.click(screen.getByText('Add'))
       await waitFor(() => {
-        screen.getByText(`item.name: item 1; item.id: 1`)
-        screen.getByText(`item.name: item 2; item.id: 2`)
+        expect(
+          screen.getByText(`item.name: item 1; item.id: 1`),
+        ).toBeInTheDocument()
+        expect(
+          screen.getByText(`item.name: item 2; item.id: 2`),
+        ).toBeInTheDocument()
       })
     })
   })
