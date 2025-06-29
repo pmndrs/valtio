@@ -30,10 +30,10 @@ it('simple counter', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
   unmount()
 })
 
@@ -72,20 +72,20 @@ it('no extra re-renders (commits)', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 0 (1)')
-    screen.getByText('count2: 0 (1)')
+    expect(screen.getByText('count: 0 (1)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0 (1)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 1 (2)')
-    screen.getByText('count2: 0 (1)')
+    expect(screen.getByText('count: 1 (2)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0 (1)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    screen.getByText('count: 1 (2)')
-    screen.getByText('count2: 1 (2)')
+    expect(screen.getByText('count: 1 (2)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 1 (2)')).toBeInTheDocument()
   })
 })
 
@@ -124,8 +124,8 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 0')
-    screen.getByText('count2: 0')
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0')).toBeInTheDocument()
   })
   expect(renderFn).toBeCalledTimes(1)
   expect(renderFn).lastCalledWith(0)
@@ -134,8 +134,8 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
 
   fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('count2: 0')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0')).toBeInTheDocument()
   })
   expect(renderFn).toBeCalledTimes(2)
   expect(renderFn).lastCalledWith(1)
@@ -144,8 +144,8 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
 
   fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('count2: 1')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('count2: 1')).toBeInTheDocument()
   })
   expect(renderFn).toBeCalledTimes(2)
   expect(renderFn).lastCalledWith(1)
@@ -154,8 +154,8 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
 
   fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    screen.getByText('count: 1')
-    screen.getByText('count2: 2')
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('count2: 2')).toBeInTheDocument()
   })
   expect(renderFn).toBeCalledTimes(2)
   expect(renderFn).lastCalledWith(1)
@@ -164,8 +164,8 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
 
   fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 2')
-    screen.getByText('count2: 2')
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+    expect(screen.getByText('count2: 2')).toBeInTheDocument()
   })
   expect(renderFn).toBeCalledTimes(3)
   expect(renderFn).lastCalledWith(2)
@@ -192,10 +192,10 @@ it('object in object', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 })
 
 it('array in object', async () => {
@@ -219,10 +219,10 @@ it('array in object', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('counts: 0,1,2')
+  expect(await screen.findByText('counts: 0,1,2')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('counts: 0,1,2,3')
+  expect(await screen.findByText('counts: 0,1,2,3')).toBeInTheDocument()
 })
 
 it('array pop and splice', async () => {
@@ -245,13 +245,13 @@ it('array pop and splice', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('counts: 0,1,2')
+  expect(await screen.findByText('counts: 0,1,2')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('counts: 0,1')
+  expect(await screen.findByText('counts: 0,1')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button2'))
-  await screen.findByText('counts: 0,10,11,1')
+  expect(await screen.findByText('counts: 0,10,11,1')).toBeInTheDocument()
 })
 
 it('array length after direct assignment', async () => {
@@ -285,13 +285,13 @@ it('array length after direct assignment', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('counts: 0,1,2')
+  expect(await screen.findByText('counts: 0,1,2')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('increment'))
-  await screen.findByText('counts: 0,1,2,3')
+  expect(await screen.findByText('counts: 0,1,2,3')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('jump'))
-  await screen.findByText('counts: 0,1,2,3,,,,,,9')
+  expect(await screen.findByText('counts: 0,1,2,3,,,,,,9')).toBeInTheDocument()
 })
 
 it('deleting property', async () => {
@@ -313,10 +313,10 @@ it('deleting property', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: none')
+  expect(await screen.findByText('count: none')).toBeInTheDocument()
 })
 
 it('circular object', async () => {
@@ -340,10 +340,10 @@ it('circular object', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 })
 
 it('circular object with non-proxy object (#375)', async () => {
@@ -362,7 +362,7 @@ it('circular object with non-proxy object (#375)', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 })
 
 it('render from outside', async () => {
@@ -390,11 +390,11 @@ it('render from outside', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('anotherCount: 0')
+  expect(await screen.findByText('anotherCount: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
   fireEvent.click(screen.getByText('toggle'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 })
 
 it('counter with sync option', async () => {
@@ -418,13 +418,13 @@ it('counter with sync option', async () => {
     </>,
   )
 
-  await screen.findByText('count: 0 (1)')
+  expect(await screen.findByText('count: 0 (1)')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1 (2)')
+  expect(await screen.findByText('count: 1 (2)')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 2 (3)')
+  expect(await screen.findByText('count: 2 (3)')).toBeInTheDocument()
 })
 
 it('support undefined property (#439)', async () => {
@@ -443,7 +443,7 @@ it('support undefined property (#439)', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('has prop: true')
+  expect(await screen.findByText('has prop: true')).toBeInTheDocument()
 })
 
 it('sync snapshot between nested components (#460)', async () => {
@@ -481,14 +481,14 @@ it('sync snapshot between nested components (#460)', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('Parent: value1')
-    screen.getByText('Child: value1')
+    expect(screen.getByText('Parent: value1')).toBeInTheDocument()
+    expect(screen.getByText('Child: value1')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('Parent: value2')
-    screen.getByText('Child: value2')
+    expect(screen.getByText('Parent: value2')).toBeInTheDocument()
+    expect(screen.getByText('Child: value2')).toBeInTheDocument()
   })
 })
 
@@ -517,14 +517,14 @@ it('stable snapshot object (#985)', async () => {
 
   render(<TestComponent />)
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
   expect(effectCount).toBe(1)
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
   expect(effectCount).toBe(1)
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 2')
+  expect(await screen.findByText('count: 2')).toBeInTheDocument()
   expect(effectCount).toBe(1)
 })

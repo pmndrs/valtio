@@ -1,6 +1,6 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
 const useCommitCount = () => {
@@ -37,10 +37,10 @@ it('simple class without methods', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 })
 
 it('no extra re-renders with class', async () => {
@@ -87,20 +87,20 @@ it('no extra re-renders with class', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 0 (0)')
-    screen.getByText('count2: 0 (0)')
+    expect(screen.getByText('count: 0 (0)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 1 (1)')
-    screen.getByText('count2: 0 (0)')
+    expect(screen.getByText('count: 1 (1)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    screen.getByText('count: 1 (1)')
-    screen.getByText('count2: 1 (1)')
+    expect(screen.getByText('count: 1 (1)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 1 (1)')).toBeInTheDocument()
   })
 })
 
@@ -137,10 +137,10 @@ it('inherited class without methods', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 })
 
 it('class with a method', async () => {
@@ -185,14 +185,14 @@ it('class with a method', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('doubled: 0 (0)')
-    screen.getByText('count: 0 (0)')
+    expect(screen.getByText('doubled: 0 (0)')).toBeInTheDocument()
+    expect(screen.getByText('count: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('doubled: 2 (1)')
-    screen.getByText('count: 1 (1)')
+    expect(screen.getByText('doubled: 2 (1)')).toBeInTheDocument()
+    expect(screen.getByText('count: 1 (1)')).toBeInTheDocument()
   })
 })
 
@@ -248,20 +248,20 @@ it('inherited class with a method', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('doubled: 0 (0)')
-    screen.getByText('count2: 0 (0)')
+    expect(screen.getByText('doubled: 0 (0)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('doubled: 2 (1)')
-    screen.getByText('count2: 0 (0)')
+    expect(screen.getByText('doubled: 2 (1)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    screen.getByText('doubled: 2 (1)')
-    screen.getByText('count2: 1 (1)')
+    expect(screen.getByText('doubled: 2 (1)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 1 (1)')).toBeInTheDocument()
   })
 })
 
@@ -315,19 +315,19 @@ it('no extra re-renders with getters', async () => {
   )
 
   await waitFor(() => {
-    screen.getByText('count: 0 (0)')
-    screen.getByText('sum: 0 (0)')
+    expect(screen.getByText('count: 0 (0)')).toBeInTheDocument()
+    expect(screen.getByText('sum: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
   await waitFor(() => {
-    screen.getByText('count: 1 (1)')
-    screen.getByText('sum: 1 (1)')
+    expect(screen.getByText('count: 1 (1)')).toBeInTheDocument()
+    expect(screen.getByText('sum: 1 (1)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button2'))
   await waitFor(() => {
-    screen.getByText('count: 1 (1)')
-    screen.getByText('sum: 2 (2)')
+    expect(screen.getByText('count: 1 (1)')).toBeInTheDocument()
+    expect(screen.getByText('sum: 2 (2)')).toBeInTheDocument()
   })
 })

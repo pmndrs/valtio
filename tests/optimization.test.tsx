@@ -34,8 +34,8 @@ it('regression: useSnapshot renders should not fail consistency check with extra
   render(<Parent />)
 
   await waitFor(() => {
-    screen.getByText('childCount: 0')
-    screen.getByText('parentCount: 0')
+    expect(screen.getByText('childCount: 0')).toBeInTheDocument()
+    expect(screen.getByText('parentCount: 0')).toBeInTheDocument()
   })
 
   expect(childRenderFn).toBeCalledTimes(1)
@@ -46,8 +46,8 @@ it('regression: useSnapshot renders should not fail consistency check with extra
   obj.parentCount += 1
 
   await waitFor(() => {
-    screen.getByText('childCount: 0')
-    screen.getByText('parentCount: 1')
+    expect(screen.getByText('childCount: 0')).toBeInTheDocument()
+    expect(screen.getByText('parentCount: 1')).toBeInTheDocument()
   })
 
   expect(childRenderFn).toBeCalledTimes(2)
@@ -91,8 +91,8 @@ it('regression: useSnapshot renders should not fail consistency check with extra
   render(<Parent />)
 
   await waitFor(() => {
-    screen.getByText('childCount: 0')
-    screen.getByText('parentCount: 0')
+    expect(screen.getByText('childCount: 0')).toBeInTheDocument()
+    expect(screen.getByText('parentCount: 0')).toBeInTheDocument()
   })
 
   expect(childRenderFn).toBeCalledTimes(1)
@@ -105,8 +105,8 @@ it('regression: useSnapshot renders should not fail consistency check with extra
   fireEvent.click(screen.getByText('parentButton'))
 
   await waitFor(() => {
-    screen.getByText('childCount: 0')
-    screen.getByText('parentCount: 1')
+    expect(screen.getByText('childCount: 0')).toBeInTheDocument()
+    expect(screen.getByText('parentCount: 1')).toBeInTheDocument()
   })
 
   expect(childRenderFn).toBeCalledTimes(2)

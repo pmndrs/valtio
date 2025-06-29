@@ -33,10 +33,10 @@ it('should trigger re-render setting objects with ref wrapper', async () => {
     </>,
   )
 
-  await screen.findByText('count: 0 (1)')
+  expect(await screen.findByText('count: 0 (1)')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 0 (2)')
+  expect(await screen.findByText('count: 0 (2)')).toBeInTheDocument()
 })
 
 it('should not track object wrapped in ref assigned to proxy state', async () => {
@@ -60,10 +60,10 @@ it('should not track object wrapped in ref assigned to proxy state', async () =>
     </StrictMode>,
   )
 
-  await screen.findByText('original')
+  expect(await screen.findByText('original')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('replace')
+  expect(await screen.findByText('replace')).toBeInTheDocument()
 })
 
 it('should not trigger re-render when mutating object wrapped in ref', async () => {
@@ -85,10 +85,10 @@ it('should not trigger re-render when mutating object wrapped in ref', async () 
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 })
 
 it('should not update snapshot or notify subscription when mutating proxy wrapped in ref', async () => {
