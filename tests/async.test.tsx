@@ -2,7 +2,7 @@
 
 import ReactExports, { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { it } from 'vitest'
+import { expect, it } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
 const sleep = (ms: number) =>
@@ -39,11 +39,11 @@ it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(await screen.findByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
-  await screen.findByText('count: 1')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(await screen.findByText('count: 1')).toBeInTheDocument()
 })
 
 it.skipIf(typeof use === 'undefined')('delayed object', async () => {
@@ -70,11 +70,11 @@ it.skipIf(typeof use === 'undefined')('delayed object', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('text: none')
+  expect(await screen.findByText('text: none')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
-  await screen.findByText('text: hello')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(await screen.findByText('text: hello')).toBeInTheDocument()
 })
 
 it.skipIf(typeof use === 'undefined')(
@@ -110,18 +110,18 @@ it.skipIf(typeof use === 'undefined')(
       )
     })
 
-    await screen.findByText('loading')
+    expect(await screen.findByText('loading')).toBeInTheDocument()
     await waitFor(() => {
-      screen.getByText('text: counter')
-      screen.getByText('count: 0')
+      expect(screen.getByText('text: counter')).toBeInTheDocument()
+      expect(screen.getByText('count: 0')).toBeInTheDocument()
     })
 
     fireEvent.click(screen.getByText('button'))
 
-    await screen.findByText('loading')
+    expect(await screen.findByText('loading')).toBeInTheDocument()
     await waitFor(() => {
-      screen.getByText('text: counter')
-      screen.getByText('count: 1')
+      expect(screen.getByText('text: counter')).toBeInTheDocument()
+      expect(screen.getByText('count: 1')).toBeInTheDocument()
     })
   },
 )
@@ -150,9 +150,9 @@ it.skipIf(typeof use === 'undefined')('delayed falsy value', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('value: true')
+  expect(await screen.findByText('value: true')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await screen.findByText('loading')
-  await screen.findByText('value: null')
+  expect(await screen.findByText('loading')).toBeInTheDocument()
+  expect(await screen.findByText('value: null')).toBeInTheDocument()
 })
