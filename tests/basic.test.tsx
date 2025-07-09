@@ -1,7 +1,15 @@
 import { StrictMode, useEffect, useRef, useState } from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { proxy, snapshot, useSnapshot } from 'valtio'
+
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -30,10 +38,14 @@ it('simple counter', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  await vi.waitFor(async () =>
+    expect(screen.getByText('count: 0')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await vi.waitFor(async () =>
+    expect(screen.getByText('count: 1')).toBeInTheDocument(),
+  )
   unmount()
 })
 
@@ -71,19 +83,19 @@ it('no extra re-renders (commits)', async () => {
     </>,
   )
 
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 0 (1)')).toBeInTheDocument()
     expect(screen.getByText('count2: 0 (1)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 1 (2)')).toBeInTheDocument()
     expect(screen.getByText('count2: 0 (1)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button2'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 1 (2)')).toBeInTheDocument()
     expect(screen.getByText('count2: 1 (2)')).toBeInTheDocument()
   })
@@ -123,7 +135,7 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
     </>,
   )
 
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 0')).toBeInTheDocument()
     expect(screen.getByText('count2: 0')).toBeInTheDocument()
   })
@@ -133,7 +145,7 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
   expect(renderFn2).lastCalledWith(0)
 
   fireEvent.click(screen.getByText('button'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 1')).toBeInTheDocument()
     expect(screen.getByText('count2: 0')).toBeInTheDocument()
   })
@@ -143,7 +155,7 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
   expect(renderFn2).lastCalledWith(0)
 
   fireEvent.click(screen.getByText('button2'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 1')).toBeInTheDocument()
     expect(screen.getByText('count2: 1')).toBeInTheDocument()
   })
@@ -153,7 +165,7 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
   expect(renderFn2).lastCalledWith(1)
 
   fireEvent.click(screen.getByText('button2'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 1')).toBeInTheDocument()
     expect(screen.getByText('count2: 2')).toBeInTheDocument()
   })
@@ -163,7 +175,7 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
   expect(renderFn2).lastCalledWith(2)
 
   fireEvent.click(screen.getByText('button'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 2')).toBeInTheDocument()
     expect(screen.getByText('count2: 2')).toBeInTheDocument()
   })
@@ -192,10 +204,14 @@ it('object in object', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 0')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 1')).toBeInTheDocument(),
+  )
 })
 
 it('array in object', async () => {
@@ -219,10 +235,14 @@ it('array in object', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('counts: 0,1,2')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('counts: 0,1,2')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('counts: 0,1,2,3')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('counts: 0,1,2,3')).toBeInTheDocument(),
+  )
 })
 
 it('array pop and splice', async () => {
@@ -245,13 +265,19 @@ it('array pop and splice', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('counts: 0,1,2')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('counts: 0,1,2')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('counts: 0,1')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('counts: 0,1')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('button2'))
-  expect(await screen.findByText('counts: 0,10,11,1')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('counts: 0,10,11,1')).toBeInTheDocument(),
+  )
 })
 
 it('array length after direct assignment', async () => {
@@ -285,13 +311,19 @@ it('array length after direct assignment', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('counts: 0,1,2')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('counts: 0,1,2')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('increment'))
-  expect(await screen.findByText('counts: 0,1,2,3')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('counts: 0,1,2,3')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('jump'))
-  expect(await screen.findByText('counts: 0,1,2,3,,,,,,9')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('counts: 0,1,2,3,,,,,,9')).toBeInTheDocument(),
+  )
 })
 
 it('deleting property', async () => {
@@ -313,10 +345,14 @@ it('deleting property', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 1')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: none')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: none')).toBeInTheDocument(),
+  )
 })
 
 it('circular object', async () => {
@@ -340,10 +376,14 @@ it('circular object', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  await vi.waitFor(() => {
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+  })
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await vi.waitFor(() => {
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+  })
 })
 
 it('circular object with non-proxy object (#375)', async () => {
@@ -362,7 +402,9 @@ it('circular object with non-proxy object (#375)', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 1')).toBeInTheDocument(),
+  )
 })
 
 it('render from outside', async () => {
@@ -390,11 +432,15 @@ it('render from outside', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('anotherCount: 0')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('anotherCount: 0')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('button'))
   fireEvent.click(screen.getByText('toggle'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 1')).toBeInTheDocument(),
+  )
 })
 
 it('counter with sync option', async () => {
@@ -418,13 +464,19 @@ it('counter with sync option', async () => {
     </>,
   )
 
-  expect(await screen.findByText('count: 0 (1)')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 0 (1)')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1 (2)')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 1 (2)')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 2 (3)')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 2 (3)')).toBeInTheDocument(),
+  )
 })
 
 it('support undefined property (#439)', async () => {
@@ -443,7 +495,9 @@ it('support undefined property (#439)', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('has prop: true')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('has prop: true')).toBeInTheDocument(),
+  )
 })
 
 it('sync snapshot between nested components (#460)', async () => {
@@ -480,13 +534,13 @@ it('sync snapshot between nested components (#460)', async () => {
     </StrictMode>,
   )
 
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('Parent: value1')).toBeInTheDocument()
     expect(screen.getByText('Child: value1')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('Parent: value2')).toBeInTheDocument()
     expect(screen.getByText('Child: value2')).toBeInTheDocument()
   })
@@ -517,14 +571,20 @@ it('stable snapshot object (#985)', async () => {
 
   render(<TestComponent />)
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 0')).toBeInTheDocument(),
+  )
   expect(effectCount).toBe(1)
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 1')).toBeInTheDocument(),
+  )
   expect(effectCount).toBe(1)
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 2')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 2')).toBeInTheDocument(),
+  )
   expect(effectCount).toBe(1)
 })
