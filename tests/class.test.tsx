@@ -1,7 +1,15 @@
 import { StrictMode, useEffect, useRef } from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { expect, it } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
+
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 const useCommitCount = () => {
   const commitCountRef = useRef(0)
@@ -37,10 +45,14 @@ it('simple class without methods', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 0')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 1')).toBeInTheDocument(),
+  )
 })
 
 it('no extra re-renders with class', async () => {
@@ -86,19 +98,19 @@ it('no extra re-renders with class', async () => {
     </>,
   )
 
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 0 (0)')).toBeInTheDocument()
     expect(screen.getByText('count2: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 1 (1)')).toBeInTheDocument()
     expect(screen.getByText('count2: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button2'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 1 (1)')).toBeInTheDocument()
     expect(screen.getByText('count2: 1 (1)')).toBeInTheDocument()
   })
@@ -137,10 +149,14 @@ it('inherited class without methods', async () => {
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 0')).toBeInTheDocument(),
+  )
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 1')).toBeInTheDocument()
+  await vi.waitFor(() =>
+    expect(screen.getByText('count: 1')).toBeInTheDocument(),
+  )
 })
 
 it('class with a method', async () => {
@@ -184,13 +200,13 @@ it('class with a method', async () => {
     </>,
   )
 
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('doubled: 0 (0)')).toBeInTheDocument()
     expect(screen.getByText('count: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('doubled: 2 (1)')).toBeInTheDocument()
     expect(screen.getByText('count: 1 (1)')).toBeInTheDocument()
   })
@@ -247,19 +263,19 @@ it('inherited class with a method', async () => {
     </>,
   )
 
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('doubled: 0 (0)')).toBeInTheDocument()
     expect(screen.getByText('count2: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('doubled: 2 (1)')).toBeInTheDocument()
     expect(screen.getByText('count2: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button2'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('doubled: 2 (1)')).toBeInTheDocument()
     expect(screen.getByText('count2: 1 (1)')).toBeInTheDocument()
   })
@@ -314,19 +330,19 @@ it('no extra re-renders with getters', async () => {
     </>,
   )
 
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 0 (0)')).toBeInTheDocument()
     expect(screen.getByText('sum: 0 (0)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 1 (1)')).toBeInTheDocument()
     expect(screen.getByText('sum: 1 (1)')).toBeInTheDocument()
   })
 
   fireEvent.click(screen.getByText('button2'))
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('count: 1 (1)')).toBeInTheDocument()
     expect(screen.getByText('sum: 2 (2)')).toBeInTheDocument()
   })
