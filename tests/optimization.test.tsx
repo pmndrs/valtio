@@ -1,7 +1,15 @@
 import { useState } from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
+
+beforeEach(() => {
+  vi.useRealTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 it('regression: useSnapshot renders should not fail consistency check with extra render (nested useSnapshot)', async () => {
   const obj = proxy({ childCount: 0, parentCount: 0 })
@@ -33,7 +41,7 @@ it('regression: useSnapshot renders should not fail consistency check with extra
 
   render(<Parent />)
 
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('childCount: 0')).toBeInTheDocument()
     expect(screen.getByText('parentCount: 0')).toBeInTheDocument()
   })
@@ -45,7 +53,7 @@ it('regression: useSnapshot renders should not fail consistency check with extra
 
   obj.parentCount += 1
 
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('childCount: 0')).toBeInTheDocument()
     expect(screen.getByText('parentCount: 1')).toBeInTheDocument()
   })
@@ -90,7 +98,7 @@ it('regression: useSnapshot renders should not fail consistency check with extra
 
   render(<Parent />)
 
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('childCount: 0')).toBeInTheDocument()
     expect(screen.getByText('parentCount: 0')).toBeInTheDocument()
   })
@@ -104,7 +112,7 @@ it('regression: useSnapshot renders should not fail consistency check with extra
 
   fireEvent.click(screen.getByText('parentButton'))
 
-  await waitFor(() => {
+  await vi.waitFor(() => {
     expect(screen.getByText('childCount: 0')).toBeInTheDocument()
     expect(screen.getByText('parentCount: 1')).toBeInTheDocument()
   })
