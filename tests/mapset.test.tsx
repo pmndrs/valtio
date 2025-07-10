@@ -22,10 +22,9 @@ it('unsupported map', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 0')
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await new Promise((resolve) => setTimeout(resolve, 10)) // FIXME better way?
   expect(() => screen.getByText('count: 1')).toThrow()
 })
 
@@ -48,9 +47,8 @@ it('unsupported set', async () => {
     </StrictMode>,
   )
 
-  await screen.findByText('count: 1,2,3')
+  expect(screen.getByText('count: 1,2,3')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await new Promise((resolve) => setTimeout(resolve, 10)) // FIXME better way?
   expect(() => screen.getByText('count: 1,2,3,4')).toThrow()
 })
