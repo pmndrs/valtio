@@ -3,6 +3,7 @@ import { proxy, ref, subscribe } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 
 const consoleWarn = console.warn
+
 beforeEach(() => {
   console.warn = vi.fn((message: string) => {
     if (message === 'Please use proxy object') {
@@ -10,9 +11,12 @@ beforeEach(() => {
     }
     consoleWarn(message)
   })
+  vi.useFakeTimers()
 })
+
 afterEach(() => {
   console.warn = consoleWarn
+  vi.useRealTimers()
 })
 
 describe('subscribe', () => {
@@ -24,7 +28,7 @@ describe('subscribe', () => {
 
     obj.count += 1
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(1)
   })
 
@@ -37,7 +41,7 @@ describe('subscribe', () => {
 
     obj.count += 1
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(0)
   })
 
@@ -53,7 +57,7 @@ describe('subscribe', () => {
 
     obj.count += 1
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(0)
   })
 
@@ -65,7 +69,7 @@ describe('subscribe', () => {
 
     obj.nested.count += 1
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(1)
   })
 
@@ -84,7 +88,7 @@ describe('subscribe', () => {
 
     obj.count = 0
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(0)
   })
 
@@ -101,8 +105,8 @@ describe('subscribe', () => {
 
     obj.count = 10
 
-    await Promise.resolve()
-    expect(handler).toBeCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(handler).toBeCalledTimes(2)
     expect(obj.count).toBe(0)
   })
 
@@ -115,7 +119,7 @@ describe('subscribe', () => {
     obj.count1 += 1
     obj.count2 += 1
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(1)
   })
 
@@ -127,7 +131,7 @@ describe('subscribe', () => {
 
     obj.nested.count += 1
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(0)
   })
 
@@ -143,7 +147,7 @@ describe('subscribe', () => {
     obj.count1 += 1
     obj.count2 = 2
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(1)
     expect(handler).lastCalledWith([
       ['set', ['count1'], 1, 0],
@@ -152,7 +156,7 @@ describe('subscribe', () => {
 
     delete obj.count2
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(2)
     expect(handler).lastCalledWith([['delete', ['count2'], 2]])
   })
@@ -165,13 +169,13 @@ describe('subscribe', () => {
 
     obj.nested.count = 1
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(1)
     expect(handler).lastCalledWith([['set', ['nested', 'count'], 1, 0]])
 
     delete obj.nested.count
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(2)
     expect(handler).lastCalledWith([['delete', ['nested', 'count'], 1]])
   })
@@ -184,7 +188,7 @@ describe('subscribe', () => {
     subscribe(state, handler)
 
     state.obj = obj
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(0)
   })
 })
@@ -200,14 +204,14 @@ describe('subscribeKey', () => {
 
     obj.count1 += 10
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler1).toBeCalledTimes(1)
     expect(handler1).lastCalledWith(10)
     expect(handler2).toBeCalledTimes(0)
 
     obj.count2 += 20
 
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(handler1).toBeCalledTimes(1)
     expect(handler2).toBeCalledTimes(1)
     expect(handler2).lastCalledWith(20)
