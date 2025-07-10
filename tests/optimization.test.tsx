@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
 beforeEach(() => {
-  vi.useRealTimers()
+  vi.useFakeTimers()
 })
 
 afterEach(() => {
@@ -41,10 +41,8 @@ it('regression: useSnapshot renders should not fail consistency check with extra
 
   render(<Parent />)
 
-  await vi.waitFor(() => {
-    expect(screen.getByText('childCount: 0')).toBeInTheDocument()
-    expect(screen.getByText('parentCount: 0')).toBeInTheDocument()
-  })
+  expect(screen.getByText('childCount: 0')).toBeInTheDocument()
+  expect(screen.getByText('parentCount: 0')).toBeInTheDocument()
 
   expect(childRenderFn).toBeCalledTimes(1)
   expect(childRenderFn).lastCalledWith(0)
@@ -53,10 +51,9 @@ it('regression: useSnapshot renders should not fail consistency check with extra
 
   obj.parentCount += 1
 
-  await vi.waitFor(() => {
-    expect(screen.getByText('childCount: 0')).toBeInTheDocument()
-    expect(screen.getByText('parentCount: 1')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('childCount: 0')).toBeInTheDocument()
+  expect(screen.getByText('parentCount: 1')).toBeInTheDocument()
 
   expect(childRenderFn).toBeCalledTimes(2)
   expect(childRenderFn).lastCalledWith(0)
@@ -98,10 +95,8 @@ it('regression: useSnapshot renders should not fail consistency check with extra
 
   render(<Parent />)
 
-  await vi.waitFor(() => {
-    expect(screen.getByText('childCount: 0')).toBeInTheDocument()
-    expect(screen.getByText('parentCount: 0')).toBeInTheDocument()
-  })
+  expect(screen.getByText('childCount: 0')).toBeInTheDocument()
+  expect(screen.getByText('parentCount: 0')).toBeInTheDocument()
 
   expect(childRenderFn).toBeCalledTimes(1)
   expect(childRenderFn).lastCalledWith(0)
@@ -111,11 +106,8 @@ it('regression: useSnapshot renders should not fail consistency check with extra
   obj.anotherValue += 1
 
   fireEvent.click(screen.getByText('parentButton'))
-
-  await vi.waitFor(() => {
-    expect(screen.getByText('childCount: 0')).toBeInTheDocument()
-    expect(screen.getByText('parentCount: 1')).toBeInTheDocument()
-  })
+  expect(screen.getByText('childCount: 0')).toBeInTheDocument()
+  expect(screen.getByText('parentCount: 1')).toBeInTheDocument()
 
   expect(childRenderFn).toBeCalledTimes(2)
   expect(childRenderFn).lastCalledWith(0)
