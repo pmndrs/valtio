@@ -100,14 +100,20 @@ describe('watch', () => {
   it('should not loop infinitely with sync (#382)', () => {
     const reference = proxy({ value: 'Example' })
 
+    const callback = vi.fn()
+
     watch(
       (get) => {
         get(reference)
+        callback()
       },
       { sync: true },
     )
 
+    expect(callback).toBeCalledTimes(1)
     reference.value = 'Update'
+    expect(callback).toBeCalledTimes(2)
+    expect(reference.value).toBe('Update')
   })
   it('should support promise watchers', async () => {
     const reference = proxy({ value: 'Example' })
