@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
@@ -39,17 +39,15 @@ it('simple object getters', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() => {
-    expect(screen.getByText('A count: 0')).toBeInTheDocument()
-    expect(screen.getByText('B count: 0')).toBeInTheDocument()
-  })
+  expect(screen.getByText('A count: 0')).toBeInTheDocument()
+  expect(screen.getByText('B count: 0')).toBeInTheDocument()
 
   computeDouble.mockClear()
+
   fireEvent.click(screen.getByText('A button'))
-  await vi.waitFor(() => {
-    expect(screen.getByText('A count: 2')).toBeInTheDocument()
-    expect(screen.getByText('B count: 2')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('A count: 2')).toBeInTheDocument()
+  expect(screen.getByText('B count: 2')).toBeInTheDocument()
   expect(computeDouble).toBeCalledTimes(1)
 })
 
@@ -81,16 +79,14 @@ it('object getters returning object', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() => {
-    expect(screen.getByText('A count: 0')).toBeInTheDocument()
-    expect(screen.getByText('B count: 0')).toBeInTheDocument()
-  })
+  expect(screen.getByText('A count: 0')).toBeInTheDocument()
+  expect(screen.getByText('B count: 0')).toBeInTheDocument()
 
   computeDouble.mockClear()
+
   fireEvent.click(screen.getByText('A button'))
-  await vi.waitFor(() => {
-    expect(screen.getByText('A count: 2')).toBeInTheDocument()
-    expect(screen.getByText('B count: 2')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('A count: 2')).toBeInTheDocument()
+  expect(screen.getByText('B count: 2')).toBeInTheDocument()
   expect(computeDouble).toBeCalledTimes(1)
 })
