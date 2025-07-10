@@ -1,5 +1,5 @@
 import { StrictMode, useEffect, useRef, useState } from 'react'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { proxy, snapshot, useSnapshot } from 'valtio'
 
@@ -38,14 +38,11 @@ it('simple counter', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(async () =>
-    expect(screen.getByText('count: 0')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(async () =>
-    expect(screen.getByText('count: 1')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
   unmount()
 })
 
@@ -83,22 +80,18 @@ it('no extra re-renders (commits)', async () => {
     </>,
   )
 
-  await vi.waitFor(() => {
-    expect(screen.getByText('count: 0 (1)')).toBeInTheDocument()
-    expect(screen.getByText('count2: 0 (1)')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0 (1)')).toBeInTheDocument()
+  expect(screen.getByText('count2: 0 (1)')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() => {
-    expect(screen.getByText('count: 1 (2)')).toBeInTheDocument()
-    expect(screen.getByText('count2: 0 (1)')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1 (2)')).toBeInTheDocument()
+  expect(screen.getByText('count2: 0 (1)')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button2'))
-  await vi.waitFor(() => {
-    expect(screen.getByText('count: 1 (2)')).toBeInTheDocument()
-    expect(screen.getByText('count2: 1 (2)')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1 (2)')).toBeInTheDocument()
+  expect(screen.getByText('count2: 1 (2)')).toBeInTheDocument()
 })
 
 it('no extra re-renders (render func calls in non strict mode)', async () => {
@@ -135,50 +128,44 @@ it('no extra re-renders (render func calls in non strict mode)', async () => {
     </>,
   )
 
-  await vi.waitFor(() => {
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-    expect(screen.getByText('count2: 0')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count2: 0')).toBeInTheDocument()
   expect(renderFn).toBeCalledTimes(1)
   expect(renderFn).lastCalledWith(0)
   expect(renderFn2).toBeCalledTimes(1)
   expect(renderFn2).lastCalledWith(0)
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('count2: 0')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count2: 0')).toBeInTheDocument()
   expect(renderFn).toBeCalledTimes(2)
   expect(renderFn).lastCalledWith(1)
   expect(renderFn2).toBeCalledTimes(1)
   expect(renderFn2).lastCalledWith(0)
 
   fireEvent.click(screen.getByText('button2'))
-  await vi.waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('count2: 1')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count2: 1')).toBeInTheDocument()
   expect(renderFn).toBeCalledTimes(2)
   expect(renderFn).lastCalledWith(1)
   expect(renderFn2).toBeCalledTimes(2)
   expect(renderFn2).lastCalledWith(1)
 
   fireEvent.click(screen.getByText('button2'))
-  await vi.waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-    expect(screen.getByText('count2: 2')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
+  expect(screen.getByText('count2: 2')).toBeInTheDocument()
   expect(renderFn).toBeCalledTimes(2)
   expect(renderFn).lastCalledWith(1)
   expect(renderFn2).toBeCalledTimes(3)
   expect(renderFn2).lastCalledWith(2)
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() => {
-    expect(screen.getByText('count: 2')).toBeInTheDocument()
-    expect(screen.getByText('count2: 2')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
+  expect(screen.getByText('count2: 2')).toBeInTheDocument()
   expect(renderFn).toBeCalledTimes(3)
   expect(renderFn).lastCalledWith(2)
   expect(renderFn2).toBeCalledTimes(3)
@@ -204,14 +191,11 @@ it('object in object', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 0')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 1')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
 it('array in object', async () => {
@@ -235,14 +219,11 @@ it('array in object', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('counts: 0,1,2')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('counts: 0,1,2')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('counts: 0,1,2,3')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('counts: 0,1,2,3')).toBeInTheDocument()
 })
 
 it('array pop and splice', async () => {
@@ -265,19 +246,15 @@ it('array pop and splice', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('counts: 0,1,2')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('counts: 0,1,2')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('counts: 0,1')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('counts: 0,1')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button2'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('counts: 0,10,11,1')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('counts: 0,10,11,1')).toBeInTheDocument()
 })
 
 it('array length after direct assignment', async () => {
@@ -311,19 +288,15 @@ it('array length after direct assignment', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('counts: 0,1,2')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('counts: 0,1,2')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('increment'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('counts: 0,1,2,3')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('counts: 0,1,2,3')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('jump'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('counts: 0,1,2,3,,,,,,9')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('counts: 0,1,2,3,,,,,,9')).toBeInTheDocument()
 })
 
 it('deleting property', async () => {
@@ -345,14 +318,11 @@ it('deleting property', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 1')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: none')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: none')).toBeInTheDocument()
 })
 
 it('circular object', async () => {
@@ -376,14 +346,11 @@ it('circular object', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() => {
-    expect(screen.getByText('count: 0')).toBeInTheDocument()
-  })
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() => {
-    expect(screen.getByText('count: 1')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
 it('circular object with non-proxy object (#375)', async () => {
@@ -402,9 +369,7 @@ it('circular object with non-proxy object (#375)', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 1')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
 it('render from outside', async () => {
@@ -432,15 +397,12 @@ it('render from outside', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('anotherCount: 0')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('anotherCount: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
   fireEvent.click(screen.getByText('toggle'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 1')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
 it('counter with sync option', async () => {
@@ -464,19 +426,15 @@ it('counter with sync option', async () => {
     </>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 0 (1)')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('count: 0 (1)')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 1 (2)')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1 (2)')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 2 (3)')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 2 (3)')).toBeInTheDocument()
 })
 
 it('support undefined property (#439)', async () => {
@@ -495,9 +453,7 @@ it('support undefined property (#439)', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('has prop: true')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('has prop: true')).toBeInTheDocument()
 })
 
 it('sync snapshot between nested components (#460)', async () => {
@@ -534,20 +490,18 @@ it('sync snapshot between nested components (#460)', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() => {
-    expect(screen.getByText('Parent: value1')).toBeInTheDocument()
-    expect(screen.getByText('Child: value1')).toBeInTheDocument()
-  })
+  expect(screen.getByText('Parent: value1')).toBeInTheDocument()
+  expect(screen.getByText('Child: value1')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() => {
-    expect(screen.getByText('Parent: value2')).toBeInTheDocument()
-    expect(screen.getByText('Child: value2')).toBeInTheDocument()
-  })
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('Parent: value2')).toBeInTheDocument()
+  expect(screen.getByText('Child: value2')).toBeInTheDocument()
 })
 
 it('respects property enumerability (#726)', async () => {
   const x = proxy(Object.defineProperty({ a: 1 }, 'b', { value: 2 }))
+
   expect(Object.keys(snapshot(x))).toEqual(Object.keys(x))
 })
 
@@ -571,20 +525,16 @@ it('stable snapshot object (#985)', async () => {
 
   render(<TestComponent />)
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 0')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
   expect(effectCount).toBe(1)
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 1')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
   expect(effectCount).toBe(1)
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 2')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 2')).toBeInTheDocument()
   expect(effectCount).toBe(1)
 })
