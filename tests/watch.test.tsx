@@ -27,10 +27,12 @@ describe('watch', () => {
     })
 
     expect(callback).toBeCalledTimes(1)
+
     reference.value = 'Update'
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(callback).toBeCalledTimes(2)
   })
+
   it('should re-run for multiple proxy updates', async () => {
     const A = proxy({ value: 'A' })
     const B = proxy({ value: 'B' })
@@ -44,13 +46,16 @@ describe('watch', () => {
     })
 
     expect(callback).toBeCalledTimes(1)
+
     A.value = 'B'
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(callback).toBeCalledTimes(2)
+
     B.value = 'C'
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(callback).toBeCalledTimes(3)
   })
+
   it('should cleanup when state updates', async () => {
     const reference = proxy({ value: 'Example' })
 
@@ -65,19 +70,24 @@ describe('watch', () => {
     })
 
     expect(callback).toBeCalledTimes(0)
+
     reference.value = 'Update'
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(0)
     expect(callback).toBeCalledTimes(1)
   })
+
   it('should cleanup when stopped', () => {
     const callback = vi.fn()
 
     const stop = watch(() => callback)
 
     expect(callback).toBeCalledTimes(0)
+
     stop()
+
     expect(callback).toBeCalledTimes(1)
   })
+
   it('should cleanup internal effects when stopped', () => {
     const callback = vi.fn()
 
@@ -94,9 +104,12 @@ describe('watch', () => {
     })
 
     expect(callback).toBeCalledTimes(0)
+
     stop()
+
     expect(callback).toBeCalledTimes(1)
   })
+
   it('should not loop infinitely with sync (#382)', () => {
     const reference = proxy({ value: 'Example' })
 
@@ -111,33 +124,28 @@ describe('watch', () => {
     )
 
     expect(callback).toBeCalledTimes(1)
+
     reference.value = 'Update'
     expect(callback).toBeCalledTimes(2)
     expect(reference.value).toBe('Update')
   })
+
   it('should support promise watchers', async () => {
     const reference = proxy({ value: 'Example' })
 
     const callback = vi.fn()
 
-    const waitPromise = sleep(10000)
     watch(async (get) => {
-      await waitPromise
+      await sleep(10000)
       get(reference)
       callback()
     })
 
-    vi.runAllTimers()
-    await waitPromise
-
+    await vi.advanceTimersByTimeAsync(10000)
     expect(callback).toBeCalledTimes(1)
-    // listener will only be attached after one promise callback due to the await stack
-    await Promise.resolve()
+
     reference.value = 'Update'
-    // wait for internal promise
-    await Promise.resolve()
-    // wait for next promise resolve call due to promise usage inside of callback
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(10000)
     expect(callback).toBeCalledTimes(2)
   })
 
@@ -146,25 +154,18 @@ describe('watch', () => {
 
     const callback = vi.fn()
 
-    const waitPromise = sleep(10000)
     const stop = watch(async (get) => {
-      await waitPromise
+      await sleep(10000)
       get(reference)
       callback()
     })
     stop()
 
-    vi.runAllTimers()
-    await waitPromise
-
+    await vi.advanceTimersByTimeAsync(10000)
     expect(callback).toBeCalledTimes(1)
-    // listener will only be attached after one promise callback due to the await stack
-    await Promise.resolve()
+
     reference.value = 'Update'
-    // wait for internal promise
-    await Promise.resolve()
-    // wait for next promise resolve call due to promise usage inside of callback
-    await Promise.resolve()
+    await vi.advanceTimersByTimeAsync(10000)
     expect(callback).toBeCalledTimes(1)
   })
 })
