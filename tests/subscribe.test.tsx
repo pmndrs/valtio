@@ -90,16 +90,20 @@ describe('subscribe', () => {
 
   it('should not cause infinite loop', async () => {
     const obj = proxy({ count: 0 })
-    const handler = () => {
+    const handler = vi.fn(() => {
       // Reset count if above 5
       if (obj.count > 5) {
         obj.count = 0
       }
-    }
+    })
 
     subscribe(obj, handler)
 
     obj.count = 10
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(1)
+    expect(obj.count).toBe(0)
   })
 
   it('should batch updates', async () => {
