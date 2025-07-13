@@ -47,16 +47,13 @@ it.skipIf(typeof use === 'undefined')('delayed increment', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 0')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
+
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('loading')).toBeInTheDocument(),
-  )
-  await vi.waitFor(() =>
-    expect(screen.getByText('count: 1')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(300))
+  expect(screen.getByText('count: 1')).toBeInTheDocument()
 })
 
 it.skipIf(typeof use === 'undefined')('delayed object', async () => {
@@ -83,17 +80,13 @@ it.skipIf(typeof use === 'undefined')('delayed object', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('text: none')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('text: none')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('loading')).toBeInTheDocument(),
-  )
-  await vi.waitFor(() =>
-    expect(screen.getByText('text: hello')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(300))
+  expect(screen.getByText('text: hello')).toBeInTheDocument()
 })
 
 it.skipIf(typeof use === 'undefined')(
@@ -129,23 +122,17 @@ it.skipIf(typeof use === 'undefined')(
       ),
     )
 
-    await vi.waitFor(() =>
-      expect(screen.getByText('loading')).toBeInTheDocument(),
-    )
-    await vi.waitFor(() => {
-      expect(screen.getByText('text: counter')).toBeInTheDocument()
-      expect(screen.getByText('count: 0')).toBeInTheDocument()
-    })
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(300))
+    expect(screen.getByText('text: counter')).toBeInTheDocument()
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('button'))
-
-    await vi.waitFor(() =>
-      expect(screen.getByText('loading')).toBeInTheDocument(),
-    )
-    await vi.waitFor(() => {
-      expect(screen.getByText('text: counter')).toBeInTheDocument()
-      expect(screen.getByText('count: 1')).toBeInTheDocument()
-    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('loading')).toBeInTheDocument()
+    await act(() => vi.advanceTimersByTimeAsync(300))
+    expect(screen.getByText('text: counter')).toBeInTheDocument()
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
   },
 )
 
@@ -173,15 +160,11 @@ it.skipIf(typeof use === 'undefined')('delayed falsy value', async () => {
     </StrictMode>,
   )
 
-  await vi.waitFor(() =>
-    expect(screen.getByText('value: true')).toBeInTheDocument(),
-  )
+  expect(screen.getByText('value: true')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  await vi.waitFor(() =>
-    expect(screen.getByText('loading')).toBeInTheDocument(),
-  )
-  await vi.waitFor(() =>
-    expect(screen.getByText('value: null')).toBeInTheDocument(),
-  )
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('loading')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(300))
+  expect(screen.getByText('value: null')).toBeInTheDocument()
 })
