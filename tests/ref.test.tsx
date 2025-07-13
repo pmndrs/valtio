@@ -7,6 +7,7 @@ import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
 beforeEach(() => {
   vi.useFakeTimers()
 })
+
 afterEach(() => {
   vi.useRealTimers()
 })

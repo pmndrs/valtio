@@ -112,15 +112,15 @@ it.skipIf(typeof use === 'undefined')(
       )
     }
 
-    await act(async () => {
+    await act(() =>
       render(
         <StrictMode>
           <Suspense fallback="loading">
             <Counter />
           </Suspense>
         </StrictMode>,
-      )
-    })
+      ),
+    )
 
     expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(300))
