@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, useSnapshot } from 'valtio'
 import { proxySet } from 'valtio/utils'
@@ -238,9 +238,8 @@ describe('clear set', () => {
       expect(screen.getByText(`size: ${state.set.size}`)).toBeInTheDocument()
 
       fireEvent.click(screen.getByText('button'))
-      await vi.waitFor(() => {
-        expect(screen.getByText('size: 0')).toBeInTheDocument()
-      })
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(screen.getByText('size: 0')).toBeInTheDocument()
     })
   })
 })
@@ -270,11 +269,10 @@ describe('add value', () => {
       )
 
       expect(screen.getByText('size: 0')).toBeInTheDocument()
-      fireEvent.click(screen.getByText('button'))
 
-      await vi.waitFor(() => {
-        expect(screen.getByText('size: 1')).toBeInTheDocument()
-      })
+      fireEvent.click(screen.getByText('button'))
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(screen.getByText('size: 1')).toBeInTheDocument()
     })
   })
 })
@@ -316,11 +314,10 @@ describe('delete', () => {
         state.set.size > 1 ? state.set.size - 1 : 0
 
       fireEvent.click(screen.getByText('button'))
-      await vi.waitFor(() => {
-        expect(
-          screen.getByText(`size: ${expectedSizeAfterDelete}`),
-        ).toBeInTheDocument()
-      })
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(
+        screen.getByText(`size: ${expectedSizeAfterDelete}`),
+      ).toBeInTheDocument()
     })
   })
 
@@ -404,19 +401,15 @@ describe('ui updates - useSnapshot', async () => {
       </StrictMode>,
     )
 
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: false')).toBeInTheDocument()
-    })
+    expect(screen.getByText('has value: false')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('add value'))
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: true')).toBeInTheDocument()
-    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('has value: true')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('delete value'))
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: false')).toBeInTheDocument()
-    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('has value: false')).toBeInTheDocument()
   })
 
   it('should update ui when calling has before and after settiing and deleting multiple values', async () => {
@@ -454,22 +447,18 @@ describe('ui updates - useSnapshot', async () => {
       </StrictMode>,
     )
 
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: false')).toBeInTheDocument()
-      expect(screen.getByText('has value2: false')).toBeInTheDocument()
-    })
+    expect(screen.getByText('has value: false')).toBeInTheDocument()
+    expect(screen.getByText('has value2: false')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('add values'))
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: true')).toBeInTheDocument()
-      expect(screen.getByText('has value2: true')).toBeInTheDocument()
-    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('has value: true')).toBeInTheDocument()
+    expect(screen.getByText('has value2: true')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('delete values'))
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: false')).toBeInTheDocument()
-      expect(screen.getByText('has value2: false')).toBeInTheDocument()
-    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('has value: false')).toBeInTheDocument()
+    expect(screen.getByText('has value2: false')).toBeInTheDocument()
   })
 
   it('should update ui when calling has before and after settiing multiple values and deleting a single one (first item)', async () => {
@@ -506,22 +495,18 @@ describe('ui updates - useSnapshot', async () => {
       </StrictMode>,
     )
 
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: false')).toBeInTheDocument()
-      expect(screen.getByText('has value2: false')).toBeInTheDocument()
-    })
+    expect(screen.getByText('has value: false')).toBeInTheDocument()
+    expect(screen.getByText('has value2: false')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('add values'))
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: true')).toBeInTheDocument()
-      expect(screen.getByText('has value2: true')).toBeInTheDocument()
-    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('has value: true')).toBeInTheDocument()
+    expect(screen.getByText('has value2: true')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('delete values'))
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: false')).toBeInTheDocument()
-      expect(screen.getByText('has value2: true')).toBeInTheDocument()
-    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('has value: false')).toBeInTheDocument()
+    expect(screen.getByText('has value2: true')).toBeInTheDocument()
   })
 
   it('should update ui when calling has before and after settiing multiple values and deleting a single one (second item)', async () => {
@@ -558,22 +543,18 @@ describe('ui updates - useSnapshot', async () => {
       </StrictMode>,
     )
 
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: false')).toBeInTheDocument()
-      expect(screen.getByText('has value2: false')).toBeInTheDocument()
-    })
+    expect(screen.getByText('has value: false')).toBeInTheDocument()
+    expect(screen.getByText('has value2: false')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('add values'))
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: true')).toBeInTheDocument()
-      expect(screen.getByText('has value2: true')).toBeInTheDocument()
-    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('has value: true')).toBeInTheDocument()
+    expect(screen.getByText('has value2: true')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('delete values'))
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: true')).toBeInTheDocument()
-      expect(screen.getByText('has value2: false')).toBeInTheDocument()
-    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('has value: true')).toBeInTheDocument()
+    expect(screen.getByText('has value2: false')).toBeInTheDocument()
   })
 
   it('should update ui when clearing the set', async () => {
@@ -610,22 +591,18 @@ describe('ui updates - useSnapshot', async () => {
       </StrictMode>,
     )
 
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: false')).toBeInTheDocument()
-      expect(screen.getByText('has value2: false')).toBeInTheDocument()
-    })
+    expect(screen.getByText('has value: false')).toBeInTheDocument()
+    expect(screen.getByText('has value2: false')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('add values'))
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: true')).toBeInTheDocument()
-      expect(screen.getByText('has value2: true')).toBeInTheDocument()
-    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('has value: true')).toBeInTheDocument()
+    expect(screen.getByText('has value2: true')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('clear set'))
-    await vi.waitFor(() => {
-      expect(screen.getByText('has value: false')).toBeInTheDocument()
-      expect(screen.getByText('has value2: false')).toBeInTheDocument()
-    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('has value: false')).toBeInTheDocument()
+    expect(screen.getByText('has value2: false')).toBeInTheDocument()
   })
 
   it('should be reactive to changes when using values method', async () => {
@@ -658,8 +635,8 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     fireEvent.click(screen.getByText('Add Item'))
-
-    await vi.waitFor(() => expect(screen.getByText('1')).toBeInTheDocument())
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('1')).toBeInTheDocument()
   })
 
   it('should be reactive to changes when using keys method', async () => {
@@ -692,9 +669,8 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     fireEvent.click(screen.getByText('Add Item'))
-    await vi.waitFor(() =>
-      expect(screen.getByText('item key: 1')).toBeInTheDocument(),
-    )
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('item key: 1')).toBeInTheDocument()
   })
 
   it('should be reactive to changes when using entries method', async () => {
@@ -727,9 +703,8 @@ describe('ui updates - useSnapshot', async () => {
     )
 
     fireEvent.click(screen.getByText('Add Item'))
-    await vi.waitFor(() =>
-      expect(screen.getByText('key: 1; value: 1')).toBeInTheDocument(),
-    )
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('key: 1; value: 1')).toBeInTheDocument()
   })
 })
 
@@ -789,11 +764,10 @@ describe('ui updates - useSnapshot - iterator methods', () => {
       )
 
       fireEvent.click(screen.getByText('Add'))
-      await vi.waitFor(() => {
-        expect(
-          screen.getByText(`item.name: item 1; item.id: 1`),
-        ).toBeInTheDocument()
-      })
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(
+        screen.getByText(`item.name: item 1; item.id: 1`),
+      ).toBeInTheDocument()
     })
 
     it(`should be reactive to changes when using ${iteratorMethod} method when setting multiple values`, async () => {
@@ -856,14 +830,13 @@ describe('ui updates - useSnapshot - iterator methods', () => {
       )
 
       fireEvent.click(screen.getByText('Add'))
-      await vi.waitFor(() => {
-        expect(
-          screen.getByText(`item.name: item 1; item.id: 1`),
-        ).toBeInTheDocument()
-        expect(
-          screen.getByText(`item.name: item 2; item.id: 2`),
-        ).toBeInTheDocument()
-      })
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(
+        screen.getByText(`item.name: item 1; item.id: 1`),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText(`item.name: item 2; item.id: 2`),
+      ).toBeInTheDocument()
     })
   })
 })

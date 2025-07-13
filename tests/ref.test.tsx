@@ -1,8 +1,16 @@
 import { StrictMode, useEffect, useRef } from 'react'
 import type { ReactElement } from 'react'
-import { fireEvent, render, screen } from '@testing-library/react'
-import { expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
+
+beforeEach(() => {
+  vi.useFakeTimers()
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 const useCommitCount = () => {
   const commitCountRef = useRef(1)
@@ -33,10 +41,11 @@ it('should trigger re-render setting objects with ref wrapper', async () => {
     </>,
   )
 
-  expect(await screen.findByText('count: 0 (1)')).toBeInTheDocument()
+  expect(screen.getByText('count: 0 (1)')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 0 (2)')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 0 (2)')).toBeInTheDocument()
 })
 
 it('should not track object wrapped in ref assigned to proxy state', async () => {
@@ -60,10 +69,11 @@ it('should not track object wrapped in ref assigned to proxy state', async () =>
     </StrictMode>,
   )
 
-  expect(await screen.findByText('original')).toBeInTheDocument()
+  expect(screen.getByText('original')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('replace')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('replace')).toBeInTheDocument()
 })
 
 it('should not trigger re-render when mutating object wrapped in ref', async () => {
@@ -85,10 +95,11 @@ it('should not trigger re-render when mutating object wrapped in ref', async () 
     </StrictMode>,
   )
 
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 
   fireEvent.click(screen.getByText('button'))
-  expect(await screen.findByText('count: 0')).toBeInTheDocument()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('count: 0')).toBeInTheDocument()
 })
 
 it('should not update snapshot or notify subscription when mutating proxy wrapped in ref', async () => {
