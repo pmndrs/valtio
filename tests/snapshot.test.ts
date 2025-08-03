@@ -1,7 +1,5 @@
 import { createProxy, getUntracked } from 'proxy-compare'
-import { expectType } from 'ts-expect'
-import type { TypeEqual } from 'ts-expect'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 import { proxy, snapshot } from 'valtio'
 import type { Snapshot } from 'valtio'
 
@@ -89,103 +87,96 @@ it('should return stable nested snapshot object', async () => {
 
 describe('snapshot typings', () => {
   it('converts object properties to readonly', () => {
-    expectType<
-      TypeEqual<
-        Snapshot<{
-          string: string
-          number: number
-          null: null
-          undefined: undefined
-          bool: boolean
-          someFunction(): number
-          ref: { x: unknown } & { $$valtioSnapshot: { x: unknown } }
-        }>,
-        {
-          readonly string: string
-          readonly number: number
-          readonly null: null
-          readonly undefined: undefined
-          readonly bool: boolean
-          readonly someFunction: () => number
-          readonly ref: { x: unknown }
-        }
-      >
-    >(true)
+    type A = Snapshot<{
+      string: string
+      number: number
+      null: null
+      undefined: undefined
+      bool: boolean
+      someFunction(): number
+      ref: { x: unknown } & { $$valtioSnapshot: { x: unknown } }
+    }>
+    type B = {
+      readonly string: string
+      readonly number: number
+      readonly null: null
+      readonly undefined: undefined
+      readonly bool: boolean
+      readonly someFunction: () => number
+      readonly ref: { x: unknown }
+    }
+
+    expectTypeOf<A>().toEqualTypeOf<B>()
   })
 
   it('converts arrays to readonly arrays', () => {
-    expectType<TypeEqual<Snapshot<number[]>, readonly number[]>>(true)
+    type A = Snapshot<number[]>
+    type B = readonly number[]
+
+    expectTypeOf<A>().toEqualTypeOf<B>()
   })
 
   it('keeps builtin objects from SnapshotIgnore as-is', () => {
-    expectType<
-      TypeEqual<
-        Snapshot<{
-          date: Date
-          map: Map<string, unknown>
-          set: Set<string>
-          regexp: RegExp
-          error: Error
-          weakMap: WeakMap<any, any>
-          weakSet: WeakSet<any>
-        }>,
-        {
-          readonly date: Date
-          readonly map: Map<string, unknown>
-          readonly set: Set<string>
-          readonly regexp: RegExp
-          readonly error: Error
-          readonly weakMap: WeakMap<any, any>
-          readonly weakSet: WeakSet<any>
-        }
-      >
-    >(true)
+    type A = Snapshot<{
+      date: Date
+      map: Map<string, unknown>
+      set: Set<string>
+      regexp: RegExp
+      error: Error
+      weakMap: WeakMap<any, any>
+      weakSet: WeakSet<any>
+    }>
+    type B = {
+      readonly date: Date
+      readonly map: Map<string, unknown>
+      readonly set: Set<string>
+      readonly regexp: RegExp
+      readonly error: Error
+      readonly weakMap: WeakMap<any, any>
+      readonly weakSet: WeakSet<any>
+    }
+
+    expectTypeOf<A>().toEqualTypeOf<B>()
   })
 
   it('converts collections to readonly', () => {
-    expectType<
-      TypeEqual<
-        Snapshot<{ key: string }[]>,
-        readonly { readonly key: string }[]
-      >
-    >(true)
+    type A = Snapshot<{ key: string }[]>
+    type B = readonly { readonly key: string }[]
+
+    expectTypeOf<A>().toEqualTypeOf<B>()
   })
 
   it('converts object properties to readonly recursively', () => {
-    expectType<
-      TypeEqual<
-        Snapshot<{
-          prevPage: number | null
-          nextPage: number | null
-          rows: number
-          items: {
-            title: string
-            details: string | null
-            createdAt: Date
-            updatedAt: Date
-          }[]
-        }>,
-        {
-          readonly prevPage: number | null
-          readonly nextPage: number | null
-          readonly rows: number
-          readonly items: readonly {
-            readonly title: string
-            readonly details: string | null
-            readonly createdAt: Date
-            readonly updatedAt: Date
-          }[]
-        }
-      >
-    >(true)
+    type A = Snapshot<{
+      prevPage: number | null
+      nextPage: number | null
+      rows: number
+      items: {
+        title: string
+        details: string | null
+        createdAt: Date
+        updatedAt: Date
+      }[]
+    }>
+    type B = {
+      readonly prevPage: number | null
+      readonly nextPage: number | null
+      readonly rows: number
+      readonly items: readonly {
+        readonly title: string
+        readonly details: string | null
+        readonly createdAt: Date
+        readonly updatedAt: Date
+      }[]
+    }
+
+    expectTypeOf<A>().toEqualTypeOf<B>()
   })
 
   it('turns class fields to readonly', () => {
     class User {
       firstName!: string
-
       lastName!: string
-
       role!: string
 
       hasRole(role: string): boolean {
@@ -193,34 +184,31 @@ describe('snapshot typings', () => {
       }
     }
 
+    type A = Snapshot<typeof user>
+    type B = {
+      readonly firstName: string
+      readonly lastName: string
+      readonly role: string
+      readonly hasRole: (role: string) => boolean
+    }
+
     const user = new User()
 
-    expectType<
-      TypeEqual<
-        Snapshot<typeof user>,
-        {
-          readonly firstName: string
-          readonly lastName: string
-          readonly role: string
-          readonly hasRole: (role: string) => boolean
-        }
-      >
-    >(true)
+    expectTypeOf<A>().toEqualTypeOf<B>()
   })
 
   it('ignores primitive types that have been branded/tagged', () => {
     const symbolTag = Symbol()
-    expectType<
-      TypeEqual<
-        Snapshot<{
-          brandedWithStringKey: string & { __brand: 'Brand' }
-          brandedWithSymbolKey: number & { [symbolTag]: 'Tag' }
-        }>,
-        {
-          readonly brandedWithStringKey: string & { __brand: 'Brand' }
-          readonly brandedWithSymbolKey: number & { [symbolTag]: 'Tag' }
-        }
-      >
-    >(true)
+
+    type A = Snapshot<{
+      brandedWithStringKey: string & { __brand: 'Brand' }
+      brandedWithSymbolKey: number & { [symbolTag]: 'Tag' }
+    }>
+    type B = {
+      readonly brandedWithStringKey: string & { __brand: 'Brand' }
+      readonly brandedWithSymbolKey: number & { [symbolTag]: 'Tag' }
+    }
+
+    expectTypeOf<A>().toEqualTypeOf<B>()
   })
 })
