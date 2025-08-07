@@ -9,7 +9,7 @@ import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   {
-    ignores: ['dist/', 'examples/', 'website/'],
+    ignores: ['dist/', 'examples/', 'website/', 'coverage/'],
   },
   eslint.configs.recommended,
   importPlugin.flatConfigs.recommended,
@@ -18,6 +18,11 @@ export default tseslint.config(
   react.configs.flat['jsx-runtime'],
   reactHooks.configs.recommended,
   {
+    languageOptions: {
+      parserOptions: {
+        project: true,
+      },
+    },
     settings: {
       react: {
         version: 'detect',
@@ -76,8 +81,18 @@ export default tseslint.config(
   {
     files: ['tests/**/*.{ts,tsx}'],
     ...testingLibrary.configs['flat/react'],
+  },
+  {
+    files: ['tests/**/*.{ts,tsx}'],
     ...jestDom.configs['flat/recommended'],
+  },
+  {
+    files: ['tests/**/*.{ts,tsx}'],
     ...vitest.configs.recommended,
+    settings: { vitest: { typecheck: true } },
+  },
+  {
+    files: ['tests/**/*.{ts,tsx}'],
     rules: {
       'import/extensions': ['error', 'never'],
       '@typescript-eslint/no-unused-vars': 'off',
@@ -91,6 +106,14 @@ export default tseslint.config(
     files: ['src/vanilla/utils/proxyMap.ts', 'src/vanilla/utils/proxySet.ts'],
     rules: {
       '@typescript-eslint/no-unused-expressions': 'off',
+    },
+  },
+  {
+    files: ['*.config.*'],
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
     },
   },
 )

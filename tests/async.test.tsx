@@ -112,6 +112,7 @@ it.skipIf(typeof use === 'undefined')(
       )
     }
 
+    // eslint-disable-next-line testing-library/no-unnecessary-act
     await act(() =>
       render(
         <StrictMode>
