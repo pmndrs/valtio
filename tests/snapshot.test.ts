@@ -3,212 +3,214 @@ import { describe, expect, expectTypeOf, it } from 'vitest'
 import { proxy, snapshot } from 'valtio'
 import type { Snapshot } from 'valtio'
 
-it('should return correct snapshots without subscribe', async () => {
-  const child = proxy({ count: 0 })
-  const state = proxy({ child })
+describe('snapshot', () => {
+  it('should return correct snapshots without subscribe', async () => {
+    const child = proxy({ count: 0 })
+    const state = proxy({ child })
 
-  expect(snapshot(state)).toEqual({ child: { count: 0 } })
+    expect(snapshot(state)).toEqual({ child: { count: 0 } })
 
-  ++child.count
-  expect(snapshot(state)).toEqual({ child: { count: 1 } })
-})
-
-it('should not change snapshot with assigning same object', async () => {
-  const obj = {}
-  const state = proxy({ obj })
-
-  const snap1 = snapshot(state)
-  state.obj = obj
-  const snap2 = snapshot(state)
-  expect(snap1).toBe(snap2)
-})
-
-it('should make the snapshot immutable', () => {
-  const state = proxy<{ foo: number; bar?: string }>({ foo: 1 })
-  const snap = snapshot(state)
-
-  // Overwriting existing property
-  expect(() => {
-    ;(snap as typeof state).foo = 100
-  }).toThrow()
-
-  // Extension (adding new property)
-  expect(() => {
-    ;(snap as typeof state).bar = 'hello'
-  }).toThrow()
-
-  // Note: The current implementation does not prevent property removal.
-  // Do not add a test for this unless we come up with an implementation that
-  // supports it.
-  // See https://github.com/pmndrs/valtio/issues/749
-})
-
-it('should not cause proxy-compare to copy', async () => {
-  const state = proxy({ foo: 1 })
-  const snap1 = snapshot(state)
-  // Ensure configurable is true, otherwise proxy-compare will copy the object
-  // so that its Proxy.get trap can work, and we don't want that perf overhead.
-  expect(Object.getOwnPropertyDescriptor(snap1, 'foo')).toEqual({
-    configurable: true,
-    enumerable: true,
-    value: 1,
-    writable: false,
-  })
-  // Technically getUntracked is smart enough to not return the copy, so this
-  // assertion doesn't strictly mean we avoided the copy
-  const cmp = createProxy(snap1, new WeakMap())
-  expect(getUntracked(cmp)).toBe(snap1)
-})
-
-it('should create a new proxy from a snapshot', async () => {
-  const state = proxy({ c: 0 })
-  const snap1 = snapshot(state)
-  const state2 = proxy(snap1)
-  expect(state2.c).toBe(0)
-})
-
-it('should not change snapshot with modifying the original proxy', async () => {
-  const state = proxy({ obj1: {}, obj2: { nested: { count: 1 } } })
-  const snap1 = snapshot(state)
-  expect(snap1.obj1).toBeDefined()
-  state.obj2.nested.count++
-  const snap2 = snapshot(state)
-  expect(snap1.obj2.nested.count).toBe(1)
-  expect(snap2.obj2.nested.count).toBe(2)
-})
-
-it('should return stable nested snapshot object', async () => {
-  const state = proxy({ count: 0, obj: {} })
-  const snap1 = snapshot(state)
-  state.count++
-  const snap2 = snapshot(state)
-  expect(snap2.obj).toBe(snap1.obj)
-})
-
-describe('snapshot typings', () => {
-  it('converts object properties to readonly', () => {
-    type A = Snapshot<{
-      string: string
-      number: number
-      null: null
-      undefined: undefined
-      bool: boolean
-      someFunction(): number
-      ref: { x: unknown } & { $$valtioSnapshot: { x: unknown } }
-    }>
-    type B = {
-      readonly string: string
-      readonly number: number
-      readonly null: null
-      readonly undefined: undefined
-      readonly bool: boolean
-      readonly someFunction: () => number
-      readonly ref: { x: unknown }
-    }
-
-    expectTypeOf<A>().toEqualTypeOf<B>()
+    ++child.count
+    expect(snapshot(state)).toEqual({ child: { count: 1 } })
   })
 
-  it('converts arrays to readonly arrays', () => {
-    type A = Snapshot<number[]>
-    type B = readonly number[]
+  it('should not change snapshot with assigning same object', async () => {
+    const obj = {}
+    const state = proxy({ obj })
 
-    expectTypeOf<A>().toEqualTypeOf<B>()
+    const snap1 = snapshot(state)
+    state.obj = obj
+    const snap2 = snapshot(state)
+    expect(snap1).toBe(snap2)
   })
 
-  it('keeps builtin objects from SnapshotIgnore as-is', () => {
-    type A = Snapshot<{
-      date: Date
-      map: Map<string, unknown>
-      set: Set<string>
-      regexp: RegExp
-      error: Error
-      weakMap: WeakMap<any, any>
-      weakSet: WeakSet<any>
-    }>
-    type B = {
-      readonly date: Date
-      readonly map: Map<string, unknown>
-      readonly set: Set<string>
-      readonly regexp: RegExp
-      readonly error: Error
-      readonly weakMap: WeakMap<any, any>
-      readonly weakSet: WeakSet<any>
-    }
+  it('should make the snapshot immutable', () => {
+    const state = proxy<{ foo: number; bar?: string }>({ foo: 1 })
+    const snap = snapshot(state)
 
-    expectTypeOf<A>().toEqualTypeOf<B>()
+    // Overwriting existing property
+    expect(() => {
+      ;(snap as typeof state).foo = 100
+    }).toThrow()
+
+    // Extension (adding new property)
+    expect(() => {
+      ;(snap as typeof state).bar = 'hello'
+    }).toThrow()
+
+    // Note: The current implementation does not prevent property removal.
+    // Do not add a test for this unless we come up with an implementation that
+    // supports it.
+    // See https://github.com/pmndrs/valtio/issues/749
   })
 
-  it('converts collections to readonly', () => {
-    type A = Snapshot<{ key: string }[]>
-    type B = readonly { readonly key: string }[]
-
-    expectTypeOf<A>().toEqualTypeOf<B>()
+  it('should not cause proxy-compare to copy', async () => {
+    const state = proxy({ foo: 1 })
+    const snap1 = snapshot(state)
+    // Ensure configurable is true, otherwise proxy-compare will copy the object
+    // so that its Proxy.get trap can work, and we don't want that perf overhead.
+    expect(Object.getOwnPropertyDescriptor(snap1, 'foo')).toEqual({
+      configurable: true,
+      enumerable: true,
+      value: 1,
+      writable: false,
+    })
+    // Technically getUntracked is smart enough to not return the copy, so this
+    // assertion doesn't strictly mean we avoided the copy
+    const cmp = createProxy(snap1, new WeakMap())
+    expect(getUntracked(cmp)).toBe(snap1)
   })
 
-  it('converts object properties to readonly recursively', () => {
-    type A = Snapshot<{
-      prevPage: number | null
-      nextPage: number | null
-      rows: number
-      items: {
-        title: string
-        details: string | null
-        createdAt: Date
-        updatedAt: Date
-      }[]
-    }>
-    type B = {
-      readonly prevPage: number | null
-      readonly nextPage: number | null
-      readonly rows: number
-      readonly items: readonly {
-        readonly title: string
-        readonly details: string | null
-        readonly createdAt: Date
-        readonly updatedAt: Date
-      }[]
-    }
-
-    expectTypeOf<A>().toEqualTypeOf<B>()
+  it('should create a new proxy from a snapshot', async () => {
+    const state = proxy({ c: 0 })
+    const snap1 = snapshot(state)
+    const state2 = proxy(snap1)
+    expect(state2.c).toBe(0)
   })
 
-  it('turns class fields to readonly', () => {
-    class User {
-      firstName!: string
-      lastName!: string
-      role!: string
+  it('should not change snapshot with modifying the original proxy', async () => {
+    const state = proxy({ obj1: {}, obj2: { nested: { count: 1 } } })
+    const snap1 = snapshot(state)
+    expect(snap1.obj1).toBeDefined()
+    state.obj2.nested.count++
+    const snap2 = snapshot(state)
+    expect(snap1.obj2.nested.count).toBe(1)
+    expect(snap2.obj2.nested.count).toBe(2)
+  })
 
-      hasRole(role: string): boolean {
-        return this.role === role
+  it('should return stable nested snapshot object', async () => {
+    const state = proxy({ count: 0, obj: {} })
+    const snap1 = snapshot(state)
+    state.count++
+    const snap2 = snapshot(state)
+    expect(snap2.obj).toBe(snap1.obj)
+  })
+
+  describe('snapshot typings', () => {
+    it('converts object properties to readonly', () => {
+      type A = Snapshot<{
+        string: string
+        number: number
+        null: null
+        undefined: undefined
+        bool: boolean
+        someFunction(): number
+        ref: { x: unknown } & { $$valtioSnapshot: { x: unknown } }
+      }>
+      type B = {
+        readonly string: string
+        readonly number: number
+        readonly null: null
+        readonly undefined: undefined
+        readonly bool: boolean
+        readonly someFunction: () => number
+        readonly ref: { x: unknown }
       }
-    }
 
-    type A = Snapshot<typeof user>
-    type B = {
-      readonly firstName: string
-      readonly lastName: string
-      readonly role: string
-      readonly hasRole: (role: string) => boolean
-    }
+      expectTypeOf<A>().toEqualTypeOf<B>()
+    })
 
-    const user = new User()
+    it('converts arrays to readonly arrays', () => {
+      type A = Snapshot<number[]>
+      type B = readonly number[]
 
-    expectTypeOf<A>().toEqualTypeOf<B>()
-  })
+      expectTypeOf<A>().toEqualTypeOf<B>()
+    })
 
-  it('ignores primitive types that have been branded/tagged', () => {
-    const symbolTag = Symbol()
+    it('keeps builtin objects from SnapshotIgnore as-is', () => {
+      type A = Snapshot<{
+        date: Date
+        map: Map<string, unknown>
+        set: Set<string>
+        regexp: RegExp
+        error: Error
+        weakMap: WeakMap<any, any>
+        weakSet: WeakSet<any>
+      }>
+      type B = {
+        readonly date: Date
+        readonly map: Map<string, unknown>
+        readonly set: Set<string>
+        readonly regexp: RegExp
+        readonly error: Error
+        readonly weakMap: WeakMap<any, any>
+        readonly weakSet: WeakSet<any>
+      }
 
-    type A = Snapshot<{
-      brandedWithStringKey: string & { __brand: 'Brand' }
-      brandedWithSymbolKey: number & { [symbolTag]: 'Tag' }
-    }>
-    type B = {
-      readonly brandedWithStringKey: string & { __brand: 'Brand' }
-      readonly brandedWithSymbolKey: number & { [symbolTag]: 'Tag' }
-    }
+      expectTypeOf<A>().toEqualTypeOf<B>()
+    })
 
-    expectTypeOf<A>().toEqualTypeOf<B>()
+    it('converts collections to readonly', () => {
+      type A = Snapshot<{ key: string }[]>
+      type B = readonly { readonly key: string }[]
+
+      expectTypeOf<A>().toEqualTypeOf<B>()
+    })
+
+    it('converts object properties to readonly recursively', () => {
+      type A = Snapshot<{
+        prevPage: number | null
+        nextPage: number | null
+        rows: number
+        items: {
+          title: string
+          details: string | null
+          createdAt: Date
+          updatedAt: Date
+        }[]
+      }>
+      type B = {
+        readonly prevPage: number | null
+        readonly nextPage: number | null
+        readonly rows: number
+        readonly items: readonly {
+          readonly title: string
+          readonly details: string | null
+          readonly createdAt: Date
+          readonly updatedAt: Date
+        }[]
+      }
+
+      expectTypeOf<A>().toEqualTypeOf<B>()
+    })
+
+    it('turns class fields to readonly', () => {
+      class User {
+        firstName!: string
+        lastName!: string
+        role!: string
+
+        hasRole(role: string): boolean {
+          return this.role === role
+        }
+      }
+
+      type A = Snapshot<typeof user>
+      type B = {
+        readonly firstName: string
+        readonly lastName: string
+        readonly role: string
+        readonly hasRole: (role: string) => boolean
+      }
+
+      const user = new User()
+
+      expectTypeOf<A>().toEqualTypeOf<B>()
+    })
+
+    it('ignores primitive types that have been branded/tagged', () => {
+      const symbolTag = Symbol()
+
+      type A = Snapshot<{
+        brandedWithStringKey: string & { __brand: 'Brand' }
+        brandedWithSymbolKey: number & { [symbolTag]: 'Tag' }
+      }>
+      type B = {
+        readonly brandedWithStringKey: string & { __brand: 'Brand' }
+        readonly brandedWithSymbolKey: number & { [symbolTag]: 'Tag' }
+      }
+
+      expectTypeOf<A>().toEqualTypeOf<B>()
+    })
   })
 })

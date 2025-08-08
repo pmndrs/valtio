@@ -2,24 +2,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, ref, subscribe } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 
-const consoleWarn = console.warn
-
-beforeEach(() => {
-  console.warn = vi.fn((message: string) => {
-    if (message === 'Please use proxy object') {
-      return
-    }
-    consoleWarn(message)
-  })
-  vi.useFakeTimers()
-})
-
-afterEach(() => {
-  console.warn = consoleWarn
-  vi.useRealTimers()
-})
-
 describe('subscribe', () => {
+  const consoleWarn = console.warn
+
+  beforeEach(() => {
+    console.warn = vi.fn((message: string) => {
+      if (message === 'Please use proxy object') {
+        return
+      }
+      consoleWarn(message)
+    })
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    console.warn = consoleWarn
+    vi.useRealTimers()
+  })
+
   it('should call subscription', async () => {
     const obj = proxy({ count: 0 })
     const handler = vi.fn()
@@ -162,7 +162,9 @@ describe('subscribe', () => {
   })
 
   it('should notify nested ops', async () => {
-    const obj = proxy<{ nested: { count?: number } }>({ nested: { count: 0 } })
+    const obj = proxy<{ nested: { count?: number } }>({
+      nested: { count: 0 },
+    })
     const handler = vi.fn()
 
     subscribe(obj, handler)
@@ -194,6 +196,23 @@ describe('subscribe', () => {
 })
 
 describe('subscribeKey', () => {
+  const consoleWarn = console.warn
+
+  beforeEach(() => {
+    console.warn = vi.fn((message: string) => {
+      if (message === 'Please use proxy object') {
+        return
+      }
+      consoleWarn(message)
+    })
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    console.warn = consoleWarn
+    vi.useRealTimers()
+  })
+
   it('should call subscription', async () => {
     const obj = proxy({ count1: 0, count2: 0 })
     const handler1 = vi.fn()
