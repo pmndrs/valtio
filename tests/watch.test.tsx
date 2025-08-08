@@ -1,11 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy } from 'valtio'
 import { watch } from 'valtio/utils'
-
-const sleep = (ms: number) =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
+import { sleep } from './utils'
 
 describe('watch', () => {
   beforeEach(() => {

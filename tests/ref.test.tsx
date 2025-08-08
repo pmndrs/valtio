@@ -1,118 +1,114 @@
-import { StrictMode, useEffect, useRef } from 'react'
+import { StrictMode } from 'react'
 import type { ReactElement } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
+import { useCommitCount } from './utils'
 
-beforeEach(() => {
-  vi.useFakeTimers()
-})
-
-afterEach(() => {
-  vi.useRealTimers()
-})
-
-const useCommitCount = () => {
-  const commitCountRef = useRef(1)
-  useEffect(() => {
-    commitCountRef.current += 1
+describe('ref', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
   })
-  return commitCountRef.current
-}
 
-it('should trigger re-render setting objects with ref wrapper', async () => {
-  const obj = proxy({ nested: ref({ count: 0 }) })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
 
-  const Counter = () => {
-    const snap = useSnapshot(obj)
-    return (
+  it('should trigger re-render setting objects with ref wrapper', async () => {
+    const obj = proxy({ nested: ref({ count: 0 }) })
+
+    const Counter = () => {
+      const snap = useSnapshot(obj)
+      return (
+        <>
+          <div>
+            count: {snap.nested.count} ({useCommitCount(1)})
+          </div>
+          <button onClick={() => (obj.nested = ref({ count: 0 }))}>
+            button
+          </button>
+        </>
+      )
+    }
+
+    render(
       <>
-        <div>
-          count: {snap.nested.count} ({useCommitCount()})
-        </div>
-        <button onClick={() => (obj.nested = ref({ count: 0 }))}>button</button>
-      </>
+        <Counter />
+      </>,
     )
-  }
 
-  render(
-    <>
-      <Counter />
-    </>,
-  )
+    expect(screen.getByText('count: 0 (1)')).toBeInTheDocument()
 
-  expect(screen.getByText('count: 0 (1)')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 0 (2)')).toBeInTheDocument()
+  })
 
-  fireEvent.click(screen.getByText('button'))
-  await act(() => vi.advanceTimersByTimeAsync(0))
-  expect(screen.getByText('count: 0 (2)')).toBeInTheDocument()
-})
+  it('should not track object wrapped in ref assigned to proxy state', async () => {
+    const obj = proxy<{ ui: ReactElement | null }>({ ui: null })
 
-it('should not track object wrapped in ref assigned to proxy state', async () => {
-  const obj = proxy<{ ui: ReactElement | null }>({ ui: null })
+    const Component = () => {
+      const snap = useSnapshot(obj)
+      return (
+        <>
+          {snap.ui || <span>original</span>}
+          <button onClick={() => (obj.ui = ref(<span>replace</span>))}>
+            button
+          </button>
+        </>
+      )
+    }
 
-  const Component = () => {
-    const snap = useSnapshot(obj)
-    return (
-      <>
-        {snap.ui || <span>original</span>}
-        <button onClick={() => (obj.ui = ref(<span>replace</span>))}>
-          button
-        </button>
-      </>
+    render(
+      <StrictMode>
+        <Component />
+      </StrictMode>,
     )
-  }
 
-  render(
-    <StrictMode>
-      <Component />
-    </StrictMode>,
-  )
+    expect(screen.getByText('original')).toBeInTheDocument()
 
-  expect(screen.getByText('original')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('replace')).toBeInTheDocument()
+  })
 
-  fireEvent.click(screen.getByText('button'))
-  await act(() => vi.advanceTimersByTimeAsync(0))
-  expect(screen.getByText('replace')).toBeInTheDocument()
-})
+  it('should not trigger re-render when mutating object wrapped in ref', async () => {
+    const obj = proxy({ nested: ref({ count: 0 }) })
 
-it('should not trigger re-render when mutating object wrapped in ref', async () => {
-  const obj = proxy({ nested: ref({ count: 0 }) })
+    const Counter = () => {
+      const snap = useSnapshot(obj)
+      return (
+        <>
+          <div>count: {snap.nested.count}</div>
+          <button onClick={() => ++obj.nested.count}>button</button>
+        </>
+      )
+    }
 
-  const Counter = () => {
-    const snap = useSnapshot(obj)
-    return (
-      <>
-        <div>count: {snap.nested.count}</div>
-        <button onClick={() => ++obj.nested.count}>button</button>
-      </>
+    render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
     )
-  }
 
-  render(
-    <StrictMode>
-      <Counter />
-    </StrictMode>,
-  )
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-  expect(screen.getByText('count: 0')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('button'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+  })
 
-  fireEvent.click(screen.getByText('button'))
-  await act(() => vi.advanceTimersByTimeAsync(0))
-  expect(screen.getByText('count: 0')).toBeInTheDocument()
-})
+  it('should not update snapshot or notify subscription when mutating proxy wrapped in ref', async () => {
+    const obj = proxy({ nested: ref(proxy({ count: 0 })) })
 
-it('should not update snapshot or notify subscription when mutating proxy wrapped in ref', async () => {
-  const obj = proxy({ nested: ref(proxy({ count: 0 })) })
+    const snap1 = snapshot(obj)
+    ++obj.nested.count
+    const snap2 = snapshot(obj)
+    expect(snap2).toBe(snap1)
 
-  const snap1 = snapshot(obj)
-  ++obj.nested.count
-  const snap2 = snapshot(obj)
-  expect(snap2).toBe(snap1)
-
-  const callback = vi.fn()
-  subscribe(obj, callback)
-  ++obj.nested.count
-  await Promise.resolve()
-  expect(callback).not.toBeCalled()
+    const callback = vi.fn()
+    subscribe(obj, callback)
+    ++obj.nested.count
+    expect(callback).not.toBeCalled()
+  })
 })
