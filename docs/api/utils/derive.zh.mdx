@@ -1,0 +1,104 @@
+---
+title: 'derive'
+section: 'API'
+subSection: 'Utils'
+description: '从其他代理创建新的派生代理'
+---
+
+## `derive`
+
+## 安装
+
+```bash
+npm install derive-valtio
+```
+
+#### 从其他代理创建新的派生代理
+
+您可以使用 `get` 订阅一些代理来创建用于计算新值的快照。
+
+```js
+import { derive } from 'derive-valtio'
+
+// 创建基础代理
+const state = proxy({
+  count: 1,
+})
+
+// 创建派生代理
+const derived = derive({
+  doubled: (get) => get(state).count * 2,
+})
+
+// 或者，将派生属性附加到现有代理
+derive(
+  {
+    tripled: (get) => get(state).count * 3,
+  },
+  {
+    proxy: state,
+  },
+)
+```
+
+## `underive`
+
+## 停止评估
+
+在某些情况下，您可能希望在派生代理后取消订阅。为此，请使用 `underive` 工具。您还可以传递键来指示要取消订阅的属性。如果您指定 `delete` 选项，它将删除属性，您可以附加新的派生属性。
+
+```js
+import { derive, underive } from 'derive-valtio'
+const state = proxy({
+  count: 1,
+})
+
+const derivedState = derive({
+  doubled: (get) => get(state).count * 2,
+})
+
+underive(derivedState)
+```
+
+## 使用模式
+
+### 当不相关属性改变时重新计算
+
+使用 `derive`，如果基础代理的任何属性发生变化，计算就会发生。示例：
+
+```javascript
+const baseProxy = proxy({
+  counter1: 0,
+  counter2: 0,
+  counter3: 0,
+  counter4: 0,
+})
+
+const countersOneAndTwoSelectors = derive({
+  sum: (get) => get(baseProxy).counter1 + get(baseProxy).counter2,
+})
+```
+
+在此示例中，如果 `baseProxy.counter3` 或 `baseProxy.counter4` 发生变化，`countersOneAndTwoSelectors` 将重新计算其中的所有键。
+
+### 由于父代理上不相关代理的更新而 `get` 子对象
+
+如本页所述，当不相关属性发生变化时会发生重新计算。可以对子对象使用 `get`。这样做的好处是当父对象的属性更新时不会重新计算。示例：
+
+```javascript
+const baseProxy = proxy({
+  counter1And2: {
+    counter1: 0,
+    counter2: 0,
+  },
+  counter3: 0,
+  counter4: 0,
+})
+
+const countersOneAndTwoSelectors = derive({
+  sum: (get) =>
+    get(baseProxy.counter1And2).counter1 + get(baseProxy.counter1And2).counter2,
+})
+```
+
+现在即使更新 `counter3` 和 `counter4`，也不会导致 `countersOneAndTwoSelectors` 重新计算。

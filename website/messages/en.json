@@ -1,0 +1,38 @@
+{
+  "navigation": {
+    "docs": "Docs",
+    "github": "GitHub",
+    "home": "Home"
+  },
+  "landing": {
+    "hero": {
+      "title": "Valtio",
+      "subtitle": "Simple and fast state management for React",
+      "description": "Valtio makes proxy-state simple for React. It's a thin layer over Zustand, making it easy to use with React hooks."
+    },
+    "gettingStarted": {
+      "title": "Getting Started",
+      "description": "Install Valtio and start building reactive applications",
+      "installCommand": "npm install valtio",
+      "installDescription": "Install the package with your favorite package manager"
+    },
+    "features": {
+      "title": "Features",
+      "proxy": "Proxy-based state",
+      "proxyDesc": "Use JavaScript's Proxy API for reactive state",
+      "react": "React integration",
+      "reactDesc": "Built-in React hooks and utilities",
+      "typescript": "TypeScript support",
+      "typescriptDesc": "Full TypeScript support with type inference",
+      "devtools": "DevTools",
+      "devtoolsDesc": "Browser DevTools integration for debugging"
+    }
+  },
+  "common": {
+    "language": "Language",
+    "theme": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "system": "System"
+  }
+}

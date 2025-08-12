@@ -1,0 +1,85 @@
+---
+title: 'watch'
+section: 'API'
+subSection: 'Utils'
+description: '监听变化。'
+---
+
+# `watch`
+
+## 通过 getter 订阅
+
+此工具支持订阅多个代理对象（与 `subscribe` 不同，它只监听单个代理）。代理对象通过传递给回调的 `get` 函数进行订阅。
+
+对代理对象（或其子代理）的任何更改都会重新运行回调。
+
+另请注意，当调用 `watch` 时，回调会立即运行一次，即使代理尚未被改变，以建立初始订阅。
+
+```js
+import { proxy } from 'valtio'
+import { watch } from 'valtio/utils'
+
+const userState = proxy({ user: { name: 'Juuso' } })
+const sessionState = proxy({ expired: false })
+
+watch((get) => {
+  // `get` 将 `sessionState` 添加到此回调的监听代理中
+  get(sessionState)
+  const expired = sessionState.expired
+  // 或者内联调用
+  const name = get(userState).user.name
+  console.log(`${name} 的会话是 ${expired ? '已过期' : '有效'}`)
+})
+// 'Juuso 的会话是有效的'
+sessionState.expired = true
+// 'Juuso 的会话已过期'
+```
+
+## 清理
+
+您可以返回一个清理函数，该函数在两个时候运行：
+
+- 在每次重新调用回调之前（即由于被监听的代理发生变化）
+- 当 `watch` 本身停止时（通过调用 `watch` 返回的清理函数）
+
+```js
+watch((get) => {
+  const expired = get(sessionState).expired
+  const name = get(userState).user.name
+  console.log(`${name} 的会话是 ${expired ? '已过期' : '有效'}`)
+  return () => {
+    if (expired) {
+      console.log('清理中')
+    }
+  }
+})
+// 第一次立即调用回调的输出
+// 'Juuso 的会话是有效的'
+
+// 更改依赖项将首先调用清理回调，
+// 但捕获的 `expired` 是 false，所以我们只看到
+// 第二次调用回调的输出。
+sessionState.expired = true
+// 'Juuso 的会话已过期'
+
+// 更改依赖项将再次调用清理回调，
+// 现在 `expired` 是 true，所以我们从清理函数
+// 以及第三次调用回调中输出。
+setTimeout(() => {
+  userState.user.name = 'Anonymous'
+}, 200)
+// 200ms -> 'Anonymous 的会话已过期'
+// 记录 '清理中'
+```
+
+## 注意事项
+
+如果您移除上面示例中的 setTimeout，`'Juuso 的会话已过期'` 将变为 `'Anonymous 的会话已过期'` 并且将被记录两次。Valtio 默认会批处理更新。您可以将 `{sync: true}` 作为第二个参数传递给 `watch` 来禁用批处理。
+
+## 无使用跟踪
+
+`watch` 目前不实现 `useSnapshot` 的使用跟踪，所以无论 `callback` 代码中访问了哪些字段，只要被监听的代理（或子代理）有任何字段被改变，回调就会重新运行。
+
+并且 `get` 的返回值只是代理本身，而不是快照。
+
+这是因为 `watch` 是建立在 `subscribe` 之上的原生原语。`watch` 或新的类似 `watch` 的方法在未来实现使用跟踪是可能的，如果感兴趣，请参阅[此讨论](https://github.com/pmndrs/valtio/discussions/640)。

@@ -1,0 +1,50 @@
+---
+title: 'devtools'
+section: 'API'
+subSection: 'Utils'
+description: '在 Valtio 中使用 Redux DevTools 扩展'
+---
+
+# devtools
+
+#### 开发工具
+
+您可以使用 [Redux DevTools Extension](https://github.com/reduxjs/redux-devtools) 来处理普通对象和数组。
+
+```jsx
+import { devtools } from 'valtio/utils'
+
+const state = proxy({ count: 0, text: 'hello' })
+const unsub = devtools(state, { name: 'state name', enabled: true })
+```
+
+<details>
+  <summary>使用 Redux DevTools 操作状态</summary>
+下面的截图显示了如何使用 Redux DevTools 来操作状态。首先从实例下拉菜单中选择对象。然后输入一个 JSON 对象来分发。然后点击"Dispatch"。注意它如何改变状态。
+
+<img width="564" alt="image" src="https://user-images.githubusercontent.com/6372489/141134955-26e9ffce-1e2a-4c8c-a9b3-d9da739610fe.png"/>
+</details>
+
+#### 在原生 JS 中使用
+
+Valtio 不绑定到 React，您可以在原生 JS 中使用它。
+
+```jsx
+import { proxy, subscribe, snapshot } from 'valtio/vanilla'
+
+const state = proxy({ count: 0, text: 'hello' })
+
+subscribe(state, () => {
+  console.log('state is mutated')
+  const obj = snapshot(state) // 快照是一个不可变对象
+})
+```
+
+#### 在 TypeScript 中使用
+
+建议安装并从 `@redux-devtools/extension` 导入类型以获得正确的类型。
+
+```ts
+import type {} from '@redux-devtools/extension'
+import { devtools } from 'valtio/utils'
+```

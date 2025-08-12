@@ -1,0 +1,26 @@
+---
+title: '如何持久化状态'
+---
+
+# 如何持久化状态
+
+## 使用 localStorage 持久化
+
+如果您的状态是 JSON 可序列化的，这应该相当直接。
+
+```js
+const state = proxy(
+  JSON.parse(localStorage.getItem('foo')) || {
+    count: 0,
+    text: 'hello',
+  },
+)
+
+subscribe(state, () => {
+  localStorage.setItem('foo', JSON.stringify(state))
+})
+```
+
+如果您有不可序列化的值，在反序列化后附加它们，并在序列化时排除它们。
+
+**_[valtio-persist](https://github.com/Noitidart/valtio-persist) 是一个可以帮助解决这个问题的库。_**

@@ -1,0 +1,17 @@
+---
+title: '内部实现'
+section: 'API'
+subSection: 'Hacks'
+description: ''
+---
+
+Valtio 暴露了一些内部功能。
+这不是为应用程序开发者准备的。使用风险自负。
+
+# `unstable_getInternalStates`
+
+此函数暴露内部状态。修改此类状态可能导致错误行为。您需要彻底理解[源代码](https://github.com/pmndrs/valtio/blob/main/src/vanilla.ts)才能使用它。
+
+# `unstable_replaceInternalFunction`
+
+此函数暴露了一种替换某些内部函数的方法。它很容易破坏事物。您需要彻底理解[源代码](https://github.com/pmndrs/valtio/blob/main/src/vanilla.ts)才能使用它。

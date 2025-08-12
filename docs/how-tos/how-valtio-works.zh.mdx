@@ -1,0 +1,101 @@
+---
+title: 'Valtio 如何工作'
+---
+
+# Valtio 如何工作
+
+参考：https://github.com/pmndrs/valtio/issues/171
+
+这是为了描述 valtio 的高级抽象。
+
+## 文章
+
+- [Valtio 代理状态如何工作（原生部分）](https://blog.axlight.com/posts/how-valtio-proxy-state-works-vanilla-part/)
+- [Valtio 代理状态如何工作（React 部分）](https://blog.axlight.com/posts/how-valtio-proxy-state-works-react-part/)
+
+## 示例
+
+### 通过示例了解 `proxy()`
+
+```js
+import { proxy, subscribe } from 'valtio'
+
+const s1 = proxy({})
+subscribe(s1, () => {
+  console.log('s1 已更改！')
+})
+s1.a = 1 // s1 已更改！
+++s1.a // s1 已更改！
+delete s1.a // s1 已更改！
+s1.b = 2 // s1 已更改！
+s1.b = 2 // （未更改）
+s1.obj = {} // s1 已更改！
+s1.obj.c = 3 // s1 已更改！
+const s2 = s1.obj
+subscribe(s2, () => {
+  console.log('s2 已更改！')
+})
+s1.obj.d = 4 // s1 已更改！并且 s2 已更改！
+s2.d = 5 // s1 已更改！并且 s2 已更改！
+const s3 = proxy({})
+subscribe(s3, () => {
+  console.log('s3 已更改！')
+})
+s1.o = s3
+s3.p = 'hello' // s1 已更改！并且 s3 已更改！
+s2.q = s3
+s3.p = 'hi' // s1 已更改！s2 已更改！并且 s3 已更改！
+s1.x = s1
+s1.a += 1 // s1 已更改！
+```
+
+### 通过示例了解 `snapshot()`
+
+```js
+import { proxy, snapshot } from 'valtio'
+
+const p = proxy({})
+const s1 = snapshot(p) // 是 {} 但没有被代理包装
+const s2 = snapshot(p)
+s1 === s2 // 是 true，因为 p 没有改变
+p.a = 1 // 改变代理
+const s3 = snapshot(p) // 是 { a: 1 }
+p.a = 1 // 变化被忽略，代理未更新
+const s4 = snapshot(p)
+s3 === s4 // 仍然是 true
+p.a = 2 // 改变它
+const s5 = snapshot(p) // 是 { a: 2 }
+p.a = 1 // 改回来
+const s6 = snapshot(p) // 创建新快照
+s3 !== s6 // 是 true（不同快照，即使它们深度相等）
+p.obj = { b: 2 } // 附加新对象，将被代理包装
+const s7 = snapshot(p) // 是 { a: 1, obj: { b: 2 } }
+p.a = 2 // 改变 p
+const s8 = snapshot(p) // 是 { a: 2, obj: { b: 2 } }
+s7 !== s8 // 是 true，因为 a 不同
+s7.obj === s8.obj // 是 true，因为 obj 没有改变
+```
+
+### 通过示例了解 `useSnapshot()`
+
+```jsx
+import { proxy, useSnapshot } from 'valtio'
+
+const s1 = proxy({
+  counter: 0,
+  text: '来自 valtio 的早安',
+  foo: {
+    boo: 'baz'
+  }
+})
+
+const MyComponent = () => {
+  // 使用解构
+  const { text, counter } = useSnapshot(state)
+
+  // 多级解构也可以工作
+  const { text, counter, { foo }} = useSnapshot(state)
+
+  // 分配给快照对象
+  const snap = useSnapshot(state)
+```

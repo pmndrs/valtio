@@ -1,0 +1,97 @@
+---
+title: '如何轻松地从应用程序的任何地方访问状态'
+---
+
+# 如何轻松地从应用程序的任何地方访问状态
+
+在处理大型应用程序时，将代码组织在单独的文件和目录中是首选方式，Valtio **状态**也不例外。在某些方面，您可能希望将状态对象放在其自己的文件中。在分离到自己的文件后，我们需要一种方法从应用程序的任何地方轻松访问它。
+
+## 使用路径别名访问状态
+
+想象一下，状态被放在 `/src/state.js` 中，而您正在处理 `/src/really/deep/nested/file/myfile.js` 中的文件，状态的导入将类似于：`import state from '../../../../state';` 这可能导致太多的大脑计算，特别是在应用程序的不同地方使用时。
+
+解决方案是使用**路径别名**，它将路径映射到更简单的字符串，整个应用程序中的导入将看起来类似于：
+
+`import { state } from '@state';`
+
+## 使用 JS Config 和 Babel Config
+
+1. 创建文件 `/src/state` 并将 Valtio **状态**放入其中：
+
+```js
+import { proxy, useSnapshot, subscribe } from 'valtio'
+const state = proxy({
+  foos: [],
+  bar: { ... },
+  boo: false
+})
+export { state, useSnapshot, subscribe }
+```
+
+2. 创建文件 `/jsconfig.json`（如果您使用 typescript，则为 `/tsconfig.json`）：
+
+```json
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "@state/*": ["./state/*"],
+      "@mypath/*": ["./my/deep/path*"],
+      "@anotherpath/*": ["./my/another/deep/path*"]
+    }
+  },
+  "exclude": ["node_modules"]
+}
+```
+
+<br />
+
+<blockquote className="tip">
+ 💡 &nbsp; 使用 TypeScript？这里有一些参考链接
+
+https://www.totaltypescript.com/tsconfig-cheat-sheet<br />
+https://github.com/tsconfig/bases<br />
+https://www.typescriptlang.org/tsconfig/
+
+</blockquote>
+
+<br />
+
+<br />
+
+3. 在您的 `babel.config.js` 中的插件中添加**模块解析器**插件：
+
+```js
+module.exports = {
+  // ...
+  plugins: [
+    // 其他现有插件
+    [
+      'module-resolver',
+      {
+        root: ['./src'],
+        extensions: ['.js', '.jsx', '.json', '.svg', '.png'],
+        alias: {
+          '@state': './src/state',
+        },
+      },
+    ],
+    // ...
+  ],
+}
+```
+
+4. 安装 Babel 插件模块解析器：
+
+- 使用 NPM：`npm install babel-plugin-module-resolver`
+- 使用 Yarn：`yarn add babel-plugin-module-resolver`
+
+5. 重启应用程序服务器
+   <br />
+   就是这样，现在您将能够从应用程序内部的任何地方执行 `import {(state, useSnapshot, subscribe)} from '@state';`。
+
+## 使用第三方库
+
+您可以使用第三方库来创建别名并实现相同的结果。
+
+库的示例：

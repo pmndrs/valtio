@@ -1,0 +1,29 @@
+---
+title: 'proxyWithHistory'
+section: 'API'
+subSection: 'Utils'
+description: ''
+---
+
+# `proxyWithHistory`
+
+## 保持快照历史
+
+这是一个用于创建具有快照历史的代理的实用函数。
+
+```js
+import { proxyWithHistory } from 'valtio-history'
+
+const state = proxyWithHistory({ count: 0 })
+console.log(state.value) // ---> { count: 0 }
+state.value.count += 1
+console.log(state.value) // ---> { count: 1 }
+state.undo()
+console.log(state.value) // ---> { count: 0 }
+state.redo()
+console.log(state.value) // ---> { count: 1 }
+```
+
+## Codesandbox 演示
+
+https://codesandbox.io/s/valtio-history-example-v0-m353xc?file=/src/App.tsx

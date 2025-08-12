@@ -1,0 +1,23 @@
+---
+title: 'subscribeKey'
+section: 'API'
+subSection: 'Utils'
+description: ''
+---
+
+# `subscribeKey`
+
+要订阅代理状态中的原始值，请考虑使用 `subscribeKey`。
+
+```js
+import { subscribeKey } from 'valtio/utils'
+
+const state = proxy({ count: 0, text: 'hello' })
+subscribeKey(state, 'count', (v) =>
+  console.log('state.count 已更改为', v),
+)
+```
+
+## Codesandbox 演示
+
+https://codesandbox.io/s/dynamic-ui-with-valtio-9gme46?file=/src/ComplexCounter.tsx

@@ -5,6 +5,8 @@ import React, { useEffect, useState } from 'react'
 import clsx from 'clsx'
 import SEO from '~/components/SEO'
 import ToggleTheme from '~/components/ToggleTheme'
+import LanguageSwitcher from '~/components/LanguageSwitcher'
+import MultilingualText from '~/components/MultilingualText'
 
 export function NavPopover({
   display = 'md:hidden',
@@ -82,7 +84,10 @@ export function NavPopover({
             </li>
           </ul>
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-200/10">
-            <ToggleTheme />
+            <div className="flex items-center justify-between">
+              <LanguageSwitcher />
+              <ToggleTheme />
+            </div>
           </div>
         </div>
       </Dialog>
@@ -95,7 +100,9 @@ export function NavItems() {
     <>
       <li>
         <Link href="/docs/introduction/getting-started">
-          <a className="hover:text-sky-500 dark:hover:text-sky-400">Docs</a>
+          <a className="hover:text-sky-500 dark:hover:text-sky-400">
+            <MultilingualText en="Docs" zh="文档" />
+          </a>
         </Link>
       </li>
     </>
@@ -175,6 +182,7 @@ export default function Header({
                   </ul>
                 </nav>
                 <div className="flex items-center border-l border-gray-200 ml-6 pl-6 dark:border-gray-800">
+                  <LanguageSwitcher />
                   <ToggleTheme />
                   <a
                     href="https://github.com/pmndrs/valtio"

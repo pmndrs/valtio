@@ -1,0 +1,38 @@
+{
+  "navigation": {
+    "docs": "文档",
+    "github": "GitHub",
+    "home": "首页"
+  },
+  "landing": {
+    "hero": {
+      "title": "Valtio",
+      "subtitle": "简单快速的 React 状态管理",
+      "description": "Valtio 让 React 的代理状态变得简单。它是 Zustand 的薄层封装，让 React hooks 的使用变得容易。"
+    },
+    "gettingStarted": {
+      "title": "开始使用",
+      "description": "安装 Valtio 并开始构建响应式应用",
+      "installCommand": "npm install valtio",
+      "installDescription": "使用您喜欢的包管理器安装包"
+    },
+    "features": {
+      "title": "特性",
+      "proxy": "基于代理的状态",
+      "proxyDesc": "使用 JavaScript 的 Proxy API 实现响应式状态",
+      "react": "React 集成",
+      "reactDesc": "内置 React hooks 和工具",
+      "typescript": "TypeScript 支持",
+      "typescriptDesc": "完整的 TypeScript 支持，具有类型推断",
+      "devtools": "开发工具",
+      "devtoolsDesc": "浏览器 DevTools 集成，便于调试"
+    }
+  },
+  "common": {
+    "language": "语言",
+    "theme": "主题",
+    "dark": "深色",
+    "light": "浅色",
+    "system": "系统"
+  }
+}

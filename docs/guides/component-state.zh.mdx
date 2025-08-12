@@ -1,0 +1,47 @@
+---
+title: '组件状态'
+section: 'Advanced'
+description: '使用 useRef 隔离组件状态'
+---
+
+# 组件状态
+
+为了隔离组件状态以实现可重用性，Valtio 必须存在于 React 生命周期中。您可以在 ref 中包装 `proxy`，通过 props 或 context 传递它。
+
+```jsx
+import { createContext, useContext } from 'react'
+import { proxy, useSnapshot } from 'valtio'
+
+const MyContext = createContext()
+
+const MyProvider = ({ children }) => {
+  const state = useRef(proxy({ count: 0 })).current
+  return <MyContext.Provider value={state}>{children}</MyContext.Provider>
+}
+
+const MyCounter = () => {
+  const state = useContext(MyContext)
+  const snap = useSnapshot(state)
+  return (
+    <>
+      {snap.count} <button onClick={() => ++state.count}>+1</button>
+    </>
+  )
+}
+```
+
+## Codesandbox 示例
+
+https://codesandbox.io/s/valtio-component-ye5tbg?file=/src/App.tsx
+
+## 替代方案
+
+如果您对 `useRef` 的使用不满意，请考虑：
+
+- [use-constant](https://www.npmjs.com/package/use-constant)
+- [bunshi](https://www.bunshi.org/recipes/valtio/)
+- 您也可以创建自定义 hooks 包装 useContext 和可选的 useSnapshot。
+
+### Bunshi 示例
+
+https://codesandbox.io/s/77r53c?file=/molecules.ts

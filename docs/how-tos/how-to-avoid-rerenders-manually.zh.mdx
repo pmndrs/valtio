@@ -1,0 +1,68 @@
+---
+title: '如何手动避免重新渲染'
+---
+
+# 如何手动避免重新渲染
+
+## `useSnapshot` 自动优化重新渲染
+
+这是基本用法。
+
+```jsx
+const Component = () => {
+  const { count } = useSnapshot(state) // 这是响应式的
+  return <>{count}</>
+}
+```
+
+## 读取状态是有效的，但不推荐用于一般用例
+
+```jsx
+const Component = () => {
+  const { count } = state // 这不是响应式的
+  return <>{count}</>
+}
+```
+
+这不会触发重新渲染，但它不遵循像任何其他全局变量一样的 react 规则。
+
+## 订阅并有条件地设置本地状态
+
+```jsx
+const Component = () => {
+  const [count, setCount] = useState(state.count)
+  useEffect(
+    () =>
+      subscribe(state, () => {
+        if (state.count % 2 === 0) {
+          // 有条件地更新本地状态
+          setCount(state.count)
+        }
+      }),
+    [],
+  )
+  return <>{count}</>
+}
+```
+
+这在大多数情况下应该有效。
+
+理论上，状态可能在订阅之前就发生变化。修复方法如下。
+
+```jsx
+const Component = () => {
+  const [count, setCount] = useState(state.count)
+  useEffect(() => {
+    const callback = () => {
+      if (state.count % 2 === 0) {
+        // 有条件地更新本地状态
+        setCount(state.count)
+      }
+    }
+    const unsubscribe = subscribe(state, callback)
+    callback()
+    return unsubscribe
+  }), [])
+  return <>{count}</>
+}
+```

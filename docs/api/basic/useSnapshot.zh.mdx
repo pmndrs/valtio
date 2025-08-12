@@ -1,0 +1,201 @@
+---
+title: 'useSnapshot'
+section: 'API'
+subSection: 'Basic'
+description: '创建一个捕获更改的本地快照。'
+---
+
+# `useSnapshot`
+
+创建一个捕获更改的本地 `snapshot`。
+
+通常，Valtio 的快照（通过 <a href="/docs/api/advanced/snapshot">`snapshot()`</a> 创建）会在代理或其任何子代理发生_任何_更改时重新创建。
+
+但是 `useSnapshot` 在访问跟踪代理中包装 Valtio 快照。这是为了确保您的组件是渲染优化的，即它只会在它（或其子组件）特别访问的键发生变化时重新渲染，而不是在代理的每次更改时都重新渲染。
+
+## 用法
+
+### 在渲染中从快照读取，在回调中使用代理
+
+快照是只读的，用于从其数据的一致视图渲染 JSX。
+
+变化，以及在回调中进行的任何读取（这些回调会进行变化），需要通过代理进行，以便回调读取和写入最新值。
+
+```jsx
+function Counter() {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      {snap.count}
+      <button
+        onClick={() => {
+          // 在回调中也要从状态代理读取
+          if (state.count < 10) {
+            ++state.count
+          }
+        }}
+      >
+        +1
+      </button>
+    </div>
+  )
+}
+```
+
+### 父/子组件
+
+如果您有一个父组件使用 `useSnapshot`，它可以将快照传递给子组件，当快照发生变化时，父组件和子组件将重新渲染。
+
+例如：
+
+```jsx
+const state = proxy({
+  books: [
+    { id: 1, title: 'b1' },
+    { id: 2, title: 'b2' },
+  ],
+})
+
+function AuthorView() {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      {snap.books.map((book) => (
+        <Book key={book.id} book={book} />
+      ))}
+    </div>
+  )
+}
+
+function BookView({ book }) {
+  // book 是一个快照
+  return <div>{book.title}</div>
+}
+```
+
+如果 book 2 的标题被更改，将创建一个新的 `snap`，`AuthorView` 和 `BookView` 组件将重新渲染。
+
+注意，如果 `BookView` 被 `React.memo` 包装，第一个 `BookView` 不会重新渲染，因为第一个 `Book` 快照将是相同的实例，因为只有第二个 `Book` 被改变了（根 `Author` 快照也会更新，因为 `books` 列表已经改变）。
+
+### 子组件进行变化
+
+如果 `BookView` 是只读的，上述方法有效；如果您的子组件需要进行变化，那么您需要传递代理：
+
+```jsx
+function AuthorView() {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      {snap.books.map((book, i) => (
+        <Book key={book.id} book={state.books[i]} />
+      ))}
+    </div>
+  )
+}
+
+function BookView({ book }) {
+  // book 是代理，所以我们可以重新快照它 + 改变它
+  const snap = useSnapshot(book)
+  return <div onClick={() => book.updateTitle()}>{snap.title}</div>
+}
+```
+
+或者，如果您不想在子组件中调用 `useSnapshot`，可以同时传递快照和代理：
+
+```jsx
+function AuthorView() {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      {snap.books.map((book, i) => (
+        <Book key={book.id} bookProxy={state.books[i]} bookSnapshot={book} />
+      ))}
+    </div>
+  )
+}
+```
+
+这两种方法之间应该没有性能差异。
+
+### 只读取您需要的内容
+
+代理内部的每个对象也成为一个代理（如果您不使用 <a href="/docs/advanced/ref">`ref()`</a>）。所以您也可以使用它们来创建本地快照。
+
+```jsx
+function ProfileName() {
+  const snap = useSnapshot(state.profile)
+  return <div>{snap.name}</div>
+}
+```
+
+## 注意事项
+
+注意不要用其他东西替换子代理，这会破坏您的 `snapshot`。这将用您分配的内容替换代理的引用，从而移除代理的陷阱。您可以在下面看到一个示例。
+
+```js
+console.log(state)
+{
+  profile: {
+    name: 'valtio'
+  }
+}
+childState = state.profile
+console.log(childState)
+{
+  name: 'valtio'
+}
+state.profile.name = 'react'
+console.log(childState)
+{
+  name: 'react'
+}
+state.profile = { name: 'new name' }
+console.log(childState)
+{
+  name: 'react'
+}
+console.log(state)
+{
+  profile: {
+    name: 'new name'
+  }
+}
+```
+
+`useSnapshot()` 依赖于子代理的原始引用，所以如果您用新的替换它，订阅旧代理的组件将不会收到新更新，因为它仍然订阅旧的。
+
+在这种情况下，我们推荐下面的一种方法。在这两个示例中，您都不需要担心重新渲染，因为它是渲染优化的。
+
+```jsx
+const snap = useSnapshot(state)
+
+return <div>{snap.profile.name}</div>
+```
+
+```jsx
+const { profile } = useSnapshot(state)
+
+return <div>{profile.name}</div>
+```
+
+## 开发模式调试值
+
+在开发模式下，`useSnapshot` 使用 React 的 `useDebugValue` 输出一个在渲染期间被访问的字段列表，即当跟踪代理发生变化时，哪些特定字段将触发重新渲染。
+
+<br />
+
+<blockquote className="important">
+!! &nbsp; 使用调试值有两个免责声明
+
+1. 由于 `useSnapshot` 使用代理在 `useSnapshot` 返回_之后_记录访问的方式，`useDebugValue` 中列出的字段在技术上来自_前一次_渲染。
+2. 对象 getter 和类 getter 调用不包含在 `useDebugValue` 输出中，但不要担心，它们实际上在内部被正确跟踪，并在更改时正确触发重新渲染。
+
+</blockquote>
+
+<br />
+
+<br />
+
+## Codesandbox 演示
+
+https://codesandbox.io/s/ping-pong-with-valtio-wb25s?file=/src/App.js

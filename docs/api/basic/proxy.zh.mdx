@@ -1,0 +1,123 @@
+---
+title: 'proxy'
+section: 'API'
+subSection: 'Basic'
+description: '创建代理对象。'
+---
+
+# `proxy`
+
+`proxy` 跟踪对原始对象和所有嵌套对象的更改，当对象被修改时通知监听器。
+
+```js
+import { proxy } from 'valtio'
+
+const state = proxy({ count: 0, text: 'hello' })
+```
+
+## 从任何地方改变
+
+您可以像对普通 js 对象一样对其进行更改。
+
+```js
+setInterval(() => {
+  ++state.count
+}, 1000)
+```
+
+## 优化：noop 和批处理
+
+将属性值设置为相同值的更新将被忽略。订阅者不会收到版本更改的通知。
+
+```js
+const state = proxy({ count: 0 })
+
+state.count = 0 // 没有效果
+```
+
+同一事件循环中的多个更改将被批处理在一起。订阅者将收到单个版本更改的通知。
+
+```js
+const state = proxy({ count: 0, text: 'hello' })
+// 订阅者将在两次更改后收到一次通知
+state.count = 1
+state.text = 'world'
+```
+
+## 嵌套代理
+
+代理可以嵌套在其他 `proxy` 对象中并作为一个整体进行更新。
+
+```jsx
+import { proxy, useSnapshot } from 'valtio'
+
+const personState = proxy({ name: 'Timo', role: 'admin' })
+const authState = proxy({ status: 'loggedIn', user: personState })
+
+authState.user.name = 'Nina'
+```
+
+## 代理中的 Promise
+
+有关更多详细信息，请参阅 [`async`](../../guides/async)。
+
+```jsx
+import { proxy } from 'valtio'
+
+const bombState = proxy({
+  explosion: new Promise((resolve) => setTimeout(() => resolve('Boom!'), 3000)),
+})
+```
+
+## 注意事项
+
+如果您将代理重新分配给一个全新的对象，它将停止工作，因为您正在用新的对象引用替换代理对象。
+
+```jsx
+let state = proxy({ user: { name: 'Timo' } })
+
+subscribe(state, () => {
+  console.log(state.user.name)
+})
+// 不会通知订阅者
+state = { user: { name: 'Nina' } }
+
+// 相反
+let state = proxy({ user: { name: 'Timo' } })
+
+subscribe(state, () => {
+  console.log(state.user.name) // 输出 "Nina"
+})
+// 会通知订阅者
+state.user.name = 'Nina'
+```
+
+并非所有内容都可以被代理。通常，如果它是可序列化的，您就是安全的。类也可以被代理。但要避免特殊对象。
+
+```jsx
+// 这些不会工作 - 对这些对象的更改不会导致更新
+// 到未代理的存储状态，请参阅 ref 的文档
+const state = proxy({
+  chart: d3.select('#chart'),
+  component: React.createElement('div'),
+  map: new Map(), // 请参阅 proxyMap
+  storage: localStorage,
+})
+
+// 这会工作
+class User {
+  first = null
+  last = null
+  constructor(first, last) {
+    this.first = first
+    this.last = last
+  }
+  greet() {
+    return `Hi ${this.first}!`
+  }
+  get fullName() {
+    return `${this.first} ${this.last}`
+  }
+}
+const state = proxy(new User('Timo', 'Kivinen'))
+```

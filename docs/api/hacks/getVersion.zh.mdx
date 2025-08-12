@@ -1,0 +1,20 @@
+---
+title: 'getVersion'
+section: 'API'
+subSection: 'Hacks'
+description: ''
+---
+
+# `getVersion`
+
+在 Valtio 中，对代理对象的更新通过版本号在内部进行跟踪。
+
+对代理的每次变化都会增加一个全局版本号，并将刚刚变化的代理以及任何父代理（它们自动订阅其子代理）分配给最新的版本号。
+
+这就是 `snapshot` 如何知道是否需要新快照的方式：自上次快照以来，我的代理版本号是否发生了变化？
+
+鉴于其对 valtio 内部行为的重要性，`getVersion` 辅助函数可用于检查代理对象是否已更新，但这在应用程序代码中通常没有用或不推荐使用，因为 `snapshot` 和 `useSnapshot` 已经在内部处理版本跟踪。
+
+```js
+getVersion(proxyObject)
+```

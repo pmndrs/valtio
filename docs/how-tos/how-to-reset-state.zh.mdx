@@ -1,0 +1,52 @@
+---
+title: '如何重置状态'
+---
+
+# 如何重置状态
+
+在某些情况下，您可能想要将代理实例中的状态重置为其初始值。例如，您正在存储表单值或其他您想要重置的临时 UI 状态。事实证明这很简单！
+
+```js
+import { proxy } from 'valtio'
+import { deepClone } from 'valtio/utils'
+
+const initialObj = {
+  text: 'hello',
+  arr: [1, 2, 3],
+  obj: { a: 'b' },
+}
+
+const state = proxy(deepClone(initialObj))
+
+const reset = () => {
+  const resetObj = deepClone(initialObj)
+  Object.keys(resetObj).forEach((key) => {
+    state[key] = resetObj[key]
+  })
+}
+```
+
+注意，我们在 `reset` 函数和 `state` 代理中都使用 `valtio/utils` 中的 `deepClone()` 工具函数来复制初始对象。在代理函数中使用 deepClone 是 v2 中的新要求。Valtio 不再默认克隆初始状态。如果您重用传递给代理函数的对象，您可能会得到意外的结果。
+
+或者，您可以将对象存储在另一个对象中，这使得重置逻辑更容易：
+
+```js
+const state = proxy({ obj: initialObj })
+
+const reset = () => {
+  state.obj = deepClone(initialObj)
+}
+```
+
+<br />
+
+<blockquote className="note">
+ℹ️ &nbsp; 注意
+
+使用 `structuredClone()`
+
+<br />
+
+在 2022 年，添加了一个名为 `structuredClone` 的新全局函数，在大多数现代浏览器中广泛可用。您可以像上面的 `deepClone` 一样使用 `structuredClone`，但是 `deepClone` 是首选，因为它会意识到您状态中的任何 `ref`。
+
+</blockquote>

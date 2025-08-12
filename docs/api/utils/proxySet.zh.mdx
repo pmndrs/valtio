@@ -1,0 +1,55 @@
+---
+title: 'proxySet'
+section: 'API'
+subSection: 'Utils'
+description: ''
+---
+
+# `proxySet`
+
+## 原因
+
+原生 `Set` 将其数据存储在不可观察的内部槽中。这意味着 `valtio` 无法跟踪原生 `Set` 内部数据的变化。`proxySet` 是一个实用工具，允许您创建一个模仿 `Set` 行为的代理，同时仍然允许 valtio 跟踪数据的变化。
+
+## 何时使用 `proxySet`
+
+当您需要 `Set` 的功能但仍然想要跟踪数据变化时，`proxySet` 很有用。如果您想要存储唯一值或想要对数据执行数学 `Set` 操作（如并集、交集或差集），`proxySet` 会很有用。`proxySet` 支持 `Set` 引入的所有新方法：
+
+- `intersection`（交集）
+- `union`（并集）
+- `difference`（差集）
+- `symmetricDifference`（对称差集）
+- `isSubsetOf`（是否为子集）
+- `isSupersetOf`（是否为超集）
+- `isDisjointFrom`（是否不相交）
+
+您可以在 [MDN 文档](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set) 中看到 `proxySet` 支持的完整方法列表。
+
+如果您的数据可以表示为简单数组或对象，并且不需要 `proxySet` 提供的额外功能，您应该使用 `proxy` 和简单数组或对象。它更高效且更容易使用。
+
+## 在 Valtio 中使用 js `Set`
+
+此实用工具创建一个模仿原生 `Set` 行为的代理。API 与原生 `Set` API 相同。
+
+```js
+import { proxySet } from 'valtio/utils'
+
+const state = proxySet([1, 2, 3])
+
+state.add(4)
+state.delete(1)
+state.forEach((v) => console.log(v)) // --->  2,3,4
+```
+
+## 嵌套
+
+它也可以在 `proxy` 内部使用。
+
+```js
+import { proxySet } from 'valtio/utils'
+
+const state = proxy({
+  count: 1,
+  set: proxySet(),
+})
+```

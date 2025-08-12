@@ -1,0 +1,99 @@
+---
+title: '一些陷阱'
+---
+
+# 一些陷阱
+
+## `useSnapshot(state)` 没有属性访问将始终触发重新渲染
+
+参考：https://github.com/pmndrs/valtio/issues/209#issuecomment-896859395
+
+假设我们有这个状态（或存储）。
+
+```js
+const state = proxy({
+  obj: {
+    count: 0,
+    text: 'hello',
+  },
+})
+```
+
+如果使用快照访问 count，
+
+```js
+const snap = useSnapshot(state)
+snap.obj.count
+```
+
+它只会在 `count` 改变时重新渲染。
+
+如果属性访问是 obj，
+
+```js
+const snap = useSnapshot(state)
+snap.obj
+```
+
+那么，它会在 `obj` 改变时重新渲染。这包括 `count` 改变和 `text` 改变。
+
+现在，我们可以订阅状态的一部分。
+
+```js
+const snapObj = useSnapshot(state.obj)
+snapObj
+```
+
+这在技术上与前面的相同。它不接触 `snapObj` 的属性，所以如果 `obj` 改变，它会重新渲染。
+
+总结一下，如果快照对象（嵌套或不嵌套）没有通过任何属性访问，它假设整个对象被访问，所以对象内部的任何改变都会触发重新渲染。
+
+## 将 `React.memo` 与对象 props 一起使用可能导致意外行为（仅限 v1）
+
+⚠️ 此行为在 v2 中已修复。
+
+`useSnapshot(state)` 返回的 `snap` 变量被跟踪以进行渲染优化。
+如果您将 `snap` 或 `snap` 中的一些对象传递给带有 `React.memo` 的组件，
+它可能不会按预期工作，因为 `React.memo` 可能会跳过接触对象属性。
+
+旁注：[react-tracked](https://react-tracked.js.org) 导出了一个特殊的 `memo` 作为解决方法。
+
+我们有一些选择：
+
+<ol type="a">
+  <li>不要使用 `React.memo`。</li>
+  <li>
+    不要将对象传递给带有 `React.memo` 的组件（而是传递原始值）。
+  </li>
+  <li>
+    传入该元素的代理，然后在该代理上使用 `useSnapshot`。
+  </li>
+</ol>
+
+### (b) 的示例
+
+```jsx
+const ChildComponent = React.memo(
+  ({
+    title, // 字符串或任何原始值都可以。
+    description, // 字符串或任何原始值都可以。
+    // obj, // 应该避免对象。
+  }) => (
+    <div>
+      {title} - {description}
+    </div>
+  ),
+)
+
+const ParentComponent = () => {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      <ChildComponent
+        title={snap.obj.title}
+        description={snap.obj.description}
+      />
+    </div>
+  )
+}
+```

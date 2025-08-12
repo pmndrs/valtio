@@ -1,0 +1,43 @@
+---
+title: '如何与 context 一起使用'
+---
+
+# 如何与 context 一起使用
+
+要使 valtio 状态只在 React 生命周期中存活，您可以在 ref 中创建状态，并且可以通过 props 或 context 传递它。
+
+## 使用 context 的基本模式
+
+```jsx
+import { createContext, useContext } from 'react'
+import { proxy, useSnapshot } from 'valtio'
+
+const MyContext = createContext()
+
+const MyProvider = ({ children }) => {
+  const state = useRef(proxy({ count: 0 })).current
+  return <MyContext.Provider value={state}>{children}</MyContext.Provider>
+}
+
+const MyCounter = () => {
+  const state = useContext(MyContext)
+  const snap = useSnapshot(state)
+  return (
+    <>
+      {snap.count} <button onClick={() => ++state.count}>+1</button>
+    </>
+  )
+}
+```
+
+## 替代方案
+
+如果您对 `useRef` 的使用不满意，请考虑：
+
+- [use-constant](https://www.npmjs.com/package/use-constant)
+- [bunshi](https://www.bunshi.org/recipes/valtio/)
+- 您可以创建自定义 hooks 来使用 `useContext` 和可选的 `useSnapshot`
+
+### Bunshi 示例
+
+https://codesandbox.io/s/77r53c?file=/molecules.ts

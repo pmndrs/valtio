@@ -1,0 +1,101 @@
+---
+title: '计算属性'
+section: 'Advanced'
+description: '使用对象 getter 和 setter'
+---
+
+# 计算属性
+
+在 Valtio 中，您可以使用对象和类的 getter 和 setter 来创建计算属性。
+
+<br />
+
+<blockquote className="note">
+ℹ️ &nbsp; 注意
+
+JavaScript 中的 getter 是语言的更高级功能，所以 Valtio 建议谨慎使用它们。话虽如此，如果您是更高级的 JavaScript 程序员，它们应该按您期望的方式工作；请参阅下面的"关于使用 `this` 的注意事项"部分。
+
+</blockquote>
+<br />
+
+<br />
+
+## 简单对象 getter
+
+```js
+const state = proxy({
+  count: 1,
+  get doubled() {
+    return this.count * 2
+  },
+})
+console.log(state.doubled) // 2
+
+// 快照上的 getter 调用按预期工作
+const snap = snapshot(state)
+console.log(snap.doubled) // 2
+
+// 当状态代理中的 count 改变时
+state.count = 10
+// 然后快照的计算属性不会改变
+console.log(snap.doubled) // 2
+```
+
+当您在 `state` 代理上调用 `state.doubled` 时，它不会被缓存，并且会在每次调用时重新计算（如果您必须缓存此结果，请参阅下面关于 `proxy-memoize` 的部分）。
+
+但是，当您制作快照时，对 `snap.doubled` 的调用实际上是缓存的，因为对象 getter 的值在快照过程中被复制。
+
+<br />
+
+<blockquote className="note">
+ℹ️ &nbsp; 注意
+
+在当前实现中，计算属性应该只引用**同级**属性，否则您会遇到奇怪的错误。例如：
+
+</blockquote>
+
+<br />
+
+```js
+const user = proxy({
+  name: 'John',
+  // 正确 - 可以通过 `this` 引用同级属性
+  get greetingEn() {
+    return 'Hello ' + this.name
+  },
+})
+```
+
+```js
+const state = proxy({
+  // 可以是嵌套的
+  user: {
+    name: 'John',
+    // 正确 - 可以通过 `this` 引用同级属性
+    get greetingEn() {
+      return 'Hello ' + this.name
+    },
+  },
+})
+```
+
+```js
+const state = proxy({
+  user: {
+    name: 'John',
+  },
+  greetings: {
+    // 错误 - `this` 指向 `state.greetings`。
+    get greetingEn() {
+      return 'Hello ' + this.user.name
+    },
+  },
+})
+```
+
+```js
+const user = proxy({
+  name: 'John',
+})
+const greetings = proxy({
+```

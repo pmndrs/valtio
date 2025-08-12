@@ -1,0 +1,66 @@
+---
+title: 'proxyMap'
+section: 'API'
+subSection: 'Utils'
+description: ''
+---
+
+# `proxyMap`
+
+## 原因
+
+原生 `Map` 将其数据存储在不可观察的内部槽中。这意味着 `valtio` 无法跟踪原生 `Map` 内部数据的变化。`proxyMap` 是一个实用工具，允许您创建一个模仿 `Map` 行为的代理，同时仍然允许 valtio 跟踪数据的变化。
+
+## 何时使用 `proxyMap`
+
+当您需要 `Map` 的灵活性但仍然想要跟踪数据变化时，`proxyMap` 很有用。如果您不知道将要处理的数据结构，并且这些数据可能具有非原始值作为键（例如对象、数组等），它会很有用。在这种情况下，您可以使用 `proxyMap` 创建一个模仿 `Map` 行为的代理，同时仍然允许 valtio 跟踪数据的变化。如果您的数据可以表示为简单对象，您应该使用 `proxy` 和简单对象。它更高效且更容易使用。
+
+## 在 Valtio 中使用 js Map
+
+此实用工具创建一个模仿原生 Map 行为的代理。API 与 Map API 相同。
+
+```js
+import { proxyMap } from 'valtio/utils'
+
+const state = proxyMap()
+state.size // ---> 0
+
+state.set(1, 'hello')
+state.size // ---> 1
+
+state.delete(1)
+state.size // ---> 0
+```
+
+## 嵌套
+
+它也可以在 `proxy` 内部使用。
+
+```js
+import { proxyMap } from 'valtio/utils'
+
+const state = proxy({
+  count: 1,
+  map: proxyMap(),
+})
+```
+
+当使用对象作为键时，您可以用 `ref` 包装它，这样它就不会被代理。如果您想保持键相等性，这很有用
+
+```js
+import { proxyMap } from 'valtio/utils'
+
+// 使用 ref
+const key = ref({})
+state.set(key, 'hello')
+state.get(key) //hello
+
+// 不使用 ref
+const key = {}
+state.set(key, 'value')
+state.get(key) //undefined
+```
+
+## Codesandbox 演示
+
+https://codesandbox.io/s/github/pmndrs/valtio/tree/main/examples/todo-with-proxyMap

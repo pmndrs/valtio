@@ -1,0 +1,209 @@
+---
+title: '开始使用'
+description: '开始使用 valtio。'
+---
+
+![Valtio](./logo.svg 'Valtio')
+
+# Valtio
+
+### 代理状态变得简单。
+
+Valtio API 是最小化、灵活、无偏见的，并且带有一丝魔力。Valtio 的代理将您传递给它的对象转换为自感知代理，允许在更新状态时进行细粒度订阅和响应性。在 React 中，Valtio 在渲染优化方面表现出色。它与 Suspense 和 React 18 兼容。Valtio 在原生 JavaScript 应用程序中也是一个可行的选择。
+
+#### 安装
+
+```bash
+npm install valtio
+```
+
+#### 待办事项应用示例
+
+#### 1. proxy
+
+让我们通过用 React 和 TypeScript 编写一个简单的待办事项应用来学习 Valtio。我们将从使用 [`proxy`](../api/basic/proxy) 创建一些状态开始。
+
+```ts
+import { proxy, useSnapshot } from 'valtio'
+
+type Status = 'pending' | 'completed'
+type Filter = Status | 'all'
+type Todo = {
+  description: string
+  status: Status
+  id: number
+}
+
+export const store = proxy<{ filter: Filter; todos: Todo[] }>({
+  filter: 'all',
+  todos: [],
+})
+```
+
+#### 2. useSnapshot
+
+要访问此存储中的数据，我们将使用 [`useSnapshot`](../api/basic/useSnapshot)。当 "todos" 或 "filter" 属性更新时，Todos 组件将重新渲染。我们添加到代理中的任何其他数据将被忽略。
+
+```tsx
+const Todos = () => {
+  const snap = useSnapshot(store)
+  return (
+    <ul>
+      {snap.todos
+        .filter(({ status }) => status === snap.filter || snap.filter === 'all')
+        .map(({ description, status, id }) => {
+          return (
+            <li key={id}>
+              <span data-status={status} className="description">
+                {description}
+              </span>
+              <button className="remove">x</button>
+            </li>
+          )
+        })}
+    </ul>
+  )
+}
+```
+
+#### 3. actions
+
+最后，我们需要创建、更新和删除我们的待办事项。为此，我们只需在我们创建的存储上（而不是快照上）改变属性。通常，这些变化被包装在称为 actions 的函数中。
+
+```ts
+const addTodo = (description: string) => {
+  store.todos.push({
+    description,
+    status: 'pending',
+    id: Date.now(),
+  })
+}
+
+const removeTodo = (id: number) => {
+  const index = store.todos.findIndex((todo) => todo.id === id)
+  if (index >= 0) {
+    store.todos.splice(index, 1)
+  }
+}
+
+const toggleDone = (id: number, currentStatus: Status) => {
+  const nextStatus = currentStatus === 'pending' ? 'completed' : 'pending'
+  const todo = store.todos.find((todo) => todo.id === id)
+  if (todo) {
+    todo.status = nextStatus
+  }
+}
+
+const setFilter = (filter: Filter) => {
+  store.filter = filter
+}
+```
+
+最后，我们将这些 actions 连接到我们的输入和按钮 - 查看下面的演示以获取完整代码。
+
+```tsx
+<button className="remove" onClick={() => removeTodo(id)}>
+  x
+</button>
+```
+
+## Codesandbox 演示
+
+https://codesandbox.io/s/valtio-to-do-list-forked-6w9h3z
+
+#### 在组件外部改变状态
+
+在我们的第一个待办事项应用中，Valtio 启用了变化，而无需担心性能或"破坏"React。`useSnapshot` 将这些变化转换为不可变的快照并优化渲染。但我们也可以轻松使用 React 自己的状态处理。让我们为我们的待办事项应用添加一些复杂性，看看 Valtio 还提供什么。
+
+我们将为待办事项添加一个 "timeLeft" 属性。现在每个待办事项都会倒计时到零，如果未及时完成则变为"逾期"。
+
+```ts
+type Todo = {
+  description: string
+  status: Status
+  id: number
+  timeLeft: number
+}
+```
+
+在其他更改中，我们将添加一个 Countdown 组件来显示每个待办事项的倒计时。我们使用将嵌套代理对象传递给 [`useSnapshot`](../api/basic/useSnapshot) 的高级技术。或者，通过将待办事项的 "timeLeft" 作为 prop 传递，使其成为一个哑组件。
+
+```tsx
+import { useSnapshot } from 'valtio'
+import { formatTimeDelta, calcTimeDelta } from './utils'
+import { store } from './App'
+
+export const Countdown = ({ index }: { index: number }) => {
+  const snap = useSnapshot(store.todos[index])
+  const delta = calcTimeDelta(snap.timeLeft)
+  const { days, hours, minutes, seconds } = formatTimeDelta(delta)
+  return (
+    <span className="countdown-time">
+      {delta.total < 0 ? '-' : ''}
+      {days}
+      {days ? ':' : ''}
+      {hours}:{minutes}:{seconds}
+    </span>
+  )
+}
+```
+
+#### 在模块作用域中改变
+
+让我们通过定义模块作用域中的递归 `countdown` 函数来管理多个计时器，而不是在 React 组件内部管理多个计时器，该函数将改变待办事项。
+
+```tsx
+const countdown = (index: number) => {
+  const todo = store.todos[index]
+  // 用户删除待办事项的情况
+  if (!todo) return
+  // 待办事项完成或逾期的情况
+  if (todo.status !== 'pending') {
+    return
+  }
+  // 时间到了
+  if (todo.timeLeft < 1000) {
+    todo.timeLeft = 0
+    todo.status = 'overdue'
+    return
+  }
+  setTimeout(() => {
+    todo.timeLeft -= 1000
+    countdown(index)
+  }, 1000)
+}
+```
+
+我们可以从增强的 `addTodo` action 开始递归倒计时。
+
+```tsx
+const addTodo = (e: React.SyntheticEvent, reset: VoidFunction) => {
+  e.preventDefault()
+  const target = e.target as typeof e.target & {
+    deadline: { value: Date }
+    description: { value: string }
+  }
+  const deadline = target.deadline.value
+  const description = target.description.value
+  const now = Date.now()
+  store.todos.push({
+    description,
+    status: 'pending',
+    id: now,
+    timeLeft: new Date(deadline).getTime() - now,
+  })
+  // 清除表单
+  reset()
+  countdown(store.todos.length - 1)
+}
+```
+
+请查看下面演示中的其余更改。
+
+#### 在模块作用域中订阅
+
+能够在组件外部改变状态是一个巨大的好处。我们还可以在模块作用域中 [`subscribe`](../api/advanced/subscribe) 状态变化。我们将让您自己尝试这个。例如，您可能会将待办事项持久化到本地存储，如[此示例](https://github.com/pmndrs/valtio/wiki/How-to-persist-states#persist-with-localstorage)中所示。
+
+## Codesandbox 演示
+
+https://codesandbox.io/s/valtio-countdown-to-do-list-xkgmri

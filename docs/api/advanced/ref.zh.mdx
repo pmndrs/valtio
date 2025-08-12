@@ -1,0 +1,39 @@
+---
+title: 'ref'
+section: 'API'
+subSection: 'Advanced'
+description: '创建引用对象'
+---
+
+# `ref`
+
+## `ref` 允许在 Valtio 代理中创建未代理的状态
+
+`ref` 在您需要在 `proxy` 中嵌套一个不被内部代理包装且因此不被跟踪的对象时很有用。
+
+```js
+const store = proxy({
+    users: [
+        { id: 1, name: 'Juho', uploads: ref([]) },
+    ]
+  })
+})
+```
+
+一旦对象被包装在 `ref` 中，应该在不重新分配对象或重新包装在新 `ref` 中的情况下对其进行改变。
+
+```js
+// ✅ 可以改变
+store.users[0].uploads.push({ id: 1, name: 'Juho' })
+// ✅ 可以重置
+store.users[0].uploads.splice(0)
+
+// ❌ 不要重新分配
+store.users[0].uploads = []
+```
+
+`ref` 也不应该用作代理中唯一的状态，这会使代理的使用变得毫无意义。
+
+## Codesandbox 演示
+
+https://codesandbox.io/s/valtio-file-load-demo-oo2yzn

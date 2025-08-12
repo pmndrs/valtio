@@ -1,0 +1,119 @@
+---
+title: 'snapshot'
+section: 'API'
+subSection: 'Advanced'
+description: '创建当前状态的快照'
+---
+
+# `snapshot`
+
+`snapshot` 接受一个代理并返回一个不可变对象，从代理中解包。
+
+不可变性是通过_高效地_深度复制和冻结对象来实现的（详见 [Copy on Write](#copy-on-write) 部分）。
+
+简而言之，在连续的 `snapshot` 调用中，当代理中的值没有改变时，会返回前一个快照的对象引用。这允许在渲染函数中进行浅比较，防止虚假渲染。
+
+快照还会抛出 promise，使它们能够与 React Suspense 一起工作。
+
+```js
+import { proxy, snapshot } from 'valtio'
+
+const store = proxy({ name: 'Mika' })
+const snap1 = snapshot(store) // 当前存储值的高效副本，未代理
+const snap2 = snapshot(store)
+console.log(snap1 === snap2) // true，无需重新渲染
+
+store.name = 'Hanna'
+const snap3 = snapshot(store)
+console.log(snap1 === snap3) // false，应该重新渲染
+```
+
+## 写时复制
+
+尽管快照是整个状态的深度副本，但它们使用延迟的写时复制机制进行更新，所以在实践中它们维护起来很快。
+
+例如，如果我们有一个嵌套对象：
+
+```js
+const author = proxy({
+  firstName: 'f',
+  lastName: 'l',
+  books: [{ title: 't1' }, { title: 't2' }],
+})
+
+const s1 = snapshot(author)
+```
+
+第一个 `snapshot` 调用创建四个新实例：
+
+- 一个用于作者，
+- 一个用于书籍数组，以及
+- 两个用于书籍对象。
+
+当我们改变第二本书并拍摄新的 `snapshot` 时：
+
+```js
+author.books[1].title = 't2b'
+const s2 = snapshot(author)
+```
+
+然后 `s2` 将有第二本书的新副本，但重用未改变的第一本书的现有快照。
+
+```js
+console.log(s1 === s2) // false
+console.log(s1.books === s2.books) // false
+console.log(s1.books[0] === s2.books[0]) // true
+console.log(s1.books[1] === s2.books[1]) // false
+```
+
+尽管这个例子只重用了四个现有快照实例中的一个，但它表明维护快照的成本基于状态树的_深度_（通常很低，比如从作者到书籍到书评是三个级别），而不是_广度_（数千本书）。
+
+## 类
+
+快照保持原始对象的原型，所以方法和 getter 可以工作，并正确评估快照的冻结状态。
+
+```js
+import { proxy, snapshot } from 'valtio'
+
+class Author {
+  firstName = 'f'
+  lastName = 'l'
+  fullName() {
+    return `${this.firstName} ${this.lastName}`
+  }
+}
+
+const state = proxy(new Author())
+const snap = snapshot(state)
+
+// 快照具有 Author 原型
+console.log(snap instanceof Author) // true
+
+state.firstName = 'f2'
+
+// 调用使用快照的状态，例如这仍然是 'f'，因为
+// 在 `fullName` 内部，`this` 将是冻结的快照实例，而不是
+// 可变的状态代理
+console.log(snap.fullName()) // 'f l'
+```
+
+注意，getter 和方法的结果不会被缓存，每次调用都会重新评估。
+
+这应该没问题，因为期望它们执行得非常快（比缓存它们的开销值得），而且也是确定性的，所以返回值仅基于已经冻结的快照状态。
+
+## 原生 JavaScript
+
+在原生 JavaScript 中，`snapshot` 不是访问代理对象值所必需的，无论是在 subscribe 内部还是外部。但是，它很有用，例如，保持未代理对象的可序列化列表或检查对象是否已更改。它还会解析 promise。
+
+<br />
+
+<blockquote className="tip">
+💡 提示
+
+如果您在 React 外部使用 valtio，请从 `valtio/vanilla` 导入
+
+```js
+import { proxy, snapshot } from 'valtio/vanilla'
+```
+
+</blockquote>

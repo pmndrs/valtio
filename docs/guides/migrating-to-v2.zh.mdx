@@ -1,0 +1,101 @@
+---
+title: '如何从 v1 迁移到 v2'
+---
+
+# 如何从 v1 迁移到 v2
+
+## v2 中的变化
+
+React 19 正式引入了 `use` hook 来处理 promise。
+Valtio v1 在内部处理 promise，这不再被推荐。
+在 Valtio v2 中，promise 不在内部处理，
+开发者应该明确使用 `use` hook 来管理 promise。
+
+注意：如果您仍在使用 React 18，可以使用 [`use` hook shim](https://github.com/dai-shi/react18-use)。
+
+Valtio v2 还在其设计选择中引入了两个微妙的变化：
+
+首先，`proxy(obj)` 的行为发生了变化。在 v1 中，它是一个纯函数并深度复制 `obj`。在 v2 中，它是一个不纯函数并深度修改 `obj`。通常不推荐重用 `obj`。除非您重用 `obj`，否则不会破坏任何东西。
+
+其次，`useSnapshot()` 的行为已被改变。虽然这是一个微妙的变化，但它不太优化以确保与 `useMemo` 和即将到来的 React 编译器的兼容性。这种变化可能在某些边缘情况下导致额外的重新渲染，但可能不会很明显。
+
+其他值得注意的变化包括保持事物更新和新鲜：
+
+- 移除所有已弃用的功能
+- 要求 React 版本 18 及以上
+- 要求 TypeScript 版本 4.5 及以上
+- 构建目标更新为 ES2018
+
+## 破坏性变化的迁移
+
+### 解析 promise
+
+```js
+// v1
+import { proxy, useSnapshot } from 'valtio'
+
+const state = proxy({ data: fetch(...).then((res) => res.json()) })
+
+const Component = () => {
+  const snap = useSnapshot(state)
+  return <>{JSON.stringify(snap.data)}</>
+}
+```
+
+```js
+// v2
+import { use } from 'react'
+import { proxy, useSnapshot } from 'valtio'
+
+const state = proxy({ data: fetch(...).then((res) => res.json()) })
+
+const Component = () => {
+  const snap = useSnapshot(state)
+  return <>{JSON.stringify(use(snap.data))}</>
+  // 如果 `data` 不是对象，您可以直接将其嵌入 JSX。
+  // return <>{snap.data}</>
+}
+```
+
+### 不纯的 `proxy(obj)`
+
+如果您不重用传递给代理的对象，什么都不会破坏。
+
+```js
+import { proxy } from 'valtio'
+
+// 这在 v1 和 v2 中都有效
+const state = proxy({ count: 1, obj: { text: 'hi' } })
+
+// 这在 v1 和 v2 中都有效
+state.obj = { text: 'hello' }
+```
+
+这是使用 `proxy` 的推荐方式。
+
+出于某种原因，如果您重用对象，在 v2 中需要明确使用 `deepClone` 来保持与 v1 相同的行为。
+
+```js
+// v1
+import { proxy } from 'valtio'
+
+const initialObj = { count: 1, obj: { text: 'hi' } }
+const state = proxy(initialObj)
+// 稍后对 `initialObj` 做某事
+
+const newObj = { text: 'hello' }
+state.obj = newObj
+// 稍后对 `newObj` 做某事
+```
+
+```js
+// v2
+import { proxy } from 'valtio'
+import { deepClone } from 'valtio/utils'
+
+const initialObj = { count: 1, obj: { text: 'hi' } }
+const state = proxy(deepClone(initialObj))
+// 稍后对 `initialObj` 做某事
+
+const newObj = { text: 'hello' }
+```

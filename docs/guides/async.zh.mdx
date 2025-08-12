@@ -1,0 +1,63 @@
+---
+title: '异步'
+section: 'Advanced'
+description: '处理 Promise 和 Suspense'
+---
+
+# `async`
+
+## Promise
+
+Promise 可以是代理对象中的值。它们将在调用 `snapshot` 时被解析。
+
+```jsx
+// 原生 js 示例
+const countDiv: HTMLElement | null = document.getElementById('count')
+if (countDiv) countDiv.innerText = '0'
+
+const store = proxy({
+  count: new Promise((r) => setTimeout(() => r(1), 1000)),
+})
+
+subscribe(store, () => {
+  const value = snapshot(store).count
+  if (countDiv && typeof value === 'number') {
+    countDiv.innerText = String(value)
+    store.count = new Promise((r) => setTimeout(() => r(value + 1), 1000))
+  }
+})
+```
+
+## 暂停您的 React 组件
+
+Valtio 与 React 19 的 `use` hook 兼容。这消除了所有异步来回，您可以直接访问数据，而父组件负责回退状态和错误处理。
+
+```jsx
+import { use } from 'react' // React 19
+// import { use } from 'react18-use' // React 18
+
+const state = proxy({ post: fetch(url).then((res) => res.json()) })
+
+function Post() {
+  const snap = useSnapshot(state)
+  return <div>{use(snap.post).title}</div>
+}
+
+function App() {
+  return (
+    <Suspense fallback="Loading...">
+      <Post />
+    </Suspense>
+  )
+}
+```
+
+它仍然受到"de-opt"的影响，这会阻止 `useTransition` 正常工作。为了缓解这个问题，有一个第三方库 [use-valtio](https://github.com/valtiojs/use-valtio)。
+
+## Codesandbox Pokemon 获取演示
+
+https://codesandbox.io/s/valtio-pokemon-fetch-x1lkbj?file=/src/App.tsx
+
+## Codesandbox 认证演示
+
+https://codesandbox.io/s/valtio-async-1pstl1?file=/src/App.tsx

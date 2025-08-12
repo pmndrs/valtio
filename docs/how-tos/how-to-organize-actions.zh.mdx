@@ -1,0 +1,107 @@
+---
+title: '如何组织 actions'
+---
+
+# 如何组织 actions
+
+Valtio 对组织 actions 没有固定看法。
+这里有一些配方来展示各种可能的模式。
+
+## 在模块中定义的 Action 函数
+
+<br />
+
+<blockquote className="note">
+ℹ️ &nbsp; 注意
+
+这种方式是首选，因为它更适合代码分割。
+
+</blockquote>
+
+<br />
+
+<br />
+
+```js
+import { proxy } from 'valtio'
+
+export const state = proxy({
+  count: 0,
+  name: 'foo',
+})
+
+export const inc = () => {
+  ++state.count
+}
+
+export const setName = (name) => {
+  state.name = name
+}
+```
+
+## 在模块中定义的 Action 对象
+
+```js
+import { proxy } from 'valtio'
+
+export const state = proxy({
+  count: 0,
+  name: 'foo',
+})
+
+export const actions = {
+  inc: () => {
+    ++state.count
+  },
+  setName: (name) => {
+    state.name = name
+  },
+}
+```
+
+## 在状态中定义的 Action 方法
+
+```js
+export const state = proxy({
+  count: 0,
+  name: 'foo',
+  inc: () => {
+    ++state.count
+  },
+  setName: (name) => {
+    state.name = name
+  },
+})
+```
+
+## 使用 `this` 的 Action 方法
+
+```js
+export const state = proxy({
+  count: 0,
+  name: 'foo',
+  inc() {
+    ++this.count
+  },
+  setName(name) {
+    this.name = name
+  },
+})
+```
+
+## 使用类
+
+```js
+class State {
+  count = 0
+  name = 'foo'
+  inc() {
+    ++this.count
+  }
+  setName(name) {
+    this.name = name
+  }
+}
+
+export const state = proxy(new State())
+```

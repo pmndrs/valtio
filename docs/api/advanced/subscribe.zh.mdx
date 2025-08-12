@@ -1,0 +1,40 @@
+---
+title: 'subscribe'
+section: 'API'
+subSection: 'Advanced'
+description: '订阅当前状态/对象'
+---
+
+# `subscribe`
+
+## 从任何地方订阅
+
+您可以在组件外部访问状态并订阅更改。
+
+```jsx
+import { proxy, subscribe } from 'valtio'
+
+const state = proxy({ count: 0 })
+
+// 订阅状态代理（及其子代理）的所有更改
+const unsubscribe = subscribe(state, () =>
+  console.log('state has changed to', state),
+)
+// 通过调用结果来取消订阅
+unsubscribe()
+```
+
+您也可以订阅状态的一部分。
+
+```jsx
+const state = proxy({ obj: { foo: 'bar' }, arr: ['hello'] })
+
+subscribe(state.obj, () => console.log('state.obj has changed to', state.obj))
+state.obj.foo = 'baz'
+subscribe(state.arr, () => console.log('state.arr has changed to', state.arr))
+state.arr.push('world')
+```
+
+## VanillaJS 中的 Codesandbox 演示
+
+https://codesandbox.io/s/valtio-photo-booth-demo-forked-xp8hs?file=/src/main.js
