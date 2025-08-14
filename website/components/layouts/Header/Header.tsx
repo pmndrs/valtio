@@ -6,6 +6,79 @@ import clsx from 'clsx'
 import SEO from '~/components/SEO'
 import ToggleTheme from '~/components/ToggleTheme'
 
+// 语言选择器组件
+function LanguageSelector() {
+  const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Element
+      if (isOpen && !target.closest('.language-selector')) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  return (
+    <div className="relative language-selector">
+      <button
+        type="button"
+        className="flex items-center text-gray-700 dark:text-gray-200 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className="mr-1">🌐</span>
+        <span>Language</span>
+        <svg
+          className={clsx(
+            'ml-1 h-4 w-4 transition-transform',
+            isOpen ? 'rotate-180' : ''
+          )}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
+          <a
+            href="https://valtio-xnj9.vercel.app/zh"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            中文文档
+          </a>
+          <Link href="/">
+            <a
+              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+              onClick={() => setIsOpen(false)}
+            >
+              English
+            </a>
+          </Link>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function NavPopover({
   display = 'md:hidden',
   className = '',
@@ -78,6 +151,16 @@ export function NavPopover({
                 className="hover:text-sky-500 dark:hover:text-sky-400"
               >
                 GitHub
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://valtio-xnj9.vercel.app/zh"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-sky-500 dark:hover:text-sky-400"
+              >
+                🇨🇳 中文文档
               </a>
             </li>
           </ul>
@@ -175,6 +258,7 @@ export default function Header({
                   </ul>
                 </nav>
                 <div className="flex items-center border-l border-gray-200 ml-6 pl-6 dark:border-gray-800">
+                  <LanguageSelector />
                   <ToggleTheme />
                   <a
                     href="https://github.com/pmndrs/valtio"
