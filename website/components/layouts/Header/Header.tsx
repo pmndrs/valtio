@@ -6,7 +6,6 @@ import clsx from 'clsx'
 import SEO from '~/components/SEO'
 import ToggleTheme from '~/components/ToggleTheme'
 
-// 语言选择器组件
 function LanguageSelector() {
   const [isOpen, setIsOpen] = useState(false)
 
