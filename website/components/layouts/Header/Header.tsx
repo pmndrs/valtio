@@ -28,7 +28,7 @@ function LanguageSelector() {
   }, [isOpen])
 
   return (
-    <div className="relative language-selector">
+    <div className="relative language-selector mr-6">
       <button
         type="button"
         className="flex items-center text-gray-700 dark:text-gray-200 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
