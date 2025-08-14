@@ -65,7 +65,7 @@ function LanguageSelector() {
           >
             中文文档
           </a>
-          <Link href="/">
+          <Link href="https://valtio.dev/">
             <a
               className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
               onClick={() => setIsOpen(false)}
