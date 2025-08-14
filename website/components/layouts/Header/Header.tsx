@@ -160,7 +160,7 @@ export function NavPopover({
                 rel="noopener noreferrer"
                 className="hover:text-sky-500 dark:hover:text-sky-400"
               >
-                🇨🇳 中文文档
+                中文文档
               </a>
             </li>
           </ul>
