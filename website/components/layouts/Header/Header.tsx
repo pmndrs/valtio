@@ -6,6 +6,7 @@ import clsx from 'clsx'
 import SEO from '~/components/SEO'
 import ToggleTheme from '~/components/ToggleTheme'
 
+<<<<<<< Updated upstream
 // 语言选择器组件
 function LanguageSelector() {
   const [isOpen, setIsOpen] = useState(false)
@@ -76,6 +77,20 @@ function LanguageSelector() {
         </div>
       )}
     </div>
+=======
+// 英文文档链接组件
+function EnglishDocsLink() {
+  return (
+    <a
+      href="https://valtio.dev"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center text-gray-700 dark:text-gray-200 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+    >
+      <span className="mr-1">🇺🇸</span>
+      <span>English Docs</span>
+    </a>
+>>>>>>> Stashed changes
   )
 }
 
@@ -155,12 +170,20 @@ export function NavPopover({
             </li>
             <li>
               <a
+<<<<<<< Updated upstream
                 href="http://zh.valtio.dev"
+=======
+                href="https://valtio.dev"
+>>>>>>> Stashed changes
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-sky-500 dark:hover:text-sky-400"
               >
+<<<<<<< Updated upstream
                 中文文档
+=======
+                🇺🇸 English Docs
+>>>>>>> Stashed changes
               </a>
             </li>
           </ul>
@@ -178,7 +201,11 @@ export function NavItems() {
     <>
       <li>
         <Link href="/docs/introduction/getting-started">
+<<<<<<< Updated upstream
           <a className="hover:text-sky-500 dark:hover:text-sky-400">Docs</a>
+=======
+          <a className="hover:text-sky-500 dark:hover:text-sky-400">文档</a>
+>>>>>>> Stashed changes
         </Link>
       </li>
     </>
@@ -258,7 +285,11 @@ export default function Header({
                   </ul>
                 </nav>
                 <div className="flex items-center border-l border-gray-200 ml-6 pl-6 dark:border-gray-800">
+<<<<<<< Updated upstream
                   <LanguageSelector />
+=======
+                  <EnglishDocsLink />
+>>>>>>> Stashed changes
                   <ToggleTheme />
                   <a
                     href="https://github.com/pmndrs/valtio"
