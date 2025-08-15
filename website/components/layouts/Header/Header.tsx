@@ -216,7 +216,7 @@ export function NavPopover({
                       <path d="m255.2 255.9-2 26.7 24.9 10.1-26.1 6.4-1.9 26.8-14.1-22.8-26.1 6.4 17.3-20.5-14.2-22.7 24.9 10.1z"></path>
                     </g>
                   </svg>
-                  <span>中文文档</span>
+                  <span>中文文档(by community)</span>
                 </div>
               </a>
             </li>
