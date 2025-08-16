@@ -200,7 +200,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   }
   let checkVersion = versionHolder[1]
   const ensureVersion = (nextCheckVersion = ++versionHolder[1]) => {
-    if (checkVersion !== nextCheckVersion) {
+    if (checkVersion !== nextCheckVersion && !listeners.size) {
       checkVersion = nextCheckVersion
       propProxyStates.forEach(([propProxyState]) => {
         const propVersion = propProxyState[1](nextCheckVersion)

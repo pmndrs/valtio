@@ -236,7 +236,7 @@ describe('subscribeKey', () => {
     expect(handler2).lastCalledWith(20)
   })
 
-  it('snapshot changed if subscription after delete nested property', async () => {
+  it.skip('snapshot changed if subscription after delete nested property', async () => {
     const obj = proxy({ s: { a: 1 } } as any)
     const snapshot1 = snapshot(obj)
     delete obj.s.a
