@@ -73,6 +73,7 @@ describe('performance with nested objects', () => {
       )
       medians.push(median)
     }
+    console.log('medians:', medians)
     const slope = logSlope(DEPTHS, medians)
     expect(slope).toBeLessThan(0.15)
   })
