@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, ref, subscribe } from 'valtio'
+import { proxy, ref, snapshot, subscribe } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 
 describe('subscribe', () => {
@@ -234,5 +234,14 @@ describe('subscribeKey', () => {
     expect(handler1).toBeCalledTimes(1)
     expect(handler2).toBeCalledTimes(1)
     expect(handler2).lastCalledWith(20)
+  })
+
+  it('snapshot changed if subscription after delete nested property', async () => {
+    const obj = proxy({ s: { a: 1 } } as any)
+    const snapshot1 = snapshot(obj)
+    delete obj.s.a
+    subscribe(obj, () => {})
+    const snapshot2 = snapshot(obj)
+    expect(snapshot1).not.toEqual(snapshot2)
   })
 })
