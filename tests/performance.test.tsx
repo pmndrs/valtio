@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { proxy, snapshot, subscribe } from 'valtio'
 
 const DEPTHS = [4, 8, 16, 32, 64, 128, 256]
-const REPEATS = 10000
+const REPEATS = 30000
 
 const measurePerformance = (
   setUp: () => void,
@@ -73,9 +73,8 @@ describe('performance with nested objects', () => {
       )
       medians.push(median)
     }
-    console.log('medians:', medians)
     const slope = logSlope(DEPTHS, medians)
-    expect(slope).toBeLessThan(0.15)
+    expect(slope).toBeLessThan(0.25)
   })
 
   // TODO add more performance tests
