@@ -142,18 +142,18 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
         cb(this.data[index]!, this.data[index]!, this)
       })
     },
-    *values(): IterableIterator<T> {
+    *values(): SetIterator<T> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         yield this.data[index]!
       }
     },
-    keys(): IterableIterator<T> {
+    keys(): SetIterator<T> {
       this.epoch // touch property for tracking
       return this.values()
     },
-    *entries(): IterableIterator<[T, T]> {
+    *entries(): SetIterator<[T, T]> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
