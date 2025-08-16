@@ -245,6 +245,9 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     }
   }
   const addListener = (listener: Listener) => {
+    if (listeners.size === 0) {
+      ensureVersion()
+    }
     listeners.add(listener)
     if (listeners.size === 1) {
       propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
