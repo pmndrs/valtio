@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { proxy, snapshot, subscribe } from 'valtio'
 
 const DEPTHS = [4, 8, 16, 32, 64, 128, 256]
-const REPEATS = 1000
+const REPEATS = 5000
 
 const measurePerformance = (
   setUp: () => void,
