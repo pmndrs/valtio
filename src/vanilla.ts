@@ -194,12 +194,12 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   const listeners = new Set<Listener>()
   const notifyUpdate = (op: Op, nextVersion = ++versionHolder[0]) => {
     if (version !== nextVersion) {
-      version = nextVersion
+      version = checkVersion = versionHolder[1] = nextVersion
       listeners.forEach((listener) => listener(op, nextVersion))
     }
   }
   let checkVersion = versionHolder[1]
-  const ensureVersion = (nextCheckVersion = ++versionHolder[1]) => {
+  const ensureVersion = (nextCheckVersion = versionHolder[1]) => {
     if (checkVersion !== nextCheckVersion) {
       checkVersion = nextCheckVersion
       propProxyStates.forEach(([propProxyState]) => {
