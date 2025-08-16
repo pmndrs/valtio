@@ -74,6 +74,7 @@ describe('no memory leaks with proxy with subscription', () => {
     await new Promise((resolve) => setTimeout(resolve, 1))
     unsub()
     unsub = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 
@@ -88,6 +89,7 @@ describe('no memory leaks with proxy with subscription', () => {
     await new Promise((resolve) => setTimeout(resolve, 1))
     unsub()
     unsub = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 
@@ -103,6 +105,7 @@ describe('no memory leaks with proxy with subscription', () => {
     await new Promise((resolve) => setTimeout(resolve, 1))
     unsub()
     unsub = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 
@@ -118,6 +121,7 @@ describe('no memory leaks with proxy with subscription', () => {
     await new Promise((resolve) => setTimeout(resolve, 1))
     unsub()
     unsub = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 
@@ -133,6 +137,7 @@ describe('no memory leaks with proxy with subscription', () => {
     await new Promise((resolve) => setTimeout(resolve, 1))
     unsub()
     unsub = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 
@@ -148,6 +153,7 @@ describe('no memory leaks with proxy with subscription', () => {
     await new Promise((resolve) => setTimeout(resolve, 1))
     unsub()
     unsub = undefined
+    await Promise.resolve()
     expect(await detector.isLeaking()).toBe(false)
   })
 })
