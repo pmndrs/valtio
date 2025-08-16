@@ -163,7 +163,7 @@ const proxyStateMap: WeakMap<ProxyObject, ProxyState> = new WeakMap()
 const refSet: WeakSet<object> = new WeakSet()
 const snapCache: WeakMap<object, [version: number, snap: unknown]> =
   new WeakMap()
-const versionHolder = [1, 1] as [number, number]
+const versionHolder = [1] as [number]
 const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
 
 // internal functions
@@ -194,12 +194,12 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   const listeners = new Set<Listener>()
   const notifyUpdate = (op: Op, nextVersion = ++versionHolder[0]) => {
     if (version !== nextVersion) {
-      version = checkVersion = versionHolder[1] = nextVersion
+      checkVersion = version = nextVersion
       listeners.forEach((listener) => listener(op, nextVersion))
     }
   }
-  let checkVersion = versionHolder[1]
-  const ensureVersion = (nextCheckVersion = versionHolder[1]) => {
+  let checkVersion = version
+  const ensureVersion = (nextCheckVersion = versionHolder[0]) => {
     if (checkVersion !== nextCheckVersion) {
       checkVersion = nextCheckVersion
       propProxyStates.forEach(([propProxyState]) => {
