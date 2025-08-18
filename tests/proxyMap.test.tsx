@@ -624,7 +624,7 @@ describe('proxyMap', () => {
     it('should update ui when calling only one get with absent key added later', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const _snap = useSnapshot(state)
 
         return (
           <>

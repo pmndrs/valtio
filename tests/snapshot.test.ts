@@ -185,7 +185,7 @@ describe('snapshot', () => {
         }
       }
 
-      type A = Snapshot<typeof user>
+      type A = Snapshot<typeof _user>
       type B = {
         readonly firstName: string
         readonly lastName: string
@@ -193,7 +193,7 @@ describe('snapshot', () => {
         readonly hasRole: (role: string) => boolean
       }
 
-      const user = new User()
+      const _user = new User()
 
       expectTypeOf<A>().toEqualTypeOf<B>()
     })
