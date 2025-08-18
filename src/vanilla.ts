@@ -56,11 +56,16 @@ export type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
 
 type RemoveListener = () => void
 type AddListener = (listener: Listener) => RemoveListener
+type AddPropListener = (
+  prop: string | number | symbol,
+  listener: Listener,
+) => RemoveListener
 
 type ProxyState = readonly [
   target: object,
   ensureVersion: (nextCheckVersion?: number) => number,
   addListener: AddListener,
+  addPropListener: AddPropListener,
 ]
 
 const canProxyDefault = (x: unknown): boolean =>
@@ -122,13 +127,13 @@ const createSnapshotDefault = <T extends object>(
 
 const createHandlerDefault = <T extends object>(
   isInitializing: () => boolean,
-  addPropListener: (prop: string | symbol, propValue: unknown) => void,
-  removePropListener: (prop: string | symbol) => void,
+  addPropStateListener: (prop: string | symbol, propValue: unknown) => void,
+  removePropStateListener: (prop: string | symbol) => void,
   notifyUpdate: (op: Op) => void,
 ): ProxyHandler<T> => ({
   deleteProperty(target: T, prop: string | symbol) {
     const prevValue = Reflect.get(target, prop)
-    removePropListener(prop)
+    removePropStateListener(prop)
     const deleted = Reflect.deleteProperty(target, prop)
     if (deleted) {
       notifyUpdate(['delete', [prop], prevValue])
@@ -145,13 +150,13 @@ const createHandlerDefault = <T extends object>(
     ) {
       return true
     }
-    removePropListener(prop)
+    removePropStateListener(prop)
     if (isObject(value)) {
       value = getUntracked(value) || value
     }
     const nextValue =
       !proxyStateMap.has(value) && canProxy(value) ? proxy(value) : value
-    addPropListener(prop, nextValue)
+    addPropStateListener(prop, nextValue)
     Reflect.set(target, prop, nextValue, receiver)
     notifyUpdate(['set', [prop], value, prevValue])
     return true
@@ -192,10 +197,16 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   }
   let version = versionHolder[0]
   const listeners = new Set<Listener>()
+  const propListenersMap = new Map<string | number | symbol, Set<Listener>>()
   const notifyUpdate = (op: Op, nextVersion = ++versionHolder[0]) => {
     if (version !== nextVersion) {
       checkVersion = version = nextVersion
       listeners.forEach((listener) => listener(op, nextVersion))
+      const prop = op[1][0]!
+      const propListeners = propListenersMap.get(prop) ?? []
+      for (const listener of propListeners) {
+        listener(op, nextVersion)
+      }
     }
   }
   let checkVersion = version
@@ -222,7 +233,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     string | symbol,
     readonly [ProxyState, RemoveListener?]
   >()
-  const addPropListener = (prop: string | symbol, propValue: unknown) => {
+  const addPropStateListener = (prop: string | symbol, propValue: unknown) => {
     const propProxyState =
       !refSet.has(propValue as object) && proxyStateMap.get(propValue as object)
     if (propProxyState) {
@@ -237,7 +248,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
       }
     }
   }
-  const removePropListener = (prop: string | symbol) => {
+  const removePropStateListener = (prop: string | symbol) => {
     const entry = propProxyStates.get(prop)
     if (entry) {
       propProxyStates.delete(prop)
@@ -268,16 +279,38 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     }
     return removeListener
   }
+  const addPropListener = (
+    prop: string | number | symbol,
+    listener: Listener,
+  ) => {
+    let propListeners = propListenersMap.get(prop)
+    if (!propListeners) {
+      propListeners = new Set<Listener>()
+      propListenersMap.set(prop, propListeners)
+    }
+    propListeners.add(listener)
+    return () => {
+      propListeners.delete(listener)
+      if (propListeners.size === 0) {
+        propListenersMap.delete(prop)
+      }
+    }
+  }
   let initializing = true
   const handler = createHandler<T>(
     () => initializing,
-    addPropListener,
-    removePropListener,
+    addPropStateListener,
+    removePropStateListener,
     notifyUpdate,
   )
   const proxyObject = newProxy(baseObject, handler)
   proxyCache.set(baseObject, proxyObject)
-  const proxyState: ProxyState = [baseObject, ensureVersion, addListener]
+  const proxyState: ProxyState = [
+    baseObject,
+    ensureVersion,
+    addListener,
+    addPropListener,
+  ]
   proxyStateMap.set(proxyObject, proxyState)
   Reflect.ownKeys(baseObject).forEach((key) => {
     const desc = Object.getOwnPropertyDescriptor(
@@ -341,6 +374,54 @@ export function subscribe<T extends object>(
     }
   }
   const removeListener = addListener(listener)
+  isListenerActive = true
+  return () => {
+    isListenerActive = false
+    removeListener()
+  }
+}
+
+/**
+ * subscribeKey
+ *
+ * The subscribeKey utility enables subscription to a primitive subproperty of a given state proxy.
+ * Subscriptions created with subscribeKey will only fire when the specified property changes.
+ * notifyInSync: same as the parameter to subscribe(); true disables batching of subscriptions.
+ *
+ * @example
+ * import { subscribeKey } from 'valtio/utils'
+ * subscribeKey(state, 'count', (v) => console.log('state.count has changed to', v))
+ */
+export function subscribeKey<T extends object, K extends keyof T>(
+  proxyObject: T,
+  key: K,
+  callback: (value: T[K]) => void,
+  notifyInSync?: boolean,
+): () => void {
+  const proxyState = proxyStateMap.get(proxyObject as object)
+  if (import.meta.env?.MODE !== 'production' && !proxyState) {
+    console.warn('Please use proxy object')
+  }
+  let promise: Promise<void> | undefined
+  const ops: Op[] = []
+  const addPropListener = (proxyState as ProxyState)[3]
+  let isListenerActive = false
+  const listener: Listener = (op) => {
+    ops.push(op)
+    if (notifyInSync) {
+      callback(proxyObject[key])
+      return
+    }
+    if (!promise) {
+      promise = Promise.resolve().then(() => {
+        promise = undefined
+        if (isListenerActive) {
+          callback(proxyObject[key])
+        }
+      })
+    }
+  }
+  const removeListener = addPropListener(key, listener)
   isListenerActive = true
   return () => {
     isListenerActive = false

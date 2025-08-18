@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { proxy, snapshot, subscribe } from 'valtio'
+import { subscribeKey } from 'valtio/utils'
 
 const DEPTHS = [4, 8, 16, 32, 64, 128, 256]
+const KEYS = [4, 8, 16, 32, 64, 128, 256, 512, 1024]
+// const KEYS = [512, 1024]
 const REPEATS = 5000
 
 const measurePerformance = (
@@ -49,6 +52,14 @@ const buildNestedObj = (depth: number) => {
   return { obj, leaf }
 }
 
+const buildManyKeysObj = (keys: number) => {
+  const obj: { [key: string]: number } = {}
+  for (let i = 0; i < keys; i++) {
+    obj[`key${i}`] = 1
+  }
+  return obj
+}
+
 describe('performance with nested objects', () => {
   it('snapshot with subscription', async () => {
     const medians: number[] = []
@@ -74,6 +85,37 @@ describe('performance with nested objects', () => {
       medians.push(median)
     }
     const slope = logSlope(DEPTHS, medians)
+    expect(slope).toBeLessThan(0.1)
+  })
+
+  it('subscribeKey with many keys', async () => {
+    const medians: number[] = []
+    for (const key of KEYS) {
+      let unsubs: (() => void)[] = []
+      let proxyObj: any | undefined
+      let firstKey: string | undefined
+      const median = measurePerformance(
+        () => {
+          const obj = buildManyKeysObj(key)
+          proxyObj = proxy(obj)
+          for (const key in obj) {
+            firstKey ??= key
+            unsubs.push(subscribeKey(proxyObj, key, () => {}))
+          }
+          snapshot(proxyObj)
+        },
+        () => {
+          proxyObj[firstKey!]++
+        },
+        () => {
+          unsubs.forEach((unsub) => unsub())
+          unsubs = []
+          firstKey = undefined
+        },
+      )
+      medians.push(median)
+    }
+    const slope = logSlope(KEYS, medians)
     expect(slope).toBeLessThan(0.1)
   })
 
