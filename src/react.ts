@@ -7,12 +7,8 @@ import {
   useRef,
   useSyncExternalStore,
 } from 'react'
-import {
-  affectedToPathList,
-  createProxy as createProxyToCompare,
-  isChanged,
-} from 'proxy-compare'
-import { snapshot, subscribe } from './vanilla.ts'
+import { affectedToPathList } from 'proxy-compare'
+import { snapshot, subscribe, subscribeKey } from './vanilla.ts'
 import type { Snapshot } from './vanilla.ts'
 
 /**
@@ -37,12 +33,110 @@ const useAffectedDebugValue = (
 }
 const condUseAffectedDebugValue = useAffectedDebugValue
 
-// This is required only for performance.
-// Ref: https://github.com/pmndrs/valtio/issues/519
-const targetCache = new WeakMap()
-
 type Options = {
   sync?: boolean
+}
+
+// function to create a new bare proxy
+const newProxy = <T extends object>(target: T, handler: ProxyHandler<T>) =>
+  new Proxy(target, handler)
+
+// get object prototype
+const getProto = Object.getPrototypeOf
+
+const objectsToTrack = new WeakMap<object, boolean>()
+export const markToTrack = (obj: object, mark = true): void => {
+  objectsToTrack.set(obj, mark)
+}
+
+// check if obj is a plain object or an array
+const isObjectToTrack = <T>(obj: T): obj is T extends object ? T : never =>
+  obj &&
+  (objectsToTrack.has(obj as unknown as object)
+    ? (objectsToTrack.get(obj as unknown as object) as boolean)
+    : getProto(obj) === Object.prototype || getProto(obj) === Array.prototype)
+
+const getPropertyDescriptor = (obj: object, key: string | symbol) => {
+  while (obj) {
+    const desc = Reflect.getOwnPropertyDescriptor(obj, key)
+    if (desc) {
+      return desc
+    }
+    obj = getProto(obj)
+  }
+  return undefined
+}
+
+const HAS_KEY_PROPERTY = 'h'
+const ALL_OWN_KEYS_PROPERTY = 'w'
+const HAS_OWN_KEY_PROPERTY = 'o'
+const KEYS_PROPERTY = 'k'
+
+const createSnapshotProxy = <T>(
+  snapshot: Snapshot<T>,
+  proxyObject: T,
+  affected: Map<object, unknown>,
+  proxyCache: WeakMap<object, Snapshot<T>>,
+  notifyInSync?: boolean,
+): Snapshot<T> => {
+  if (!isObjectToTrack(snapshot)) return snapshot
+  if (proxyCache.get(snapshot)) return proxyCache.get(snapshot)!
+
+  const recordUsage = (
+    type:
+      | typeof HAS_KEY_PROPERTY
+      | typeof ALL_OWN_KEYS_PROPERTY
+      | typeof HAS_OWN_KEY_PROPERTY
+      | typeof KEYS_PROPERTY,
+    key?: string | symbol,
+  ) => {
+    let used = affected.get(proxyObject as object) as any
+    if (!used) {
+      used = {}
+      affected.set(proxyObject as object, used)
+    }
+    if (type === ALL_OWN_KEYS_PROPERTY) {
+      used[ALL_OWN_KEYS_PROPERTY] = true
+    } else {
+      let set = used[type]
+      if (!set) {
+        set = new Set()
+        used[type] = set
+      }
+      set.add(key as string | symbol)
+    }
+  }
+  const proxySnapshot = newProxy(snapshot, {
+    get(target, prop) {
+      const desc = getPropertyDescriptor(target, prop)
+      if (desc?.get) {
+        return Reflect.get(target, prop, proxySnapshot)
+      }
+
+      recordUsage(KEYS_PROPERTY, prop)
+      return createSnapshotProxy(
+        Reflect.get(target, prop),
+        (proxyObject as any)[prop],
+        affected,
+        proxyCache,
+        notifyInSync,
+      )
+    },
+    has(target, key) {
+      recordUsage(HAS_KEY_PROPERTY, key)
+      return Reflect.has(target, key)
+    },
+    getOwnPropertyDescriptor(target, key) {
+      recordUsage(HAS_OWN_KEY_PROPERTY, key)
+      return Reflect.getOwnPropertyDescriptor(target, key)
+    },
+    ownKeys(target) {
+      recordUsage(ALL_OWN_KEYS_PROPERTY)
+      return Reflect.ownKeys(target)
+    },
+  })
+  proxyCache.set(snapshot, proxySnapshot)
+  return proxySnapshot
 }
 
 /**
@@ -125,44 +219,38 @@ export function useSnapshot<T extends object>(
   const notifyInSync = options?.sync
   // per-proxy & per-hook affected, it's not ideal but memo compatible
   const affected = useMemo(
-    () => proxyObject && new WeakMap<object, unknown>(),
+    () => proxyObject && new Map<object, unknown>(),
     [proxyObject],
   )
+
   const lastSnapshot = useRef<Snapshot<T>>(undefined)
-  let inRender = true
   const currSnapshot = useSyncExternalStore(
     useCallback(
       (callback) => {
-        const unsub = subscribe(proxyObject, callback, notifyInSync)
-        callback() // Note: do we really need this?
-        return unsub
-      },
-      [proxyObject, notifyInSync],
-    ),
-    () => {
-      const nextSnapshot = snapshot(proxyObject)
-      try {
-        if (
-          !inRender &&
-          lastSnapshot.current &&
-          !isChanged(
-            lastSnapshot.current,
-            nextSnapshot,
-            affected,
-            new WeakMap(),
-          )
-        ) {
-          // not changed
-          return lastSnapshot.current
+        const unsubscribes = [] as (() => void)[]
+        for (const obj of affected.keys()) {
+          const used = affected.get(obj) as any
+          if (used[ALL_OWN_KEYS_PROPERTY]) {
+            unsubscribes.push(subscribe(obj, callback, notifyInSync))
+          } else {
+            for (const type in used) {
+              for (const key of used[type]) {
+                unsubscribes.push(
+                  subscribeKey(obj as any, key, callback, notifyInSync),
+                )
+              }
+            }
+          }
         }
-      } catch {
-        // ignore if a promise or something is thrown
-      }
-      return nextSnapshot
-    },
+        return () => {
+          unsubscribes.forEach((unsub) => unsub())
+        }
+      },
+      [affected, notifyInSync],
+    ),
+    () => snapshot(proxyObject),
     () => snapshot(proxyObject),
   )
-  inRender = false
   useLayoutEffect(() => {
     lastSnapshot.current = currSnapshot
   })
@@ -170,5 +258,11 @@ export function useSnapshot<T extends object>(
     condUseAffectedDebugValue(currSnapshot as object, affected)
   }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
-  return createProxyToCompare(currSnapshot, affected, proxyCache, targetCache)
+  return createSnapshotProxy(
+    currSnapshot,
+    proxyObject,
+    affected,
+    proxyCache,
+    notifyInSync,
+  )
 }

@@ -1,4 +1,5 @@
-import { getUntracked, markToTrack } from 'proxy-compare'
+import { getUntracked } from 'proxy-compare'
+import { markToTrack } from './react.ts'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -100,18 +101,23 @@ const createSnapshotDefault = <T extends object>(
       // Only the known case is Array.length so far.
       return
     }
-    const value = Reflect.get(target, key)
-    const { enumerable } = Reflect.getOwnPropertyDescriptor(
+    const targetDesc = Reflect.getOwnPropertyDescriptor(
       target,
       key,
     ) as PropertyDescriptor
     const desc: PropertyDescriptor = {
-      value,
-      enumerable: enumerable as boolean,
+      ...targetDesc,
       // This is intentional to avoid copying with proxy-compare.
       // It's still non-writable, so it avoids assigning a value.
       configurable: true,
     }
+    // we call getter on render time to track props used inside getter
+    if (desc.get || desc.set) {
+      delete desc.writable
+    } else {
+      desc.writable = false
+    }
+    const value = desc.value
     if (refSet.has(value as object)) {
       markToTrack(value as object, false) // mark not to track
     } else if (proxyStateMap.has(value as object)) {
@@ -122,6 +128,14 @@ const createSnapshotDefault = <T extends object>(
     }
     Object.defineProperty(snap, key, desc)
   })
+  if (
+    Symbol.toStringTag in target &&
+    (target[Symbol.toStringTag] === 'Set' ||
+      target[Symbol.toStringTag] === 'Map')
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    ;(target as any).size // touch property for registerSnapMap()
+  }
   return Object.preventExtensions(snap)
 }
 
@@ -143,6 +157,8 @@ const createHandlerDefault = <T extends object>(
   set(target: T, prop: string | symbol, value: any, receiver: object) {
     const hasPrevValue = !isInitializing() && Reflect.has(target, prop)
     const prevValue = Reflect.get(target, prop, receiver)
+    const prevLen = Reflect.get(target, 'length', receiver)
+
     if (
       hasPrevValue &&
       (objectIs(prevValue, value) ||
@@ -159,6 +175,16 @@ const createHandlerDefault = <T extends object>(
     addPropStateListener(prop, nextValue)
     Reflect.set(target, prop, nextValue, receiver)
     notifyUpdate(['set', [prop], value, prevValue])
+
+    const nextLen = Reflect.get(target, 'length', receiver)
+    if (nextLen !== prevLen) {
+      // we should notify length change here
+      // because after target[prop] = value, length already changed
+      // and next time trap setter for "length", prevValue always equal to value
+      // we can't use Array.isArray to skip this logic, because Array.prototype.push support non-array objects:
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push#calling_push_on_non-array_objects
+      notifyUpdate(['set', ['length'], nextLen, prevLen])
+    }
     return true
   },
 })

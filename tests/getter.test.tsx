@@ -1,5 +1,5 @@
 import { StrictMode } from 'react'
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
 
@@ -49,7 +49,7 @@ describe('getter', () => {
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('A count: 2')).toBeInTheDocument()
     expect(screen.getByText('B count: 2')).toBeInTheDocument()
-    expect(computeDouble).toBeCalledTimes(1)
+    expect(computeDouble).toBeCalledTimes(4)
   })
 
   it('object getters returning object', async () => {
@@ -89,6 +89,6 @@ describe('getter', () => {
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('A count: 2')).toBeInTheDocument()
     expect(screen.getByText('B count: 2')).toBeInTheDocument()
-    expect(computeDouble).toBeCalledTimes(1)
+    expect(computeDouble).toBeCalledTimes(4)
   })
 })
