@@ -1,8 +1,6 @@
 import {
-  useCallback,
   useDebugValue,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useSyncExternalStore,
@@ -223,39 +221,32 @@ export function useSnapshot<T extends object>(
     [proxyObject],
   )
 
-  const lastSnapshot = useRef<Snapshot<T>>(undefined)
   const currSnapshot = useSyncExternalStore(
-    useCallback(
-      (callback) => {
-        const unsubscribes = [] as (() => void)[]
-        for (const obj of affected.keys()) {
-          const used = affected.get(obj) as any
-          if (used[ALL_OWN_KEYS_PROPERTY]) {
-            unsubscribes.push(subscribe(obj, callback, notifyInSync))
-          } else {
-            for (const type in used) {
-              for (const key of used[type]) {
-                unsubscribes.push(
-                  subscribeKey(obj as any, key, callback, notifyInSync),
-                )
-              }
+    (callback) => {
+      const unsubscribes = [] as (() => void)[]
+      for (const obj of affected.keys()) {
+        const used = affected.get(obj) as any
+        if (used[ALL_OWN_KEYS_PROPERTY]) {
+          unsubscribes.push(subscribe(obj, callback, notifyInSync))
+        } else {
+          for (const type in used) {
+            for (const key of used[type]) {
+              unsubscribes.push(
+                subscribeKey(obj as any, key, callback, notifyInSync),
+              )
             }
           }
         }
-        return () => {
-          unsubscribes.forEach((unsub) => unsub())
-        }
-      },
-      [affected, notifyInSync],
-    ),
+      }
+      return () => {
+        unsubscribes.forEach((unsub) => unsub())
+      }
+    },
     () => snapshot(proxyObject),
     () => snapshot(proxyObject),
   )
-  useLayoutEffect(() => {
-    lastSnapshot.current = currSnapshot
-  })
   if (import.meta.env?.MODE !== 'production') {
-    condUseAffectedDebugValue(currSnapshot as object, affected)
+    condUseAffectedDebugValue(proxyObject, affected)
   }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
   return createSnapshotProxy(
