@@ -6,6 +6,7 @@ import 'timers'
 
 describe('optimization', () => {
   beforeEach(() => {
+	// don't fake setImmediate, it conflict with javascript debugger and cause stuck
     vi.useFakeTimers({
       toFake: [
         'setTimeout',

@@ -5,7 +5,16 @@ import { sleep } from './utils'
 
 describe('watch', () => {
   beforeEach(() => {
-    vi.useFakeTimers()
+	// don't fake setImmediate, it conflict with javascript debugger and cause stuck
+    vi.useFakeTimers({
+      toFake: [
+        'setTimeout',
+        'setInterval',
+        'clearTimeout',
+        'clearInterval',
+        'Date',
+      ],
+    })
   })
 
   afterEach(() => {
