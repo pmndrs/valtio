@@ -5,7 +5,15 @@ import { proxy, useSnapshot } from 'valtio'
 
 describe('getter', () => {
   beforeEach(() => {
-    vi.useFakeTimers()
+    vi.useFakeTimers({
+      toFake: [
+        'setTimeout',
+        'setInterval',
+        'clearTimeout',
+        'clearInterval',
+        'Date',
+      ],
+    })
   })
 
   afterEach(() => {

@@ -6,7 +6,15 @@ import { useCommitCount } from './utils'
 
 describe('basic', () => {
   beforeEach(() => {
-    vi.useFakeTimers()
+    vi.useFakeTimers({
+      toFake: [
+        'setTimeout',
+        'setInterval',
+        'clearTimeout',
+        'clearInterval',
+        'Date',
+      ],
+    })
   })
 
   afterEach(() => {

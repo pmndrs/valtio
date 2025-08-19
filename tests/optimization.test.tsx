@@ -2,10 +2,19 @@ import { useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
+import 'timers'
 
 describe('optimization', () => {
   beforeEach(() => {
-    vi.useFakeTimers()
+    vi.useFakeTimers({
+      toFake: [
+        'setTimeout',
+        'setInterval',
+        'clearTimeout',
+        'clearInterval',
+        'Date',
+      ],
+    })
   })
 
   afterEach(() => {
@@ -170,7 +179,9 @@ describe('optimization', () => {
       renderFn()
       return (
         <>
-          <div>Count: {snap.switch ? "b" : "a"}:{snap.switch ? snap.b : snap.a}</div>
+          <div>
+            Count: {snap.switch ? 'b' : 'a'}:{snap.switch ? snap.b : snap.a}
+          </div>
           <button
             onClick={() => {
               state.switch = true
@@ -207,26 +218,71 @@ describe('optimization', () => {
     expect(renderFn).toBeCalledTimes(2)
     expect(screen.getByText('Count: a:1')).toBeInTheDocument()
 
-	fireEvent.click(screen.getByText('increment b'))
+    fireEvent.click(screen.getByText('increment b'))
     await act(() => vi.advanceTimersByTimeAsync(0))
 
-	expect(renderFn).toBeCalledTimes(2)
+    expect(renderFn).toBeCalledTimes(2)
 
     fireEvent.click(screen.getByText('switch'))
-	await act(() => vi.advanceTimersByTimeAsync(0))
-
-	expect(renderFn).toBeCalledTimes(3)
-	expect(screen.getByText('Count: b:2')).toBeInTheDocument()
-
-	fireEvent.click(screen.getByText('increment a'))
     await act(() => vi.advanceTimersByTimeAsync(0))
 
-	expect(renderFn).toBeCalledTimes(3)
+    expect(renderFn).toBeCalledTimes(3)
+    expect(screen.getByText('Count: b:2')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('increment a'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(renderFn).toBeCalledTimes(3)
+
+    fireEvent.click(screen.getByText('increment b'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(renderFn).toBeCalledTimes(4)
+    expect(screen.getByText('Count: b:3')).toBeInTheDocument()
+  })
+
+   it('no rerender if nested property is updated but not accessed', async () => {
+    const state = proxy({ nested: { a: 0, b: 1 } })
+
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return (
+        <>
+          <div>Count: { snap.nested.a }</div>
+          <button
+            onClick={() => {
+              state.nested.a++
+            }}
+          >
+            increment a
+          </button>
+          <button
+            onClick={() => {
+              state.nested.b++
+            }}
+          >
+            increment b
+          </button>
+        </>
+      )
+    }
+
+    render(<Component />)
+
+    expect(screen.getByText('Count: 0')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(1)
 
 	fireEvent.click(screen.getByText('increment b'))
-	await act(() => vi.advanceTimersByTimeAsync(0))
+    await act(() => vi.advanceTimersByTimeAsync(0))
 
-	expect(renderFn).toBeCalledTimes(4)
-	expect(screen.getByText('Count: b:3')).toBeInTheDocument()
+	expect(renderFn).toBeCalledTimes(1)
+
+    fireEvent.click(screen.getByText('increment a'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(renderFn).toBeCalledTimes(2)
+    expect(screen.getByText('Count: 1')).toBeInTheDocument()
   })
 })

@@ -6,7 +6,12 @@ import {
   useSyncExternalStore,
 } from 'react'
 import { affectedToPathList } from 'proxy-compare'
-import { snapshot, subscribe, subscribeKey } from './vanilla.ts'
+import {
+  getProxyBySnapshot,
+  snapshot,
+  subscribe,
+  subscribeKey,
+} from './vanilla.ts'
 import type { Snapshot } from './vanilla.ts'
 
 /**
@@ -54,6 +59,10 @@ const isObjectToTrack = <T>(obj: T): obj is T extends object ? T : never =>
     ? (objectsToTrack.get(obj as unknown as object) as boolean)
     : getProto(obj) === Object.prototype || getProto(obj) === Array.prototype)
 
+// check if it is object
+const isObject = (x: unknown): x is object =>
+  typeof x === 'object' && x !== null
+
 const getPropertyDescriptor = (obj: object, key: string | symbol) => {
   while (obj) {
     const desc = Reflect.getOwnPropertyDescriptor(obj, key)
@@ -70,9 +79,19 @@ const ALL_OWN_KEYS_PROPERTY = 'w'
 const HAS_OWN_KEY_PROPERTY = 'o'
 const KEYS_PROPERTY = 'k'
 
+type HasKeySet = Set<string | symbol>
+type HasOwnKeySet = Set<string | symbol>
+type KeysSet = Set<string | symbol>
+type Used = {
+  [HAS_KEY_PROPERTY]?: HasKeySet
+  [ALL_OWN_KEYS_PROPERTY]?: true
+  [HAS_OWN_KEY_PROPERTY]?: HasOwnKeySet
+  [KEYS_PROPERTY]?: KeysSet
+}
+type Affected = Map<object, Used>
+
 const createSnapshotProxy = <T>(
   snapshot: Snapshot<T>,
-  proxyObject: T,
   affected: Map<object, unknown>,
   proxyCache: WeakMap<object, Snapshot<T>>,
   notifyInSync?: boolean,
@@ -80,6 +99,7 @@ const createSnapshotProxy = <T>(
   if (!isObjectToTrack(snapshot)) return snapshot
   if (proxyCache.get(snapshot)) return proxyCache.get(snapshot)!
 
+  const proxyObject = getProxyBySnapshot(snapshot)
   const recordUsage = (
     type:
       | typeof HAS_KEY_PROPERTY
@@ -113,8 +133,7 @@ const createSnapshotProxy = <T>(
 
       recordUsage(KEYS_PROPERTY, prop)
       return createSnapshotProxy(
-        Reflect.get(target, prop),
-        (proxyObject as any)[prop],
+        Reflect.get(target, prop) as Snapshot<T>,
         affected,
         proxyCache,
         notifyInSync,
@@ -217,10 +236,11 @@ export function useSnapshot<T extends object>(
   const notifyInSync = options?.sync
   // per-proxy & per-hook affected, it's not ideal but memo compatible
   const affected = useMemo(
-    () => proxyObject && new Map<object, unknown>(),
+    () => proxyObject && (new Map() as Affected),
     [proxyObject],
   )
 
+  const lastSnapshot = useRef<Snapshot<T>>(undefined)
   const currSnapshot = useSyncExternalStore(
     (callback) => {
       const unsubscribes = [] as (() => void)[]
@@ -242,18 +262,84 @@ export function useSnapshot<T extends object>(
         unsubscribes.forEach((unsub) => unsub())
       }
     },
-    () => snapshot(proxyObject),
+    () => {
+      const nextSnapshot = snapshot(proxyObject)
+      try {
+        if (!isChanged(lastSnapshot.current, nextSnapshot, affected)) {
+          return lastSnapshot.current
+        }
+      } catch {
+        // ignore if a promise or something is thrown
+      }
+      affected.clear()
+      // because we clear, we can't check isChanged again, so update lastSnapshot
+      lastSnapshot.current = nextSnapshot
+      return nextSnapshot
+    },
     () => snapshot(proxyObject),
   )
   if (import.meta.env?.MODE !== 'production') {
     condUseAffectedDebugValue(proxyObject, affected)
   }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
-  return createSnapshotProxy(
-    currSnapshot,
-    proxyObject,
-    affected,
-    proxyCache,
-    notifyInSync,
+  return createSnapshotProxy(currSnapshot, affected, proxyCache, notifyInSync)
+}
+
+const isAllOwnKeysChanged = (prevObj: object, nextObj: object) => {
+  const prevKeys = Reflect.ownKeys(prevObj)
+  const nextKeys = Reflect.ownKeys(nextObj)
+  return (
+    prevKeys.length !== nextKeys.length ||
+    prevKeys.some((k, i) => k !== nextKeys[i])
   )
+}
+
+export const isChanged = (
+  prevSnap: unknown,
+  nextSnap: unknown,
+  affected: Affected,
+  cache: WeakMap<object, unknown> = new WeakMap(),
+  isEqual: (a: unknown, b: unknown) => boolean = Object.is,
+): boolean => {
+  if (isEqual(prevSnap, nextSnap)) {
+    return false
+  }
+  if (!isObject(prevSnap) || !isObject(nextSnap)) return true
+  const proxyObject = getProxyBySnapshot(prevSnap)
+  const used = (affected as Affected).get(proxyObject)
+  if (!used) return true
+  const hit = cache.get(prevSnap)
+  if (hit === nextSnap) {
+    return false
+  }
+  // for object with cycles
+  cache.set(prevSnap, nextSnap)
+  let changed: boolean | null = null
+  for (const key of used[HAS_KEY_PROPERTY] || []) {
+    changed = Reflect.has(prevSnap, key) !== Reflect.has(nextSnap, key)
+    if (changed) return changed
+  }
+  if (used[ALL_OWN_KEYS_PROPERTY] === true) {
+    changed = isAllOwnKeysChanged(prevSnap, nextSnap)
+    if (changed) return changed
+  } else {
+    for (const key of used[HAS_OWN_KEY_PROPERTY] || []) {
+      const hasPrev = !!Reflect.getOwnPropertyDescriptor(prevSnap, key)
+      const hasNext = !!Reflect.getOwnPropertyDescriptor(nextSnap, key)
+      changed = hasPrev !== hasNext
+      if (changed) return changed
+    }
+  }
+  for (const key of used[KEYS_PROPERTY] || []) {
+    changed = isChanged(
+      (prevSnap as any)[key],
+      (nextSnap as any)[key],
+      affected,
+      cache,
+      isEqual,
+    )
+    if (changed) return changed
+  }
+  if (changed === null) throw new Error('invalid used')
+  return changed
 }

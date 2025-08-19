@@ -136,6 +136,7 @@ const createSnapshotDefault = <T extends object>(
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     ;(target as any).size // touch property for registerSnapMap()
   }
+  snapToTargetMap.set(snap, target)
   return Object.preventExtensions(snap)
 }
 
@@ -196,6 +197,7 @@ const snapCache: WeakMap<object, [version: number, snap: unknown]> =
   new WeakMap()
 const versionHolder = [1] as [number]
 const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
+const snapToTargetMap: WeakMap<object, object> = new WeakMap()
 
 // internal functions
 let objectIs: (a: unknown, b: unknown) => boolean = Object.is
@@ -484,6 +486,15 @@ export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
 export function ref<T extends object>(obj: T) {
   refSet.add(obj)
   return obj as T & { $$valtioSnapshot: T }
+}
+
+export function getProxyBySnapshot<T extends object>(snapshot: Snapshot<T>): T {
+  const target = snapToTargetMap.get(snapshot as object)
+  if (import.meta.env?.MODE !== 'production' && !target) {
+    console.warn('Please use snapshot object')
+  }
+  const proxyObject = proxyCache.get(target!)
+  return proxyObject as T
 }
 
 // ------------------------------------------------
