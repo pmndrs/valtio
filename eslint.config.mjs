@@ -72,7 +72,7 @@ export default tseslint.config(
       ],
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': [
-        'warn',
+        'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
       'react-hooks/react-compiler': 'error',
@@ -95,7 +95,6 @@ export default tseslint.config(
     files: ['tests/**/*.{ts,tsx}'],
     rules: {
       'import/extensions': ['error', 'never'],
-      '@typescript-eslint/no-unused-vars': 'off',
       'vitest/consistent-test-it': [
         'error',
         { fn: 'it', withinDescribe: 'it' },
