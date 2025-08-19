@@ -350,4 +350,37 @@ describe('optimization', () => {
 
     expect(renderFn).toBeCalledTimes(1)
   })
+
+  it('rerender if nested object no access and deleted with option changedIfNotUsed: false', async () => {
+    const state = proxy({ nested: { a: 0 } })
+
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state, { changedIfNotUsed: false })
+      renderFn()
+      return (
+        <>
+          <div>Nested: {snap.nested !== undefined ? 'Exist' : 'Not Exist'}</div>
+          <button
+            onClick={() => {
+              delete (state as any).nested
+            }}
+          >
+            delete nested
+          </button>
+        </>
+      )
+    }
+
+    render(<Component />)
+
+    expect(screen.getByText('Nested: Exist')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(1)
+
+    fireEvent.click(screen.getByText('delete nested'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(screen.getByText('Nested: Not Exist')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(2)
+  })
 })
