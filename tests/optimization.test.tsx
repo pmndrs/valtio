@@ -319,7 +319,7 @@ describe('optimization', () => {
     expect(renderFn).toBeCalledTimes(2)
   })
 
-  it('no rerender if nested object no access but updated with option changedIfNotUsed: false', async () => {
+  it('no rerender if nested object no properties access but property updated with option changedIfNotUsed: false', async () => {
     const state = proxy({ nested: { a: 0 } })
 
     const renderFn = vi.fn()
@@ -349,6 +349,55 @@ describe('optimization', () => {
     await act(() => vi.advanceTimersByTimeAsync(0))
 
     expect(renderFn).toBeCalledTimes(1)
+  })
+
+  it('no rerender if deep nested object no properties access but object updated with option changedIfNotUsed: false', async () => {
+    const state = proxy({
+      a: {
+        b1: {
+          c: 0,
+        },
+        b2: {
+          c: 0,
+        },
+      },
+    })
+
+    const renderFn = vi.fn()
+    const Component = ({ name }: { name: string }) => {
+      const snap = useSnapshot(state, { changedIfNotUsed: false })
+      renderFn()
+      return (
+        <>
+          <div>
+            {name}{' '}
+            {name === 'A' ? snap.a.b1 && snap.a.b2 && 'b1b2' : snap.a.b1.c}
+          </div>
+          <button
+            onClick={() => {
+              state.a.b1 = { c: state.a.b1.c + 1 }
+            }}
+          >
+            {name} increment c
+          </button>
+        </>
+      )
+    }
+
+    render(
+      <>
+        <Component name="A" />
+        <Component name="B" />
+      </>,
+    )
+
+    expect(screen.getByText('A b1b2')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(2)
+
+    fireEvent.click(screen.getByText('A increment c'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(renderFn).toBeCalledTimes(3)
   })
 
   it('rerender if nested object no access and deleted with option changedIfNotUsed: false', async () => {

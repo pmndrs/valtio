@@ -366,6 +366,7 @@ const isChanged = (
       (nextSnap as any)[key],
       affected,
       cache,
+      changedIfNotUsed,
     )
     if (changed) return changed
   }
