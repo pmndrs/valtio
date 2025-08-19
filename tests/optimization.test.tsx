@@ -241,7 +241,7 @@ describe('optimization', () => {
     expect(screen.getByText('Count: b:3')).toBeInTheDocument()
   })
 
-   it('no rerender if nested property is updated but not accessed', async () => {
+  it('no rerender if nested property is updated but not accessed', async () => {
     const state = proxy({ nested: { a: 0, b: 1 } })
 
     const renderFn = vi.fn()
@@ -250,7 +250,7 @@ describe('optimization', () => {
       renderFn()
       return (
         <>
-          <div>Count: { snap.nested.a }</div>
+          <div>Count: {snap.nested.a}</div>
           <button
             onClick={() => {
               state.nested.a++
@@ -274,10 +274,10 @@ describe('optimization', () => {
     expect(screen.getByText('Count: 0')).toBeInTheDocument()
     expect(renderFn).toBeCalledTimes(1)
 
-	fireEvent.click(screen.getByText('increment b'))
+    fireEvent.click(screen.getByText('increment b'))
     await act(() => vi.advanceTimersByTimeAsync(0))
 
-	expect(renderFn).toBeCalledTimes(1)
+    expect(renderFn).toBeCalledTimes(1)
 
     fireEvent.click(screen.getByText('increment a'))
     await act(() => vi.advanceTimersByTimeAsync(0))
