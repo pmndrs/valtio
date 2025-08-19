@@ -38,6 +38,7 @@ const condUseAffectedDebugValue = useAffectedDebugValue
 
 type Options = {
   sync?: boolean
+  changedIfNotUsed?: boolean
 }
 
 // function to create a new bare proxy
@@ -78,6 +79,7 @@ const HAS_KEY_PROPERTY = 'h'
 const ALL_OWN_KEYS_PROPERTY = 'w'
 const HAS_OWN_KEY_PROPERTY = 'o'
 const KEYS_PROPERTY = 'k'
+const NO_ACCESS_PROPERTY = 'n'
 
 type HasKeySet = Set<string | symbol>
 type HasOwnKeySet = Set<string | symbol>
@@ -87,43 +89,49 @@ type Used = {
   [ALL_OWN_KEYS_PROPERTY]?: true
   [HAS_OWN_KEY_PROPERTY]?: HasOwnKeySet
   [KEYS_PROPERTY]?: KeysSet
+  [NO_ACCESS_PROPERTY]?: true
 }
 type Affected = Map<object, Used>
 
+const recordUsage = (
+  proxyObject: object,
+  affected: Affected,
+  type:
+    | typeof HAS_KEY_PROPERTY
+    | typeof ALL_OWN_KEYS_PROPERTY
+    | typeof HAS_OWN_KEY_PROPERTY
+    | typeof KEYS_PROPERTY
+    | typeof NO_ACCESS_PROPERTY,
+  key?: string | symbol,
+) => {
+  let used = affected.get(proxyObject as object) as any
+  if (!used) {
+    used = {}
+    affected.set(proxyObject as object, used)
+  }
+  if (type === ALL_OWN_KEYS_PROPERTY) {
+    used[ALL_OWN_KEYS_PROPERTY] = true
+  } else {
+    let set = used[type]
+    if (!set) {
+      set = new Set()
+      used[type] = set
+    }
+    set.add(key as string | symbol)
+  }
+}
+
 const createSnapshotProxy = <T>(
   snapshot: Snapshot<T>,
-  affected: Map<object, unknown>,
+  affected: Affected,
   proxyCache: WeakMap<object, Snapshot<T>>,
   notifyInSync?: boolean,
+  changedIfNotUsed?: boolean,
 ): Snapshot<T> => {
   if (!isObjectToTrack(snapshot)) return snapshot
   if (proxyCache.get(snapshot)) return proxyCache.get(snapshot)!
 
   const proxyObject = getProxyBySnapshot(snapshot)
-  const recordUsage = (
-    type:
-      | typeof HAS_KEY_PROPERTY
-      | typeof ALL_OWN_KEYS_PROPERTY
-      | typeof HAS_OWN_KEY_PROPERTY
-      | typeof KEYS_PROPERTY,
-    key?: string | symbol,
-  ) => {
-    let used = affected.get(proxyObject as object) as any
-    if (!used) {
-      used = {}
-      affected.set(proxyObject as object, used)
-    }
-    if (type === ALL_OWN_KEYS_PROPERTY) {
-      used[ALL_OWN_KEYS_PROPERTY] = true
-    } else {
-      let set = used[type]
-      if (!set) {
-        set = new Set()
-        used[type] = set
-      }
-      set.add(key as string | symbol)
-    }
-  }
   const proxySnapshot = newProxy(snapshot, {
     get(target, prop) {
       const desc = getPropertyDescriptor(target, prop)
@@ -131,7 +139,7 @@ const createSnapshotProxy = <T>(
         return Reflect.get(target, prop, proxySnapshot)
       }
 
-      recordUsage(KEYS_PROPERTY, prop)
+      recordUsage(proxyObject, affected, KEYS_PROPERTY, prop)
       return createSnapshotProxy(
         Reflect.get(target, prop) as Snapshot<T>,
         affected,
@@ -140,19 +148,23 @@ const createSnapshotProxy = <T>(
       )
     },
     has(target, key) {
-      recordUsage(HAS_KEY_PROPERTY, key)
+      recordUsage(proxyObject, affected, HAS_KEY_PROPERTY, key)
       return Reflect.has(target, key)
     },
     getOwnPropertyDescriptor(target, key) {
-      recordUsage(HAS_OWN_KEY_PROPERTY, key)
+      recordUsage(proxyObject, affected, HAS_OWN_KEY_PROPERTY, key)
       return Reflect.getOwnPropertyDescriptor(target, key)
     },
     ownKeys(target) {
-      recordUsage(ALL_OWN_KEYS_PROPERTY)
+      recordUsage(proxyObject, affected, ALL_OWN_KEYS_PROPERTY)
       return Reflect.ownKeys(target)
     },
   })
   proxyCache.set(snapshot, proxySnapshot)
+
+  if (changedIfNotUsed) {
+    recordUsage(proxyObject, affected, NO_ACCESS_PROPERTY)
+  }
   return proxySnapshot
 }
 
@@ -234,6 +246,7 @@ export function useSnapshot<T extends object>(
   options?: Options,
 ): Snapshot<T> {
   const notifyInSync = options?.sync
+  const changedIfNotUsed = options?.changedIfNotUsed ?? true
   // per-proxy & per-hook affected, it's not ideal but memo compatible
   const affected = useMemo(
     () => proxyObject && (new Map() as Affected),
@@ -246,7 +259,7 @@ export function useSnapshot<T extends object>(
       const unsubscribes = [] as (() => void)[]
       for (const obj of affected.keys()) {
         const used = affected.get(obj) as any
-        if (used[ALL_OWN_KEYS_PROPERTY]) {
+        if (used[ALL_OWN_KEYS_PROPERTY] || used[NO_ACCESS_PROPERTY]) {
           unsubscribes.push(subscribe(obj, callback, notifyInSync))
         } else {
           for (const type in used) {
@@ -265,7 +278,15 @@ export function useSnapshot<T extends object>(
     () => {
       const nextSnapshot = snapshot(proxyObject)
       try {
-        if (!isChanged(lastSnapshot.current, nextSnapshot, affected)) {
+        if (
+          !isChanged(
+            lastSnapshot.current,
+            nextSnapshot,
+            affected,
+            new WeakMap(),
+            changedIfNotUsed,
+          )
+        ) {
           return lastSnapshot.current
         }
       } catch {
@@ -282,7 +303,13 @@ export function useSnapshot<T extends object>(
     condUseAffectedDebugValue(proxyObject, affected)
   }
   const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
-  return createSnapshotProxy(currSnapshot, affected, proxyCache, notifyInSync)
+  return createSnapshotProxy(
+    currSnapshot,
+    affected,
+    proxyCache,
+    notifyInSync,
+    changedIfNotUsed,
+  )
 }
 
 const isAllOwnKeysChanged = (prevObj: object, nextObj: object) => {
@@ -294,20 +321,20 @@ const isAllOwnKeysChanged = (prevObj: object, nextObj: object) => {
   )
 }
 
-export const isChanged = (
+const isChanged = (
   prevSnap: unknown,
   nextSnap: unknown,
   affected: Affected,
   cache: WeakMap<object, unknown> = new WeakMap(),
-  isEqual: (a: unknown, b: unknown) => boolean = Object.is,
+  changedIfNotUsed: boolean = true,
 ): boolean => {
-  if (isEqual(prevSnap, nextSnap)) {
+  if (Object.is(prevSnap, nextSnap)) {
     return false
   }
   if (!isObject(prevSnap) || !isObject(nextSnap)) return true
   const proxyObject = getProxyBySnapshot(prevSnap)
   const used = (affected as Affected).get(proxyObject)
-  if (!used) return true
+  if (!used) return changedIfNotUsed
   const hit = cache.get(prevSnap)
   if (hit === nextSnap) {
     return false
@@ -320,6 +347,9 @@ export const isChanged = (
     if (changed) return changed
   }
   if (used[ALL_OWN_KEYS_PROPERTY] === true) {
+    changed = isAllOwnKeysChanged(prevSnap, nextSnap)
+    if (changed) return changed
+  } else if (used[NO_ACCESS_PROPERTY] === true) {
     changed = isAllOwnKeysChanged(prevSnap, nextSnap)
     if (changed) return changed
   } else {
@@ -336,7 +366,6 @@ export const isChanged = (
       (nextSnap as any)[key],
       affected,
       cache,
-      isEqual,
     )
     if (changed) return changed
   }

@@ -286,4 +286,68 @@ describe('optimization', () => {
     expect(renderFn).toBeCalledTimes(2)
     expect(screen.getByText('Count: 1')).toBeInTheDocument()
   })
+
+  it('rerender if nested object no access but updated', async () => {
+    const state = proxy({ nested: { a: 0 } })
+
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return (
+        <>
+          <div>Nested: {snap.nested !== undefined ? 'Exist' : 'Not Exist'}</div>
+          <button
+            onClick={() => {
+              state.nested.a++
+            }}
+          >
+            increment a
+          </button>
+        </>
+      )
+    }
+
+    render(<Component />)
+
+    expect(screen.getByText('Nested: Exist')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(1)
+
+    fireEvent.click(screen.getByText('increment a'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(renderFn).toBeCalledTimes(2)
+  })
+
+  it('no rerender if nested object no access but updated with option changedIfNotUsed: false', async () => {
+    const state = proxy({ nested: { a: 0 } })
+
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state, { changedIfNotUsed: false })
+      renderFn()
+      return (
+        <>
+          <div>Nested: {snap.nested !== undefined ? 'Exist' : 'Not Exist'}</div>
+          <button
+            onClick={() => {
+              state.nested.a++
+            }}
+          >
+            increment a
+          </button>
+        </>
+      )
+    }
+
+    render(<Component />)
+
+    expect(screen.getByText('Nested: Exist')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(1)
+
+    fireEvent.click(screen.getByText('increment a'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(renderFn).toBeCalledTimes(1)
+  })
 })
