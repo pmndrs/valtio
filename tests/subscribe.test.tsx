@@ -12,7 +12,7 @@ describe('subscribe', () => {
       }
       consoleWarn(message)
     })
-	// don't fake setImmediate, it conflict with javascript debugger and cause stuck
+    // don't fake setImmediate, it conflict with javascript debugger and cause stuck
     vi.useFakeTimers({
       toFake: [
         'setTimeout',
@@ -214,7 +214,7 @@ describe('subscribeKey', () => {
       }
       consoleWarn(message)
     })
-	// don't fake setImmediate, it conflict with javascript debugger and cause stuck
+    // don't fake setImmediate, it conflict with javascript debugger and cause stuck
     vi.useFakeTimers({
       toFake: [
         'setTimeout',
