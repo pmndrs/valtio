@@ -230,7 +230,12 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     if (version !== nextVersion) {
       checkVersion = version = nextVersion
       listeners.forEach((listener) => listener(op, nextVersion))
-      const prop = op[1][0]!
+      const path = op[1]
+      if (path.length !== 1) {
+        // no recursive notifications for propListeners
+        return
+      }
+      const prop = path[0]!
       const propListeners = propListenersMap.get(prop) ?? []
       for (const listener of propListeners) {
         listener(op, nextVersion)

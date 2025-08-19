@@ -118,5 +118,33 @@ describe('performance with nested objects', () => {
     expect(slope).toBeLessThan(0.1)
   })
 
+  it('subscribeKey nested object with many times', async () => {
+    const medians: number[] = []
+    for (const key of KEYS) {
+      let unsubs: (() => void)[] = []
+      let proxyObj: any | undefined
+      const median = measurePerformance(
+        () => {
+          const obj = { child: { x: 0 } }
+          proxyObj = proxy(obj)
+          for (let i = 0; i < key; i++) {
+            unsubs.push(subscribeKey(proxyObj, `child`, () => {}))
+          }
+          snapshot(proxyObj)
+        },
+        () => {
+          proxyObj.child.x++
+        },
+        () => {
+          unsubs.forEach((unsub) => unsub())
+          unsubs = []
+        },
+      )
+      medians.push(median)
+    }
+    const slope = logSlope(KEYS, medians)
+    expect(slope).toBeLessThan(0.1)
+  })
+
   // TODO add more performance tests
 })
