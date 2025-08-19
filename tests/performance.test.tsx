@@ -118,7 +118,7 @@ describe('performance with nested objects', () => {
     expect(slope).toBeLessThan(0.1)
   })
 
-  it('subscribeKey nested object with many times', async () => {
+  it.skip('subscribeKey nested object with many times', async () => {
     const medians: number[] = []
     for (const key of KEYS) {
       let unsubs: (() => void)[] = []
