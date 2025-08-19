@@ -194,6 +194,7 @@ describe('snapshot', () => {
       }
 
       const user = new User()
+      expect(user).toBeDefined()
 
       expectTypeOf<A>().toEqualTypeOf<B>()
     })
