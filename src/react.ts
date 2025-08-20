@@ -73,6 +73,8 @@ const getPropertyDescriptor = (obj: object, key: string | symbol) => {
   return undefined
 }
 
+const noop = () => {}
+
 const HAS_KEY_PROPERTY = 'h'
 const ALL_OWN_KEYS_PROPERTY = 'w'
 const HAS_OWN_KEY_PROPERTY = 'o'
@@ -81,9 +83,10 @@ const NO_ACCESS_PROPERTY = 'n'
 
 type Unsubscribe = () => void
 
-type HasKeyMap = Map<string | symbol, Unsubscribe>
-type HasOwnKeyMap = Map<string | symbol, Unsubscribe>
-type KeysMap = Map<string | symbol, Unsubscribe>
+type UsedKeyMap = Map<string | symbol, Unsubscribe>
+type HasKeyMap = UsedKeyMap
+type HasOwnKeyMap = UsedKeyMap
+type KeysMap = UsedKeyMap
 type Used = {
   [HAS_KEY_PROPERTY]?: HasKeyMap
   [ALL_OWN_KEYS_PROPERTY]?: Unsubscribe
@@ -105,8 +108,6 @@ const recordUsage = (
   key?: string | symbol,
 ) => {
   const affected = observer.affected
-  const notify = observer.notify
-  const notifyInSync = observer.notifyInSync
   let used = affected.get(proxyObject as object)
   if (!used) {
     used = {}
@@ -114,7 +115,7 @@ const recordUsage = (
   }
 
   if (type === NO_ACCESS_PROPERTY) {
-    used[NO_ACCESS_PROPERTY] = subscribe(proxyObject, notify, notifyInSync)
+    used[NO_ACCESS_PROPERTY] ??= observer.observe(proxyObject)
     return
   } else {
     used[NO_ACCESS_PROPERTY]?.()
@@ -122,15 +123,17 @@ const recordUsage = (
   }
 
   if (type === ALL_OWN_KEYS_PROPERTY) {
-    used[ALL_OWN_KEYS_PROPERTY] = subscribe(proxyObject, notify, notifyInSync)
+    used[ALL_OWN_KEYS_PROPERTY] ??= observer.observe(proxyObject)
   } else {
-    let set = used[type]
-    if (!set) {
-      set = new Map()
-      used[type] = set
+    let map = used[type]
+    if (!map) {
+      map = new Map()
+      used[type] = map
     }
-    const unsub = subscribeKey(proxyObject as any, key!, notify, notifyInSync)
-    set.set(key!, unsub)
+    if (!map.has(key!)) {
+      const unsub = observer.observe(proxyObject as any, key!)
+      map.set(key!, unsub)
+    }
   }
 }
 
@@ -259,12 +262,6 @@ export function useSnapshot<T extends object>(
   // eslint-disable-next-line react-hooks/react-compiler
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const observer = useMemo(() => new SnapshotObserver(options), [])
-  useLayoutEffect(
-    () => () => {
-      observer.clear()
-    },
-    [observer],
-  )
 
   const lastSnapshot = useRef<Snapshot<T>>(undefined)
   const currSnapshot = useSyncExternalStore(
@@ -272,8 +269,19 @@ export function useSnapshot<T extends object>(
     () => observer.getSnapshot(proxyObject),
     () => observer.getSnapshot(proxyObject),
   )
+
+  useLayoutEffect(() => {
+    observer.enable()
+    return () => {
+      observer.disable()
+    }
+  }, [observer, currSnapshot])
+
   if (lastSnapshot.current !== currSnapshot) {
-    observer.clear() // we re-subscribe affected in render
+    observer.clear() // we re-subscribe affected properties in render
+    if (observer.initEntireSubscribe) {
+      recordUsage(proxyObject, observer, NO_ACCESS_PROPERTY)
+    }
     lastSnapshot.current = currSnapshot
   }
   if (import.meta.env?.MODE !== 'production') {
@@ -290,21 +298,83 @@ export function useSnapshot<T extends object>(
  * Just like useSnapshot, but can use outside of React components.
  */
 export class SnapshotObserver {
+  static counter = 0
+  uid: number = SnapshotObserver.counter++
   affected: Affected = new Map()
   proxyCache: WeakMap<any, any> = new WeakMap()
   notifyInSync: boolean
   initEntireSubscribe: boolean
   listeners: Set<() => void> = new Set()
+  enabled: boolean
 
-  constructor(options?: Options) {
+  constructor(options?: Options & { enabled?: boolean }) {
     this.notifyInSync = options?.sync ?? false
     this.initEntireSubscribe = options?.initEntireSubscribe ?? true
+    this.enabled = options?.enabled ?? false
   }
 
   getSnapshot<T extends object>(proxyObject: T): Snapshot<T> {
     const snap = snapshot(proxyObject)
     const snapProxy = createSnapshotProxy(snap, this)
     return snapProxy
+  }
+
+  observe(proxyObject: object, key?: string | symbol): Unsubscribe {
+    if (!this.enabled) return noop
+    if (key === undefined) {
+      return subscribe(proxyObject, this.broadcast, this.notifyInSync)
+    } else {
+      return subscribeKey(
+        proxyObject as any,
+        key,
+        this.broadcast,
+        this.notifyInSync,
+      )
+    }
+  }
+
+  enable(): void {
+    if (this.enabled) return
+    this.enabled = true
+
+    for (const [proxyObject, used] of this.affected) {
+      for (const key in used) {
+        const type = key as keyof Used
+        if (type === NO_ACCESS_PROPERTY || type === ALL_OWN_KEYS_PROPERTY) {
+          used[type] = this.observe(proxyObject)
+        } else {
+          const map = used[type]
+          if (map) {
+            for (const [key] of map) {
+              map.set(key, this.observe(proxyObject as any, key))
+            }
+          }
+        }
+      }
+    }
+  }
+
+  disable(): void {
+    if (!this.enabled) return
+    this.enabled = false
+
+    for (const [, used] of this.affected) {
+      for (const key in used) {
+        const type = key as keyof Used
+        if (type === NO_ACCESS_PROPERTY || type === ALL_OWN_KEYS_PROPERTY) {
+          used[type]?.()
+          used[type] = noop
+        } else {
+          const map = used[type]
+          if (map) {
+            for (const [key, unsub] of map.entries()) {
+              unsub()
+              map.set(key, noop)
+            }
+          }
+        }
+      }
+    }
   }
 
   subscribe(listener: () => void): () => void {
@@ -314,26 +384,12 @@ export class SnapshotObserver {
     }
   }
 
-  notify = (): void => {
+  broadcast = (): void => {
     this.listeners.forEach((listener) => listener())
   }
 
   clear(): void {
-    for (const [, used] of this.affected) {
-      for (const key in used) {
-        const type = key as keyof Used
-        if (type === NO_ACCESS_PROPERTY || type === ALL_OWN_KEYS_PROPERTY) {
-          used[type]?.()
-        } else {
-          const set = used[type]
-          if (set) {
-            for (const [, unsub] of set) {
-              unsub()
-            }
-          }
-        }
-      }
-    }
+    this.disable()
     this.affected.clear()
   }
 }
