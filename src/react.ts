@@ -256,12 +256,15 @@ const createSnapshotProxy = <T>(
  */
 export function useSnapshot<T extends object>(
   proxyObject: T,
-  options?: Options,
+  options?: Options & { testOnlyObserver?: SnapshotObserver },
 ): Snapshot<T> {
   // per-hook observer, it's not ideal but memo compatible
-  // eslint-disable-next-line react-hooks/react-compiler
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const observer = useMemo(() => new SnapshotObserver(options), [])
+  const observer = useMemo(
+    () => options?.testOnlyObserver ?? new SnapshotObserver(options),
+    // eslint-disable-next-line react-hooks/react-compiler
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  )
 
   const lastSnapshot = useRef<Snapshot<T>>(undefined)
   const currSnapshot = useSyncExternalStore(

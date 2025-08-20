@@ -2,7 +2,13 @@ import { StrictMode, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import LeakDetector from 'jest-leak-detector'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, subscribe, useSnapshot } from 'valtio'
+import {
+  type Snapshot,
+  SnapshotObserver,
+  proxy,
+  subscribe,
+  useSnapshot,
+} from 'valtio'
 
 describe('no memory leaks with proxy', () => {
   it('empty object', async () => {
@@ -157,9 +163,12 @@ describe('no memory leaks with proxy with useSnapshot', () => {
   it('simple counter', async () => {
     let state = proxy({ count: 0 })
     const stateDetector = new LeakDetector(state)
+    let snap: Snapshot<typeof state> | undefined
+    let observer = new SnapshotObserver()
 
     const Counter = () => {
-      const snap = useSnapshot(state)
+      // eslint-disable-next-line react-hooks/react-compiler
+      snap = useSnapshot(state, { testOnlyObserver: observer })
       return (
         <>
           <div>count: {snap.count}</div>
@@ -174,6 +183,8 @@ describe('no memory leaks with proxy with useSnapshot', () => {
       </StrictMode>,
     )
     const viewDetector = new LeakDetector(view)
+    const snapDetector = new LeakDetector(snap!)
+    const observerDetector = new LeakDetector(observer)
 
     expect(screen.getByText('count: 0')).toBeInTheDocument()
 
@@ -183,8 +194,12 @@ describe('no memory leaks with proxy with useSnapshot', () => {
 
     await act(() => view.unmount())
     view = undefined as never
+    snap = undefined as never
+    observer = undefined as never
     await Promise.resolve()
     expect(await viewDetector.isLeaking()).toBe(false)
+    expect(await snapDetector.isLeaking()).toBe(false)
+    expect(await observerDetector.isLeaking()).toBe(false)
 
     state = undefined as never
     await Promise.resolve()
@@ -194,10 +209,13 @@ describe('no memory leaks with proxy with useSnapshot', () => {
   it('nested object reference change', async () => {
     let state = proxy({ nested: { count: 0 } })
     const stateDetector = new LeakDetector(state)
+    let snap: Snapshot<typeof state> | undefined
+    let observer = new SnapshotObserver()
 
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      // eslint-disable-next-line react-hooks/react-compiler
+      snap = useSnapshot(state, { testOnlyObserver: observer })
       renderFn()
       return (
         <>
@@ -226,6 +244,8 @@ describe('no memory leaks with proxy with useSnapshot', () => {
       </StrictMode>,
     )
     const viewDetector = new LeakDetector(view)
+    const snapDetector = new LeakDetector(snap!)
+    const observerDetector = new LeakDetector(observer)
 
     expect(screen.getByText('Count: 0')).toBeInTheDocument()
     expect(renderFn).toBeCalledTimes(2)
@@ -243,8 +263,12 @@ describe('no memory leaks with proxy with useSnapshot', () => {
 
     await act(() => view.unmount())
     view = undefined as never
+    snap = undefined as never
+    observer = undefined as never
     await Promise.resolve()
     expect(await viewDetector.isLeaking()).toBe(false)
+    expect(await snapDetector.isLeaking()).toBe(false)
+    expect(await observerDetector.isLeaking()).toBe(false)
 
     state = undefined as never
     await Promise.resolve()
@@ -256,12 +280,15 @@ describe('no memory leaks with proxy with useSnapshot', () => {
     let state2 = proxy({ nested: { count: 10 } })
     const stateDetector1 = new LeakDetector(state1)
     const stateDetector2 = new LeakDetector(state2)
+    let snap: Snapshot<typeof state1> | undefined
+    let observer = new SnapshotObserver()
 
     const renderFn = vi.fn()
     const Component = () => {
       const [second, setSecond] = useState(false)
       const state = second ? state2 : state1
-      const snap = useSnapshot(state)
+      // eslint-disable-next-line react-hooks/react-compiler
+      snap = useSnapshot(state, { testOnlyObserver: observer })
       renderFn()
       return (
         <>
@@ -290,6 +317,8 @@ describe('no memory leaks with proxy with useSnapshot', () => {
       </StrictMode>,
     )
     const viewDetector = new LeakDetector(view)
+    const snapDetector = new LeakDetector(snap!)
+    const observerDetector = new LeakDetector(observer)
 
     expect(screen.getByText('Count: 0')).toBeInTheDocument()
     expect(renderFn).toBeCalledTimes(2)
@@ -311,8 +340,12 @@ describe('no memory leaks with proxy with useSnapshot', () => {
 
     await act(() => view.unmount())
     view = undefined as never
+    snap = undefined as never
+    observer = undefined as never
     await Promise.resolve()
     expect(await viewDetector.isLeaking()).toBe(false)
+    expect(await snapDetector.isLeaking()).toBe(false)
+    expect(await observerDetector.isLeaking()).toBe(false)
 
     state1 = undefined as never
     state2 = undefined as never
