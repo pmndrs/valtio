@@ -1,4 +1,3 @@
-import { getUntracked } from 'proxy-compare'
 import { markToTrack } from './react.ts'
 
 const isObject = (x: unknown): x is object =>
@@ -168,9 +167,6 @@ const createHandlerDefault = <T extends object>(
       return true
     }
     removePropStateListener(prop)
-    if (isObject(value)) {
-      value = getUntracked(value) || value
-    }
     const nextValue =
       !proxyStateMap.has(value) && canProxy(value) ? proxy(value) : value
     addPropStateListener(prop, nextValue)
@@ -207,6 +203,8 @@ let canProxy: typeof canProxyDefault = canProxyDefault
 let createSnapshot: typeof createSnapshotDefault = createSnapshotDefault
 let createHandler: typeof createHandlerDefault = createHandlerDefault
 
+let valtioProxyCounter = 0
+export const valtioDebugProxyUID: symbol = Symbol.for('valtio-proxy-uid')
 /**
  * Creates a reactive proxy object that can be tracked for changes
  *
@@ -336,6 +334,19 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     removePropStateListener,
     notifyUpdate,
   )
+  if (import.meta.env?.MODE !== 'production') {
+    try {
+      //   (baseObject as any)[ValtioDebugProxyUID] = ValtioProxyCounter++
+      Object.defineProperty(baseObject, valtioDebugProxyUID, {
+        value: valtioProxyCounter++,
+        writable: false,
+        enumerable: false,
+        configurable: false,
+      })
+    } catch {
+      /* empty */
+    }
+  }
   const proxyObject = newProxy(baseObject, handler)
   proxyCache.set(baseObject, proxyObject)
   const proxyState: ProxyState = [

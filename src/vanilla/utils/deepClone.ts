@@ -1,4 +1,7 @@
-import { unstable_getInternalStates } from '../../vanilla.ts'
+import {
+  unstable_getInternalStates,
+  valtioDebugProxyUID,
+} from '../../vanilla.ts'
 import { isProxyMap, proxyMap } from './proxyMap.ts'
 import { isProxySet, proxySet } from './proxySet.ts'
 
@@ -43,6 +46,9 @@ export function deepClone<T>(
     ? []
     : Object.create(Object.getPrototypeOf(obj))
   Reflect.ownKeys(obj).forEach((key) => {
+    if (key === valtioDebugProxyUID) {
+      return
+    }
     baseObject[key as keyof T] = deepClone(obj[key as keyof T], getRefSet)
   })
   return baseObject

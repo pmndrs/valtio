@@ -22,7 +22,7 @@ describe('optimization', () => {
     vi.useRealTimers()
   })
 
-  it('should not rerender if the leaf value does not change', async () => {
+  it('should rerender if the leaf value does not change but the object reference does', async () => {
     const state = proxy({ nested: { count: 0 } })
 
     const renderFn = vi.fn()
@@ -58,13 +58,13 @@ describe('optimization', () => {
     fireEvent.click(screen.getByText('button-zero'))
 
     await act(() => vi.advanceTimersByTimeAsync(0))
-    expect(renderFn).toBeCalledTimes(1)
+    expect(renderFn).toBeCalledTimes(2)
 
     fireEvent.click(screen.getByText('button-one'))
 
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('Count: 1')).toBeInTheDocument()
-    expect(renderFn).toBeCalledTimes(2)
+    expect(renderFn).toBeCalledTimes(3)
   })
 
   it('regression: useSnapshot renders should not fail consistency check with extra render (nested useSnapshot)', async () => {
@@ -319,12 +319,12 @@ describe('optimization', () => {
     expect(renderFn).toBeCalledTimes(2)
   })
 
-  it('no rerender if nested object no properties access but property updated with option changedIfNotUsed: false', async () => {
+  it('no rerender if nested object no properties access but property updated with option initEntireSubscribe: false', async () => {
     const state = proxy({ nested: { a: 0 } })
 
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state, { changedIfNotUsed: false })
+      const snap = useSnapshot(state, { initEntireSubscribe: false })
       renderFn()
       return (
         <>
@@ -351,7 +351,7 @@ describe('optimization', () => {
     expect(renderFn).toBeCalledTimes(1)
   })
 
-  it('no rerender if deep nested object no properties access but object updated with option changedIfNotUsed: false', async () => {
+  it('rerender if deep nested object no properties access but reference updated with option initEntireSubscribe: false', async () => {
     const state = proxy({
       a: {
         b1: {
@@ -365,7 +365,7 @@ describe('optimization', () => {
 
     const renderFn = vi.fn()
     const Component = ({ name }: { name: string }) => {
-      const snap = useSnapshot(state, { changedIfNotUsed: false })
+      const snap = useSnapshot(state, { initEntireSubscribe: false })
       renderFn()
       return (
         <>
@@ -397,15 +397,15 @@ describe('optimization', () => {
     fireEvent.click(screen.getByText('A increment c'))
     await act(() => vi.advanceTimersByTimeAsync(0))
 
-    expect(renderFn).toBeCalledTimes(3)
+    expect(renderFn).toBeCalledTimes(4)
   })
 
-  it('rerender if nested object no access and deleted with option changedIfNotUsed: false', async () => {
+  it('rerender if nested object no access and deleted with option initEntireSubscribe: false', async () => {
     const state = proxy({ nested: { a: 0 } })
 
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state, { changedIfNotUsed: false })
+      const snap = useSnapshot(state, { initEntireSubscribe: false })
       renderFn()
       return (
         <>
@@ -431,5 +431,95 @@ describe('optimization', () => {
 
     expect(screen.getByText('Nested: Not Exist')).toBeInTheDocument()
     expect(renderFn).toBeCalledTimes(2)
+  })
+
+  it('re-subscribe after nested object re-assigned', async () => {
+    const state = proxy({ nested: { a: 0 } })
+
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return (
+        <>
+          <div>Nested a: {snap.nested.a}</div>
+          <button
+            onClick={() => {
+              state.nested = { a: 0, b: 0 } as any
+            }}
+          >
+            re-assign nested
+          </button>
+          <button
+            onClick={() => {
+              state.nested.a++
+            }}
+          >
+            increment a
+          </button>
+        </>
+      )
+    }
+
+    render(<Component />)
+
+    expect(screen.getByText('Nested a: 0')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(1)
+
+    fireEvent.click(screen.getByText('re-assign nested'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(renderFn).toBeCalledTimes(2)
+
+    fireEvent.click(screen.getByText('increment a'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(screen.getByText('Nested a: 1')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(3)
+  })
+
+  it('rerender and re-subscribe after nested object re-assigned initEntireSubscribe: false', async () => {
+    const state = proxy({ nested: { a: 0 } })
+
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state, { initEntireSubscribe: false })
+      renderFn()
+      return (
+        <>
+          <div>Nested a: {snap.nested.a}</div>
+          <button
+            onClick={() => {
+              state.nested = { a: 0, b: 0 } as any
+            }}
+          >
+            re-assign nested
+          </button>
+          <button
+            onClick={() => {
+              state.nested.a++
+            }}
+          >
+            increment a
+          </button>
+        </>
+      )
+    }
+
+    render(<Component />)
+
+    expect(screen.getByText('Nested a: 0')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(1)
+
+    fireEvent.click(screen.getByText('re-assign nested'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(renderFn).toBeCalledTimes(2)
+
+    fireEvent.click(screen.getByText('increment a'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(renderFn).toBeCalledTimes(3)
+    expect(screen.getByText('Nested a: 1')).toBeInTheDocument()
   })
 })

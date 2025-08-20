@@ -38,7 +38,7 @@ const condUseAffectedDebugValue = useAffectedDebugValue
 
 type Options = {
   sync?: boolean
-  changedIfNotUsed?: boolean
+  initEntireSubscribe?: boolean
 }
 
 // function to create a new bare proxy
@@ -59,10 +59,6 @@ const isObjectToTrack = <T>(obj: T): obj is T extends object ? T : never =>
   (objectsToTrack.has(obj as unknown as object)
     ? (objectsToTrack.get(obj as unknown as object) as boolean)
     : getProto(obj) === Object.prototype || getProto(obj) === Array.prototype)
-
-// check if it is object
-const isObject = (x: unknown): x is object =>
-  typeof x === 'object' && x !== null
 
 const getPropertyDescriptor = (obj: object, key: string | symbol) => {
   while (obj) {
@@ -109,6 +105,14 @@ const recordUsage = (
     used = {}
     affected.set(proxyObject as object, used)
   }
+
+  if (type === NO_ACCESS_PROPERTY) {
+    used[NO_ACCESS_PROPERTY] = true
+    return
+  } else {
+    delete used[NO_ACCESS_PROPERTY]
+  }
+
   if (type === ALL_OWN_KEYS_PROPERTY) {
     used[ALL_OWN_KEYS_PROPERTY] = true
   } else {
@@ -126,7 +130,7 @@ const createSnapshotProxy = <T>(
   affected: Affected,
   proxyCache: WeakMap<object, Snapshot<T>>,
   notifyInSync?: boolean,
-  changedIfNotUsed?: boolean,
+  initEntireSubscribe?: boolean,
 ): Snapshot<T> => {
   if (!isObjectToTrack(snapshot)) return snapshot
   if (proxyCache.get(snapshot)) return proxyCache.get(snapshot)!
@@ -145,6 +149,7 @@ const createSnapshotProxy = <T>(
         affected,
         proxyCache,
         notifyInSync,
+        initEntireSubscribe,
       )
     },
     has(target, key) {
@@ -162,7 +167,7 @@ const createSnapshotProxy = <T>(
   })
   proxyCache.set(snapshot, proxySnapshot)
 
-  if (changedIfNotUsed) {
+  if (initEntireSubscribe) {
     recordUsage(proxyObject, affected, NO_ACCESS_PROPERTY)
   }
   return proxySnapshot
@@ -246,7 +251,7 @@ export function useSnapshot<T extends object>(
   options?: Options,
 ): Snapshot<T> {
   const notifyInSync = options?.sync
-  const changedIfNotUsed = options?.changedIfNotUsed ?? true
+  const initEntireSubscribe = options?.initEntireSubscribe ?? true
   // per-proxy & per-hook affected, it's not ideal but memo compatible
   const affected = useMemo(
     () => proxyObject && (new Map() as Affected),
@@ -275,30 +280,13 @@ export function useSnapshot<T extends object>(
         unsubscribes.forEach((unsub) => unsub())
       }
     },
-    () => {
-      const nextSnapshot = snapshot(proxyObject)
-      try {
-        if (
-          !isChanged(
-            lastSnapshot.current,
-            nextSnapshot,
-            affected,
-            new WeakMap(),
-            changedIfNotUsed,
-          )
-        ) {
-          return lastSnapshot.current
-        }
-      } catch {
-        // ignore if a promise or something is thrown
-      }
-      affected.clear()
-      // because we clear, we can't check isChanged again, so update lastSnapshot
-      lastSnapshot.current = nextSnapshot
-      return nextSnapshot
-    },
+    () => snapshot(proxyObject),
     () => snapshot(proxyObject),
   )
+  if (lastSnapshot.current !== currSnapshot) {
+    affected.clear() // we re-subscribe affected in render
+    lastSnapshot.current = currSnapshot
+  }
   if (import.meta.env?.MODE !== 'production') {
     condUseAffectedDebugValue(proxyObject, affected)
   }
@@ -308,68 +296,6 @@ export function useSnapshot<T extends object>(
     affected,
     proxyCache,
     notifyInSync,
-    changedIfNotUsed,
+    initEntireSubscribe,
   )
-}
-
-const isAllOwnKeysChanged = (prevObj: object, nextObj: object) => {
-  const prevKeys = Reflect.ownKeys(prevObj)
-  const nextKeys = Reflect.ownKeys(nextObj)
-  return (
-    prevKeys.length !== nextKeys.length ||
-    prevKeys.some((k, i) => k !== nextKeys[i])
-  )
-}
-
-const isChanged = (
-  prevSnap: unknown,
-  nextSnap: unknown,
-  affected: Affected,
-  cache: WeakMap<object, unknown> = new WeakMap(),
-  changedIfNotUsed: boolean = true,
-): boolean => {
-  if (Object.is(prevSnap, nextSnap)) {
-    return false
-  }
-  if (!isObject(prevSnap) || !isObject(nextSnap)) return true
-  const proxyObject = getProxyBySnapshot(prevSnap)
-  const used = (affected as Affected).get(proxyObject)
-  if (!used) return changedIfNotUsed
-  const hit = cache.get(prevSnap)
-  if (hit === nextSnap) {
-    return false
-  }
-  // for object with cycles
-  cache.set(prevSnap, nextSnap)
-  let changed: boolean | null = null
-  for (const key of used[HAS_KEY_PROPERTY] || []) {
-    changed = Reflect.has(prevSnap, key) !== Reflect.has(nextSnap, key)
-    if (changed) return changed
-  }
-  if (used[ALL_OWN_KEYS_PROPERTY] === true) {
-    changed = isAllOwnKeysChanged(prevSnap, nextSnap)
-    if (changed) return changed
-  } else if (used[NO_ACCESS_PROPERTY] === true) {
-    changed = isAllOwnKeysChanged(prevSnap, nextSnap)
-    if (changed) return changed
-  } else {
-    for (const key of used[HAS_OWN_KEY_PROPERTY] || []) {
-      const hasPrev = !!Reflect.getOwnPropertyDescriptor(prevSnap, key)
-      const hasNext = !!Reflect.getOwnPropertyDescriptor(nextSnap, key)
-      changed = hasPrev !== hasNext
-      if (changed) return changed
-    }
-  }
-  for (const key of used[KEYS_PROPERTY] || []) {
-    changed = isChanged(
-      (prevSnap as any)[key],
-      (nextSnap as any)[key],
-      affected,
-      cache,
-      changedIfNotUsed,
-    )
-    if (changed) return changed
-  }
-  if (changed === null) throw new Error('invalid used')
-  return changed
 }
