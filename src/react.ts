@@ -258,7 +258,7 @@ export function useSnapshot<T extends object>(
   proxyObject: T,
   options?: Options,
 ): Snapshot<T> {
-  // per-proxy & per-hook observer, it's not ideal but memo compatible
+  // per-hook observer, it's not ideal but memo compatible
   // eslint-disable-next-line react-hooks/react-compiler
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const observer = useMemo(() => new SnapshotObserver(options), [])
