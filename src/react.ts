@@ -1,6 +1,8 @@
 import {
+  useCallback,
   useDebugValue,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useSyncExternalStore,
@@ -77,21 +79,23 @@ const HAS_OWN_KEY_PROPERTY = 'o'
 const KEYS_PROPERTY = 'k'
 const NO_ACCESS_PROPERTY = 'n'
 
-type HasKeySet = Set<string | symbol>
-type HasOwnKeySet = Set<string | symbol>
-type KeysSet = Set<string | symbol>
+type Unsubscribe = () => void
+
+type HasKeyMap = Map<string | symbol, Unsubscribe>
+type HasOwnKeyMap = Map<string | symbol, Unsubscribe>
+type KeysMap = Map<string | symbol, Unsubscribe>
 type Used = {
-  [HAS_KEY_PROPERTY]?: HasKeySet
-  [ALL_OWN_KEYS_PROPERTY]?: true
-  [HAS_OWN_KEY_PROPERTY]?: HasOwnKeySet
-  [KEYS_PROPERTY]?: KeysSet
-  [NO_ACCESS_PROPERTY]?: true
+  [HAS_KEY_PROPERTY]?: HasKeyMap
+  [ALL_OWN_KEYS_PROPERTY]?: Unsubscribe
+  [HAS_OWN_KEY_PROPERTY]?: HasOwnKeyMap
+  [KEYS_PROPERTY]?: KeysMap
+  [NO_ACCESS_PROPERTY]?: Unsubscribe
 }
 type Affected = Map<object, Used>
 
 const recordUsage = (
   proxyObject: object,
-  affected: Affected,
+  observer: SnapshotObserver,
   type:
     | typeof HAS_KEY_PROPERTY
     | typeof ALL_OWN_KEYS_PROPERTY
@@ -100,39 +104,43 @@ const recordUsage = (
     | typeof NO_ACCESS_PROPERTY,
   key?: string | symbol,
 ) => {
-  let used = affected.get(proxyObject as object) as any
+  const affected = observer.affected
+  const notify = observer.notify
+  const notifyInSync = observer.notifyInSync
+  let used = affected.get(proxyObject as object)
   if (!used) {
     used = {}
     affected.set(proxyObject as object, used)
   }
 
   if (type === NO_ACCESS_PROPERTY) {
-    used[NO_ACCESS_PROPERTY] = true
+    used[NO_ACCESS_PROPERTY] = subscribe(proxyObject, notify, notifyInSync)
     return
   } else {
+    used[NO_ACCESS_PROPERTY]?.()
     delete used[NO_ACCESS_PROPERTY]
   }
 
   if (type === ALL_OWN_KEYS_PROPERTY) {
-    used[ALL_OWN_KEYS_PROPERTY] = true
+    used[ALL_OWN_KEYS_PROPERTY] = subscribe(proxyObject, notify, notifyInSync)
   } else {
     let set = used[type]
     if (!set) {
-      set = new Set()
+      set = new Map()
       used[type] = set
     }
-    set.add(key as string | symbol)
+    const unsub = subscribeKey(proxyObject as any, key!, notify, notifyInSync)
+    set.set(key!, unsub)
   }
 }
 
 const createSnapshotProxy = <T>(
   snapshot: Snapshot<T>,
-  affected: Affected,
-  proxyCache: WeakMap<object, Snapshot<T>>,
-  notifyInSync?: boolean,
-  initEntireSubscribe?: boolean,
+  observer: SnapshotObserver,
 ): Snapshot<T> => {
   if (!isObjectToTrack(snapshot)) return snapshot
+
+  const { proxyCache, initEntireSubscribe } = observer
   if (proxyCache.get(snapshot)) return proxyCache.get(snapshot)!
 
   const proxyObject = getProxyBySnapshot(snapshot)
@@ -143,32 +151,29 @@ const createSnapshotProxy = <T>(
         return Reflect.get(target, prop, proxySnapshot)
       }
 
-      recordUsage(proxyObject, affected, KEYS_PROPERTY, prop)
+      recordUsage(proxyObject, observer, KEYS_PROPERTY, prop)
       return createSnapshotProxy(
         Reflect.get(target, prop) as Snapshot<T>,
-        affected,
-        proxyCache,
-        notifyInSync,
-        initEntireSubscribe,
+        observer,
       )
     },
     has(target, key) {
-      recordUsage(proxyObject, affected, HAS_KEY_PROPERTY, key)
+      recordUsage(proxyObject, observer, HAS_KEY_PROPERTY, key)
       return Reflect.has(target, key)
     },
     getOwnPropertyDescriptor(target, key) {
-      recordUsage(proxyObject, affected, HAS_OWN_KEY_PROPERTY, key)
+      recordUsage(proxyObject, observer, HAS_OWN_KEY_PROPERTY, key)
       return Reflect.getOwnPropertyDescriptor(target, key)
     },
     ownKeys(target) {
-      recordUsage(proxyObject, affected, ALL_OWN_KEYS_PROPERTY)
+      recordUsage(proxyObject, observer, ALL_OWN_KEYS_PROPERTY)
       return Reflect.ownKeys(target)
     },
   })
   proxyCache.set(snapshot, proxySnapshot)
 
   if (initEntireSubscribe) {
-    recordUsage(proxyObject, affected, NO_ACCESS_PROPERTY)
+    recordUsage(proxyObject, observer, NO_ACCESS_PROPERTY)
   }
   return proxySnapshot
 }
@@ -250,52 +255,85 @@ export function useSnapshot<T extends object>(
   proxyObject: T,
   options?: Options,
 ): Snapshot<T> {
-  const notifyInSync = options?.sync
-  const initEntireSubscribe = options?.initEntireSubscribe ?? true
-  // per-proxy & per-hook affected, it's not ideal but memo compatible
-  const affected = useMemo(
-    () => proxyObject && (new Map() as Affected),
-    [proxyObject],
+  // per-proxy & per-hook observer, it's not ideal but memo compatible
+  // eslint-disable-next-line react-hooks/react-compiler
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const observer = useMemo(() => new SnapshotObserver(options), [])
+  useLayoutEffect(
+    () => () => {
+      observer.clear()
+    },
+    [observer],
   )
 
   const lastSnapshot = useRef<Snapshot<T>>(undefined)
   const currSnapshot = useSyncExternalStore(
-    (callback) => {
-      const unsubscribes = [] as (() => void)[]
-      for (const obj of affected.keys()) {
-        const used = affected.get(obj) as any
-        if (used[ALL_OWN_KEYS_PROPERTY] || used[NO_ACCESS_PROPERTY]) {
-          unsubscribes.push(subscribe(obj, callback, notifyInSync))
+    useCallback((callback) => observer.subscribe(callback), [observer]),
+    () => observer.getSnapshot(proxyObject),
+    () => observer.getSnapshot(proxyObject),
+  )
+  if (lastSnapshot.current !== currSnapshot) {
+    observer.clear() // we re-subscribe affected in render
+    lastSnapshot.current = currSnapshot
+  }
+  if (import.meta.env?.MODE !== 'production') {
+    condUseAffectedDebugValue(proxyObject, observer.affected)
+  }
+  return currSnapshot
+}
+
+/**
+ * SnapshotObserver
+ *
+ * A class that gets snapshots of a proxy object and auto observes changes.
+ * Notify subscribers only when the snapshots accessed properties change.
+ * Just like useSnapshot, but can use outside of React components.
+ */
+export class SnapshotObserver {
+  affected: Affected = new Map()
+  proxyCache: WeakMap<any, any> = new WeakMap()
+  notifyInSync: boolean
+  initEntireSubscribe: boolean
+  listeners: Set<() => void> = new Set()
+
+  constructor(options?: Options) {
+    this.notifyInSync = options?.sync ?? false
+    this.initEntireSubscribe = options?.initEntireSubscribe ?? true
+  }
+
+  getSnapshot<T extends object>(proxyObject: T): Snapshot<T> {
+    const snap = snapshot(proxyObject)
+    const snapProxy = createSnapshotProxy(snap, this)
+    return snapProxy
+  }
+
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener)
+    return () => {
+      this.listeners.delete(listener)
+    }
+  }
+
+  notify = (): void => {
+    this.listeners.forEach((listener) => listener())
+  }
+
+  clear(): void {
+    for (const [, used] of this.affected) {
+      for (const key in used) {
+        const type = key as keyof Used
+        if (type === NO_ACCESS_PROPERTY || type === ALL_OWN_KEYS_PROPERTY) {
+          used[type]?.()
         } else {
-          for (const type in used) {
-            for (const key of used[type]) {
-              unsubscribes.push(
-                subscribeKey(obj as any, key, callback, notifyInSync),
-              )
+          const set = used[type]
+          if (set) {
+            for (const [, unsub] of set) {
+              unsub()
             }
           }
         }
       }
-      return () => {
-        unsubscribes.forEach((unsub) => unsub())
-      }
-    },
-    () => snapshot(proxyObject),
-    () => snapshot(proxyObject),
-  )
-  if (lastSnapshot.current !== currSnapshot) {
-    affected.clear() // we re-subscribe affected in render
-    lastSnapshot.current = currSnapshot
+    }
+    this.affected.clear()
   }
-  if (import.meta.env?.MODE !== 'production') {
-    condUseAffectedDebugValue(proxyObject, affected)
-  }
-  const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
-  return createSnapshotProxy(
-    currSnapshot,
-    affected,
-    proxyCache,
-    notifyInSync,
-    initEntireSubscribe,
-  )
 }
