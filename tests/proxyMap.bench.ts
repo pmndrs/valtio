@@ -63,8 +63,8 @@ TEST_SIZES.forEach((size) => {
     const testData = generateTestData(size)
 
     bench('proxyMap', () => {
-      const map = proxyMap<number, number>(testData)
-      testData.forEach(([key, value]) => {})
+      const _map = proxyMap<number, number>(testData)
+      testData.forEach(([_key, _value]) => {})
     })
   })
 
@@ -120,7 +120,7 @@ TEST_SIZES.forEach((size) => {
     bench('proxyMap', () => {
       const map = proxyMap<number, number>(testData)
       const snap = snapshot(map)
-      testData.forEach(([key, value]) => {
+      testData.forEach(([key, _value]) => {
         snap.get(key)
       })
     })
@@ -132,9 +132,9 @@ TEST_SIZES.forEach((size) => {
 
     bench('proxyMap', () => {
       const map = proxyMap<number, number>(testData)
-      const snap1 = snapshot(map)
+      const _snap1 = snapshot(map)
       map.set(oneData[0], oneData[1])
-      const snap2 = snapshot(map)
+      const _snap2 = snapshot(map)
     })
   })
 

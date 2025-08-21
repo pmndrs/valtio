@@ -625,6 +625,7 @@ describe('proxyMap', () => {
       const state = proxyMap()
       const TestComponent = () => {
         const snap = useSnapshot(state)
+        expect(snap).toBeDefined()
 
         return (
           <>

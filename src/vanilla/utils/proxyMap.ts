@@ -162,14 +162,14 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         yield [key, this.data[index]!]
       }
     },
-    *keys(): IterableIterator<K> {
+    *keys(): MapIterator<K> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const key of map.keys()) {
         yield key
       }
     },
-    *values(): IterableIterator<V> {
+    *values(): MapIterator<V> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {

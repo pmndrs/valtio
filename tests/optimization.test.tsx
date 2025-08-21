@@ -12,6 +12,51 @@ describe('optimization', () => {
     vi.useRealTimers()
   })
 
+  it('should not rerender if the leaf value does not change', async () => {
+    const state = proxy({ nested: { count: 0 } })
+
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return (
+        <>
+          <div>Count: {snap.nested.count}</div>
+          <button
+            onClick={() => {
+              state.nested = { count: 0 }
+            }}
+          >
+            button-zero
+          </button>
+          <button
+            onClick={() => {
+              state.nested = { count: 1 }
+            }}
+          >
+            button-one
+          </button>
+        </>
+      )
+    }
+
+    render(<Component />)
+
+    expect(screen.getByText('Count: 0')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(1)
+
+    fireEvent.click(screen.getByText('button-zero'))
+
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toBeCalledTimes(1)
+
+    fireEvent.click(screen.getByText('button-one'))
+
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Count: 1')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(2)
+  })
+
   it('regression: useSnapshot renders should not fail consistency check with extra render (nested useSnapshot)', async () => {
     const obj = proxy({ childCount: 0, parentCount: 0 })
 
