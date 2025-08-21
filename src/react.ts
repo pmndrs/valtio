@@ -392,7 +392,11 @@ export class SnapshotObserver {
   }
 
   clear(): void {
+    const startEnabled = this.enabled
     this.disable()
     this.affected.clear()
+    if (startEnabled) {
+      this.enable()
+    }
   }
 }
