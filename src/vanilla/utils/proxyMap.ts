@@ -95,6 +95,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (!isProxy(this)) {
         registerSnapMap()
       }
+      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       return map.size
     },

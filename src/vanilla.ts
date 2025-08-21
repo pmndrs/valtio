@@ -1,4 +1,4 @@
-import { getUntracked, markToTrack } from 'proxy-compare'
+import { markToTrack } from './react.ts'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -56,11 +56,16 @@ export type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
 
 type RemoveListener = () => void
 type AddListener = (listener: Listener) => RemoveListener
+type AddPropListener = (
+  prop: string | number | symbol,
+  listener: Listener,
+) => RemoveListener
 
 type ProxyState = readonly [
   target: object,
   ensureVersion: (nextCheckVersion?: number) => number,
   addListener: AddListener,
+  addPropListener: AddPropListener,
 ]
 
 const canProxyDefault = (x: unknown): boolean =>
@@ -95,18 +100,23 @@ const createSnapshotDefault = <T extends object>(
       // Only the known case is Array.length so far.
       return
     }
-    const value = Reflect.get(target, key)
-    const { enumerable } = Reflect.getOwnPropertyDescriptor(
+    const targetDesc = Reflect.getOwnPropertyDescriptor(
       target,
       key,
     ) as PropertyDescriptor
     const desc: PropertyDescriptor = {
-      value,
-      enumerable: enumerable as boolean,
+      ...targetDesc,
       // This is intentional to avoid copying with proxy-compare.
       // It's still non-writable, so it avoids assigning a value.
       configurable: true,
     }
+    // we call getter on render time to track props used inside getter
+    if (desc.get || desc.set) {
+      delete desc.writable
+    } else {
+      desc.writable = false
+    }
+    const value = desc.value
     if (refSet.has(value as object)) {
       markToTrack(value as object, false) // mark not to track
     } else if (proxyStateMap.has(value as object)) {
@@ -117,18 +127,27 @@ const createSnapshotDefault = <T extends object>(
     }
     Object.defineProperty(snap, key, desc)
   })
+  if (
+    Symbol.toStringTag in target &&
+    (target[Symbol.toStringTag] === 'Set' ||
+      target[Symbol.toStringTag] === 'Map')
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    ;(target as any).size // touch property for registerSnapMap()
+  }
+  snapToTargetMap.set(snap, target)
   return Object.preventExtensions(snap)
 }
 
 const createHandlerDefault = <T extends object>(
   isInitializing: () => boolean,
-  addPropListener: (prop: string | symbol, propValue: unknown) => void,
-  removePropListener: (prop: string | symbol) => void,
+  addPropStateListener: (prop: string | symbol, propValue: unknown) => void,
+  removePropStateListener: (prop: string | symbol) => void,
   notifyUpdate: (op: Op) => void,
 ): ProxyHandler<T> => ({
   deleteProperty(target: T, prop: string | symbol) {
     const prevValue = Reflect.get(target, prop)
-    removePropListener(prop)
+    removePropStateListener(prop)
     const deleted = Reflect.deleteProperty(target, prop)
     if (deleted) {
       notifyUpdate(['delete', [prop], prevValue])
@@ -138,6 +157,8 @@ const createHandlerDefault = <T extends object>(
   set(target: T, prop: string | symbol, value: any, receiver: object) {
     const hasPrevValue = !isInitializing() && Reflect.has(target, prop)
     const prevValue = Reflect.get(target, prop, receiver)
+    const prevLen = Reflect.get(target, 'length', receiver)
+
     if (
       hasPrevValue &&
       (objectIs(prevValue, value) ||
@@ -145,15 +166,22 @@ const createHandlerDefault = <T extends object>(
     ) {
       return true
     }
-    removePropListener(prop)
-    if (isObject(value)) {
-      value = getUntracked(value) || value
-    }
+    removePropStateListener(prop)
     const nextValue =
       !proxyStateMap.has(value) && canProxy(value) ? proxy(value) : value
-    addPropListener(prop, nextValue)
+    addPropStateListener(prop, nextValue)
     Reflect.set(target, prop, nextValue, receiver)
     notifyUpdate(['set', [prop], value, prevValue])
+
+    const nextLen = Reflect.get(target, 'length', receiver)
+    if (nextLen !== prevLen) {
+      // we should notify length change here
+      // because after target[prop] = value, length already changed
+      // and next time trap setter for "length", prevValue always equal to value
+      // we can't use Array.isArray to skip this logic, because Array.prototype.push support non-array objects:
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/push#calling_push_on_non-array_objects
+      notifyUpdate(['set', ['length'], nextLen, prevLen])
+    }
     return true
   },
 })
@@ -165,6 +193,7 @@ const snapCache: WeakMap<object, [version: number, snap: unknown]> =
   new WeakMap()
 const versionHolder = [1] as [number]
 const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
+const snapToTargetMap: WeakMap<object, object> = new WeakMap()
 
 // internal functions
 let objectIs: (a: unknown, b: unknown) => boolean = Object.is
@@ -174,6 +203,8 @@ let canProxy: typeof canProxyDefault = canProxyDefault
 let createSnapshot: typeof createSnapshotDefault = createSnapshotDefault
 let createHandler: typeof createHandlerDefault = createHandlerDefault
 
+let valtioProxyCounter = 0
+export const valtioDebugProxyUID: symbol = Symbol.for('valtio-proxy-uid')
 /**
  * Creates a reactive proxy object that can be tracked for changes
  *
@@ -192,10 +223,21 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   }
   let version = versionHolder[0]
   const listeners = new Set<Listener>()
+  const propListenersMap = new Map<string | number | symbol, Set<Listener>>()
   const notifyUpdate = (op: Op, nextVersion = ++versionHolder[0]) => {
     if (version !== nextVersion) {
       checkVersion = version = nextVersion
       listeners.forEach((listener) => listener(op, nextVersion))
+      const path = op[1]
+      if (path.length !== 1) {
+        // no recursive notifications for propListeners
+        return
+      }
+      const prop = path[0]!
+      const propListeners = propListenersMap.get(prop) ?? []
+      for (const listener of propListeners) {
+        listener(op, nextVersion)
+      }
     }
   }
   let checkVersion = version
@@ -222,7 +264,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     string | symbol,
     readonly [ProxyState, RemoveListener?]
   >()
-  const addPropListener = (prop: string | symbol, propValue: unknown) => {
+  const addPropStateListener = (prop: string | symbol, propValue: unknown) => {
     const propProxyState =
       !refSet.has(propValue as object) && proxyStateMap.get(propValue as object)
     if (propProxyState) {
@@ -237,7 +279,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
       }
     }
   }
-  const removePropListener = (prop: string | symbol) => {
+  const removePropStateListener = (prop: string | symbol) => {
     const entry = propProxyStates.get(prop)
     if (entry) {
       propProxyStates.delete(prop)
@@ -268,16 +310,51 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     }
     return removeListener
   }
+  const addPropListener = (
+    prop: string | number | symbol,
+    listener: Listener,
+  ) => {
+    let propListeners = propListenersMap.get(prop)
+    if (!propListeners) {
+      propListeners = new Set<Listener>()
+      propListenersMap.set(prop, propListeners)
+    }
+    propListeners.add(listener)
+    return () => {
+      propListeners.delete(listener)
+      if (propListeners.size === 0) {
+        propListenersMap.delete(prop)
+      }
+    }
+  }
   let initializing = true
   const handler = createHandler<T>(
     () => initializing,
-    addPropListener,
-    removePropListener,
+    addPropStateListener,
+    removePropStateListener,
     notifyUpdate,
   )
+  if (import.meta.env?.MODE !== 'production') {
+    try {
+      //   (baseObject as any)[ValtioDebugProxyUID] = ValtioProxyCounter++
+      Object.defineProperty(baseObject, valtioDebugProxyUID, {
+        value: valtioProxyCounter++,
+        writable: false,
+        enumerable: false,
+        configurable: false,
+      })
+    } catch {
+      /* empty */
+    }
+  }
   const proxyObject = newProxy(baseObject, handler)
   proxyCache.set(baseObject, proxyObject)
-  const proxyState: ProxyState = [baseObject, ensureVersion, addListener]
+  const proxyState: ProxyState = [
+    baseObject,
+    ensureVersion,
+    addListener,
+    addPropListener,
+  ]
   proxyStateMap.set(proxyObject, proxyState)
   Reflect.ownKeys(baseObject).forEach((key) => {
     const desc = Object.getOwnPropertyDescriptor(
@@ -349,6 +426,54 @@ export function subscribe<T extends object>(
 }
 
 /**
+ * subscribeKey
+ *
+ * The subscribeKey utility enables subscription to a primitive subproperty of a given state proxy.
+ * Subscriptions created with subscribeKey will only fire when the specified property changes.
+ * notifyInSync: same as the parameter to subscribe(); true disables batching of subscriptions.
+ *
+ * @example
+ * import { subscribeKey } from 'valtio/utils'
+ * subscribeKey(state, 'count', (v) => console.log('state.count has changed to', v))
+ */
+export function subscribeKey<T extends object, K extends keyof T>(
+  proxyObject: T,
+  key: K,
+  callback: (value: T[K]) => void,
+  notifyInSync?: boolean,
+): () => void {
+  const proxyState = proxyStateMap.get(proxyObject as object)
+  if (import.meta.env?.MODE !== 'production' && !proxyState) {
+    console.warn('Please use proxy object')
+  }
+  let promise: Promise<void> | undefined
+  const ops: Op[] = []
+  const addPropListener = (proxyState as ProxyState)[3]
+  let isListenerActive = false
+  const listener: Listener = (op) => {
+    ops.push(op)
+    if (notifyInSync) {
+      callback(proxyObject[key])
+      return
+    }
+    if (!promise) {
+      promise = Promise.resolve().then(() => {
+        promise = undefined
+        if (isListenerActive) {
+          callback(proxyObject[key])
+        }
+      })
+    }
+  }
+  const removeListener = addPropListener(key, listener)
+  isListenerActive = true
+  return () => {
+    isListenerActive = false
+    removeListener()
+  }
+}
+
+/**
  * Creates an immutable snapshot of the current state of a proxy object
  *
  * @template T - Type of the proxy object
@@ -377,6 +502,15 @@ export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
 export function ref<T extends object>(obj: T) {
   refSet.add(obj)
   return obj as T & { $$valtioSnapshot: T }
+}
+
+export function getProxyBySnapshot<T extends object>(snapshot: Snapshot<T>): T {
+  const target = snapToTargetMap.get(snapshot as object)
+  if (import.meta.env?.MODE !== 'production' && !target) {
+    console.warn('Please use snapshot object')
+  }
+  const proxyObject = proxyCache.get(target!)
+  return proxyObject as T
 }
 
 // ------------------------------------------------
