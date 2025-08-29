@@ -92,6 +92,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (!isProxy(this)) {
         registerSnapMap()
       }
+      this.epoch // touch property for tracking
       return indexMap.size
     },
     has(value: T) {
