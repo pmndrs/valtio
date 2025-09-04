@@ -83,7 +83,7 @@ function LanguageSelector() {
                     d="m0 0 16 11h61 61 61 61 60L47 37h61 61 60 61L16 63h61 61 61 61 60L47 89h61 61 60 61L16 115h61 61 61 61 60L47 141h61 61 60 61L16 166h61 61 61 61 60L47 192h61 61 60 61L16 218h61 61 61 61 60z"
                   />
                 </svg>
-                <span className='inline-flex w-56 justify-between ml-1'>
+                <span className="inline-flex w-56 justify-between ml-1">
                   <span>English</span>
                   <span className="flex-grow text-right mx-3">(Official)</span>
                   <span>✓</span>
@@ -114,14 +114,13 @@ function LanguageSelector() {
                   <path d="m255.2 255.9-2 26.7 24.9 10.1-26.1 6.4-1.9 26.8-14.1-22.8-26.1 6.4 17.3-20.5-14.2-22.7 24.9 10.1z"></path>
                 </g>
               </svg>
-              <span className='inline-flex w-56 justify-between ml-1'>
+              <span className="inline-flex w-56 justify-between ml-1">
                 <span>中文文档</span>
                 <span className="flex-grow text-right mx-3">(Community)</span>
                 <span>👥</span>
               </span>
             </div>
           </a>
-          
         </div>
       )}
     </div>
