@@ -7,12 +7,13 @@ import {
   useRef,
   useSyncExternalStore,
 } from 'react'
+import { affectedToPathList } from 'proxy-compare'
 import {
-  affectedToPathList,
-  createProxy as createProxyToCompare,
-  isChanged,
-} from 'proxy-compare'
-import { snapshot, subscribe } from './vanilla.ts'
+  getProxyBySnapshot,
+  snapshot,
+  subscribe,
+  subscribeKey,
+} from './vanilla.ts'
 import type { Snapshot } from './vanilla.ts'
 
 /**
@@ -37,12 +38,147 @@ const useAffectedDebugValue = (
 }
 const condUseAffectedDebugValue = useAffectedDebugValue
 
-// This is required only for performance.
-// Ref: https://github.com/pmndrs/valtio/issues/519
-const targetCache = new WeakMap()
-
 type Options = {
   sync?: boolean
+  initEntireSubscribe?: boolean
+}
+
+// function to create a new bare proxy
+const newProxy = <T extends object>(target: T, handler: ProxyHandler<T>) =>
+  new Proxy(target, handler)
+
+// get object prototype
+const getProto = Object.getPrototypeOf
+
+const objectsToTrack = new WeakMap<object, boolean>()
+export const markToTrack = (obj: object, mark = true): void => {
+  objectsToTrack.set(obj, mark)
+}
+
+// check if obj is a plain object or an array
+const isObjectToTrack = <T>(obj: T): obj is T extends object ? T : never =>
+  obj &&
+  (objectsToTrack.has(obj as unknown as object)
+    ? (objectsToTrack.get(obj as unknown as object) as boolean)
+    : getProto(obj) === Object.prototype || getProto(obj) === Array.prototype)
+
+const getPropertyDescriptor = (obj: object, key: string | symbol) => {
+  while (obj) {
+    const desc = Reflect.getOwnPropertyDescriptor(obj, key)
+    if (desc) {
+      return desc
+    }
+    obj = getProto(obj)
+  }
+  return undefined
+}
+
+const noop = () => {}
+
+const HAS_KEY_PROPERTY = 'h'
+const ALL_OWN_KEYS_PROPERTY = 'w'
+const HAS_OWN_KEY_PROPERTY = 'o'
+const KEYS_PROPERTY = 'k'
+const NO_ACCESS_PROPERTY = 'n'
+
+type Unsubscribe = () => void
+
+type UsedKeyMap = Map<string | symbol, Unsubscribe>
+type HasKeyMap = UsedKeyMap
+type HasOwnKeyMap = UsedKeyMap
+type KeysMap = UsedKeyMap
+type Used = {
+  [HAS_KEY_PROPERTY]?: HasKeyMap
+  [ALL_OWN_KEYS_PROPERTY]?: Unsubscribe
+  [HAS_OWN_KEY_PROPERTY]?: HasOwnKeyMap
+  [KEYS_PROPERTY]?: KeysMap
+  [NO_ACCESS_PROPERTY]?: Unsubscribe
+}
+type Affected = Map<object, Used>
+
+const recordUsage = (
+  proxyObject: object,
+  observer: SnapshotObserver,
+  type:
+    | typeof HAS_KEY_PROPERTY
+    | typeof ALL_OWN_KEYS_PROPERTY
+    | typeof HAS_OWN_KEY_PROPERTY
+    | typeof KEYS_PROPERTY
+    | typeof NO_ACCESS_PROPERTY,
+  key?: string | symbol,
+) => {
+  const affected = observer.affected
+  let used = affected.get(proxyObject as object)
+  if (!used) {
+    used = {}
+    affected.set(proxyObject as object, used)
+  }
+
+  if (type === NO_ACCESS_PROPERTY) {
+    used[NO_ACCESS_PROPERTY] ??= observer.observe(proxyObject)
+    return
+  } else {
+    used[NO_ACCESS_PROPERTY]?.()
+    delete used[NO_ACCESS_PROPERTY]
+  }
+
+  if (type === ALL_OWN_KEYS_PROPERTY) {
+    used[ALL_OWN_KEYS_PROPERTY] ??= observer.observe(proxyObject)
+  } else {
+    let map = used[type]
+    if (!map) {
+      map = new Map()
+      used[type] = map
+    }
+    if (!map.has(key!)) {
+      const unsub = observer.observe(proxyObject as any, key!)
+      map.set(key!, unsub)
+    }
+  }
+}
+
+const createSnapshotProxy = <T>(
+  snapshot: Snapshot<T>,
+  observer: SnapshotObserver,
+): Snapshot<T> => {
+  if (!isObjectToTrack(snapshot)) return snapshot
+
+  const { proxyCache, initEntireSubscribe } = observer
+  if (proxyCache.get(snapshot)) return proxyCache.get(snapshot)!
+
+  const proxyObject = getProxyBySnapshot(snapshot)
+  const proxySnapshot = newProxy(snapshot, {
+    get(target, prop) {
+      const desc = getPropertyDescriptor(target, prop)
+      if (desc?.get) {
+        return Reflect.get(target, prop, proxySnapshot)
+      }
+
+      recordUsage(proxyObject, observer, KEYS_PROPERTY, prop)
+      return createSnapshotProxy(
+        Reflect.get(target, prop) as Snapshot<T>,
+        observer,
+      )
+    },
+    has(target, key) {
+      recordUsage(proxyObject, observer, HAS_KEY_PROPERTY, key)
+      return Reflect.has(target, key)
+    },
+    getOwnPropertyDescriptor(target, key) {
+      recordUsage(proxyObject, observer, HAS_OWN_KEY_PROPERTY, key)
+      return Reflect.getOwnPropertyDescriptor(target, key)
+    },
+    ownKeys(target) {
+      recordUsage(proxyObject, observer, ALL_OWN_KEYS_PROPERTY)
+      return Reflect.ownKeys(target)
+    },
+  })
+  proxyCache.set(snapshot, proxySnapshot)
+
+  if (initEntireSubscribe) {
+    recordUsage(proxyObject, observer, NO_ACCESS_PROPERTY)
+  }
+  return proxySnapshot
 }
 
 /**
@@ -120,55 +256,147 @@ type Options = {
  */
 export function useSnapshot<T extends object>(
   proxyObject: T,
-  options?: Options,
+  options?: Options & { testOnlyObserver?: SnapshotObserver },
 ): Snapshot<T> {
-  const notifyInSync = options?.sync
-  // per-proxy & per-hook affected, it's not ideal but memo compatible
-  const affected = useMemo(
-    () => proxyObject && new WeakMap<object, unknown>(),
-    [proxyObject],
+  // per-hook observer, it's not ideal but memo compatible
+  const observer = useMemo(
+    () => options?.testOnlyObserver ?? new SnapshotObserver(options),
+    // eslint-disable-next-line react-hooks/react-compiler
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   )
+
   const lastSnapshot = useRef<Snapshot<T>>(undefined)
-  let inRender = true
   const currSnapshot = useSyncExternalStore(
-    useCallback(
-      (callback) => {
-        const unsub = subscribe(proxyObject, callback, notifyInSync)
-        callback() // Note: do we really need this?
-        return unsub
-      },
-      [proxyObject, notifyInSync],
-    ),
-    () => {
-      const nextSnapshot = snapshot(proxyObject)
-      try {
-        if (
-          !inRender &&
-          lastSnapshot.current &&
-          !isChanged(
-            lastSnapshot.current,
-            nextSnapshot,
-            affected,
-            new WeakMap(),
-          )
-        ) {
-          // not changed
-          return lastSnapshot.current
-        }
-      } catch {
-        // ignore if a promise or something is thrown
-      }
-      return nextSnapshot
-    },
-    () => snapshot(proxyObject),
+    useCallback((callback) => observer.subscribe(callback), [observer]),
+    () => observer.getSnapshot(proxyObject),
+    () => observer.getSnapshot(proxyObject),
   )
-  inRender = false
+
   useLayoutEffect(() => {
+    observer.enable()
+    return () => {
+      observer.disable()
+    }
+  }, [observer, currSnapshot])
+
+  if (lastSnapshot.current !== currSnapshot) {
+    observer.clear() // we re-subscribe affected properties in render
+    if (observer.initEntireSubscribe) {
+      recordUsage(proxyObject, observer, NO_ACCESS_PROPERTY)
+    }
     lastSnapshot.current = currSnapshot
-  })
-  if (import.meta.env?.MODE !== 'production') {
-    condUseAffectedDebugValue(currSnapshot as object, affected)
   }
-  const proxyCache = useMemo(() => new WeakMap(), []) // per-hook proxyCache
-  return createProxyToCompare(currSnapshot, affected, proxyCache, targetCache)
+  if (import.meta.env?.MODE !== 'production') {
+    condUseAffectedDebugValue(proxyObject, observer.affected)
+  }
+  return currSnapshot
+}
+
+/**
+ * SnapshotObserver
+ *
+ * A class that gets snapshots of a proxy object and auto observes changes.
+ * Notify subscribers only when the snapshots accessed properties change.
+ * Just like useSnapshot, but can use outside of React components.
+ */
+export class SnapshotObserver {
+  static counter = 0
+  uid: number = SnapshotObserver.counter++
+  affected: Affected = new Map()
+  proxyCache: WeakMap<any, any> = new WeakMap()
+  notifyInSync: boolean
+  initEntireSubscribe: boolean
+  listeners: Set<() => void> = new Set()
+  enabled: boolean
+
+  constructor(options?: Options & { enabled?: boolean }) {
+    this.notifyInSync = options?.sync ?? false
+    this.initEntireSubscribe = options?.initEntireSubscribe ?? true
+    this.enabled = options?.enabled ?? false
+  }
+
+  getSnapshot<T extends object>(proxyObject: T): Snapshot<T> {
+    const snap = snapshot(proxyObject)
+    const snapProxy = createSnapshotProxy(snap, this)
+    return snapProxy
+  }
+
+  observe(proxyObject: object, key?: string | symbol): Unsubscribe {
+    if (!this.enabled) return noop
+    if (key === undefined) {
+      return subscribe(proxyObject, this.broadcast, this.notifyInSync)
+    } else {
+      return subscribeKey(
+        proxyObject as any,
+        key,
+        this.broadcast,
+        this.notifyInSync,
+      )
+    }
+  }
+
+  enable(): void {
+    if (this.enabled) return
+    this.enabled = true
+
+    for (const [proxyObject, used] of this.affected) {
+      for (const key in used) {
+        const type = key as keyof Used
+        if (type === NO_ACCESS_PROPERTY || type === ALL_OWN_KEYS_PROPERTY) {
+          used[type] = this.observe(proxyObject)
+        } else {
+          const map = used[type]
+          if (map) {
+            for (const [key] of map) {
+              map.set(key, this.observe(proxyObject as any, key))
+            }
+          }
+        }
+      }
+    }
+  }
+
+  disable(): void {
+    if (!this.enabled) return
+    this.enabled = false
+
+    for (const [, used] of this.affected) {
+      for (const key in used) {
+        const type = key as keyof Used
+        if (type === NO_ACCESS_PROPERTY || type === ALL_OWN_KEYS_PROPERTY) {
+          used[type]?.()
+          used[type] = noop
+        } else {
+          const map = used[type]
+          if (map) {
+            for (const [key, unsub] of map.entries()) {
+              unsub()
+              map.set(key, noop)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  subscribe(listener: () => void): () => void {
+    this.listeners.add(listener)
+    return () => {
+      this.listeners.delete(listener)
+    }
+  }
+
+  broadcast = (): void => {
+    this.listeners.forEach((listener) => listener())
+  }
+
+  clear(): void {
+    const startEnabled = this.enabled
+    this.disable()
+    this.affected.clear()
+    if (startEnabled) {
+      this.enable()
+    }
+  }
 }
