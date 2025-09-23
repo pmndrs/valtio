@@ -29,18 +29,31 @@ export function deepProxy<T>(
   obj: T,
   getRefSet: () => WeakSet<object> = getDefaultRefSet,
 ): T {
+  const memo = new WeakMap<object, unknown>()
+
   const visit = (value: unknown) => {
     if (!isObject(value) || getRefSet().has(value)) return value
 
+    // Normalize Sets: deep-visit each element before wrapping
     if (value instanceof Set || isProxySet(value as object)) {
-      return proxySet(value as Iterable<unknown>)
+      const input = value as Iterable<unknown>
+      const items: unknown[] = []
+      for (const el of input) {
+        items.push(visit(el))
+      }
+      return proxySet(items)
     }
 
+    // Normalize Maps: deep-visit keys and values before wrapping
     if (value instanceof Map || isProxyMap(value as object)) {
-      return proxyMap(value as Iterable<[unknown, unknown]>)
+      const input = value as Iterable<[unknown, unknown]>
+      const entries: [unknown, unknown][] = []
+      for (const [k, v] of input) {
+        entries.push([visit(k), visit(v)])
+      }
+      return proxyMap(entries)
     }
 
-    const memo = new WeakMap<object, unknown>()
     const hit = memo.get(value)
 
     if (hit) return hit

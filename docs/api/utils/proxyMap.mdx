@@ -61,6 +61,23 @@ state.set(key, 'value')
 state.get(key) //undefined
 ```
 
+## `isProxyMap`
+
+If you want to check if an object is a proxyMap, you can use the `isProxyMap` function.
+
+```js
+import { proxy, ref } from 'valtio'
+import { proxyMap, isProxyMap } from 'valtio/utils'
+
+const state = proxy({
+  nativeMap: ref(new Map(/*...*/)),
+  proxyMap: proxyMap(),
+})
+
+isProxyMap(state.nativeMap) // false
+isProxyMap(state.proxyMap) // true
+```
+
 ## Codesandbox demo
 
 https://codesandbox.io/s/github/pmndrs/valtio/tree/main/examples/todo-with-proxyMap
