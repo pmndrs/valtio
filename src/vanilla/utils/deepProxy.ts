@@ -14,7 +14,9 @@ const getDefaultRefSet = (): WeakSet<object> => {
 }
 
 const cloneContainer = <T extends object>(src: T): T => {
-  return (Array.isArray(src) ? [] : Object.create(Object.getPrototypeOf(src))) as T
+  return (
+    Array.isArray(src) ? [] : Object.create(Object.getPrototypeOf(src))
+  ) as T
 }
 
 /**
@@ -27,7 +29,6 @@ export function deepProxy<T>(
   obj: T,
   getRefSet: () => WeakSet<object> = getDefaultRefSet,
 ): T {
-
   const visit = (value: unknown) => {
     if (!isObject(value) || getRefSet().has(value)) return value
 
