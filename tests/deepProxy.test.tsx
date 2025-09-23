@@ -6,7 +6,7 @@ import {
   isProxySet,
   proxyMap,
   proxySet,
-} from '../src/vanilla/utils'
+} from 'valtio/utils'
 
 describe('deepProxy – core behavior', () => {
   it('should properly clone a proxySet', () => {
