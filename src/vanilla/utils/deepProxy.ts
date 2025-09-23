@@ -13,6 +13,10 @@ const getDefaultRefSet = (): WeakSet<object> => {
   return defaultRefSet
 }
 
+const cloneContainer = <T extends object>(src: T): T => {
+  return (Array.isArray(src) ? [] : Object.create(Object.getPrototypeOf(src))) as T
+}
+
 /**
  * Deeply proxies an input while normalizing Maps/Sets into proxyMap/proxySet.
  * - Values in refSet or primitives are returned as-is.
@@ -23,28 +27,39 @@ export function deepProxy<T>(
   obj: T,
   getRefSet: () => WeakSet<object> = getDefaultRefSet,
 ): T {
-  if (!isObject(obj) || getRefSet().has(obj)) {
-    return obj
+
+  const visit = (value: unknown) => {
+    if (!isObject(value) || getRefSet().has(value)) return value
+
+    if (value instanceof Set || isProxySet(value as object)) {
+      return proxySet(value as Iterable<unknown>)
+    }
+
+    if (value instanceof Map || isProxyMap(value as object)) {
+      return proxyMap(value as Iterable<[unknown, unknown]>)
+    }
+
+    const memo = new WeakMap<object, unknown>()
+    const hit = memo.get(value)
+
+    if (hit) return hit
+
+    const target = cloneContainer(value)
+    memo.set(value, target)
+
+    for (const key of Reflect.ownKeys(value)) {
+      const desc = Reflect.getOwnPropertyDescriptor(value, key)
+      if (!desc) continue // type guard to make sure we can access metadata
+      if ('value' in desc) {
+        const next = visit((value as Record<PropertyKey, unknown>)[key])
+        Object.defineProperty(target, key, { ...desc, value: next })
+      } else {
+        Object.defineProperty(target, key, desc)
+      }
+    }
+
+    return proxy(target)
   }
 
-  if (obj instanceof Set || isProxySet(obj as object)) {
-    return proxySet(obj as unknown as Iterable<unknown>) as T
-  }
-
-  if (obj instanceof Map || isProxyMap(obj as object)) {
-    return proxyMap(obj as unknown as Iterable<[unknown, unknown]>) as T
-  }
-
-  const baseObject: T = Array.isArray(obj)
-    ? ([] as unknown as T)
-    : Object.create(Object.getPrototypeOf(obj))
-
-  Reflect.ownKeys(obj).forEach((key) => {
-    baseObject[key as keyof T] = deepProxy(
-      (obj as Record<PropertyKey, unknown>)[key] as T[keyof T],
-      getRefSet,
-    )
-  })
-
-  return proxy(baseObject as unknown as object) as T
+  return visit(obj) as T
 }
