@@ -262,6 +262,7 @@ export function getDocsNav(): NavigationTree {
         pages['proxyWithHistory'],
         pages['proxySet'],
         pages['proxyMap'],
+        pages['unstable_deepProxy'],
       ],
       Hacks: [pages['getVersion'], pages['internals']],
     },
