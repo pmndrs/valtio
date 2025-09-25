@@ -53,3 +53,20 @@ const state = proxy({
   set: proxySet(),
 })
 ```
+
+## `isProxySet`
+
+If you want to check if an object is a proxyMap, you can use the `isProxySet` function.
+
+```js
+import { proxy, ref } from 'valtio'
+import { proxySet, isProxySet } from 'valtio/utils'
+
+const state = proxy({
+  nativeSet: ref(new Set(/*...*/)),
+  proxySet: proxySet(),
+})
+
+isProxySet(state.nativeSet) // false
+isProxySet(state.proxySet) // true
+```

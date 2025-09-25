@@ -1,0 +1,31 @@
+---
+title: 'unstable_deepProxy'
+section: 'API'
+subSection: 'Utils'
+description: ''
+---
+
+# `unstable_deepProxy`
+
+You can use this utility to recursively go through an object and proxy all proxiable objects with the exception of anything marked with `ref()`. `Map`s will become `proxyMap`s and `Set`s will become `proxySet`s.
+
+```js
+import {
+  unstable_deepProxy as deepProxy,
+  isProxyMap,
+  isProxySet,
+} from 'valtio/utils'
+
+const obj = {
+  mySet: new Set(),
+  myMap: new Map(),
+  sub: {
+    foo: 'bar',
+  },
+}
+
+const clonedProxy = deepProxy(obj)
+
+console.log(isProxyMap(clonedProxy.myMap)) // true
+console.log(isProxySet(clonedProxy.mySet)) // true
+```
