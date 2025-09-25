@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { proxy } from 'valtio'
 import {
-  deepProxy,
+  unstable_deepProxy as deepProxy,
   isProxyMap,
   isProxySet,
   proxyMap,

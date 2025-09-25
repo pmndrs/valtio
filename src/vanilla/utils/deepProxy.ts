@@ -25,7 +25,7 @@ const cloneContainer = <T extends object>(src: T): T => {
  * - Map/proxyMap and Set/proxySet are re-instantiated by passing their existing iterables directly.
  * - Arrays/objects are rebuilt recursively and wrapped with proxy().
  */
-export function deepProxy<T>(
+export function unstable_deepProxy<T>(
   obj: T,
   getRefSet: () => WeakSet<object> = getDefaultRefSet,
 ): T {
