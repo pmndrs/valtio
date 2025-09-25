@@ -5,12 +5,12 @@ subSection: 'Utils'
 description: ''
 ---
 
-# `deepProxy`
+# `unstable_deepProxy`
 
 You can use this utility to recursively go through an object and proxy all proxiable objects with the exception of anything marked with `ref()`. `Map`s will become `proxyMap`s and `Set`s will become `proxySet`s.
 
 ```js
-import { deepProxy, isProxyMap, isProxySet } from 'valtio/utils'
+import { unstable_deepProxy as deepProxy, isProxyMap, isProxySet } from 'valtio/utils'
 
 const obj = {
   mySet: new Set(),
