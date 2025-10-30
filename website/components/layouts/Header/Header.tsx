@@ -6,6 +6,127 @@ import clsx from 'clsx'
 import SEO from '~/components/SEO'
 import ToggleTheme from '~/components/ToggleTheme'
 
+function LanguageSelector() {
+  const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Element
+      if (isOpen && !target.closest('.language-selector')) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  return (
+    <div className="relative language-selector mr-6">
+      <button
+        type="button"
+        className="flex items-center text-gray-700 dark:text-gray-200 hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className="mr-1">🌐</span>
+        <span>Language</span>
+        <svg
+          className={clsx(
+            'ml-1 h-4 w-4 transition-transform',
+            isOpen ? 'rotate-180' : '',
+          )}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-60 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-700">
+          <Link href="https://valtio.dev/">
+            <a
+              className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-sky-500 dark:hover:text-sky-400 transition-colors text-nowrap"
+              onClick={() => setIsOpen(false)}
+            >
+              <div className="flex items-center">
+                <svg
+                  className="w-4 h-4 mr-1 z-10"
+                  xmlns="http://www.w3.org/2000/svg"
+                  id="flag-icons-us"
+                  viewBox="0 0 640 480"
+                >
+                  <path fill="#bd3d44" d="M0 0h640v480H0" />
+                  <path
+                    stroke="#fff"
+                    strokeWidth="37"
+                    d="M0 55.3h640M0 129h640M0 203h640M0 277h640M0 351h640M0 425h640"
+                  />
+                  <path fill="#192f5d" d="M0 0h364.8v258.5H0" />
+                  <marker id="us-a" markerHeight="30" markerWidth="30">
+                    <path fill="#fff" d="m14 0 9 27L0 10h28L5 27z" />
+                  </marker>
+                  <path
+                    fill="none"
+                    markerMid="url(#us-a)"
+                    d="m0 0 16 11h61 61 61 61 60L47 37h61 61 60 61L16 63h61 61 61 61 60L47 89h61 61 60 61L16 115h61 61 61 61 60L47 141h61 61 60 61L16 166h61 61 61 61 60L47 192h61 61 60 61L16 218h61 61 61 61 60z"
+                  />
+                </svg>
+                <span className="inline-flex w-56 justify-between ml-1">
+                  <span>English</span>
+                  <span className="flex-grow text-right mx-3">(Official)</span>
+                  <span>✓</span>
+                </span>
+              </div>
+            </a>
+          </Link>
+          <a
+            href="https://valtio-nine.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-sky-500 dark:hover:text-sky-400 transition-colors text-nowrap"
+            onClick={() => setIsOpen(false)}
+          >
+            <div className="flex items-center">
+              <svg
+                className="w-4 h-4 mr-1 z-10"
+                enableBackground="new -49 141 512 512"
+                viewBox="-49 141 512 512"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle cx="207" cy="397" fill="#d80027" r="256"></circle>
+                <g fill="#ffda44">
+                  <path d="m91.1 296.8 22.1 68h71.5l-57.8 42.1 22.1 68-57.9-42-57.9 42 22.2-68-57.9-42.1h71.5z"></path>
+                  <path d="m254.5 537.5-16.9-20.8-25 9.7 14.5-22.5-16.9-20.9 25.9 6.9 14.6-22.5 1.4 26.8 26 6.9-25.1 9.6z"></path>
+                  <path d="m288.1 476.5 8-25.6-21.9-15.5 26.8-.4 7.9-25.6 8.7 25.4 26.8-.3-21.5 16 8.6 25.4-21.9-15.5z"></path>
+                  <path d="m333.4 328.9-11.8 24.1 19.2 18.7-26.5-3.8-11.8 24-4.6-26.4-26.6-3.8 23.8-12.5-4.6-26.5 19.2 18.7z"></path>
+                  <path d="m255.2 255.9-2 26.7 24.9 10.1-26.1 6.4-1.9 26.8-14.1-22.8-26.1 6.4 17.3-20.5-14.2-22.7 24.9 10.1z"></path>
+                </g>
+              </svg>
+              <span className="inline-flex w-56 justify-between ml-1">
+                <span>中文文档</span>
+                <span className="flex-grow text-right mx-3">(Community)</span>
+                <span>👥</span>
+              </span>
+            </div>
+          </a>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function NavPopover({
   display = 'md:hidden',
   className = '',
@@ -78,6 +199,33 @@ export function NavPopover({
                 className="hover:text-sky-500 dark:hover:text-sky-400"
               >
                 GitHub
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://valtio-nine.vercel.app/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-sky-500 dark:hover:text-sky-400"
+              >
+                <div className="flex items-center">
+                  <svg
+                    className="w-4 h-4 mr-1 z-10"
+                    enableBackground="new -49 141 512 512"
+                    viewBox="-49 141 512 512"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle cx="207" cy="397" fill="#d80027" r="256"></circle>
+                    <g fill="#ffda44">
+                      <path d="m91.1 296.8 22.1 68h71.5l-57.8 42.1 22.1 68-57.9-42-57.9 42 22.2-68-57.9-42.1h71.5z"></path>
+                      <path d="m254.5 537.5-16.9-20.8-25 9.7 14.5-22.5-16.9-20.9 25.9 6.9 14.6-22.5 1.4 26.8 26 6.9-25.1 9.6z"></path>
+                      <path d="m288.1 476.5 8-25.6-21.9-15.5 26.8-.4 7.9-25.6 8.7 25.4 26.8-.3-21.5 16 8.6 25.4-21.9-15.5z"></path>
+                      <path d="m333.4 328.9-11.8 24.1 19.2 18.7-26.5-3.8-11.8 24-4.6-26.4-26.6-3.8 23.8-12.5-4.6-26.5 19.2 18.7z"></path>
+                      <path d="m255.2 255.9-2 26.7 24.9 10.1-26.1 6.4-1.9 26.8-14.1-22.8-26.1 6.4 17.3-20.5-14.2-22.7 24.9 10.1z"></path>
+                    </g>
+                  </svg>
+                  <span>中文文档(by community)</span>
+                </div>
               </a>
             </li>
           </ul>
@@ -175,6 +323,7 @@ export default function Header({
                   </ul>
                 </nav>
                 <div className="flex items-center border-l border-gray-200 ml-6 pl-6 dark:border-gray-800">
+                  <LanguageSelector />
                   <ToggleTheme />
                   <a
                     href="https://github.com/pmndrs/valtio"
