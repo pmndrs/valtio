@@ -33,6 +33,8 @@ const useAffectedDebugValue = (
   useEffect(() => {
     pathList.current = affectedToPathList(state, affected, true)
   })
+  // TODO should we use useState instead?
+  // eslint-disable-next-line react-hooks/refs
   useDebugValue(pathList.current)
 }
 const condUseAffectedDebugValue = useAffectedDebugValue
@@ -162,6 +164,8 @@ export function useSnapshot<T extends object>(
     },
     () => snapshot(proxyObject),
   )
+  // TODO how could we bypass this?
+  // eslint-disable-next-line react-hooks/immutability
   inRender = false
   useLayoutEffect(() => {
     lastSnapshot.current = currSnapshot
