@@ -11,5 +11,6 @@ export function useCommitCount(initialCount = 0): number {
   useEffect(() => {
     commitCountRef.current += 1
   })
+  // eslint-disable-next-line react-hooks/refs
   return commitCountRef.current
 }
