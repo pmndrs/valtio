@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "esnext",
+    "target": "es2024" /* FIXME we want to support esnext */,
     "strict": true,
     "jsx": "react-jsx",
     "esModuleInterop": true,
