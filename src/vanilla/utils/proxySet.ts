@@ -148,7 +148,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
 
   function differenceImpl<T, U>(
     this: InternalProxySet<T>,
-    _other: RSetLike<U>,
+    other: RSetLike<U>,
   ): Set<T>
   function differenceImpl<T>(this: InternalProxySet<T>, other: Set<T>): Set<T>
   function differenceImpl<T>(
@@ -178,6 +178,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<unknown>()
     for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
+    // v is unknown from RSetLike<unknown>, but has() accepts T and safely handles type mismatches
     for (const v of otherSet.values()) if (!this.has(v as T)) result.add(v)
     return proxySet(result)
   }
