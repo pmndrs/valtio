@@ -91,7 +91,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     }
   }
 
-  const hasIterator = (o: unknown): o is Iterable<unknown> =>
+  const isIterable = (o: unknown): o is Iterable<unknown> =>
     typeof o === 'object' && o !== null && Symbol.iterator in (o as object)
 
   const hasForEach = <U>(
@@ -100,7 +100,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     typeof (o as { forEach?: unknown }).forEach === 'function'
 
   const asIterable = <U>(other: RSetLike<U> | Set<U>): Iterable<U> => {
-    if (hasIterator(other)) return other as Iterable<U>
+    if (isIterable(other)) return other as Iterable<U>
     if (hasForEach(other)) {
       const acc: U[] = []
       other.forEach((v) => acc.push(v))
@@ -118,7 +118,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch
+    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<T>()
     for (const value of this.values()) {
@@ -138,7 +138,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch
+    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<unknown>()
     for (const v of this.values()) result.add(v)
@@ -155,7 +155,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<T> {
-    this.epoch
+    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<T>()
     for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
@@ -174,7 +174,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch
+    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<unknown>()
     for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
@@ -196,7 +196,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     has(value: T) {
       const map = getMapForThis(this)
       const v = maybeProxify(value)
-      this.epoch
+      this.epoch // touch property for tracking
       return map.has(v)
     },
     add(value: T) {
@@ -229,31 +229,31 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      this.data.length = 0
+      this.data.length = 0 // empty array
       this.index = 0
       this.epoch++
       indexMap.clear()
     },
     forEach(cb: (value: T, valueAgain: T, set: Set<T>) => void) {
-      this.epoch
+      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       map.forEach((index) => {
         cb(this.data[index]!, this.data[index]!, this)
       })
     },
     *values(): SetIterator<T> {
-      this.epoch
+      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         yield this.data[index]!
       }
     },
     keys(): SetIterator<T> {
-      this.epoch
+      this.epoch // touch property for tracking
       return this.values()
     },
     *entries(): SetIterator<[T, T]> {
-      this.epoch
+      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         const value = this.data[index]!
@@ -274,18 +274,18 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     difference: differenceImpl,
     symmetricDifference: symmetricDifferenceImpl,
     isSubsetOf(other: RSetLike<T>) {
-      this.epoch
+      this.epoch // touch property for tracking
       for (const v of this.values()) if (!other.has(v)) return false
       return true
     },
     isSupersetOf(other: RSetLike<T>) {
-      this.epoch
+      this.epoch // touch property for tracking
       const it = asIterable(other)
       for (const v of it) if (!this.has(v)) return false
       return true
     },
     isDisjointFrom(other: RSetLike<T>) {
-      this.epoch
+      this.epoch // touch property for tracking
       for (const v of this.values()) if (other.has(v)) return false
       return true
     },
