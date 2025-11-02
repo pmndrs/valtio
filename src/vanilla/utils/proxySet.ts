@@ -94,7 +94,9 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   const hasIterator = (o: unknown): o is Iterable<unknown> =>
     typeof o === 'object' && o !== null && Symbol.iterator in (o as object)
 
-  const hasForEach = <U>(o: RSetLike<U>): o is RSetLike<U> & { forEach: (cb: (v: U) => void) => void } =>
+  const hasForEach = <U>(
+    o: RSetLike<U>,
+  ): o is RSetLike<U> & { forEach: (cb: (v: U) => void) => void } =>
     typeof (o as { forEach?: unknown }).forEach === 'function'
 
   const asIterable = <U>(other: RSetLike<U> | Set<U>): Iterable<U> => {
@@ -107,11 +109,14 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     throw new TypeError('Expected an iterable')
   }
 
-  function intersectionImpl<T, U>(this: InternalProxySet<T>, other: RSetLike<U>): Set<T & U>
+  function intersectionImpl<T, U>(
+    this: InternalProxySet<T>,
+    other: RSetLike<U>,
+  ): Set<T & U>
   function intersectionImpl<T>(this: InternalProxySet<T>, other: Set<T>): Set<T>
   function intersectionImpl<T>(
     this: InternalProxySet<T>,
-    other: RSetLike<unknown> | Set<T>
+    other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
     this.epoch
     const otherSet = proxySet(asIterable(other))
@@ -124,11 +129,14 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     return proxySet(result)
   }
 
-  function unionImpl<T, U>(this: InternalProxySet<T>, other: RSetLike<U>): Set<T | U>
+  function unionImpl<T, U>(
+    this: InternalProxySet<T>,
+    other: RSetLike<U>,
+  ): Set<T | U>
   function unionImpl<T>(this: InternalProxySet<T>, other: Set<T>): Set<T>
   function unionImpl<T>(
     this: InternalProxySet<T>,
-    other: RSetLike<unknown> | Set<T>
+    other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
     this.epoch
     const otherSet = proxySet(asIterable(other))
@@ -138,11 +146,14 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     return proxySet(result)
   }
 
-  function differenceImpl<T, U>(this: InternalProxySet<T>, _other: RSetLike<U>): Set<T>
+  function differenceImpl<T, U>(
+    this: InternalProxySet<T>,
+    _other: RSetLike<U>,
+  ): Set<T>
   function differenceImpl<T>(this: InternalProxySet<T>, other: Set<T>): Set<T>
   function differenceImpl<T>(
     this: InternalProxySet<T>,
-    other: RSetLike<unknown> | Set<T>
+    other: RSetLike<unknown> | Set<T>,
   ): Set<T> {
     this.epoch
     const otherSet = proxySet(asIterable(other))
@@ -151,11 +162,17 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     return proxySet(result)
   }
 
-  function symmetricDifferenceImpl<T, U>(this: InternalProxySet<T>, other: RSetLike<U>): Set<T | U>
-  function symmetricDifferenceImpl<T>(this: InternalProxySet<T>, other: Set<T>): Set<T>
+  function symmetricDifferenceImpl<T, U>(
+    this: InternalProxySet<T>,
+    other: RSetLike<U>,
+  ): Set<T | U>
   function symmetricDifferenceImpl<T>(
     this: InternalProxySet<T>,
-    other: RSetLike<unknown> | Set<T>
+    other: Set<T>,
+  ): Set<T>
+  function symmetricDifferenceImpl<T>(
+    this: InternalProxySet<T>,
+    other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
     this.epoch
     const otherSet = proxySet(asIterable(other))
@@ -164,8 +181,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     for (const v of otherSet.values()) if (!this.has(v as T)) result.add(v)
     return proxySet(result)
   }
-
-
 
   const vObject: InternalProxySet<T> = {
     data: initialData,
