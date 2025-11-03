@@ -138,7 +138,10 @@ export function useSnapshot<T extends object>(
         subscribed.current = true
         const unsub = subscribe(proxyObject, callback, notifyInSync)
         callback() // Note: do we really need this?
-        return unsub
+        return () => {
+          unsub()
+          subscribed.current = false
+        }
       },
       [proxyObject, notifyInSync],
     ),
