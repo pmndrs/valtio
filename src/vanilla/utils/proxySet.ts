@@ -4,18 +4,24 @@ const { proxyStateMap, snapCache } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
 
+type RSetLike<T> = { has(value: T): boolean }
+
 type InternalProxySet<T> = Set<T> & {
   data: T[]
-  toJSON: object
+  toJSON: () => object
   index: number
   epoch: number
-  intersection: (other: Set<T>) => Set<T>
-  union: (other: Set<T>) => Set<T>
-  difference: (other: Set<T>) => Set<T>
-  symmetricDifference: (other: Set<T>) => Set<T>
-  isSubsetOf: (other: Set<T>) => boolean
-  isSupersetOf: (other: Set<T>) => boolean
-  isDisjointFrom: (other: Set<T>) => boolean
+  intersection<U>(other: RSetLike<U>): Set<T & U>
+  intersection(other: Set<T>): Set<T>
+  union<U>(other: RSetLike<U>): Set<T | U>
+  union(other: Set<T>): Set<T>
+  difference<U>(other: RSetLike<U>): Set<T>
+  difference(other: Set<T>): Set<T>
+  symmetricDifference<U>(other: RSetLike<U>): Set<T | U>
+  symmetricDifference(other: Set<T>): Set<T>
+  isSubsetOf(other: RSetLike<T>): boolean
+  isSupersetOf(other: RSetLike<T>): boolean
+  isDisjointFrom(other: RSetLike<T>): boolean
 }
 
 /**
@@ -55,6 +61,7 @@ export const isProxySet = (obj: object): boolean => {
  *   set: proxySet()
  * })
  */
+
 export function proxySet<T>(initialValues?: Iterable<T> | null) {
   const initialData: T[] = []
   const indexMap = new Map<T, number>()
@@ -82,6 +89,98 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
         initialData[initialIndex++] = v
       }
     }
+  }
+
+  const isIterable = (o: unknown): o is Iterable<unknown> =>
+    typeof o === 'object' && o !== null && Symbol.iterator in (o as object)
+
+  const hasForEach = <U>(
+    o: RSetLike<U>,
+  ): o is RSetLike<U> & { forEach: (cb: (v: U) => void) => void } =>
+    typeof (o as { forEach?: unknown }).forEach === 'function'
+
+  const asIterable = <U>(other: RSetLike<U> | Set<U>): Iterable<U> => {
+    if (isIterable(other)) return other as Iterable<U>
+    if (hasForEach(other)) {
+      const acc: U[] = []
+      other.forEach((v) => acc.push(v))
+      return acc
+    }
+    throw new TypeError('Expected an iterable')
+  }
+
+  function intersectionImpl<T, U>(
+    this: InternalProxySet<T>,
+    other: RSetLike<U>,
+  ): Set<T & U>
+  function intersectionImpl<T>(this: InternalProxySet<T>, other: Set<T>): Set<T>
+  function intersectionImpl<T>(
+    this: InternalProxySet<T>,
+    other: RSetLike<unknown> | Set<T>,
+  ): Set<unknown> {
+    this.epoch // touch property for tracking
+    const otherSet = proxySet(asIterable(other))
+    const result = proxySet<T>()
+    for (const value of this.values()) {
+      if (otherSet.has(value)) {
+        result.add(value)
+      }
+    }
+    return proxySet(result)
+  }
+
+  function unionImpl<T, U>(
+    this: InternalProxySet<T>,
+    other: RSetLike<U>,
+  ): Set<T | U>
+  function unionImpl<T>(this: InternalProxySet<T>, other: Set<T>): Set<T>
+  function unionImpl<T>(
+    this: InternalProxySet<T>,
+    other: RSetLike<unknown> | Set<T>,
+  ): Set<unknown> {
+    this.epoch // touch property for tracking
+    const otherSet = proxySet(asIterable(other))
+    const result = proxySet<unknown>()
+    for (const v of this.values()) result.add(v)
+    for (const v of otherSet.values()) result.add(v)
+    return proxySet(result)
+  }
+
+  function differenceImpl<T, U>(
+    this: InternalProxySet<T>,
+    other: RSetLike<U>,
+  ): Set<T>
+  function differenceImpl<T>(this: InternalProxySet<T>, other: Set<T>): Set<T>
+  function differenceImpl<T>(
+    this: InternalProxySet<T>,
+    other: RSetLike<unknown> | Set<T>,
+  ): Set<T> {
+    this.epoch // touch property for tracking
+    const otherSet = proxySet(asIterable(other))
+    const result = proxySet<T>()
+    for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
+    return proxySet(result)
+  }
+
+  function symmetricDifferenceImpl<T, U>(
+    this: InternalProxySet<T>,
+    other: RSetLike<U>,
+  ): Set<T | U>
+  function symmetricDifferenceImpl<T>(
+    this: InternalProxySet<T>,
+    other: Set<T>,
+  ): Set<T>
+  function symmetricDifferenceImpl<T>(
+    this: InternalProxySet<T>,
+    other: RSetLike<unknown> | Set<T>,
+  ): Set<unknown> {
+    this.epoch // touch property for tracking
+    const otherSet = proxySet(asIterable(other))
+    const result = proxySet<unknown>()
+    for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
+    // (v as T) -> v is unknown from RSetLike<unknown>, but has() accepts T and safely handles type mismatches
+    for (const v of otherSet.values()) if (!this.has(v as T)) result.add(v)
+    return proxySet(result)
   }
 
   const vObject: InternalProxySet<T> = {
@@ -135,7 +234,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       this.epoch++
       indexMap.clear()
     },
-    forEach(cb) {
+    forEach(cb: (value: T, valueAgain: T, set: Set<T>) => void) {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       map.forEach((index) => {
@@ -170,76 +269,25 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     get [Symbol.toStringTag]() {
       return 'Set'
     },
-    intersection(other: Set<T>): Set<T> {
+    intersection: intersectionImpl,
+    union: unionImpl,
+    difference: differenceImpl,
+    symmetricDifference: symmetricDifferenceImpl,
+    isSubsetOf(other: RSetLike<T>) {
       this.epoch // touch property for tracking
-      const otherSet = proxySet<T>(other)
-      const resultSet = proxySet<T>()
-      for (const value of this.values()) {
-        if (otherSet.has(value)) {
-          resultSet.add(value)
-        }
-      }
-      return proxySet(resultSet)
+      for (const v of this.values()) if (!other.has(v)) return false
+      return true
     },
-    union(other: Set<T>) {
+    isSupersetOf(other: RSetLike<T>) {
       this.epoch // touch property for tracking
-      const resultSet = proxySet<T>()
-      const otherSet = proxySet<T>(other)
-      for (const value of this.values()) {
-        resultSet.add(value)
-      }
-      for (const value of otherSet) {
-        resultSet.add(value)
-      }
-      return proxySet(resultSet)
+      const it = asIterable(other)
+      for (const v of it) if (!this.has(v)) return false
+      return true
     },
-    difference(other: Set<T>) {
+    isDisjointFrom(other: RSetLike<T>) {
       this.epoch // touch property for tracking
-      const resultSet = proxySet<T>()
-      const otherSet = proxySet<T>(other)
-      for (const value of this.values()) {
-        if (!otherSet.has(value)) {
-          resultSet.add(value)
-        }
-      }
-      return proxySet(resultSet)
-    },
-    symmetricDifference(other: Set<T>) {
-      this.epoch // touch property for tracking
-      const resultSet = proxySet<T>()
-      const otherSet = proxySet<T>(other)
-      for (const value of this.values()) {
-        if (!otherSet.has(value)) {
-          resultSet.add(value)
-        }
-      }
-      for (const value of otherSet.values()) {
-        if (!this.has(value)) {
-          resultSet.add(value)
-        }
-      }
-      return proxySet(resultSet)
-    },
-    isSubsetOf(other: Set<T>) {
-      this.epoch // touch property for tracking
-      const otherSet = proxySet<T>(other)
-      return (
-        this.size <= other.size &&
-        [...this.values()].every((value) => otherSet.has(value))
-      )
-    },
-    isSupersetOf(other: Set<T>) {
-      this.epoch // touch property for tracking
-      const otherSet = proxySet<T>(other)
-      return (
-        this.size >= other.size &&
-        [...otherSet].every((value) => this.has(value))
-      )
-    },
-    isDisjointFrom(other: Set<T>): boolean {
-      this.epoch // touch property for tracking
-      const otherSet = proxySet<T>(other)
-      return [...this.values()].every((value) => !otherSet.has(value))
+      for (const v of this.values()) if (other.has(v)) return false
+      return true
     },
   }
 
@@ -253,7 +301,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   })
   Object.seal(proxiedObject)
 
-  return proxiedObject as unknown as InternalProxySet<T> & {
+  return proxiedObject as InternalProxySet<T> & {
     $$valtioSnapshot: Omit<InternalProxySet<T>, 'set' | 'delete' | 'clear'>
   }
 }
