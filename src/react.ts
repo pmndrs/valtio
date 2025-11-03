@@ -131,10 +131,11 @@ export function useSnapshot<T extends object>(
     [proxyObject],
   )
   const lastSnapshot = useRef<Snapshot<T>>(undefined)
-  let inRender = true
+  const subscribed = useRef(false)
   const currSnapshot = useSyncExternalStore(
     useCallback(
       (callback) => {
+        subscribed.current = true
         const unsub = subscribe(proxyObject, callback, notifyInSync)
         callback() // Note: do we really need this?
         return unsub
@@ -145,7 +146,7 @@ export function useSnapshot<T extends object>(
       const nextSnapshot = snapshot(proxyObject)
       try {
         if (
-          !inRender &&
+          subscribed.current &&
           lastSnapshot.current &&
           !isChanged(
             lastSnapshot.current,
@@ -164,9 +165,6 @@ export function useSnapshot<T extends object>(
     },
     () => snapshot(proxyObject),
   )
-  // TODO how could we bypass this?
-  // eslint-disable-next-line react-hooks/immutability
-  inRender = false
   useLayoutEffect(() => {
     lastSnapshot.current = currSnapshot
   })
