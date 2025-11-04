@@ -47,10 +47,10 @@ type SnapshotIgnore =
 export type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
   ? S
   : T extends SnapshotIgnore
-  ? T
-  : T extends object
-  ? { readonly [K in keyof T]: Snapshot<T[K]> }
-  : T
+    ? T
+    : T extends object
+      ? { readonly [K in keyof T]: Snapshot<T[K]> }
+      : T
 
 type RemoveListener = () => void
 type AddListener = (listener: Listener) => RemoveListener
@@ -206,11 +206,11 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   }
   const createPropListener =
     (prop: string | symbol): Listener =>
-      (op, nextVersion) => {
-        const newOp: Op = [...op]
-        newOp[1] = [prop, ...(newOp[1] as Path)]
-        notifyUpdate(newOp, nextVersion)
-      }
+    (op, nextVersion) => {
+      const newOp: Op = [...op]
+      newOp[1] = [prop, ...(newOp[1] as Path)]
+      notifyUpdate(newOp, nextVersion)
+    }
   const propProxyStates = new Map<
     string | symbol,
     readonly [ProxyState, RemoveListener?]

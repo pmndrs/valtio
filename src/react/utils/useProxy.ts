@@ -20,7 +20,7 @@ const DUMMY_SYMBOL = Symbol()
  *   const store = useStore()
  *   return <button onClick={() => {store.count++}}>{store.count}</button>
  * }
- * 
+ *
  */
 export function useProxy<T extends object>(
   proxy: T,
@@ -28,9 +28,9 @@ export function useProxy<T extends object>(
 ): T {
   const snapshot = useSnapshot(proxy, options) as T
 
-    // touch dummy prop so that it doesn't trigger re-renders when no props are touched.
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    ; (snapshot as any)[DUMMY_SYMBOL]
+  // touch dummy prop so that it doesn't trigger re-renders when no props are touched.
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  ;(snapshot as any)[DUMMY_SYMBOL]
 
   let isRendering = true
   useLayoutEffect(() => {

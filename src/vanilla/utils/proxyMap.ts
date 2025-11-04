@@ -33,7 +33,7 @@ export const isProxyMap = (obj: object): boolean => {
  * const state = proxyMap([["key", "value"]])
  *
  * This can be used inside a proxy as well
- * 
+ *
  * const state = proxy({
  *   count: 1,
  *   map: proxyMap()
@@ -41,7 +41,7 @@ export const isProxyMap = (obj: object): boolean => {
  *
  * When using an object as a key, you can wrap it with `ref` so it's not proxied
  * this is useful if you want to preserve the key equality
- * 
+ *
  * import { ref } from 'valtio'
  *
  * const key = ref({})
