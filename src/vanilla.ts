@@ -43,8 +43,6 @@ type SnapshotIgnore =
 
 /**
  * Snapshot type that converts objects to readonly versions recursively
- *
- * @template T - Type to convert to a snapshot
  */
 export type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
   ? S
@@ -176,11 +174,6 @@ let createHandler: typeof createHandlerDefault = createHandlerDefault
 
 /**
  * Creates a reactive proxy object that can be tracked for changes
- *
- * @template T - Type of the object to be proxied
- * @param {T} baseObject - The object to create a proxy for
- * @returns {T} A proxied version of the input object
- * @throws {Error} If the input is not an object
  */
 export function proxy<T extends object>(baseObject: T = {} as T): T {
   if (!isObject(baseObject)) {
@@ -294,9 +287,6 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
 
 /**
  * Gets the current version number of a proxy object
- *
- * @param {unknown} proxyObject - The proxy object to get the version of
- * @returns {number | undefined} The current version number, or undefined if not a proxy
  */
 export function getVersion(proxyObject: unknown): number | undefined {
   const proxyState = proxyStateMap.get(proxyObject as object)
@@ -305,12 +295,6 @@ export function getVersion(proxyObject: unknown): number | undefined {
 
 /**
  * Subscribes to changes in a proxy object
- *
- * @template T - Type of the proxy object
- * @param {T} proxyObject - The proxy object to subscribe to
- * @param {Function} callback - Function called when the proxy object changes
- * @param {boolean} [notifyInSync] - If true, notifications happen synchronously
- * @returns {Function} Unsubscribe function to stop listening for changes
  */
 export function subscribe<T extends object>(
   proxyObject: T,
@@ -350,10 +334,6 @@ export function subscribe<T extends object>(
 
 /**
  * Creates an immutable snapshot of the current state of a proxy object
- *
- * @template T - Type of the proxy object
- * @param {T} proxyObject - The proxy object to create a snapshot from
- * @returns {Snapshot<T>} An immutable snapshot of the current state
  */
 export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
   const proxyState = proxyStateMap.get(proxyObject as object)
@@ -369,10 +349,6 @@ export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
  *
  * Objects marked with ref will be kept as references in snapshots
  * instead of being deeply copied.
- *
- * @template T - Type of the object to mark as a reference
- * @param {T} obj - The object to mark as a reference
- * @returns {T & { $$valtioSnapshot: T }} The same object with a type marker
  */
 export function ref<T extends object>(obj: T) {
   refSet.add(obj)

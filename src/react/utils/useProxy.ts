@@ -12,6 +12,7 @@ const DUMMY_SYMBOL = Symbol()
  * For the best ergonomics, you can export a custom hook from your store, so you
  * don't have to figure out a separate name for the hook reference. E.g.:
  *
+ * @example
  * export const store = proxy(initialState)
  * export const useStore = () => useProxy(store)
  * // in the component file:
@@ -20,9 +21,6 @@ const DUMMY_SYMBOL = Symbol()
  *   return <button onClick={() => {store.count++}}>{store.count}</button>
  * }
  *
- * @param proxy
- * @param options
- * @returns A new proxy which you can use in the render as well as in callbacks.
  */
 export function useProxy<T extends object>(
   proxy: T,
