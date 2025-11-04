@@ -1,5 +1,5 @@
 import { snapshot, subscribe } from '../../vanilla.ts'
-import type {} from '@redux-devtools/extension'
+import type { } from '@redux-devtools/extension'
 
 // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
 type Message = {
@@ -28,14 +28,7 @@ type Options = {
  * using the Redux DevTools browser extension.
  *
  * Limitation: Only plain objects/values are supported.
- *
- * @template T - Type of the proxy object
- * @param {T} proxyObject - The proxy object to connect to DevTools
- * @param {Options} [options] - Configuration options for the DevTools connection
- * @param {boolean} [options.enabled] - Explicitly enable or disable the connection
- * @param {string} [options.name=''] - Name to display in DevTools
- * @returns {Function|undefined} Unsubscribe function to disconnect from DevTools, or undefined if connection failed
- *
+ * 
  * @example
  * import { devtools } from 'valtio/utils'
  * const state = proxy({ count: 0, text: 'hello' })
@@ -116,7 +109,7 @@ export function devtools<T extends object>(
         const state = JSON.parse(message.state)
         Object.assign(proxyObject, state)
       }
-      ;(proxyObject as any)[DEVTOOLS] = message
+      ; (proxyObject as any)[DEVTOOLS] = message
     } else if (
       message.type === 'DISPATCH' &&
       message.payload?.type === 'COMMIT'

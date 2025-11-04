@@ -12,9 +12,6 @@ type InternalProxyObject<K, V> = Map<K, V> & {
 
 /**
  * Determines if an object is a proxy Map created with proxyMap
- *
- * @param {object} obj - The object to check
- * @returns {boolean} True if the object is a proxy Map, false otherwise
  */
 export const isProxyMap = (obj: object): boolean => {
   return (
@@ -31,24 +28,20 @@ export const isProxyMap = (obj: object): boolean => {
  * allowing you to track changes to the Map in the same way as regular proxy objects.
  * The API is the same as the standard JavaScript Map.
  *
- * @template K - Type of the Map keys
- * @template V - Type of the Map values
- * @param {Iterable<[K, V]>} [entries] - Initial key-value pairs to populate the Map
- * @returns {Map<K, V>} A proxy Map object that tracks changes
- * @throws {TypeError} If entries is not iterable
- *
  * @example
  * import { proxyMap } from 'valtio/utils'
  * const state = proxyMap([["key", "value"]])
  *
- * // can be used inside a proxy as well
+ * This can be used inside a proxy as well
+ * 
  * const state = proxy({
  *   count: 1,
  *   map: proxyMap()
  * })
  *
- * // When using an object as a key, you can wrap it with `ref` so it's not proxied
- * // this is useful if you want to preserve the key equality
+ * When using an object as a key, you can wrap it with `ref` so it's not proxied
+ * this is useful if you want to preserve the key equality
+ * 
  * import { ref } from 'valtio'
  *
  * const key = ref({})
