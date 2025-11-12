@@ -148,6 +148,33 @@ subscribe(state.subscribeData, async () => {
 })
 ```
 
+## Controlled inputs may lose caret position without `sync: true`
+
+Ref: https://github.com/pmndrs/valtio/issues/270
+
+When using Valtio state with controlled `<input>` elements, you might notice the text caret jumping to the end while typing in the middle of the existing text.
+
+This happens because Valtio batches state updates causing React to re-render after the input event. React resets the DOM value and loses the caret position.
+
+**Use `{ sync: true }` to update synchronously and preserve the caret:**
+
+```jsx
+function Input() {
+  const snap = useSnapshot(state, { sync: true })
+
+  return (
+    <input
+      value={snap.text}
+      onChange={(e) => {
+        state.text = e.target.value
+      }}
+    />
+  )
+}
+```
+
+`sync: true` disables batching so React re-renders within the same event loop tick, skipping the DOM update and preserving the caret position.
+
 ## Issue with `array` `proxy`
 
 The following use case can occur unexpected results on `arr` subscription:
