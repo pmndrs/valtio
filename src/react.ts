@@ -20,10 +20,6 @@ import type { Snapshot } from './vanilla.ts'
  *
  * This internal hook collects the paths that were accessed during render
  * and displays them in React DevTools to help with debugging render optimizations.
- *
- * @param {object} state - The state object being tracked
- * @param {WeakMap<object, unknown>} affected - WeakMap of accessed properties
- * @private
  */
 const useAffectedDebugValue = (
   state: object,

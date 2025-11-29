@@ -26,9 +26,6 @@ type InternalProxySet<T> = Set<T> & {
 
 /**
  * Determines if an object is a proxy Set created with proxySet
- *
- * @param {object} obj - The object to check
- * @returns {boolean} True if the object is a proxy Set, false otherwise
  */
 export const isProxySet = (obj: object): boolean => {
   return (
@@ -45,11 +42,6 @@ export const isProxySet = (obj: object): boolean => {
  * allowing you to track changes to the Set in the same way as regular proxy objects.
  * The API extends the standard JavaScript Set with additional set operations like
  * union, intersection, difference, etc.
- *
- * @template T - Type of the Set elements
- * @param {Iterable<T>} [initialValues] - Initial values to populate the Set
- * @returns {Set<T>} A reactive proxy Set with extended methods
- * @throws {TypeError} If initialValues is not iterable
  *
  * @example
  * import { proxySet } from 'valtio/utils'

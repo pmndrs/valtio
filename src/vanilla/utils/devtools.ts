@@ -29,13 +29,6 @@ type Options = {
  *
  * Limitation: Only plain objects/values are supported.
  *
- * @template T - Type of the proxy object
- * @param {T} proxyObject - The proxy object to connect to DevTools
- * @param {Options} [options] - Configuration options for the DevTools connection
- * @param {boolean} [options.enabled] - Explicitly enable or disable the connection
- * @param {string} [options.name=''] - Name to display in DevTools
- * @returns {Function|undefined} Unsubscribe function to disconnect from DevTools, or undefined if connection failed
- *
  * @example
  * import { devtools } from 'valtio/utils'
  * const state = proxy({ count: 0, text: 'hello' })

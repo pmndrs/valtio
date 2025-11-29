@@ -29,10 +29,6 @@ let currentCleanups: Set<Cleanup> | undefined
  *
  * `watch` calls inside `watch` are also automatically tracked and cleaned up
  * whenever the parent `watch` reevaluates.
- *
- * @param callback
- * @returns A cleanup function that stops the callback from reevaluating and
- * also performs cleanups registered into `watch`.
  */
 export function watch(
   callback: WatchCallback,
