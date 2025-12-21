@@ -22,7 +22,7 @@ type Op =
   | [op: 'delete', path: Path, prevValue: unknown]
 
 /** Function called when a proxy object changes */
-type Listener = (op: Op, nextVersion: number) => void
+type Listener = (op: Op | undefined, nextVersion: number) => void
 
 export type INTERNAL_Op = Op
 
@@ -53,7 +53,8 @@ export type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
       : T
 
 type RemoveListener = () => void
-type AddListener = (listener: Listener) => RemoveListener
+type NeedsOp = boolean
+type AddListener = (listener: Listener, needsOp: NeedsOp) => RemoveListener
 
 type ProxyState = readonly [
   target: object,
@@ -185,7 +186,11 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   }
   let version = versionHolder[0]
   const listeners = new Set<Listener>()
-  const notifyUpdate = (op: Op, nextVersion = ++versionHolder[0]) => {
+  let opListeners = 0
+  const notifyUpdate = (
+    op: Op | undefined,
+    nextVersion = ++versionHolder[0],
+  ) => {
     if (version !== nextVersion) {
       checkVersion = version = nextVersion
       listeners.forEach((listener) => listener(op, nextVersion))
@@ -207,14 +212,46 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   const createPropListener =
     (prop: string | symbol): Listener =>
     (op, nextVersion) => {
-      const newOp: Op = [...op]
-      newOp[1] = [prop, ...(newOp[1] as Path)]
+      let newOp: Op | undefined
+      if (op) {
+        const newOp: Op = [...op]
+        newOp[1] = [prop, ...(newOp[1] as Path)]
+      }
       notifyUpdate(newOp, nextVersion)
     }
+  type WithOp = boolean
   const propProxyStates = new Map<
     string | symbol,
-    readonly [ProxyState, RemoveListener?]
+    readonly [ProxyState, RemoveListener?, WithOp?]
   >()
+  const addPropListenerWithOp = (
+    prop: string | symbol,
+    propProxyState: ProxyState,
+    withOp: boolean,
+  ) => {
+    return propProxyState[2](createPropListener(prop), withOp)
+  }
+  const updatePropListeners = () => {
+    const shouldListen = listeners.size > 0
+    const withOp = opListeners > 0
+    propProxyStates.forEach(
+      ([propProxyState, prevRemove, prevWithOp], prop) => {
+        if (!shouldListen) {
+          if (prevRemove) {
+            prevRemove()
+            propProxyStates.set(prop, [propProxyState])
+          }
+          return
+        }
+        if (prevWithOp === withOp && prevRemove) {
+          return
+        }
+        prevRemove?.()
+        const remove = addPropListenerWithOp(prop, propProxyState, withOp)
+        propProxyStates.set(prop, [propProxyState, remove, withOp])
+      },
+    )
+  }
   const addPropListener = (prop: string | symbol, propValue: unknown) => {
     const propProxyState =
       !refSet.has(propValue as object) && proxyStateMap.get(propValue as object)
@@ -223,8 +260,9 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
         throw new Error('prop listener already exists')
       }
       if (listeners.size) {
-        const remove = propProxyState[2](createPropListener(prop))
-        propProxyStates.set(prop, [propProxyState, remove])
+        const withOp = opListeners > 0
+        const remove = addPropListenerWithOp(prop, propProxyState, withOp)
+        propProxyStates.set(prop, [propProxyState, remove, withOp])
       } else {
         propProxyStates.set(prop, [propProxyState])
       }
@@ -237,26 +275,21 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
       entry[1]?.()
     }
   }
-  const addListener = (listener: Listener) => {
+  const addListener = (listener: Listener, needsOp: NeedsOp) => {
     listeners.add(listener)
-    if (listeners.size === 1) {
-      propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
-        if (import.meta.env?.MODE !== 'production' && prevRemove) {
-          throw new Error('remove already exists')
-        }
-        const remove = propProxyState[2](createPropListener(prop))
-        propProxyStates.set(prop, [propProxyState, remove])
-      })
+    if (needsOp) {
+      opListeners += 1
+    }
+    if (listeners.size === 1 || (needsOp && opListeners === 1)) {
+      updatePropListeners()
     }
     const removeListener = () => {
       listeners.delete(listener)
-      if (listeners.size === 0) {
-        propProxyStates.forEach(([propProxyState, remove], prop) => {
-          if (remove) {
-            remove()
-            propProxyStates.set(prop, [propProxyState])
-          }
-        })
+      if (needsOp) {
+        opListeners -= 1
+      }
+      if (listeners.size === 0 || (needsOp && opListeners === 0)) {
+        updatePropListeners()
       }
     }
     return removeListener
@@ -335,7 +368,7 @@ export function subscribe<T extends object>(
   const addListener = (proxyState as ProxyState)[2]
   let isListenerActive = false
   const listener: Listener = (op) => {
-    ops?.push(op)
+    ops?.push(op!)
     if (options?.sync) {
       callback(ops?.splice(0) as never)
       return
@@ -349,7 +382,7 @@ export function subscribe<T extends object>(
       })
     }
   }
-  const removeListener = addListener(listener)
+  const removeListener = addListener(listener, !!ops)
   isListenerActive = true
   return () => {
     isListenerActive = false
