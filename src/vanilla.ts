@@ -293,33 +293,58 @@ export function getVersion(proxyObject: unknown): number | undefined {
   return proxyState?.[1]()
 }
 
+/** @deprecated Use options object */
+export function subscribe<T extends object>(
+  proxyObject: T,
+  callback: (unstable_ops: Op[]) => void,
+  notifyInSync: boolean,
+): () => void
+
+export function subscribe<T extends object>(
+  proxyObject: T,
+  callback: (unstable_ops: Op[]) => void,
+  options: { sync?: boolean; unstable_ops: true },
+): () => void
+
+export function subscribe<T extends object>(
+  proxyObject: T,
+  callback: () => void,
+  options?: { sync?: boolean; unstable_ops?: false },
+): () => void
+
 /**
  * Subscribes to changes in a proxy object
  */
 export function subscribe<T extends object>(
   proxyObject: T,
   callback: (unstable_ops: Op[]) => void,
-  notifyInSync?: boolean,
+  options?: { sync?: boolean; unstable_ops?: boolean } | boolean,
 ): () => void {
+  if (typeof options === 'boolean') {
+    console.warn(
+      '[DEPRECATED] subscribe with boolean option is deprecated. Please use options object instead.',
+    )
+    options = { sync: options, unstable_ops: true }
+  }
   const proxyState = proxyStateMap.get(proxyObject as object)
   if (import.meta.env?.MODE !== 'production' && !proxyState) {
     console.warn('Please use proxy object')
   }
   let promise: Promise<void> | undefined
-  const ops: Op[] = []
+  const ops: Op[] | undefined = options?.unstable_ops ? [] : undefined
   const addListener = (proxyState as ProxyState)[2]
   let isListenerActive = false
   const listener: Listener = (op) => {
-    ops.push(op)
-    if (notifyInSync) {
-      callback(ops.splice(0))
+    ops?.push(op)
+    if (options?.sync) {
+      callback(ops?.splice(0) as never)
       return
     }
     if (!promise) {
       promise = Promise.resolve().then(() => {
         promise = undefined
         if (isListenerActive) {
-          callback(ops.splice(0))
+          callback(ops?.splice(0) as never)
         }
       })
     }
