@@ -280,13 +280,17 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     if (needsOp) {
       opListeners += 1
     }
-    updatePropListeners()
+    if (listeners.size === 1 || (needsOp && opListeners === 1)) {
+      updatePropListeners()
+    }
     const removeListener = () => {
       listeners.delete(listener)
       if (needsOp) {
         opListeners -= 1
       }
-      updatePropListeners()
+      if (listeners.size === 0 || (needsOp && opListeners === 0)) {
+        updatePropListeners()
+      }
     }
     return removeListener
   }
