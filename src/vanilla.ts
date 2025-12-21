@@ -229,25 +229,20 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     propProxyState: ProxyState,
     needsOp: NeedsOp,
   ) => propProxyState[2](createPropListener(prop, needsOp), needsOp)
-  const updatePropListeners = () => {
-    if (listeners.size) {
-      propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
-        prevRemove?.()
-        const remove = addPropListenerWithOp(
-          prop,
-          propProxyState,
-          opListeners > 0,
-        )
-        propProxyStates.set(prop, [propProxyState, remove])
-      })
-    } else {
-      propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
-        if (prevRemove) {
-          prevRemove()
-          propProxyStates.set(prop, [propProxyState])
-        }
-      })
-    }
+  const attachPropListeners = (needsOp: NeedsOp) => {
+    propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
+      prevRemove?.()
+      const remove = addPropListenerWithOp(prop, propProxyState, needsOp)
+      propProxyStates.set(prop, [propProxyState, remove])
+    })
+  }
+  const detachPropListeners = () => {
+    propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
+      if (prevRemove) {
+        prevRemove()
+        propProxyStates.set(prop, [propProxyState])
+      }
+    })
   }
   const addPropListener = (prop: string | symbol, propValue: unknown) => {
     const propProxyState =
@@ -280,16 +275,20 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     if (needsOp) {
       opListeners += 1
     }
-    if (listeners.size === 1 || (needsOp && opListeners === 1)) {
-      updatePropListeners()
+    if (listeners.size === 1) {
+      attachPropListeners(opListeners > 0)
+    } else if (needsOp && opListeners === 1) {
+      attachPropListeners(true)
     }
     const removeListener = () => {
       listeners.delete(listener)
       if (needsOp) {
         opListeners -= 1
       }
-      if (listeners.size === 0 || (needsOp && opListeners === 0)) {
-        updatePropListeners()
+      if (listeners.size === 0) {
+        detachPropListeners()
+      } else if (needsOp && opListeners === 0) {
+        attachPropListeners(false)
       }
     }
     return removeListener
