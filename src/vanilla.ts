@@ -210,14 +210,15 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     return version
   }
   const createPropListener =
-    (prop: string | symbol): Listener =>
+    (prop: string | symbol, withOp: boolean): Listener =>
     (op, nextVersion) => {
-      let newOp: Op | undefined
-      if (op) {
+      if (withOp && op) {
         const newOp: Op = [...op]
         newOp[1] = [prop, ...(newOp[1] as Path)]
+        notifyUpdate(newOp, nextVersion)
+      } else {
+        notifyUpdate(undefined, nextVersion)
       }
-      notifyUpdate(newOp, nextVersion)
     }
   type WithOp = boolean
   const propProxyStates = new Map<
@@ -228,9 +229,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     prop: string | symbol,
     propProxyState: ProxyState,
     withOp: boolean,
-  ) => {
-    return propProxyState[2](createPropListener(prop), withOp)
-  }
+  ) => propProxyState[2](createPropListener(prop, withOp), withOp)
   const updatePropListeners = () => {
     const shouldListen = listeners.size > 0
     const withOp = opListeners > 0
@@ -280,17 +279,13 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     if (needsOp) {
       opListeners += 1
     }
-    if (listeners.size === 1 || (needsOp && opListeners === 1)) {
-      updatePropListeners()
-    }
+    updatePropListeners()
     const removeListener = () => {
       listeners.delete(listener)
       if (needsOp) {
         opListeners -= 1
       }
-      if (listeners.size === 0 || (needsOp && opListeners === 0)) {
-        updatePropListeners()
-      }
+      updatePropListeners()
     }
     return removeListener
   }
