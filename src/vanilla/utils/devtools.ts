@@ -57,34 +57,30 @@ export function devtools<T extends object>(
 
   let isTimeTraveling = false
   const devtools = extension.connect({ name, ...rest })
-  const unsub1 = subscribe(
-    proxyObject,
-    (ops) => {
-      const action = ops
-        .filter(([_, path]) => path[0] !== DEVTOOLS)
-        .map(([op, path]) => `${op}:${path.map(String).join('.')}`)
-        .join(', ')
+  const unsub1 = subscribe(proxyObject, (ops) => {
+    const action = ops
+      .filter(([_, path]) => path[0] !== DEVTOOLS)
+      .map(([op, path]) => `${op}:${path.map(String).join('.')}`)
+      .join(', ')
 
-      if (!action) {
-        return
-      }
+    if (!action) {
+      return
+    }
 
-      if (isTimeTraveling) {
-        isTimeTraveling = false
-      } else {
-        const snapWithoutDevtools = Object.assign({}, snapshot(proxyObject))
-        delete (snapWithoutDevtools as any)[DEVTOOLS]
-        devtools.send(
-          {
-            type: action,
-            updatedAt: new Date().toLocaleString(),
-          } as any,
-          snapWithoutDevtools,
-        )
-      }
-    },
-    { unstable_ops: true },
-  )
+    if (isTimeTraveling) {
+      isTimeTraveling = false
+    } else {
+      const snapWithoutDevtools = Object.assign({}, snapshot(proxyObject))
+      delete (snapWithoutDevtools as any)[DEVTOOLS]
+      devtools.send(
+        {
+          type: action,
+          updatedAt: new Date().toLocaleString(),
+        } as any,
+        snapWithoutDevtools,
+      )
+    }
+  })
   const unsub2 = (
     devtools as unknown as {
       // FIXME https://github.com/reduxjs/redux-devtools/issues/1097

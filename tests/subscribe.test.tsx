@@ -142,7 +142,7 @@ describe('subscribe', () => {
     })
     const handler = vi.fn()
 
-    subscribe(obj, handler, { unstable_ops: true })
+    subscribe(obj, handler)
 
     obj.count1 += 1
     obj.count2 = 2
@@ -167,7 +167,7 @@ describe('subscribe', () => {
     })
     const handler = vi.fn()
 
-    subscribe(obj, handler, { unstable_ops: true })
+    subscribe(obj, handler)
 
     obj.nested.count = 1
 

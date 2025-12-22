@@ -26,6 +26,6 @@ export function subscribeKey<T extends object, K extends keyof T>(
         callback((prevValue = nextValue))
       }
     },
-    { sync: !!notifyInSync },
+    notifyInSync,
   )
 }

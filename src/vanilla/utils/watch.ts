@@ -74,9 +74,7 @@ export function watch(
         // in case the callback is a promise and the watch has ended
         if (alive && !subscriptions.has(proxyObject)) {
           // subscribe to new proxy immediately -> this fixes problems when Promises are used due to the callstack
-          const unsubscribe = subscribe(proxyObject, revalidate, {
-            sync: !!options?.sync,
-          })
+          const unsubscribe = subscribe(proxyObject, revalidate, options?.sync)
           subscriptions.set(proxyObject, unsubscribe)
         }
         return proxyObject
