@@ -192,13 +192,17 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   }
   let version = versionHolder[0]
   const listeners = new Set<Listener>()
+  let listenerArrayCache: Listener[] | null = null
   const notifyUpdate = (
     op: Op | undefined,
     nextVersion = ++versionHolder[0],
   ) => {
     if (version !== nextVersion) {
       checkVersion = version = nextVersion
-      listeners.forEach((listener) => listener(op, nextVersion))
+      listenerArrayCache ||= Array.from(listeners)
+      for (let i = 0; i < listenerArrayCache.length; ++i) {
+        listenerArrayCache[i]!(op, nextVersion)
+      }
     }
   }
   let checkVersion = version
@@ -252,6 +256,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   }
   const addListener = (listener: Listener) => {
     listeners.add(listener)
+    listenerArrayCache = null
     if (listeners.size === 1) {
       propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
         if (import.meta.env?.MODE !== 'production' && prevRemove) {
@@ -263,6 +268,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     }
     const removeListener = () => {
       listeners.delete(listener)
+      listenerArrayCache = null
       if (listeners.size === 0) {
         propProxyStates.forEach(([propProxyState, remove], prop) => {
           if (remove) {
