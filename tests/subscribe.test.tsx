@@ -1,11 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import {
-  unstable_enableOp as enableOp,
-  proxy,
-  ref,
-  snapshot,
-  subscribe,
-} from 'valtio'
+import { proxy, ref, snapshot, subscribe, unstable_enableOp } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 
 describe('subscribe', () => {
@@ -209,7 +203,7 @@ describe('subscribe with op', () => {
   const consoleWarn = console.warn
 
   beforeEach(() => {
-    enableOp(true)
+    unstable_enableOp(true)
     console.warn = vi.fn((message: string) => {
       if (message === 'Please use proxy object') {
         return
@@ -222,7 +216,7 @@ describe('subscribe with op', () => {
   afterEach(() => {
     console.warn = consoleWarn
     vi.useRealTimers()
-    enableOp(false)
+    unstable_enableOp(false)
   })
 
   it('should notify ops', async () => {
