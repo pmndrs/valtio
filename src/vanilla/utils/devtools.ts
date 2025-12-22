@@ -1,4 +1,4 @@
-import { snapshot, subscribe } from '../../vanilla.ts'
+import { snapshot, subscribe, unstable_enableOp } from '../../vanilla.ts'
 import type {} from '@redux-devtools/extension'
 
 // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
@@ -55,10 +55,11 @@ export function devtools<T extends object>(
     return
   }
 
+  unstable_enableOp()
   let isTimeTraveling = false
   const devtools = extension.connect({ name, ...rest })
-  const unsub1 = subscribe(proxyObject, (ops) => {
-    const action = ops
+  const unsub1 = subscribe(proxyObject, (unstable_ops) => {
+    const action = unstable_ops
       .filter(([_, path]) => path[0] !== DEVTOOLS)
       .map(([op, path]) => `${op}:${path.map(String).join('.')}`)
       .join(', ')
