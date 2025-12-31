@@ -11,8 +11,12 @@ type WatchOptions = {
 
 let currentCleanups: Set<Cleanup> | undefined
 
+let didWarnDeprecation = false
+
 /**
  * watch
+ *
+ * @deprecated This util is no longer maintained. Please migrate to [valtio-reactive](https://github.com/valtiojs/valtio-reactive).
  *
  * Creates a reactive effect that automatically tracks proxy objects and
  * reevaluates everytime one of the tracked proxy objects updates. It returns
@@ -34,6 +38,13 @@ export function watch(
   callback: WatchCallback,
   options?: WatchOptions,
 ): Cleanup {
+  if (import.meta.env?.MODE !== 'production' && !didWarnDeprecation) {
+    console.warn(
+      '[DEPRECATED] The `watch` util is no longer maintained. Please migrate to [valtio-reactive](https://github.com/valtiojs/valtio-reactive).',
+    )
+    didWarnDeprecation = true
+  }
+
   let alive = true
   const cleanups = new Set<Cleanup>()
 
