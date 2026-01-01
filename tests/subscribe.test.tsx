@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, ref, snapshot, subscribe } from 'valtio'
+import { proxy, ref, snapshot, subscribe, unstable_enableOp } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 
 describe('subscribe', () => {
@@ -49,7 +49,7 @@ describe('subscribe', () => {
     const obj = proxy({ count: 0 })
     const handler = vi.fn()
 
-    const _unsubscribeA = subscribe(obj, () => {
+    subscribe(obj, () => {
       unsubscribeB()
     })
 
@@ -135,53 +135,6 @@ describe('subscribe', () => {
     expect(handler).toBeCalledTimes(0)
   })
 
-  it('should notify ops', async () => {
-    const obj = proxy<{ count1: number; count2?: number }>({
-      count1: 0,
-      count2: 0,
-    })
-    const handler = vi.fn()
-
-    subscribe(obj, handler)
-
-    obj.count1 += 1
-    obj.count2 = 2
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toBeCalledTimes(1)
-    expect(handler).lastCalledWith([
-      ['set', ['count1'], 1, 0],
-      ['set', ['count2'], 2, 0],
-    ])
-
-    delete obj.count2
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toBeCalledTimes(2)
-    expect(handler).lastCalledWith([['delete', ['count2'], 2]])
-  })
-
-  it('should notify nested ops', async () => {
-    const obj = proxy<{ nested: { count?: number } }>({
-      nested: { count: 0 },
-    })
-    const handler = vi.fn()
-
-    subscribe(obj, handler)
-
-    obj.nested.count = 1
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toBeCalledTimes(1)
-    expect(handler).lastCalledWith([['set', ['nested', 'count'], 1, 0]])
-
-    delete obj.nested.count
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toBeCalledTimes(2)
-    expect(handler).lastCalledWith([['delete', ['nested', 'count'], 1]])
-  })
-
   it('should not notify with assigning same object', async () => {
     const obj = {}
     const state = proxy({ obj })
@@ -243,5 +196,73 @@ describe('subscribeKey', () => {
     subscribe(obj, () => {})
     const snapshot2 = snapshot(obj)
     expect(snapshot1).not.toEqual(snapshot2)
+  })
+})
+
+describe('subscribe with op', () => {
+  const consoleWarn = console.warn
+
+  beforeEach(() => {
+    unstable_enableOp(true)
+    console.warn = vi.fn((message: string) => {
+      if (message === 'Please use proxy object') {
+        return
+      }
+      consoleWarn(message)
+    })
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    console.warn = consoleWarn
+    vi.useRealTimers()
+    unstable_enableOp(false)
+  })
+
+  it('should notify ops', async () => {
+    const obj = proxy<{ count1: number; count2?: number }>({
+      count1: 0,
+      count2: 0,
+    })
+    const handler = vi.fn()
+
+    subscribe(obj, handler)
+
+    obj.count1 += 1
+    obj.count2 = 2
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(handler).toBeCalledTimes(1)
+    expect(handler).lastCalledWith([
+      ['set', ['count1'], 1, 0],
+      ['set', ['count2'], 2, 0],
+    ])
+
+    delete obj.count2
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(handler).toBeCalledTimes(2)
+    expect(handler).lastCalledWith([['delete', ['count2'], 2]])
+  })
+
+  it('should notify nested ops', async () => {
+    const obj = proxy<{ nested: { count?: number } }>({
+      nested: { count: 0 },
+    })
+    const handler = vi.fn()
+
+    subscribe(obj, handler)
+
+    obj.nested.count = 1
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(handler).toBeCalledTimes(1)
+    expect(handler).lastCalledWith([['set', ['nested', 'count'], 1, 0]])
+
+    delete obj.nested.count
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(handler).toBeCalledTimes(2)
+    expect(handler).lastCalledWith([['delete', ['nested', 'count'], 1]])
   })
 })
