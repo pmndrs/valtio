@@ -40,10 +40,8 @@ jobs:
       - name: Patch for all TS
         run: |
           sed -i~ 's/"isolatedDeclarations": true,//' tsconfig.json
-          sed -i~ 's/"allowImportingTsExtensions": true,//' tsconfig.json
           sed -i~ 's/"valtio": \["\.\/src\/index\.ts"\],/"valtio": [".\/dist\/index.d.ts"],/' tsconfig.json
           sed -i~ 's/"valtio\/\*": \["\.\/src\/\*\.ts"\]/"valtio\/*": [".\/dist\/*.d.ts"]/' tsconfig.json
-          sed -i~ 's/"include": .*/"include": ["src\/types.d.ts", "dist\/**\/*", "tests\/**\/*"],/' tsconfig.json
       - name: Patch for v4/v3 TS
         if: ${{ startsWith(matrix.typescript, '4.') || startsWith(matrix.typescript, '3.') }}
         run: |
