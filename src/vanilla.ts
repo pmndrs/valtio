@@ -22,7 +22,7 @@ type Op =
   | [op: 'delete', path: Path, prevValue: unknown]
 
 /** Function called when a proxy object changes */
-type Listener = (op: Op, nextVersion: number) => void
+type Listener = (op: Op | undefined, nextVersion: number) => void
 
 export type INTERNAL_Op = Op
 
@@ -122,14 +122,14 @@ const createHandlerDefault = <T extends object>(
   isInitializing: () => boolean,
   addPropListener: (prop: string | symbol, propValue: unknown) => void,
   removePropListener: (prop: string | symbol) => void,
-  notifyUpdate: (op: Op) => void,
+  notifyUpdate: (op: Op | undefined) => void,
 ): ProxyHandler<T> => ({
   deleteProperty(target: T, prop: string | symbol) {
     const prevValue = Reflect.get(target, prop)
     removePropListener(prop)
     const deleted = Reflect.deleteProperty(target, prop)
     if (deleted) {
-      notifyUpdate(['delete', [prop], prevValue])
+      notifyUpdate(createOp?.('delete', prop, prevValue))
     }
     return deleted
   },
@@ -151,10 +151,16 @@ const createHandlerDefault = <T extends object>(
       !proxyStateMap.has(value) && canProxy(value) ? proxy(value) : value
     addPropListener(prop, nextValue)
     Reflect.set(target, prop, nextValue, receiver)
-    notifyUpdate(['set', [prop], value, prevValue])
+    notifyUpdate(createOp?.('set', prop, value, prevValue))
     return true
   },
 })
+
+const createOpDefault = (
+  type: 'set' | 'delete',
+  prop: symbol | string,
+  ...args: unknown[]
+) => [type, [prop], ...args] as Op
 
 // internal states
 const proxyStateMap: WeakMap<ProxyObject, ProxyState> = new WeakMap()
@@ -171,6 +177,7 @@ let newProxy = <T extends object>(target: T, handler: ProxyHandler<T>): T =>
 let canProxy: typeof canProxyDefault = canProxyDefault
 let createSnapshot: typeof createSnapshotDefault = createSnapshotDefault
 let createHandler: typeof createHandlerDefault = createHandlerDefault
+let createOp: typeof createOpDefault | undefined
 
 /**
  * Creates a reactive proxy object that can be tracked for changes
@@ -185,7 +192,10 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   }
   let version = versionHolder[0]
   const listeners = new Set<Listener>()
-  const notifyUpdate = (op: Op, nextVersion = ++versionHolder[0]) => {
+  const notifyUpdate = (
+    op: Op | undefined,
+    nextVersion = ++versionHolder[0],
+  ) => {
     if (version !== nextVersion) {
       checkVersion = version = nextVersion
       listeners.forEach((listener) => listener(op, nextVersion))
@@ -207,8 +217,11 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   const createPropListener =
     (prop: string | symbol): Listener =>
     (op, nextVersion) => {
-      const newOp: Op = [...op]
-      newOp[1] = [prop, ...(newOp[1] as Path)]
+      let newOp: Op | undefined
+      if (op) {
+        newOp = [...op]
+        newOp[1] = [prop, ...(newOp[1] as Path)]
+      }
       notifyUpdate(newOp, nextVersion)
     }
   const propProxyStates = new Map<
@@ -310,7 +323,9 @@ export function subscribe<T extends object>(
   const addListener = (proxyState as ProxyState)[2]
   let isListenerActive = false
   const listener: Listener = (op) => {
-    ops.push(op)
+    if (op) {
+      ops.push(op)
+    }
     if (notifyInSync) {
       callback(ops.splice(0))
       return
@@ -427,5 +442,17 @@ export function unstable_replaceInternalFunction(
       break
     default:
       throw new Error('unknown function')
+  }
+}
+
+export function unstable_enableOp(
+  enabled: boolean | typeof createOpDefault = true,
+): void {
+  if (enabled === true) {
+    createOp = createOpDefault
+  } else if (enabled === false) {
+    createOp = undefined
+  } else {
+    createOp = enabled
   }
 }
