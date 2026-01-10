@@ -270,6 +270,7 @@ export function getDocsNav(): NavigationTree {
       pages['how-to-avoid-rerenders-manually'],
       pages['how-to-easily-access-the-state-from-anywhere-in-the-application'],
       pages['how-to-organize-actions'],
+      pages['how-to-update-values-inside-arrays'],
       pages['how-to-persist-states'],
       pages['how-to-reset-state'],
       pages['how-to-split-and-compose-states'],
