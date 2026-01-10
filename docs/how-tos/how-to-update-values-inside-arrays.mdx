@@ -1,0 +1,95 @@
+---
+title: 'How to update values inside arrays'
+---
+
+# How to update values inside arrays
+
+Avoid unnecessary re-renders when updating values inside arrays.
+
+## Basic approach (triggers full list re-render)
+
+In this example, iterating over the snapshot items causes the entire list to re-render whenever any item changes.
+
+```js
+import { proxy, useSnapshot } from 'valtio'
+
+const state = proxy({
+  title: 'My Counter list',
+  items: [
+    { id: 1, count: 0 },
+    { id: 2, count: 0 },
+  ],
+})
+
+function Counter({ item }) {
+  return (
+    <div>
+      <span>{item.count}</span>
+      <button onClick={() => item.count++}>+1</button>
+    </div>
+  )
+}
+
+function CounterList() {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      <h1>{snap.title}</h1>
+      {/* Touching snap.items causes the whole list to re-render when any child updates */}
+      {snap.items.map((item) => (
+        <Counter key={item.id} item={item} />
+      ))}
+    </div>
+  )
+}
+```
+
+## Optimized approach (only changed items re-render)
+
+Pass the proxy item (not snapshot) to children and let each child subscribe to its own item.
+Do not access the entire array from the snapshot in the parent component.
+
+```js
+import { proxy, useSnapshot } from 'valtio'
+
+const state = proxy({
+  title: 'My Counter list',
+  items: [
+    { id: 1, count: 0 },
+    { id: 2, count: 0 },
+  ],
+})
+
+function Counter({ item }) {
+  const snap = useSnapshot(item)
+  return (
+    <div>
+      <span>{snap.count}</span>
+      <button onClick={() => item.count++}>+1</button>
+    </div>
+  )
+}
+
+function CounterList() {
+  const snap = useSnapshot(state)
+  return (
+    <div>
+      <h1>{snap.title}</h1>
+      {/* Only the length is accessed from snap, so only updated children re-render */}
+      {Array.from({ length: snap.items.length }, (_, index) => (
+        <Counter key={state.items[index].id} item={state.items[index]} />
+      ))}
+    </div>
+  )
+}
+```
+
+## FAQ
+
+### Why does `snap.items.map()` cause re-renders but `snap.items.length` doesn't?
+
+When you call `snap.items.map()`, you're accessing every item in the array. Valtio sees this and re-renders whenever _any_ item changes. When you only access `snap.items.length`, Valtio only re-renders when the array length changes.
+
+### Why use `Array.from()` instead of `.map()`?
+
+`Array.from({ length: n }, (_, i) => ...)` creates an array by index without touching the snapshot items. This lets you access items via `state.items[index]` (the proxy) instead of `snap.items[index]` (the snapshot), avoiding unnecessary re-renders.
