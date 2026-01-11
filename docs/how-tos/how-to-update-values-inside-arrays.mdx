@@ -84,12 +84,8 @@ function CounterList() {
 }
 ```
 
-## FAQ
+## Why this works
 
-### Why does `snap.items.map()` cause re-renders but `snap.items.length` doesn't?
+Because the proxy (in this case: `state.items[index]`) is a proxy object instead of a snapshot object, accessing it does not track usage. This prevents the parent component from "subscribing" to the item's internal changes, effectively isolating updates to the child component.
 
-When you call `snap.items.map()`, you're accessing every item in the array. Valtio sees this and re-renders whenever _any_ item changes. When you only access `snap.items.length`, Valtio only re-renders when the array length changes.
-
-### Why use `Array.from()` instead of `.map()`?
-
-`Array.from({ length: n }, (_, i) => ...)` creates an array by index without touching the snapshot items. This lets you access items via `state.items[index]` (the proxy) instead of `snap.items[index]` (the snapshot), avoiding unnecessary re-renders.
+When you call `snap.items.map()`, you access every item in the array, causing Valtio to re-render whenever _any_ item changes. By only accessing `snap.items.length`, Valtio only re-renders when the array length changes. Using `Array.from({ length: n }, (_, i) => ...)` creates an array by index without touching snapshot items, letting you access the proxy directly.
