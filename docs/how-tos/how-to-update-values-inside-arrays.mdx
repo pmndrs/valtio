@@ -77,6 +77,7 @@ function CounterList() {
       <h1>{snap.title}</h1>
       {/* Only the length is accessed from snap, so only updated children re-render */}
       {Array.from({ length: snap.items.length }, (_, index) => (
+        {/* Note that we are passing the proxy object (state) instead of the snapshot (snap) to the child component */}
         <Counter key={state.items[index].id} item={state.items[index]} />
       ))}
     </div>
