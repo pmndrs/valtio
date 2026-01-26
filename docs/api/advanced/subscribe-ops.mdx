@@ -1,0 +1,95 @@
+---
+title: 'subscribe-ops'
+section: 'API'
+subSection: 'Advanced'
+description: 'Fine-grained mutation tracking with operational transformations (Ops)'
+---
+
+# Subscribe Ops
+
+By default, Valtio's `subscribe` notify you that _something_ has changed in the state proxy. However, you can opt-in to receiving **Ops** (Operations), which are detailed descriptions of exactly what was modified.
+
+## What are Ops?
+
+Ops are granular mutation records. When a proxy is updated, Valtio can generate a description of the change as a tuple.
+
+### Op Types
+
+- **`set`**: `[op: 'set', path: Path, value: unknown, prevValue: unknown]`
+  - Triggered when a property is assigned a new value.
+- **`delete`**: `[op: 'delete', path: Path, prevValue: unknown]`
+  - Triggered when a property is deleted.
+- **`resolve`**: `[op: 'resolve', path: Path, value: unknown]`
+  - Triggered when a promise in the state is fulfilled.
+- **`reject`**: `[op: 'reject', path: Path, error: unknown]`
+  - Triggered when a promise in the state is rejected.
+
+The `Path` is an array of strings or symbols representing the nested location of the property (e.g., `['user', 'profile', 'name']`).
+
+## How to use Ops
+
+The "ops" feature is an **opt-in** feature because it introduces a small performance overhead for tracking and allocating these operation objects.
+
+### 1. Enabling Ops
+
+You must explicitly enable op-tracking using the unstable API:
+
+```javascript
+import { unstable_enableOp } from 'valtio'
+
+// Enable globally
+unstable_enableOp(true)
+```
+
+### 2. Receiving Ops in `subscribe`
+
+Once enabled, the `subscribe` callback receives an array of these operations as its first argument.
+
+```javascript
+import { proxy, subscribe, unstable_enableOp } from 'valtio'
+
+unstable_enableOp(true)
+
+const state = proxy({ count: 0, text: 'hello' })
+
+subscribe(state, (ops) => {
+  ops.forEach((op) => {
+    const [action, path, value, prevValue] = op
+    console.log(`Action: ${action} at ${path.join('.')}`)
+    console.log(`New value:`, value)
+    console.log(`Previous value:`, prevValue)
+  })
+})
+
+state.count++
+// Output:
+// Action: set at count
+// New value: 1
+// Previous value: 0
+```
+
+> **Note**: If `unstable_enableOp(true)` is not called, the `ops` argument will be an empty array or `undefined`.
+
+## Use Cases
+
+While standard `subscribe` is sufficient for most React UI updates, Ops are useful for specific advanced scenarios:
+
+1.  **Network Synchronization**: Instead of sending the entire state over the wire, you can send only the `ops` (patches). This significantly reduces bandwidth consumption in distributed applications.
+2.  **Undo/Redo History**: Use the `prevValue` provided in `set` and `delete` ops to easily revert state changes.
+3.  **Audit Logs & Debugging**: Track a sequence of user-driven mutations for analytics or time-travel debugging.
+4.  **Devtools Integration**: Powering custom development tools that need to visualize state transitions.
+
+## Performance Considerations
+
+Enabling Ops has a small overhead cost. For every mutation, Valtio must:
+
+- Detect the change type.
+- Construct the `Path` array.
+- Allocate the `Op` tuple.
+
+In high-frequency update scenarios (e.g., animations, canvas interactions moving hundreds of objects per frame), this can lead to:
+
+- Increased garbage collection (GC) pressure due to object allocations.
+- A measurable drop in frame rates (FPS).
+
+**Recommendation**: Only enable `unstable_enableOp` if your application actually consumes the granular `ops` data.

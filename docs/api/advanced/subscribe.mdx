@@ -38,3 +38,9 @@ state.arr.push('world')
 ## Codesandbox demo in VanillaJS
 
 https://codesandbox.io/s/valtio-photo-booth-demo-forked-xp8hs?file=/src/main.js
+
+## Advanced: Listening to "Ops"
+
+The `subscribe` callback can also receive **Ops** (Operations), which are detailed records of exactly what changed (e.g., which property was set or deleted). This is useful for advanced scenarios like synchronization or undo/redo.
+
+Because tracking these operations has a small performance cost, they are disabled by default. For more details on how to enable and use them, check out [Subscribe Ops](./subscribe-ops).

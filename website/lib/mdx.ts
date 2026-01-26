@@ -253,7 +253,12 @@ export function getDocsNav(): NavigationTree {
     ],
     API: {
       Basic: [pages['proxy'], pages['useSnapshot']],
-      Advanced: [pages['ref'], pages['subscribe'], pages['snapshot']],
+      Advanced: [
+        pages['ref'],
+        pages['subscribe'],
+        pages['subscribe-ops'],
+        pages['snapshot'],
+      ],
       Utils: [
         pages['subscribeKey'],
         pages['watch'],
