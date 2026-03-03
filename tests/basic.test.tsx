@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useState } from 'react'
+import { StrictMode, useEffect, useLayoutEffect, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, useSnapshot } from 'valtio'
@@ -397,6 +397,47 @@ describe('basic', () => {
     fireEvent.click(screen.getByText('toggle'))
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('count: 1')).toBeInTheDocument()
+  })
+
+  it('should not commit stale value for newly accessed keys on local rerender (regression in #1176)', async () => {
+    const obj = proxy({ count: 0, anotherValue: 0 })
+
+    const commitFn = vi.fn()
+    const Component = () => {
+      const [showAnotherValue, setShowAnotherValue] = useState(false)
+      const snap = useSnapshot(obj)
+      const value = showAnotherValue ? snap.anotherValue : 'hidden'
+      useLayoutEffect(() => {
+        commitFn(value)
+      }, [value])
+      return (
+        <>
+          <div>count: {snap.count}</div>
+          {showAnotherValue && <div>anotherValue: {snap.anotherValue}</div>}
+          <button onClick={() => setShowAnotherValue(true)}>
+            showAnotherValue
+          </button>
+        </>
+      )
+    }
+
+    render(<Component />)
+
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+    expect(screen.queryByText('anotherValue: 0')).not.toBeInTheDocument()
+    expect(screen.queryByText('anotherValue: 1')).not.toBeInTheDocument()
+    expect(commitFn).toBeCalledTimes(1)
+    expect(commitFn).toHaveBeenNthCalledWith(1, 'hidden')
+
+    obj.anotherValue += 1
+
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(commitFn).toBeCalledTimes(1)
+
+    fireEvent.click(screen.getByText('showAnotherValue'))
+
+    expect(screen.getByText('anotherValue: 1')).toBeInTheDocument()
+    expect(commitFn.mock.calls.map(([value]) => value)).toEqual(['hidden', 1])
   })
 
   it('counter with sync option', async () => {
