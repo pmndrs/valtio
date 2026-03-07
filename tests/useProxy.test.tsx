@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/immutability */
 import { StrictMode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -22,6 +21,7 @@ describe('useProxy', () => {
       return (
         <>
           <div>count: {store.count}</div>
+          {/* eslint-disable-next-line react-hooks/immutability */}
           <button onClick={() => ++store.count}>increment</button>
         </>
       )
@@ -52,6 +52,7 @@ describe('useProxy', () => {
           <div>
             {store.user.name} ({store.user.age})
           </div>
+          {/* eslint-disable-next-line react-hooks/immutability */}
           <button onClick={() => (store.user.name = 'Bob')}>rename</button>
         </>
       )
@@ -82,6 +83,7 @@ describe('useProxy', () => {
           </div>
           <button
             onClick={() => {
+              // eslint-disable-next-line react-hooks/immutability
               store.firstName = 'Jane'
               store.lastName = 'Smith'
             }}
@@ -113,6 +115,7 @@ describe('useProxy', () => {
       return (
         <>
           <div>count: {store.count}</div>
+          {/* eslint-disable-next-line react-hooks/immutability */}
           <button onClick={() => ++store.count}>increment</button>
         </>
       )
