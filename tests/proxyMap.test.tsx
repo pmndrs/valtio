@@ -330,6 +330,12 @@ describe('proxyMap', () => {
     })
   })
 
+  it('should throw TypeError when initial entries is not iterable', () => {
+    expect(() => proxyMap(123 as any)).toThrow(
+      'proxyMap:\n\tinitial state must be iterable\n\t\ttip: structure should be [[key, value]]',
+    )
+  })
+
   describe('snapshot', () => {
     it('should error when trying to mutate a snapshot', () => {
       const state = proxyMap()
