@@ -1,5 +1,6 @@
 import { StrictMode, useEffect, useLayoutEffect, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
+import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, useSnapshot } from 'valtio'
 import { useCommitCount } from './utils'
@@ -11,6 +12,24 @@ describe('basic', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+  })
+
+  it('should return snapshot via getServerSnapshot with renderToString', () => {
+    const obj = proxy({ count: 0 })
+
+    const Counter = () => {
+      const snap = useSnapshot(obj)
+      return <div>count: {snap.count}</div>
+    }
+
+    const view = renderToString(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
+    )
+
+    expect(view).toContain('count:')
+    expect(view).toContain('0')
   })
 
   it('simple counter', async () => {
