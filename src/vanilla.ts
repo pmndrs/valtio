@@ -115,7 +115,7 @@ const createSnapshotDefault = <T extends object>(
     }
     Object.defineProperty(snap, key, desc)
   })
-  return Object.preventExtensions(snap)
+  return snap
 }
 
 const createHandlerDefault = <T extends object>(
