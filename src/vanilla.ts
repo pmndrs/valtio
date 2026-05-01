@@ -115,7 +115,8 @@ const createSnapshotDefault = <T extends object>(
     }
     Object.defineProperty(snap, key, desc)
   })
-  return Object.preventExtensions(snap)
+  // Object.preventExtensions is removed. ref: https://github.com/pmndrs/valtio/pull/1220
+  return snap
 }
 
 const createHandlerDefault = <T extends object>(
