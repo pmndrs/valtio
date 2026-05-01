@@ -48,7 +48,7 @@ jobs:
         run: |
           ts_ver_esc=${{ matrix.typescript }}
           ts_ver_esc=${ts_ver_esc//./\\.}
-          sed -i~ "s/\/\/ @ts-expect-error .*\[SKIP-TS-${ts_ver_esc}\].*//" src/*/*.tsx src/*/*/*.tsx
+          sed -i~ "s/\/\/ @ts-expect-error .*\[SKIP-TS-${ts_ver_esc}\].*//" src/*/*.ts src/*/*/*.ts
           sed -i~ "s/\/\/ .*\[ONLY-TS-${ts_ver_esc}\].* @ts-/\/\/ @ts-/" src/*/*.ts src/*/*/*.ts
       - name: Patch for Old TS
         if: ${{ matrix.typescript == '5.5.4' || matrix.typescript == '5.4.5' || matrix.typescript == '5.3.3' || matrix.typescript == '5.2.2' || matrix.typescript == '5.1.6' || matrix.typescript == '5.0.4' || matrix.typescript == '4.9.5' || matrix.typescript == '4.8.4' || matrix.typescript == '4.7.4' || matrix.typescript == '4.6.4' || matrix.typescript == '4.5.5' }}
