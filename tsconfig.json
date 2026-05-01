@@ -15,7 +15,6 @@
     "isolatedDeclarations": true,
     "types": ["@testing-library/jest-dom"],
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
       "valtio": ["./src/index.ts"],
       "valtio/*": ["./src/*.ts"]
