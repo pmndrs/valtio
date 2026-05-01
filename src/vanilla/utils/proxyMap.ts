@@ -178,6 +178,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     toJSON(): Map<K, V> {
       return new Map(this.entries())
     },
+    getOrInsert() {
+      throw new Error('not implemented')
+    },
+    getOrInsertComputed() {
+      throw new Error('not implemented')
+    },
   }
 
   const proxiedObject = proxy(vObject)
