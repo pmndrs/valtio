@@ -3,18 +3,12 @@ import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
 const { proxyStateMap, snapCache } = unstable_getInternalStates()
 const isProxy = (x: any) => proxyStateMap.has(x)
 
-type MapGetOrInsert<K, V> = {
-  getOrInsert(key: K, defaultValue: V): V
-  getOrInsertComputed(key: K, callbackFn: (key: K) => V): V
+type InternalProxyObject<K, V> = Map<K, V> & {
+  data: Array<V>
+  index: number
+  epoch: number
+  toJSON: () => Map<K, V>
 }
-
-type InternalProxyObject<K, V> = Map<K, V> &
-  Partial<MapGetOrInsert<K, V>> & {
-    data: Array<V>
-    index: number
-    epoch: number
-    toJSON: () => Map<K, V>
-  }
 
 /**
  * Determines if an object is a proxy Map created with proxyMap
