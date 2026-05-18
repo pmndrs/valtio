@@ -854,6 +854,24 @@ describe('proxySet', () => {
       expect(result).toEqual(proxySet([1, 9]))
     })
 
+    it('.intersection with Set-like object that has forEach but is not iterable', () => {
+      const odds = proxySet([1, 3, 5, 7, 9])
+      const setLike = {
+        size: 3,
+        has(v: number) {
+          return [1, 4, 9].includes(v)
+        },
+        keys() {
+          return [1, 4, 9].values()
+        },
+        forEach(cb: (v: number) => void) {
+          ;[1, 4, 9].forEach(cb)
+        },
+      }
+      const result = odds.intersection(setLike)
+      expect(result).toEqual(proxySet([1, 9]))
+    })
+
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/union#examples
     it('.union', () => {
       const evens = proxySet([2, 4, 6, 8])
