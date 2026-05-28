@@ -1,3 +1,4 @@
 allowBuilds:
   esbuild: false
   unrs-resolver: false
+  postinstall-postinstall: false
