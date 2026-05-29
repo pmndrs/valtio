@@ -139,7 +139,6 @@
     "jest-leak-detector": "^30.3.0",
     "jsdom": "^29.1.0",
     "json": "^11.0.0",
-    "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.8.3",
     "proxy-memoize": "^3.0.1",
     "react": "19.2.5",
