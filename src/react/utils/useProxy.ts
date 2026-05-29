@@ -33,6 +33,7 @@ export function useProxy<T extends object>(
   ;(snapshot as any)[DUMMY_SYMBOL]
 
   let isRendering = true
+  // eslint-disable-next-line react-hooks/immutability
   useLayoutEffect(() => {
     // This is an intentional hack
     // It might not work with React Compiler
