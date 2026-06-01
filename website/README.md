@@ -14,10 +14,11 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
-Install the dependencies:
+Install the dependencies (the website is part of the pnpm workspace, so a plain
+install from the repo root or from `website/` works):
 
 ```bash
-pnpm install --ignore-workspace
+pnpm install
 ```
 
 Run the development server:
