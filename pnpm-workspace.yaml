@@ -2,4 +2,8 @@ packages:
   - .
   - website
 ignoreWorkspaceRootCheck: true
-minimumReleaseAge: 1440
+allowBuilds:
+  deasync: false
+  esbuild: false
+  sharp: false
+  unrs-resolver: false
