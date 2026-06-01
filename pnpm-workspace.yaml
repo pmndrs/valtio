@@ -5,4 +5,5 @@ ignoreWorkspaceRootCheck: true
 allowBuilds:
   deasync: false
   esbuild: false
+  sharp: false
   unrs-resolver: false
