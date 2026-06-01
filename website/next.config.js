@@ -8,7 +8,4 @@ if (!buffer.SlowBuffer) {
 /** @type {import('next').NextConfig} */
 module.exports = {
   reactStrictMode: true,
-  typescript: {
-    ignoreBuildErrors: true, // FIXME why type errors in build?
-  },
 }
