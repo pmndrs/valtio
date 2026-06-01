@@ -7,7 +7,6 @@
     "start": "next start",
     "lint": "next lint"
   },
-  "packageManager": "pnpm@10.18.3",
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
