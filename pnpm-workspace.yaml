@@ -1,3 +1,8 @@
+packages:
+  - .
+  - website
+ignoreWorkspaceRootCheck: true
 allowBuilds:
+  deasync: false
   esbuild: false
   unrs-resolver: false
