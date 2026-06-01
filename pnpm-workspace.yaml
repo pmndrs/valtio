@@ -1,4 +1,5 @@
 packages:
   - .
   - website
+ignoreWorkspaceRootCheck: true
 minimumReleaseAge: 1440
