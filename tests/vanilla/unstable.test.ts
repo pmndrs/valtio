@@ -106,27 +106,35 @@ describe('unstable_replaceInternalFunction', () => {
   })
 
   it('should replace createSnapshot', () => {
-    const createSnapshot = vi.fn(
-      (prev: any) =>
-        <T extends object>(target: T, version: number) =>
-          prev(target, version),
-    )
-    replace('createSnapshot', createSnapshot)
+    let installed: ReturnType<typeof vi.fn> | undefined
+    replace('createSnapshot', (prev: any) => {
+      installed = vi.fn((target: object, version: number) =>
+        prev(target, version),
+      )
+      return installed
+    })
 
-    snapshot(proxy({ count: 0 }))
-    expect(createSnapshot).toHaveBeenCalled()
+    const state = proxy({ count: 0 })
+    expect(installed).not.toHaveBeenCalled()
+
+    expect(snapshot(state)).toEqual({ count: 0 })
+    expect(installed).toHaveBeenCalled()
   })
 
   it('should replace createHandler', () => {
-    const createHandler = vi.fn(
-      (prev: any) =>
-        (...args: any[]) =>
-          prev(...args),
-    )
-    replace('createHandler', createHandler)
+    let installed: ReturnType<typeof vi.fn> | undefined
+    replace('createHandler', (prev: any) => {
+      installed = vi.fn((...args: any[]) => prev(...args))
+      return installed
+    })
 
-    proxy({ count: 0 })
-    expect(createHandler).toHaveBeenCalled()
+    expect(installed).not.toHaveBeenCalled()
+
+    const state = proxy({ count: 0 })
+    expect(installed).toHaveBeenCalled()
+
+    state.count += 1
+    expect(state.count).toBe(1)
   })
 })
 

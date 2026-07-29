@@ -942,20 +942,57 @@ describe('proxySet', () => {
       })
     })
 
+    // The TC39 set-methods proposal defines a set-like by `size`, `has()` and
+    // `keys()`. proxySet instead accepts Symbol.iterator and falls back to
+    // forEach, and never calls keys(). These tests pin the current divergence
+    // from a native Set rather than asserting the proposal's semantics.
     describe('set-like arguments', () => {
-      const setLike = <T,>(values: T[]) => ({
-        size: values.length,
-        has: (v: T) => values.includes(v),
-        keys: () => values[Symbol.iterator](),
-        forEach: (cb: (v: T) => void) => values.forEach(cb),
+      it('should accept an iterable', () => {
+        const set = proxySet([1, 2, 3])
+        expect([...set.union(new Set([4]))]).toEqual([1, 2, 3, 4])
+        expect([...set.intersection(new Set([2, 3, 4]))]).toEqual([2, 3])
+        expect([...set.difference(new Set([1]))]).toEqual([2, 3])
       })
 
-      it('should accept a set-like without Symbol.iterator', () => {
+      it('should reject a set-like exposing only size, has and keys', () => {
         const set = proxySet([1, 2, 3])
-        expect([...set.intersection(setLike([2, 3, 4]) as any)]).toEqual([2, 3])
-        expect([...set.union(setLike([4]) as any)]).toEqual([1, 2, 3, 4])
-        expect([...set.difference(setLike([1]) as any)]).toEqual([2, 3])
-        expect(set.isDisjointFrom(setLike([9]) as any)).toBe(true)
+        const setLike = {
+          size: 2,
+          has: (v: number) => [2, 3].includes(v),
+          keys: () => [2, 3][Symbol.iterator](),
+        }
+        // A native Set accepts this and yields [1, 2, 3].
+        expect(() => set.union(setLike as any)).toThrow(TypeError)
+      })
+
+      it('should consume a Map as entries rather than as its keys', () => {
+        const map = new Map<number, string>([
+          [2, 'a'],
+          [9, 'b'],
+        ])
+        // A native Set treats a Map as the set of its keys:
+        //   union        -> [1, 2, 3, 9]
+        //   intersection -> [2]
+        expect([...proxySet<unknown>([1, 2, 3]).union(map as any)]).toEqual([
+          1,
+          2,
+          3,
+          [2, 'a'],
+          [9, 'b'],
+        ])
+        expect([
+          ...proxySet<unknown>([1, 2, 3]).intersection(map as any),
+        ]).toEqual([])
+      })
+
+      it('should fall back to forEach for a non-iterable collection', () => {
+        const set = proxySet([1, 2, 3])
+        const forEachOnly = {
+          size: 2,
+          has: (v: number) => [2, 3].includes(v),
+          forEach: (cb: (v: number) => void) => [2, 3].forEach(cb),
+        }
+        expect([...set.intersection(forEachOnly as any)]).toEqual([2, 3])
       })
 
       it('should throw when the argument is neither iterable nor forEach-able', () => {
