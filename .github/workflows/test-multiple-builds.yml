@@ -31,13 +31,13 @@ jobs:
       - name: Patch for DEV-ONLY
         if: ${{ matrix.env == 'development' }}
         run: |
-          sed -i~ "s/it[.a-zA-Z]*('\[DEV-ONLY\]/it('/" tests/*.ts tests/*.tsx
-          sed -i~ "s/it[.a-zA-Z]*('\[PRD-ONLY\]/it.skip('/" tests/*.ts tests/*.tsx
+          find tests -type f \( -name '*.ts' -o -name '*.tsx' \) -exec sed -i~ "s/it[.a-zA-Z]*('\[DEV-ONLY\]/it('/" {} +
+          find tests -type f \( -name '*.ts' -o -name '*.tsx' \) -exec sed -i~ "s/it[.a-zA-Z]*('\[PRD-ONLY\]/it.skip('/" {} +
       - name: Patch for PRD-ONLY
         if: ${{ matrix.env == 'production' }}
         run: |
-          sed -i~ "s/it[.a-zA-Z]*('\[PRD-ONLY\]/it('/" tests/*.ts tests/*.tsx
-          sed -i~ "s/it[.a-zA-Z]*('\[DEV-ONLY\]/it.skip('/" tests/*.ts tests/*.tsx
+          find tests -type f \( -name '*.ts' -o -name '*.tsx' \) -exec sed -i~ "s/it[.a-zA-Z]*('\[PRD-ONLY\]/it('/" {} +
+          find tests -type f \( -name '*.ts' -o -name '*.tsx' \) -exec sed -i~ "s/it[.a-zA-Z]*('\[DEV-ONLY\]/it.skip('/" {} +
       - name: Patch for CJS
         if: ${{ matrix.build == 'cjs' }}
         run: |
@@ -46,7 +46,7 @@ jobs:
         if: ${{ matrix.build == 'esm' }}
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/esm\1.mjs')/" vitest.config.mts
-          sed -i~ "1s/^/import.meta.env.MODE='${NODE_ENV}';/" tests/*.ts tests/*.tsx
+          find tests -type f \( -name '*.ts' -o -name '*.tsx' \) -exec sed -i~ "1s/^/import.meta.env.MODE='${NODE_ENV}';/" {} +
         env:
           NODE_ENV: ${{ matrix.env }}
       - name: Test ${{ matrix.build }} ${{ matrix.env }}
