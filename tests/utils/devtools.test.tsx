@@ -189,6 +189,57 @@ describe('devtools', () => {
     expect(extension.send).toBeCalledTimes(2)
   })
 
+  it('should stop sending after the returned unsubscribe is called', async () => {
+    const obj = proxy({ count: 0 })
+    const unsubscribe = devtools(obj, { enabled: true })
+
+    extension.send.mockClear()
+
+    obj.count += 1
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toBeCalledTimes(1)
+
+    unsubscribe?.()
+
+    obj.count += 1
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toBeCalledTimes(1)
+  })
+
+  it('should report an ACTION payload that is not serializable', () => {
+    const obj = proxy({ count: 0 })
+    devtools(obj, { enabled: true })
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    ;(extensionSubscriber as (message: any) => void)({
+      type: 'ACTION',
+      payload: 'not json',
+    })
+
+    expect(consoleError).toHaveBeenCalled()
+    expect(obj.count).toBe(0)
+
+    consoleError.mockRestore()
+  })
+
+  // Jumping to the state the proxy already holds changes nothing, leaving only
+  // the internal devtools marker, which must not be reported as an action.
+  it('should not send when the only change is the devtools marker', async () => {
+    const obj = proxy({ count: 0 })
+    devtools(obj, { enabled: true })
+
+    extension.send.mockClear()
+    ;(extensionSubscriber as (message: any) => void)({
+      type: 'DISPATCH',
+      state: JSON.stringify({ count: 0 }),
+      payload: { type: 'JUMP_TO_STATE' },
+    })
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toBeCalledTimes(0)
+  })
+
   describe('when it receives an message of type...', () => {
     it('updating state with ACTION', async () => {
       const obj = proxy({ count: 0 })

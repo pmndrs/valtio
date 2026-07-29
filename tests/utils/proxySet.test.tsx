@@ -285,10 +285,10 @@ describe('proxySet', () => {
           set: proxySet<unknown>(value),
         })
 
-        // pick a random value from the set
-        const valueToDelete = Array.from(state.set)[
-          Math.floor(Math.random() * state.set.size)
-        ]
+        // Delete every member in iteration order rather than one at random, so
+        // each run exercises all of them.
+        const valuesToDelete = Array.from(state.set)
+        const initialSize = valuesToDelete.length
 
         const TestComponent = () => {
           const snap = useSnapshot(state)
@@ -296,9 +296,11 @@ describe('proxySet', () => {
           return (
             <>
               <div>size: {snap.set.size}</div>
-              <button onClick={() => state.set.delete(valueToDelete)}>
-                button
-              </button>
+              {valuesToDelete.map((value, index) => (
+                <button key={index} onClick={() => state.set.delete(value)}>
+                  {`delete ${index}`}
+                </button>
+              ))}
             </>
           )
         }
@@ -309,16 +311,17 @@ describe('proxySet', () => {
           </StrictMode>,
         )
 
-        expect(screen.getByText(`size: ${state.set.size}`)).toBeInTheDocument()
+        expect(screen.getByText(`size: ${initialSize}`)).toBeInTheDocument()
 
-        const expectedSizeAfterDelete =
-          state.set.size > 1 ? state.set.size - 1 : 0
+        for (let index = 0; index < initialSize; index += 1) {
+          fireEvent.click(screen.getByText(`delete ${index}`))
+          await act(() => vi.advanceTimersByTimeAsync(0))
+          expect(
+            screen.getByText(`size: ${initialSize - index - 1}`),
+          ).toBeInTheDocument()
+        }
 
-        fireEvent.click(screen.getByText('button'))
-        await act(() => vi.advanceTimersByTimeAsync(0))
-        expect(
-          screen.getByText(`size: ${expectedSizeAfterDelete}`),
-        ).toBeInTheDocument()
+        expect(state.set.size).toBe(0)
       })
     })
 
@@ -936,6 +939,67 @@ describe('proxySet', () => {
         const composites = proxySet([4, 6, 8, 9, 10, 12, 14, 15, 16, 18])
         const squares = proxySet([1, 4, 9, 16])
         expect(composites.isDisjointFrom(squares)).toBe(false) // false
+      })
+    })
+
+    // The TC39 set-methods proposal defines a set-like by `size`, `has()` and
+    // `keys()`. proxySet instead accepts Symbol.iterator and falls back to
+    // forEach, and never calls keys(). These tests pin the current divergence
+    // from a native Set rather than asserting the proposal's semantics.
+    describe('set-like arguments', () => {
+      it('should accept an iterable', () => {
+        const set = proxySet([1, 2, 3])
+        expect([...set.union(new Set([4]))]).toEqual([1, 2, 3, 4])
+        expect([...set.intersection(new Set([2, 3, 4]))]).toEqual([2, 3])
+        expect([...set.difference(new Set([1]))]).toEqual([2, 3])
+      })
+
+      it('should reject a set-like exposing only size, has and keys', () => {
+        const set = proxySet([1, 2, 3])
+        const setLike = {
+          size: 2,
+          has: (v: number) => [2, 3].includes(v),
+          keys: () => [2, 3][Symbol.iterator](),
+        }
+        // A native Set accepts this and yields [1, 2, 3].
+        expect(() => set.union(setLike as any)).toThrow(TypeError)
+      })
+
+      it('should consume a Map as entries rather than as its keys', () => {
+        const map = new Map<number, string>([
+          [2, 'a'],
+          [9, 'b'],
+        ])
+        // A native Set treats a Map as the set of its keys:
+        //   union        -> [1, 2, 3, 9]
+        //   intersection -> [2]
+        expect([...proxySet<unknown>([1, 2, 3]).union(map as any)]).toEqual([
+          1,
+          2,
+          3,
+          [2, 'a'],
+          [9, 'b'],
+        ])
+        expect([
+          ...proxySet<unknown>([1, 2, 3]).intersection(map as any),
+        ]).toEqual([])
+      })
+
+      it('should fall back to forEach for a non-iterable collection', () => {
+        const set = proxySet([1, 2, 3])
+        const forEachOnly = {
+          size: 2,
+          has: (v: number) => [2, 3].includes(v),
+          forEach: (cb: (v: number) => void) => [2, 3].forEach(cb),
+        }
+        expect([...set.intersection(forEachOnly as any)]).toEqual([2, 3])
+      })
+
+      it('should throw when the argument is neither iterable nor forEach-able', () => {
+        const set = proxySet([1, 2, 3])
+        expect(() =>
+          set.intersection({ size: 0, has: () => false } as any),
+        ).toThrow(TypeError)
       })
     })
   })

@@ -319,7 +319,7 @@ describe('proxyMap', () => {
 
   describe('proxyMap internal', () => {
     it('should be sealed', () => {
-      expect(Object.isSealed(proxySet())).toBe(true)
+      expect(Object.isSealed(proxyMap())).toBe(true)
     })
 
     it('should list only enumerable properties', () => {
@@ -327,6 +327,14 @@ describe('proxyMap', () => {
       expect(
         Object.keys(proxyMap()).some((k) => notEnumerableProps.includes(k)),
       ).toBe(false)
+    })
+
+    it('should not implement getOrInsert', () => {
+      const map = proxyMap<string, number>() as any
+      expect(() => map.getOrInsert('a', 1)).toThrow('not implemented')
+      expect(() => map.getOrInsertComputed('a', () => 1)).toThrow(
+        'not implemented',
+      )
     })
   })
 
