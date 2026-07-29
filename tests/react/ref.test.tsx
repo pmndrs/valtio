@@ -3,7 +3,7 @@ import type { ReactElement } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
-import { useCommitCount } from './utils'
+import { useCommitCount } from '../test-utils'
 
 describe('ref', () => {
   beforeEach(() => {
