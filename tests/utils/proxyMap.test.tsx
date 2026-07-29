@@ -328,6 +328,14 @@ describe('proxyMap', () => {
         Object.keys(proxyMap()).some((k) => notEnumerableProps.includes(k)),
       ).toBe(false)
     })
+
+    it('should not implement getOrInsert', () => {
+      const map = proxyMap<string, number>() as any
+      expect(() => map.getOrInsert('a', 1)).toThrow('not implemented')
+      expect(() => map.getOrInsertComputed('a', () => 1)).toThrow(
+        'not implemented',
+      )
+    })
   })
 
   it('should throw TypeError when initial entries is not iterable', () => {

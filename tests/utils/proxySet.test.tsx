@@ -938,5 +938,29 @@ describe('proxySet', () => {
         expect(composites.isDisjointFrom(squares)).toBe(false) // false
       })
     })
+
+    describe('set-like arguments', () => {
+      const setLike = <T,>(values: T[]) => ({
+        size: values.length,
+        has: (v: T) => values.includes(v),
+        keys: () => values[Symbol.iterator](),
+        forEach: (cb: (v: T) => void) => values.forEach(cb),
+      })
+
+      it('should accept a set-like without Symbol.iterator', () => {
+        const set = proxySet([1, 2, 3])
+        expect([...set.intersection(setLike([2, 3, 4]) as any)]).toEqual([2, 3])
+        expect([...set.union(setLike([4]) as any)]).toEqual([1, 2, 3, 4])
+        expect([...set.difference(setLike([1]) as any)]).toEqual([2, 3])
+        expect(set.isDisjointFrom(setLike([9]) as any)).toBe(true)
+      })
+
+      it('should throw when the argument is neither iterable nor forEach-able', () => {
+        const set = proxySet([1, 2, 3])
+        expect(() =>
+          set.intersection({ size: 0, has: () => false } as any),
+        ).toThrow(TypeError)
+      })
+    })
   })
 })
