@@ -285,10 +285,10 @@ describe('proxySet', () => {
           set: proxySet<unknown>(value),
         })
 
-        // pick a random value from the set
-        const valueToDelete = Array.from(state.set)[
-          Math.floor(Math.random() * state.set.size)
-        ]
+        // Delete every member in iteration order rather than one at random, so
+        // each run exercises all of them.
+        const valuesToDelete = Array.from(state.set)
+        const initialSize = valuesToDelete.length
 
         const TestComponent = () => {
           const snap = useSnapshot(state)
@@ -296,9 +296,11 @@ describe('proxySet', () => {
           return (
             <>
               <div>size: {snap.set.size}</div>
-              <button onClick={() => state.set.delete(valueToDelete)}>
-                button
-              </button>
+              {valuesToDelete.map((value, index) => (
+                <button key={index} onClick={() => state.set.delete(value)}>
+                  {`delete ${index}`}
+                </button>
+              ))}
             </>
           )
         }
@@ -309,16 +311,17 @@ describe('proxySet', () => {
           </StrictMode>,
         )
 
-        expect(screen.getByText(`size: ${state.set.size}`)).toBeInTheDocument()
+        expect(screen.getByText(`size: ${initialSize}`)).toBeInTheDocument()
 
-        const expectedSizeAfterDelete =
-          state.set.size > 1 ? state.set.size - 1 : 0
+        for (let index = 0; index < initialSize; index += 1) {
+          fireEvent.click(screen.getByText(`delete ${index}`))
+          await act(() => vi.advanceTimersByTimeAsync(0))
+          expect(
+            screen.getByText(`size: ${initialSize - index - 1}`),
+          ).toBeInTheDocument()
+        }
 
-        fireEvent.click(screen.getByText('button'))
-        await act(() => vi.advanceTimersByTimeAsync(0))
-        expect(
-          screen.getByText(`size: ${expectedSizeAfterDelete}`),
-        ).toBeInTheDocument()
+        expect(state.set.size).toBe(0)
       })
     })
 

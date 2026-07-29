@@ -319,7 +319,7 @@ describe('proxyMap', () => {
 
   describe('proxyMap internal', () => {
     it('should be sealed', () => {
-      expect(Object.isSealed(proxySet())).toBe(true)
+      expect(Object.isSealed(proxyMap())).toBe(true)
     })
 
     it('should list only enumerable properties', () => {
