@@ -115,6 +115,76 @@ describe('updating values inside arrays', () => {
     expect(listRenderFn).toBeCalledTimes(2)
   })
 
+  // The todo example derives its list inside a custom hook (useTodos) that
+  // filters the snapshot array rather than reading it directly.
+  describe('derived through a custom hook', () => {
+    const createTodoState = () =>
+      proxy({
+        todos: [
+          { id: 1, name: 'a', completed: false },
+          { id: 2, name: 'b', completed: true },
+        ],
+        filter: 'completed' as 'all' | 'completed',
+      })
+
+    it('should track only what the derivation reads', async () => {
+      const state = createTodoState()
+
+      const useTodos = () => {
+        const snap = useSnapshot(state)
+        return snap.filter === 'all'
+          ? snap.todos
+          : snap.todos.filter((todo) => todo.completed)
+      }
+
+      const renderFn = vi.fn()
+      const TodoList = () => {
+        const todos = useTodos()
+        renderFn()
+        return <div>{`ids: ${todos.map((todo) => todo.id).join(',')}`}</div>
+      }
+
+      render(<TodoList />)
+      expect(screen.getByText('ids: 2')).toBeInTheDocument()
+      expect(renderFn).toBeCalledTimes(1)
+
+      // `name` is never read by the derivation or the render
+      state.todos[0]!.name = 'renamed'
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(renderFn).toBeCalledTimes(1)
+
+      state.todos[0]!.completed = true
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(screen.getByText('ids: 1,2')).toBeInTheDocument()
+      expect(renderFn).toBeCalledTimes(2)
+    })
+
+    it('should re-render when the filter itself changes', async () => {
+      const state = createTodoState()
+
+      const TodoList = () => {
+        const snap = useSnapshot(state)
+        const todos =
+          snap.filter === 'all'
+            ? snap.todos
+            : snap.todos.filter((todo) => todo.completed)
+        return (
+          <>
+            <div>{`ids: ${todos.map((todo) => todo.id).join(',')}`}</div>
+            <button onClick={() => (state.filter = 'all')}>all</button>
+          </>
+        )
+      }
+
+      render(<TodoList />)
+      expect(screen.getByText('ids: 2')).toBeInTheDocument()
+
+      fireEvent.click(screen.getByText('all'))
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(screen.getByText('ids: 1,2')).toBeInTheDocument()
+    })
+  })
+
   it('should mutate an item through the proxy from a child callback', async () => {
     const state = createState()
 
