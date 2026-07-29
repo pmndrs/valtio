@@ -230,6 +230,41 @@ describe('proxy arrays', () => {
     expect([...state]).toEqual([3, 2, 1])
   })
 
+  // The todo example removes an item with
+  // `store.todos = store.todos.filter(...)`, replacing the array with a plain
+  // copy whose members are already proxies.
+  it('should preserve member identity when replaced by a filtered copy', async () => {
+    const state = proxy({ items: [{ id: 1 }, { id: 2 }, { id: 3 }] })
+    const survivor = state.items[1]
+    const handler = vi.fn()
+    subscribe(state, handler)
+
+    state.items = state.items.filter((item) => item.id !== 1)
+
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(1)
+    expect(state.items.map((item) => item.id)).toEqual([2, 3])
+    expect(state.items[0]).toBe(survivor)
+    expect(snapshot(state)).toEqual({ items: [{ id: 2 }, { id: 3 }] })
+  })
+
+  it('should keep notifying through a member that survived the replacement', async () => {
+    const state = proxy({
+      items: [
+        { id: 1, n: 0 },
+        { id: 2, n: 0 },
+      ],
+    })
+    state.items = state.items.filter((item) => item.id !== 1)
+
+    const handler = vi.fn()
+    subscribe(state, handler)
+
+    state.items[0]!.n += 1
+    await Promise.resolve()
+    expect(handler).toBeCalledTimes(1)
+  })
+
   it('should keep length in sync with sparse assignment', () => {
     const state = proxy([0])
     state[3] = 3

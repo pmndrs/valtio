@@ -38,6 +38,35 @@ describe('object', () => {
     expect(screen.getByText('count: 1')).toBeInTheDocument()
   })
 
+  // The counter example creates the proxy without `nested`, assigns it right
+  // after, and reads it optionally in the component.
+  it('property added after creation', async () => {
+    const obj = proxy<{ count: number; nested?: { ticks: number } }>({
+      count: 0,
+    })
+
+    const Counter = () => {
+      const snap = useSnapshot(obj)
+      return <div>ticks: {snap.nested?.ticks ?? 'none'}</div>
+    }
+
+    render(
+      <StrictMode>
+        <Counter />
+      </StrictMode>,
+    )
+
+    expect(screen.getByText('ticks: none')).toBeInTheDocument()
+
+    obj.nested = { ticks: 0 }
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('ticks: 0')).toBeInTheDocument()
+
+    obj.nested.ticks += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('ticks: 1')).toBeInTheDocument()
+  })
+
   it('deleting property', async () => {
     const obj = proxy<{ count?: number }>({ count: 1 })
 
