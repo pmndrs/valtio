@@ -34,6 +34,44 @@ store.users[0].uploads = []
 
 A `ref` should also not be used as the only state in a proxy, making the proxy usage pointless.
 
+## Using `ref` with an existing Valtio proxy
+
+`ref` can also be used with a proxy that has already been created. This is useful when a child proxy is managed independently and should not propagate its updates through a parent proxy.
+
+```js
+const child = proxy({ count: 0 })
+const parent = proxy({ child: ref(child) })
+```
+
+When passed an existing Valtio proxy, `ref` returns the same object rather than creating a wrapper:
+
+```js
+ref(child) === child // true
+```
+
+The child proxy is not tracked by the parent, so changes to `child` do not notify subscribers of `parent`. The child is also kept by identity in the parent snapshot rather than being replaced with an immutable child snapshot:
+
+```js
+snapshot(parent).child === child // true
+```
+
+The marking applies to the proxy's identity globally within the current Valtio runtime; it is not scoped to the `parent.child` property. If the same proxy is later placed in another parent without calling `ref` again, that parent also treats the child as an untracked reference:
+
+```js
+const anotherParent = proxy({ child })
+// Changes to child do not notify anotherParent either.
+```
+
+Subscribe to the child proxy separately when you need to observe its updates:
+
+```js
+subscribe(child, () => {
+  // child changed
+})
+```
+
+Use `ref(existingProxy)` deliberately, because it affects how that proxy identity participates in later proxy composition.
+
 ## Codesandbox demo
 
 https://codesandbox.io/s/valtio-file-load-demo-oo2yzn
