@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, useSnapshot } from 'valtio'
+import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { proxyMap, proxySet } from 'valtio/utils'
 
 const initialValues = [
@@ -319,7 +319,7 @@ describe('proxyMap', () => {
 
   describe('proxyMap internal', () => {
     it('should be sealed', () => {
-      expect(Object.isSealed(proxySet())).toBe(true)
+      expect(Object.isSealed(proxyMap())).toBe(true)
     })
 
     it('should list only enumerable properties', () => {
@@ -327,6 +327,91 @@ describe('proxyMap', () => {
       expect(
         Object.keys(proxyMap()).some((k) => notEnumerableProps.includes(k)),
       ).toBe(false)
+    })
+
+    // The todo-with-proxyMap example stores objects and mutates them in place
+    // via get() and forEach(). The other ui tests here only store primitives.
+    it('should proxy object values and notify when one is mutated', async () => {
+      const state = proxy({
+        todos: proxyMap<number, { name: string; completed: boolean }>(),
+      })
+      state.todos.set(1, { name: 'a', completed: false })
+
+      const handler = vi.fn()
+      subscribe(state, handler)
+
+      state.todos.get(1)!.completed = true
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(handler).toBeCalledTimes(1)
+      expect(state.todos.get(1)).toEqual({ name: 'a', completed: true })
+      expect(snapshot(state).todos.get(1)).toEqual({
+        name: 'a',
+        completed: true,
+      })
+    })
+
+    it('should notify when object values are mutated during forEach', async () => {
+      const state = proxy({
+        todos: proxyMap<number, { completed: boolean }>([
+          [1, { completed: false }],
+          [2, { completed: false }],
+        ]),
+      })
+
+      const handler = vi.fn()
+      subscribe(state, handler)
+
+      state.todos.forEach((todo) => {
+        todo.completed = true
+      })
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(handler).toBeCalledTimes(1)
+      expect(Array.from(state.todos.values())).toEqual([
+        { completed: true },
+        { completed: true },
+      ])
+    })
+
+    it('should re-render a component when an object value is mutated', async () => {
+      const state = proxy({
+        todos: proxyMap<number, { name: string; completed: boolean }>([
+          [1, { name: 'a', completed: false }],
+        ]),
+      })
+
+      const TestComponent = () => {
+        const snap = useSnapshot(state)
+        return (
+          <div>
+            {Array.from(snap.todos.values())
+              .map((todo) => `${todo.name}:${todo.completed}`)
+              .join(',')}
+          </div>
+        )
+      }
+
+      render(
+        <StrictMode>
+          <TestComponent />
+        </StrictMode>,
+      )
+
+      expect(screen.getByText('a:false')).toBeInTheDocument()
+
+      state.todos.get(1)!.completed = true
+      await act(() => vi.advanceTimersByTimeAsync(0))
+
+      expect(screen.getByText('a:true')).toBeInTheDocument()
+    })
+
+    it('should not implement getOrInsert', () => {
+      const map = proxyMap<string, number>() as any
+      expect(() => map.getOrInsert('a', 1)).toThrow('not implemented')
+      expect(() => map.getOrInsertComputed('a', () => 1)).toThrow(
+        'not implemented',
+      )
     })
   })
 

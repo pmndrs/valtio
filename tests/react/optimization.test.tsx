@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
+import { useCommitCount } from '../test-utils'
 
 describe('optimization', () => {
   beforeEach(() => {
@@ -159,5 +160,131 @@ describe('optimization', () => {
     expect(childRenderFn).lastCalledWith(0)
     expect(parentRenderFn).toBeCalledTimes(2)
     expect(parentRenderFn).lastCalledWith(1)
+  })
+
+  it('no extra re-renders (commits)', async () => {
+    const obj = proxy({ count: 0, count2: 0 })
+
+    const Counter = () => {
+      const snap = useSnapshot(obj)
+      return (
+        <>
+          <div>
+            count: {snap.count} ({useCommitCount(1)})
+          </div>
+          <button onClick={() => ++obj.count}>button</button>
+        </>
+      )
+    }
+
+    const Counter2 = () => {
+      const snap = useSnapshot(obj)
+      return (
+        <>
+          <div>
+            count2: {snap.count2} ({useCommitCount(1)})
+          </div>
+          <button onClick={() => ++obj.count2}>button2</button>
+        </>
+      )
+    }
+
+    render(
+      <>
+        <Counter />
+        <Counter2 />
+      </>,
+    )
+
+    expect(screen.getByText('count: 0 (1)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0 (1)')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('button'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1 (2)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0 (1)')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('button2'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1 (2)')).toBeInTheDocument()
+    expect(screen.getByText('count2: 1 (2)')).toBeInTheDocument()
+  })
+
+  it('no extra re-renders (render func calls in non strict mode)', async () => {
+    const obj = proxy({ count: 0, count2: 0 })
+
+    const renderFn = vi.fn()
+    const Counter = () => {
+      const snap = useSnapshot(obj)
+      renderFn(snap.count)
+      return (
+        <>
+          <div>count: {snap.count}</div>
+          <button onClick={() => ++obj.count}>button</button>
+        </>
+      )
+    }
+
+    const renderFn2 = vi.fn()
+    const Counter2 = () => {
+      const snap = useSnapshot(obj)
+      renderFn2(snap.count2)
+      return (
+        <>
+          <div>count2: {snap.count2}</div>
+          <button onClick={() => ++obj.count2}>button2</button>
+        </>
+      )
+    }
+
+    render(
+      <>
+        <Counter />
+        <Counter2 />
+      </>,
+    )
+
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(1)
+    expect(renderFn).lastCalledWith(0)
+    expect(renderFn2).toBeCalledTimes(1)
+    expect(renderFn2).lastCalledWith(0)
+
+    fireEvent.click(screen.getByText('button'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('count2: 0')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(2)
+    expect(renderFn).lastCalledWith(1)
+    expect(renderFn2).toBeCalledTimes(1)
+    expect(renderFn2).lastCalledWith(0)
+
+    fireEvent.click(screen.getByText('button2'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('count2: 1')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(2)
+    expect(renderFn).lastCalledWith(1)
+    expect(renderFn2).toBeCalledTimes(2)
+    expect(renderFn2).lastCalledWith(1)
+
+    fireEvent.click(screen.getByText('button2'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(screen.getByText('count2: 2')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(2)
+    expect(renderFn).lastCalledWith(1)
+    expect(renderFn2).toBeCalledTimes(3)
+    expect(renderFn2).lastCalledWith(2)
+
+    fireEvent.click(screen.getByText('button'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+    expect(screen.getByText('count2: 2')).toBeInTheDocument()
+    expect(renderFn).toBeCalledTimes(3)
+    expect(renderFn).lastCalledWith(2)
+    expect(renderFn2).toBeCalledTimes(3)
+    expect(renderFn2).lastCalledWith(2)
   })
 })

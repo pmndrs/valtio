@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy } from 'valtio'
 import { watch } from 'valtio/utils'
-import { sleep } from './utils'
+import { sleep } from '../test-utils'
 
 describe('watch', () => {
   beforeEach(() => {
@@ -106,24 +106,70 @@ describe('watch', () => {
     expect(callback).toBeCalledTimes(1)
   })
 
-  it('should not loop infinitely with sync (#382)', () => {
-    const reference = proxy({ value: 'Example' })
+  it('should unsubscribe proxies that are no longer tracked', async () => {
+    const flag = proxy({ on: true })
+    const a = proxy({ value: 0 })
+    const b = proxy({ value: 0 })
 
     const callback = vi.fn()
 
-    watch(
+    watch((get) => {
+      if (get(flag).on) get(a)
+      else get(b)
+      callback()
+    })
+
+    expect(callback).toBeCalledTimes(1)
+
+    flag.on = false
+    await vi.advanceTimersByTimeAsync(0)
+    expect(callback).toBeCalledTimes(2)
+
+    a.value = 1
+    await vi.advanceTimersByTimeAsync(0)
+    expect(callback).toBeCalledTimes(2)
+
+    b.value = 1
+    await vi.advanceTimersByTimeAsync(0)
+    expect(callback).toBeCalledTimes(3)
+  })
+
+  it('should ignore a revalidation triggered by its own cleanup', () => {
+    const reference = proxy({ value: 0 })
+
+    const callback = vi.fn()
+
+    const stop = watch(
       (get) => {
         get(reference)
         callback()
+        return () => {
+          reference.value += 1
+        }
       },
       { sync: true },
     )
 
     expect(callback).toBeCalledTimes(1)
 
-    reference.value = 'Update'
-    expect(callback).toBeCalledTimes(2)
-    expect(reference.value).toBe('Update')
+    stop()
+
+    expect(callback).toBeCalledTimes(1)
+  })
+
+  // The cleanup returned by an async callback is dropped when the watch was
+  // already stopped, so it never runs.
+  it('should drop a cleanup returned after the watch is stopped', async () => {
+    const cleanup = vi.fn()
+
+    const stop = watch(async () => {
+      await sleep(1000)
+      return cleanup
+    })
+    stop()
+
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(cleanup).toBeCalledTimes(0)
   })
 
   it('should support promise watchers', async () => {

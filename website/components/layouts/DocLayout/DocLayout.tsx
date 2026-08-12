@@ -1,5 +1,5 @@
 import React, { forwardRef, useRef } from 'react'
-import { Dialog } from '@headlessui/react'
+import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
 import Link from 'next/link'
 import clsx from 'clsx'
 import { Router, useRouter } from 'next/router'
@@ -371,8 +371,8 @@ export default function DocLayout({
           onClose={() => setNavIsOpen?.(false)}
           className="fixed z-50 inset-0 overflow-y-auto lg:hidden"
         >
-          <Dialog.Overlay className="fixed inset-0 bg-black/20 backdrop-blur-sm dark:bg-gray-900/80" />
-          <div className="relative bg-white w-80 max-w-[calc(100%-3rem)] p-6 dark:bg-gray-800">
+          <DialogBackdrop className="fixed inset-0 bg-black/20 backdrop-blur-sm dark:bg-gray-900/80" />
+          <DialogPanel className="relative bg-white w-80 max-w-[calc(100%-3rem)] p-6 dark:bg-gray-800">
             <button
               type="button"
               onClick={() => setNavIsOpen?.(false)}
@@ -390,7 +390,7 @@ export default function DocLayout({
               </svg>
             </button>
             <Nav nav={nav} fallbackHref={fallbackHref} mobile={true}></Nav>
-          </div>
+          </DialogPanel>
         </Dialog>
       </DocLayoutContext.Provider>
     </>

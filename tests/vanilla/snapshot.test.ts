@@ -1,5 +1,5 @@
 import { createProxy, getUntracked } from 'proxy-compare'
-import { describe, expect, expectTypeOf, it } from 'vitest'
+import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { proxy, snapshot } from 'valtio'
 import type { Snapshot } from 'valtio'
 
@@ -64,6 +64,34 @@ describe('snapshot', () => {
     state.count++
     const snap2 = snapshot(state)
     expect(snap2.obj).toBe(snap1.obj)
+  })
+
+  it('should warn and throw for a non-proxy object', () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    expect(() => snapshot({} as any)).toThrow()
+    expect(consoleWarn).toHaveBeenCalledWith('Please use proxy object')
+
+    consoleWarn.mockRestore()
+  })
+
+  it('should reuse the snapshot while the state is unchanged', () => {
+    const state = proxy({ count: 0 })
+    expect(snapshot(state)).toBe(snapshot(state))
+
+    const snap1 = snapshot(state)
+    state.count += 1
+    expect(snapshot(state)).not.toBe(snap1)
+  })
+
+  it('should produce read-only properties', () => {
+    const state = proxy({ count: 0 })
+    const snap = snapshot(state)
+
+    expect(() => {
+      ;(snap as any).count = 1
+    }).toThrow()
+    expect(snap.count).toBe(0)
   })
 
   describe('snapshot typings', () => {

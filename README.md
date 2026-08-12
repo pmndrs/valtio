@@ -193,6 +193,8 @@ This may be useful if you have large, nested objects with accessors that you don
 
 See [#61](https://github.com/pmndrs/valtio/issues/61) and [#178](https://github.com/pmndrs/valtio/issues/178) for more information.
 
+When `ref` is passed an existing Valtio proxy, it returns the same proxy and globally marks it as untracked, including in later proxy composition. See the [`ref` API documentation](./docs/api/advanced/ref.mdx) for details.
+
 ```js
 import { proxy, ref } from 'valtio'
 

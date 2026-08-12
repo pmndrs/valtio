@@ -75,12 +75,17 @@ export function watch(
 
     // Setup watch context, this allows us to automatically capture
     // watch cleanups if the watch callback itself has watch calls.
+    // Nested watches can only be created during the synchronous part of the
+    // callback, so the global context is restored right after the callback
+    // returns (before awaiting any returned promise). Keeping it set across
+    // the await would leak this watch's cleanups set into unrelated watches
+    // created while this one is suspended.
     const parent = currentCleanups
     currentCleanups = cleanups
 
-    // Ensures that the parent is reset if the callback throws an error.
+    let promiseOrPossibleCleanup: ReturnType<WatchCallback>
     try {
-      const promiseOrPossibleCleanup = callback((proxyObject) => {
+      promiseOrPossibleCleanup = callback((proxyObject) => {
         proxiesToSubscribe.add(proxyObject)
         // in case the callback is a promise and the watch has ended
         if (alive && !subscriptions.has(proxyObject)) {
@@ -90,21 +95,24 @@ export function watch(
         }
         return proxyObject
       })
-      const couldBeCleanup =
-        promiseOrPossibleCleanup && promiseOrPossibleCleanup instanceof Promise
-          ? await promiseOrPossibleCleanup
-          : promiseOrPossibleCleanup
-
-      // If there's a cleanup, we add this to the cleanups set
-      if (couldBeCleanup) {
-        if (alive) {
-          cleanups.add(couldBeCleanup)
-        } else {
-          cleanup()
-        }
-      }
     } finally {
+      // Restore the parent context before awaiting, so it is not corrupted by
+      // (or does not corrupt) revalidations that run while we are suspended.
       currentCleanups = parent
+    }
+
+    const couldBeCleanup =
+      promiseOrPossibleCleanup && promiseOrPossibleCleanup instanceof Promise
+        ? await promiseOrPossibleCleanup
+        : promiseOrPossibleCleanup
+
+    // If there's a cleanup, we add this to the cleanups set
+    if (couldBeCleanup) {
+      if (alive) {
+        cleanups.add(couldBeCleanup)
+      } else {
+        cleanup()
+      }
     }
 
     // Unsubscribe old subscriptions

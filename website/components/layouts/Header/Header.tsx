@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Router from 'next/router'
-import { Dialog } from '@headlessui/react'
+import { Dialog, DialogBackdrop, DialogPanel } from '@headlessui/react'
 import React, { useEffect, useState } from 'react'
 import clsx from 'clsx'
 import SEO from '~/components/SEO'
@@ -48,8 +48,8 @@ export function NavPopover({
         open={isOpen}
         onClose={setIsOpen}
       >
-        <Dialog.Overlay className="fixed inset-0 bg-black/20 backdrop-blur-sm dark:bg-gray-900/80" />
-        <div className="fixed top-4 right-4 w-full max-w-xs bg-white rounded-lg shadow-lg p-6 text-base font-semibold text-gray-900 dark:bg-gray-800 dark:text-gray-400 dark:highlight-white/5">
+        <DialogBackdrop className="fixed inset-0 bg-black/20 backdrop-blur-sm dark:bg-gray-900/80" />
+        <DialogPanel className="fixed top-4 right-4 w-full max-w-xs bg-white rounded-lg shadow-lg p-6 text-base font-semibold text-gray-900 dark:bg-gray-800 dark:text-gray-400 dark:highlight-white/5">
           <button
             type="button"
             className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
@@ -84,7 +84,7 @@ export function NavPopover({
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-200/10">
             <ToggleTheme />
           </div>
-        </div>
+        </DialogPanel>
       </Dialog>
     </div>
   )

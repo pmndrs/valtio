@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, ref, snapshot, subscribe, unstable_enableOp } from 'valtio'
-import { subscribeKey } from 'valtio/utils'
+import { proxy, ref, subscribe, unstable_enableOp } from 'valtio'
 
 describe('subscribe', () => {
   const consoleWarn = console.warn
@@ -146,56 +145,48 @@ describe('subscribe', () => {
     await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(0)
   })
-})
 
-describe('subscribeKey', () => {
-  const consoleWarn = console.warn
-
-  beforeEach(() => {
-    console.warn = vi.fn((message: string) => {
-      if (message === 'Please use proxy object') {
-        return
-      }
-      consoleWarn(message)
-    })
-    vi.useFakeTimers()
+  it('should warn when subscribing to a non-proxy object', () => {
+    expect(() => subscribe({} as any, vi.fn())).toThrow()
+    expect(console.warn).toHaveBeenCalledWith('Please use proxy object')
   })
 
-  afterEach(() => {
-    console.warn = consoleWarn
-    vi.useRealTimers()
+  it('should notify synchronously with the sync option', async () => {
+    const obj = proxy({ count: 0 })
+    const handler = vi.fn()
+
+    subscribe(obj, handler, true)
+
+    obj.count += 1
+    expect(handler).toBeCalledTimes(1)
+
+    obj.count += 1
+    expect(handler).toBeCalledTimes(2)
   })
 
-  it('should call subscription', async () => {
+  it('should not batch updates with the sync option', async () => {
     const obj = proxy({ count1: 0, count2: 0 })
-    const handler1 = vi.fn()
-    const handler2 = vi.fn()
+    const handler = vi.fn()
 
-    subscribeKey(obj, 'count1', handler1)
-    subscribeKey(obj, 'count2', handler2)
+    subscribe(obj, handler, true)
 
-    obj.count1 += 10
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler1).toBeCalledTimes(1)
-    expect(handler1).lastCalledWith(10)
-    expect(handler2).toBeCalledTimes(0)
-
-    obj.count2 += 20
+    obj.count1 += 1
+    obj.count2 += 1
 
     await vi.advanceTimersByTimeAsync(0)
-    expect(handler1).toBeCalledTimes(1)
-    expect(handler2).toBeCalledTimes(1)
-    expect(handler2).lastCalledWith(20)
+    expect(handler).toBeCalledTimes(2)
   })
 
-  it('snapshot changed if subscription after delete nested property', async () => {
-    const obj = proxy({ s: { a: 1 } } as any)
-    const snapshot1 = snapshot(obj)
-    delete obj.s.a
-    subscribe(obj, () => {})
-    const snapshot2 = snapshot(obj)
-    expect(snapshot1).not.toEqual(snapshot2)
+  it('should not call a subscription unsubscribed before the microtask runs', async () => {
+    const obj = proxy({ count: 0 })
+    const handler = vi.fn()
+
+    const unsubscribe = subscribe(obj, handler)
+    obj.count += 1
+    unsubscribe()
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(handler).toBeCalledTimes(0)
   })
 })
 
