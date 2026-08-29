@@ -53,14 +53,8 @@ function createESMConfig(input, output) {
       alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
       resolve({ extensions }),
       replace({
-        ...(output.endsWith('.js')
-          ? {
-              'import.meta.env?.MODE': 'process.env.NODE_ENV',
-            }
-          : {
-              'import.meta.env?.MODE':
-                '(import.meta.env ? import.meta.env.MODE : undefined)',
-            }),
+        'import.meta.env?.MODE':
+          '(import.meta.env ? import.meta.env.MODE : undefined)',
         delimiters: ['\\b', '\\b(?!(\\.|/))'],
         preventAssignment: true,
       }),
@@ -96,7 +90,7 @@ export default function (args) {
   }
   return [
     ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
-    createCommonJSConfig(`src/${c}.ts`, `dist/${c}.js`),
-    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.mjs`),
+    createCommonJSConfig(`src/${c}.ts`, `dist/${c}.cjs`),
+    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.js`),
   ]
 }

@@ -41,11 +41,11 @@ jobs:
       - name: Patch for CJS
         if: ${{ matrix.build == 'cjs' }}
         run: |
-          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.mts
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.cjs')/" vitest.config.mts
       - name: Patch for ESM
         if: ${{ matrix.build == 'esm' }}
         run: |
-          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/esm\1.mjs')/" vitest.config.mts
+          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/esm\1.js')/" vitest.config.mts
           find tests -type f \( -name '*.ts' -o -name '*.tsx' \) -exec sed -i~ "1s/^/import.meta.env.MODE='${NODE_ENV}';/" {} +
         env:
           NODE_ENV: ${{ matrix.env }}
