@@ -38,7 +38,7 @@ export function watch(
   callback: WatchCallback,
   options?: WatchOptions,
 ): Cleanup {
-  if (import.meta.env?.MODE !== 'production' && !didWarnDeprecation) {
+  if (process.env.NODE_ENV !== 'production' && !didWarnDeprecation) {
     console.warn(
       '[DEPRECATED] The `watch` util is no longer maintained. Please migrate to [valtio-reactive](https://github.com/valtiojs/valtio-reactive).',
     )
