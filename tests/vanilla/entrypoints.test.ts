@@ -47,7 +47,6 @@ describe('entry points', () => {
       'proxySet',
       'subscribeKey',
       'unstable_deepProxy',
-      'watch',
     ])
   })
 
