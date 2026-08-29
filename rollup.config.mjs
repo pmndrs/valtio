@@ -63,24 +63,6 @@ function createESMConfig(input, output) {
   }
 }
 
-function createCommonJSConfig(input, output) {
-  return {
-    input,
-    output: { file: output, format: 'cjs' },
-    external,
-    plugins: [
-      alias({ entries: entries.filter((entry) => !entry.find.test(input)) }),
-      resolve({ extensions }),
-      replace({
-        'import.meta.env?.MODE': 'process.env.NODE_ENV',
-        delimiters: ['\\b', '\\b(?!(\\.|/))'],
-        preventAssignment: true,
-      }),
-      getEsbuild(),
-    ],
-  }
-}
-
 export default function (args) {
   let c = Object.keys(args).find((key) => key.startsWith('config-'))
   if (c) {
@@ -90,7 +72,6 @@ export default function (args) {
   }
   return [
     ...(c === 'index' ? [createDeclarationConfig(`src/${c}.ts`, 'dist')] : []),
-    createCommonJSConfig(`src/${c}.ts`, `dist/${c}.cjs`),
-    createESMConfig(`src/${c}.ts`, `dist/esm/${c}.js`),
+    createESMConfig(`src/${c}.ts`, `dist/${c}.js`),
   ]
 }
