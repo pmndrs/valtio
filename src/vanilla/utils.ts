@@ -1,5 +1,4 @@
 export { subscribeKey } from './utils/subscribeKey.js'
-export { watch } from './utils/watch.js'
 export { devtools } from './utils/devtools.js'
 export { deepClone } from './utils/deepClone.js'
 export { unstable_deepProxy } from './utils/deepProxy.js'
