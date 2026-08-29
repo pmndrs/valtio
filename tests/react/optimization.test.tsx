@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
-import { useCommitCount } from '../test-utils'
+import { useCommitCount } from '../test-utils.js'
 
 describe('optimization', () => {
   beforeEach(() => {

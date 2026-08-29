@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy } from 'valtio'
 import { watch } from 'valtio/utils'
-import { sleep } from '../test-utils'
+import { sleep } from '../test-utils.js'
 
 describe('watch', () => {
   beforeEach(() => {
