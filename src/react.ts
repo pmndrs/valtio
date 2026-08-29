@@ -166,7 +166,7 @@ export function useSnapshot<T extends object>(
   useLayoutEffect(() => {
     lastSnapshot.current = currSnapshot
   })
-  if (import.meta.env?.MODE !== 'production') {
+  if (process.env.NODE_ENV !== 'production') {
     condUseAffectedDebugValue(currSnapshot as object, affected)
   }
   const proxyCache = useMemo(() => new WeakMap<object, unknown>(), []) // per-hook proxyCache

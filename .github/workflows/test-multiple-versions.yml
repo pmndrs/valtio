@@ -43,7 +43,7 @@ jobs:
         run: |
           find tests -type f -name '*.tsx' -exec sed -i~ '1s/^/import React from "react";/' {} +
           sed -i~ 's/"jsx": "react-jsx"/"jsx": "react"/' tsconfig.json
-          sed -i~ 's/import\.meta\.env[?]\.MODE/"DEVELOPMENT".toLowerCase()/' src/*.ts src/*/*.ts src/*/*/*.ts
+          sed -i~ 's/process\.env\.NODE_ENV/"DEVELOPMENT".toLowerCase()/' src/*.ts src/*/*.ts src/*/*/*.ts
       - name: Test ${{ matrix.react }}
         run: |
           pnpm add -D react@$REACT_VER react-dom@$REACT_VER
