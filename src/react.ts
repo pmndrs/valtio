@@ -12,8 +12,8 @@ import {
   createProxy as createProxyToCompare,
   isChanged,
 } from 'proxy-compare'
-import { snapshot, subscribe } from './vanilla.ts'
-import type { Snapshot } from './vanilla.ts'
+import { snapshot, subscribe } from './vanilla.js'
+import type { Snapshot } from './vanilla.js'
 
 /**
  * React hook to display affected paths in React DevTools for debugging

@@ -1,4 +1,4 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
+import { proxy, unstable_getInternalStates } from '../../vanilla.js'
 
 const { proxyStateMap, snapCache } = unstable_getInternalStates()
 const isProxy = (x: any) => proxyStateMap.has(x)

@@ -1,4 +1,4 @@
-import { unstable_getInternalStates } from '../../vanilla.ts'
+import { unstable_getInternalStates } from '../../vanilla.js'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
