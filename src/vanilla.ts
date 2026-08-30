@@ -233,7 +233,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     const propProxyState =
       !refSet.has(propValue as object) && proxyStateMap.get(propValue as object)
     if (propProxyState) {
-      if (import.meta.env?.MODE !== 'production' && propProxyStates.has(prop)) {
+      if (process.env.NODE_ENV !== 'production' && propProxyStates.has(prop)) {
         throw new Error('prop listener already exists')
       }
       if (listeners.size) {
@@ -255,7 +255,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     listeners.add(listener)
     if (listeners.size === 1) {
       propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
-        if (import.meta.env?.MODE !== 'production' && prevRemove) {
+        if (process.env.NODE_ENV !== 'production' && prevRemove) {
           throw new Error('remove already exists')
         }
         const remove = propProxyState[2](createPropListener(prop))
@@ -316,7 +316,7 @@ export function subscribe<T extends object>(
   notifyInSync?: boolean,
 ): () => void {
   const proxyState = proxyStateMap.get(proxyObject as object)
-  if (import.meta.env?.MODE !== 'production' && !proxyState) {
+  if (process.env.NODE_ENV !== 'production' && !proxyState) {
     console.warn('Please use proxy object')
   }
   let promise: Promise<void> | undefined
@@ -353,7 +353,7 @@ export function subscribe<T extends object>(
  */
 export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
   const proxyState = proxyStateMap.get(proxyObject as object)
-  if (import.meta.env?.MODE !== 'production' && !proxyState) {
+  if (process.env.NODE_ENV !== 'production' && !proxyState) {
     console.warn('Please use proxy object')
   }
   const [target, ensureVersion] = proxyState as ProxyState

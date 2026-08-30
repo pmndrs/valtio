@@ -15,8 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        build: [cjs, esm]
-        env: [development] # [development, production]
+        env: [development, production]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -38,19 +37,13 @@ jobs:
         run: |
           find tests -type f \( -name '*.ts' -o -name '*.tsx' \) -exec sed -i~ "s/it[.a-zA-Z]*('\[PRD-ONLY\]/it('/" {} +
           find tests -type f \( -name '*.ts' -o -name '*.tsx' \) -exec sed -i~ "s/it[.a-zA-Z]*('\[DEV-ONLY\]/it.skip('/" {} +
-      - name: Patch for CJS
-        if: ${{ matrix.build == 'cjs' }}
+      - name: Patch dist for production # React itself must stay in development mode for act() to work
+        if: ${{ matrix.env == 'production' }}
+        run: |
+          sed -i~ 's/process\.env\.NODE_ENV/"production"/g' dist/*.js dist/*/*.js dist/*/*/*.js
+      - name: Patch for ESM
         run: |
           sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\1.js')/" vitest.config.mts
-      - name: Patch for ESM
-        if: ${{ matrix.build == 'esm' }}
-        run: |
-          sed -i~ "s/resolve('\.\/src\(.*\)\.ts')/resolve('\.\/dist\/esm\1.mjs')/" vitest.config.mts
-          find tests -type f \( -name '*.ts' -o -name '*.tsx' \) -exec sed -i~ "1s/^/import.meta.env.MODE='${NODE_ENV}';/" {} +
-        env:
-          NODE_ENV: ${{ matrix.env }}
-      - name: Test ${{ matrix.build }} ${{ matrix.env }}
+      - name: Test ESM ${{ matrix.env }}
         run: |
           pnpm run test:spec
-        env:
-          NODE_ENV: ${{ matrix.env }}

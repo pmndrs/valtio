@@ -150,17 +150,6 @@ subscribeKey(state, 'count', (v) =>
 )
 ```
 
-There is another util `watch` which might be convenient in some cases.
-
-```jsx
-import { watch } from 'valtio/utils'
-
-const state = proxy({ count: 0 })
-const stop = watch((get) => {
-  console.log('state has changed to', get(state)) // auto-subscribe on use
-})
-```
-
 #### Suspend your components
 
 Valtio is compatible with React 19 `use` hook. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.

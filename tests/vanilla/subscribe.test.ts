@@ -146,7 +146,7 @@ describe('subscribe', () => {
     expect(handler).toBeCalledTimes(0)
   })
 
-  it('should warn when subscribing to a non-proxy object', () => {
+  it('[DEV-ONLY] should warn when subscribing to a non-proxy object', () => {
     expect(() => subscribe({} as any, vi.fn())).toThrow()
     expect(console.warn).toHaveBeenCalledWith('Please use proxy object')
   })

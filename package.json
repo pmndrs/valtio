@@ -1,75 +1,62 @@
 {
   "name": "valtio",
   "description": "🧙 Valtio makes proxy-state simple for React and Vanilla",
-  "private": true,
-  "type": "commonjs",
+  "type": "module",
   "version": "2.3.2",
-  "main": "./index.js",
-  "types": "./index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "typesVersions": {
-    ">=4.5": {
-      "esm/*": [
-        "esm/*"
-      ],
+    ">=5.5": {
       "*": [
-        "*"
+        "dist/*"
       ]
     },
     "*": {
-      "esm/*": [
-        "ts_version_4.5_and_above_is_required.d.ts"
-      ],
       "*": [
-        "ts_version_4.5_and_above_is_required.d.ts"
+        "dist/ts_version_5.5_and_above_is_required.d.ts"
       ]
     }
   },
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "react-native": {
-        "types": "./index.d.ts",
-        "default": "./index.js"
-      },
-      "import": {
-        "types": "./esm/index.d.mts",
-        "default": "./esm/index.mjs"
-      },
-      "default": {
-        "types": "./index.d.ts",
-        "default": "./index.js"
-      }
+      "types@>=5.5": "./dist/index.d.ts",
+      "types": "./dist/ts_version_5.5_and_above_is_required.d.ts",
+      "default": "./dist/index.js"
     },
-    "./*": {
-      "react-native": {
-        "types": "./*.d.ts",
-        "default": "./*.js"
-      },
-      "import": {
-        "types": "./esm/*.d.mts",
-        "default": "./esm/*.mjs"
-      },
-      "default": {
-        "types": "./*.d.ts",
-        "default": "./*.js"
-      }
+    "./utils": {
+      "types@>=5.5": "./dist/utils.d.ts",
+      "types": "./dist/ts_version_5.5_and_above_is_required.d.ts",
+      "default": "./dist/utils.js"
+    },
+    "./vanilla": {
+      "types@>=5.5": "./dist/vanilla.d.ts",
+      "types": "./dist/ts_version_5.5_and_above_is_required.d.ts",
+      "default": "./dist/vanilla.js"
+    },
+    "./vanilla/utils": {
+      "types@>=5.5": "./dist/vanilla/utils.d.ts",
+      "types": "./dist/ts_version_5.5_and_above_is_required.d.ts",
+      "default": "./dist/vanilla/utils.js"
+    },
+    "./react": {
+      "types@>=5.5": "./dist/react.d.ts",
+      "types": "./dist/ts_version_5.5_and_above_is_required.d.ts",
+      "default": "./dist/react.js"
+    },
+    "./react/utils": {
+      "types@>=5.5": "./dist/react/utils.d.ts",
+      "types": "./dist/ts_version_5.5_and_above_is_required.d.ts",
+      "default": "./dist/react/utils.js"
     }
   },
   "files": [
-    "**"
+    "dist"
   ],
   "sideEffects": false,
   "scripts": {
-    "prebuild": "shx rm -rf dist",
-    "build": "pnpm run prebuild && pnpm run \"/^build:.*/\" && pnpm run postbuild",
-    "build-watch": "pnpm run \"/^build:.*/\" --watch",
-    "build:base": "rollup -c",
-    "build:utils": "rollup -c --config-utils",
-    "build:vanilla": "rollup -c --config-vanilla",
-    "build:vanilla_utils": "rollup -c --config-vanilla_utils",
-    "build:react": "rollup -c --config-react",
-    "build:react_utils": "rollup -c --config-react_utils",
-    "postbuild": "pnpm run patch-d-ts && pnpm run copy && pnpm run patch-old-ts && pnpm run patch-esm-ts",
+    "build": "shx rm -rf dist && tsc -p tsconfig.build.json --noCheck && shx touch dist/ts_version_5.5_and_above_is_required.d.ts",
+    "build-watch": "tsc -p tsconfig.build.json --noCheck --watch",
     "fix": "pnpm run fix:lint && pnpm run fix:format",
     "fix:format": "prettier . --write",
     "fix:lint": "eslint . --fix",
@@ -77,14 +64,10 @@
     "test:format": "prettier . --list-different",
     "test:types": "tsc --noEmit",
     "test:lint": "eslint .",
-    "test:spec": "vitest run",
-    "patch-d-ts": "node --input-type=module -e \"import { entries } from './rollup.config.mjs'; import shelljs from 'shelljs'; const { find, sed } = shelljs; find('dist/**/*.d.ts').forEach(f => { entries.forEach(({ find, replacement }) => { sed('-i', new RegExp(' from \\'' + find.source.slice(0, -1) + '\\';$'), ' from \\'' + replacement + '\\';', f); }); sed('-i', / from '(\\.[^']+)\\.ts';$/, ' from \\'\\$1\\';', f); });\"",
-    "copy": "shx cp -r dist/src/* dist/esm && shx cp -r dist/src/* dist && shx rm -rf dist/{src,tests} && shx cp package.json README.md LICENSE dist && json -I -f dist/package.json -e \"this.private=false; this.devDependencies=undefined; this.optionalDependencies=undefined; this.scripts=undefined; this.prettier=undefined;\"",
-    "patch-old-ts": "shx touch dist/ts_version_4.5_and_above_is_required.d.ts",
-    "patch-esm-ts": "node -e \"require('shelljs').find('dist/esm/**/*.d.ts').forEach(f=>{var f2=f.replace(/\\.ts$/,'.mts');require('fs').renameSync(f,f2);require('shelljs').sed('-i',/ from '(\\.[^']+)';$/,' from \\'\\$1.mjs\\';',f2);require('shelljs').sed('-i',/^declare module '(\\.[^']+)'/,'declare module \\'\\$1.mjs\\'',f2)})\""
+    "test:spec": "vitest run"
   },
   "engines": {
-    "node": ">=12.20.0"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "prettier": {
     "semi": false,
@@ -116,19 +99,15 @@
   "devDependencies": {
     "@eslint/js": "9.39.4",
     "@redux-devtools/extension": "^4.0.0",
-    "@rollup/plugin-alias": "^6.0.0",
-    "@rollup/plugin-node-resolve": "^16.0.3",
-    "@rollup/plugin-replace": "^6.0.3",
-    "@rollup/plugin-typescript": "^12.3.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/jsdom": "^28.0.1",
+    "@types/node": "^25.9.5",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitest/coverage-v8": "^4.1.5",
     "@vitest/eslint-plugin": "^1.6.16",
     "@vitest/ui": "^4.1.5",
-    "esbuild": "^0.28.0",
     "eslint": "9.39.4",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
@@ -144,11 +123,8 @@
     "react": "19.2.5",
     "react-dom": "19.2.5",
     "redux": "^5.0.1",
-    "rollup": "^4.60.2",
-    "rollup-plugin-esbuild": "^6.2.1",
     "shelljs": "^0.10.0",
     "shx": "^0.4.0",
-    "tslib": "^2.8.1",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.1",
     "vite": "^8.0.10",

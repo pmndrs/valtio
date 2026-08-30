@@ -4,7 +4,7 @@ import ReactExports, { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
-import { sleep } from '../test-utils'
+import { sleep } from '../test-utils.js'
 
 const { use } = ReactExports
 const use2 = <T,>(x: T): Awaited<T> =>
