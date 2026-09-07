@@ -73,6 +73,25 @@ describe('basic', () => {
     expect(screen.getByText('count: 1')).toBeInTheDocument()
   })
 
+  it.each([
+    (state: { count: number }) => new Proxy(state, {}),
+    (state: { count: number }) => proxy(state),
+  ])('updates when a proxy wrapper changes the state (%#)', async (wrap) => {
+    const state = proxy({ count: 0 })
+    const wrapped = wrap(state)
+    const Counter = () => {
+      const snap = useSnapshot(state)
+      return <div>count: {snap.count}</div>
+    }
+
+    render(<Counter />)
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+
+    wrapped.count = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+  })
+
   it('counter with sync option', async () => {
     const obj = proxy({ count: 0 })
 

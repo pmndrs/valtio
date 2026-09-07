@@ -112,4 +112,20 @@ describe('array', () => {
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('counts: 0,1,2,3,,,,,,9')).toBeInTheDocument()
   })
+
+  it('array truncation updates an accessed index', async () => {
+    const state = proxy([0, 1, 2])
+
+    const Component = () => {
+      const snap = useSnapshot(state)
+      return <div>value: {snap[2] ?? 'missing'}</div>
+    }
+
+    render(<Component />)
+    expect(screen.getByText('value: 2')).toBeInTheDocument()
+
+    state.length = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('value: missing')).toBeInTheDocument()
+  })
 })

@@ -71,6 +71,54 @@ describe('useProxy', () => {
     expect(screen.getByText('Bob (20)')).toBeInTheDocument()
   })
 
+  it('should replace nested objects', async () => {
+    const state = proxy({ nested: { value: 1 } })
+    const nested = state.nested
+
+    const Component = () => {
+      const store = useProxy(state)
+      return (
+        <>
+          <div>value: {store.nested.value}</div>
+          <button
+            onClick={() => {
+              store.nested = { value: 2 }
+            }}
+          >
+            replace
+          </button>
+        </>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('value: 1')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('replace'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(state.nested).not.toBe(nested)
+    expect(screen.getByText('value: 2')).toBeInTheDocument()
+  })
+
+  it('should preserve a different set receiver', () => {
+    const state = proxy({ nested: { value: 1 } })
+    let store: typeof state | undefined
+
+    const Component = () => {
+      store = useProxy(state)
+      return null
+    }
+
+    render(<Component />)
+    const derived = Object.create(store as typeof state) as typeof state
+    derived.nested = { value: 2 }
+
+    expect(Object.hasOwn(derived, 'nested')).toBe(true)
+    expect(derived.nested.value).toBe(2)
+    expect(state.nested.value).toBe(1)
+  })
+
   it('should handle multiple mutations in one handler', async () => {
     const state = proxy({ firstName: 'John', lastName: 'Doe' })
 
