@@ -159,12 +159,16 @@ describe('ref', () => {
       render(<Component />)
       expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-      state.child = proxy(value)
-      await act(() => vi.advanceTimersByTimeAsync(0))
+      await act(async () => {
+        state.child = proxy(value)
+        await vi.advanceTimersByTimeAsync(0)
+      })
       expect(renderFn).toHaveBeenCalledTimes(2)
 
-      state.child.count++
-      await act(() => vi.advanceTimersByTimeAsync(0))
+      await act(async () => {
+        state.child.count++
+        await vi.advanceTimersByTimeAsync(0)
+      })
       expect(screen.getByText('count: 1')).toBeInTheDocument()
       expect(renderFn).toHaveBeenCalledTimes(3)
     },

@@ -67,32 +67,36 @@ describe('subscribeKey', () => {
   it.each([
     [
       'own',
-      proxy({
-        count: 1,
-        get doubled() {
-          return this.count * 2
-        },
-      }),
+      (): { count: number; readonly doubled: number } =>
+        proxy({
+          count: 1,
+          get doubled() {
+            return this.count * 2
+          },
+        }),
     ],
     [
       'inherited',
-      proxy(
-        new (class {
-          count = 1
-          get doubled() {
-            return this.count * 2
-          }
-        })(),
-      ),
+      (): { count: number; readonly doubled: number } =>
+        proxy(
+          new (class {
+            count = 1
+            get doubled() {
+              return this.count * 2
+            }
+          })(),
+        ),
     ],
-  ])('should notify for an %s getter', (_name, state) => {
+  ] as const)('should notify for an %s getter', (_name, createState) => {
+    const state = createState()
     const handler = vi.fn()
 
-    subscribeKey(state, 'doubled', handler, true)
+    const unsubscribe = subscribeKey(state, 'doubled', handler, true)
     state.count = 2
 
     expect(handler).toHaveBeenCalledTimes(1)
     expect(handler).toHaveBeenLastCalledWith(4)
+    unsubscribe()
   })
 
   it('should notify when deleting a property reveals a getter', () => {

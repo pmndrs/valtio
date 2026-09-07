@@ -97,7 +97,8 @@ describe('getter', () => {
     expect(renderFn).toHaveBeenCalledTimes(2)
   })
 
-  it('should track receiver reads in getter-returned closures', async () => {
+  it('should render updated values from getter-returned closures', async () => {
+    // In v2, function identity alone can trigger this render.
     const state = proxy({
       count: 1,
       get select() {
@@ -116,15 +117,17 @@ describe('getter', () => {
     }
 
     render(<Component />)
+    expect(screen.getByText('values: 1,1')).toBeInTheDocument()
     state.count = 2
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('values: 2,2')).toBeInTheDocument()
     expect(renderFn).toHaveBeenCalledTimes(2)
   })
 
-  it('should track receiver reads while another getter calls an escaped closure', async () => {
+  it('should update a getter that calls a getter-returned closure', async () => {
     const state = proxy({
       count: 1,
+      unrelated: 0,
       get select() {
         return () => this.count
       },
@@ -140,6 +143,12 @@ describe('getter', () => {
     }
 
     render(<Component />)
+    expect(screen.getByText('doubled: 2')).toBeInTheDocument()
+
+    state.unrelated++
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
     state.count = 2
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('doubled: 4')).toBeInTheDocument()

@@ -32,24 +32,33 @@ describe('proxy creation', () => {
   })
 
   it.each([
-    (state: { count: number }) => new Proxy(state, {}),
-    (state: { count: number }) => proxy(state),
-    (state: { count: number }) => proxy(proxy(state)),
-  ])('should notify the original proxy through a wrapper (%#)', (wrap) => {
-    const state = proxy({ count: 0 })
-    const wrapped = wrap(state)
-    const handler = vi.fn()
-    const unsubscribe = subscribe(state, handler, true)
-    const snap = snapshot(state)
+    [
+      'transparent Proxy',
+      (state: { count: number }): typeof state => new Proxy(state, {}),
+    ],
+    ['Valtio proxy', (state: { count: number }): typeof state => proxy(state)],
+    [
+      'nested Valtio proxy',
+      (state: { count: number }): typeof state => proxy(proxy(state)),
+    ],
+  ] as const)(
+    'should notify the original proxy through a wrapper (%s)',
+    (_name, wrap) => {
+      const state = proxy({ count: 0 })
+      const wrapped = wrap(state)
+      const handler = vi.fn()
+      const unsubscribe = subscribe(state, handler, true)
+      const snap = snapshot(state)
 
-    wrapped.count = 1
+      wrapped.count = 1
 
-    expect(state.count).toBe(1)
-    expect(snapshot(state).count).toBe(1)
-    expect(snap.count).toBe(0)
-    expect(handler).toHaveBeenCalledTimes(1)
-    unsubscribe()
-  })
+      expect(state.count).toBe(1)
+      expect(snapshot(state).count).toBe(1)
+      expect(snap.count).toBe(0)
+      expect(handler).toHaveBeenCalledTimes(1)
+      unsubscribe()
+    },
+  )
 
   it('should proxy and track children assigned through a transparent wrapper', () => {
     const state = proxy({ child: { count: 0 } })
@@ -68,6 +77,7 @@ describe('proxy creation', () => {
 })
 
 describe('proxy nested values', () => {
+  // Preserve JavaScript replacement semantics, including own keys and aliases.
   it('should proxy nested objects present at creation', () => {
     const state = proxy({ nested: { count: 0 } })
     expect(isProxy(state.nested)).toBe(true)
@@ -973,6 +983,7 @@ describe('proxy property descriptors', () => {
 
 describe('proxy arrays', () => {
   it('should not enumerate existing keys when appending or growing length', () => {
+    // Scanning existing keys on every append makes repeated pushes quadratic.
     const raw = [0, 1, 2]
     const state = proxy(raw)
     const ownKeys = vi.spyOn(Reflect, 'ownKeys')
@@ -988,6 +999,7 @@ describe('proxy arrays', () => {
       ownKeys.mockRestore()
     }
   })
+
   it('should track push, pop and splice', async () => {
     const state = proxy([0, 1, 2])
     const handler = vi.fn()

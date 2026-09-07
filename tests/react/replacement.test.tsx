@@ -201,7 +201,8 @@ describe('getters with replacement', () => {
     expect(screen.getByText('2')).toBeInTheDocument()
   })
 
-  it('tracks getter-returned closures across replacement', async () => {
+  it('renders updated getter-returned closure values after replacement', async () => {
+    // In v2, function identity alone can trigger this render.
     const state = proxy({
       obj: { count: 1 },
       get select() {
@@ -213,6 +214,7 @@ describe('getters with replacement', () => {
       return <div>{snap.select()}</div>
     }
     render(<Component />)
+    expect(screen.getByText('1')).toBeInTheDocument()
     await act(async () => {
       state.obj = { count: 2 }
     })
