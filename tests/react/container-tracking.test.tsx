@@ -2,16 +2,13 @@ import { memo, useLayoutEffect, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
+import type { Snapshot } from 'valtio'
 
 describe('container tracking', () => {
   it('rechecks a container discovered after an unused mutation', async () => {
     const state = proxy({ obj: { count: 1 } })
     let observed: object | null = null
-    const Child = ({
-      snap,
-    }: {
-      snap: ReturnType<typeof useSnapshot<typeof state>>
-    }) => {
+    const Child = ({ snap }: { snap: Snapshot<typeof state> }) => {
       const [visible, setVisible] = useState(false)
       const obj = visible ? snap.obj : null
       useLayoutEffect(() => {
@@ -34,7 +31,7 @@ describe('container tracking', () => {
     const Child = memo(function Child({
       snap,
     }: {
-      snap: ReturnType<typeof useSnapshot<typeof state>>
+      snap: Snapshot<typeof state>
     }) {
       return <div>child: {snap.b}</div>
     })
@@ -181,7 +178,7 @@ describe('container tracking', () => {
     const Child = memo(function Child({
       snap,
     }: {
-      snap: ReturnType<typeof useSnapshot<typeof state>>
+      snap: Snapshot<typeof state>
     }) {
       useLayoutEffect(effect, [snap.obj])
       return null

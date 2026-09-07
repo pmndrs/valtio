@@ -2,6 +2,7 @@ import { memo, useLayoutEffect, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { proxy, snapshot, useSnapshot } from 'valtio'
+import type { Snapshot } from 'valtio'
 import { proxyMap } from 'valtio/utils'
 
 describe('replacement and detachment', () => {
@@ -84,7 +85,7 @@ describe('replacement and detachment', () => {
 
   it('keeps old immutable snapshots readable after replacement', async () => {
     const state = proxy({ obj: { count: 1 } })
-    let previous: ReturnType<typeof useSnapshot<typeof state>> | undefined
+    let previous: Snapshot<typeof state> | undefined
     const Component = () => {
       const snap = useSnapshot(state)
       previous ||= snap

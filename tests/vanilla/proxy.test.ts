@@ -99,7 +99,7 @@ describe('proxy nested values', () => {
 
     derived.nested = { count: 1 }
 
-    expect(Object.hasOwn(derived, 'nested')).toBe(true)
+    expect(Object.prototype.hasOwnProperty.call(derived, 'nested')).toBe(true)
     expect(derived.nested.count).toBe(1)
     expect(state.nested).toBe(nested)
     expect(state.nested.count).toBe(0)
@@ -163,9 +163,15 @@ describe('proxy nested values', () => {
     state.nested = next
 
     expect(state.nested).not.toBe(prevNested)
-    expect(Object.hasOwn(state.nested, '__proto__')).toBe(true)
-    expect(Object.hasOwn(state.nested, 'constructor')).toBe(true)
-    expect(Object.hasOwn(state.nested, 'toString')).toBe(true)
+    expect(
+      Object.prototype.hasOwnProperty.call(state.nested, '__proto__'),
+    ).toBe(true)
+    expect(
+      Object.prototype.hasOwnProperty.call(state.nested, 'constructor'),
+    ).toBe(true)
+    expect(Object.prototype.hasOwnProperty.call(state.nested, 'toString')).toBe(
+      true,
+    )
     expect(Object.getPrototypeOf(state.nested)).toBe(Object.prototype)
   })
 
@@ -794,7 +800,9 @@ describe('proxy nested values', () => {
     state.node = JSON.parse('{"a":2,"__proto__":1}') as Record<string, number>
 
     expect(Object.keys(state.node)).toEqual(['a', '__proto__'])
-    expect(Object.hasOwn(state.node, '__proto__')).toBe(true)
+    expect(Object.prototype.hasOwnProperty.call(state.node, '__proto__')).toBe(
+      true,
+    )
     expect(Object.getPrototypeOf(state.node)).toBe(Object.prototype)
   })
 

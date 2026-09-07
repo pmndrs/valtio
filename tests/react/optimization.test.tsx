@@ -349,7 +349,12 @@ describe('optimization', () => {
       const snap = useSnapshot(state)
       renderFn()
       return (
-        <div>Value: {Object.hasOwn(snap, 'value') ? 'present' : 'absent'}</div>
+        <div>
+          Value:{' '}
+          {Object.prototype.hasOwnProperty.call(snap, 'value')
+            ? 'present'
+            : 'absent'}
+        </div>
       )
     }
 

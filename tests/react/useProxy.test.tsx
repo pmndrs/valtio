@@ -114,7 +114,7 @@ describe('useProxy', () => {
     const derived = Object.create(store as typeof state) as typeof state
     derived.nested = { value: 2 }
 
-    expect(Object.hasOwn(derived, 'nested')).toBe(true)
+    expect(Object.prototype.hasOwnProperty.call(derived, 'nested')).toBe(true)
     expect(derived.nested.value).toBe(2)
     expect(state.nested.value).toBe(1)
   })
