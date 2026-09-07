@@ -51,4 +51,91 @@ describe('subscribeKey', () => {
     const snapshot2 = snapshot(obj)
     expect(snapshot1).not.toEqual(snapshot2)
   })
+
+  it('should preserve the final Object.is comparison', async () => {
+    const state = proxy({ count: 0 })
+    const handler = vi.fn()
+
+    subscribeKey(state, 'count', handler)
+    state.count = 1
+    state.count = 0
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    [
+      'own',
+      (): { count: number; readonly doubled: number } =>
+        proxy({
+          count: 1,
+          get doubled() {
+            return this.count * 2
+          },
+        }),
+    ],
+    [
+      'inherited',
+      (): { count: number; readonly doubled: number } =>
+        proxy(
+          new (class {
+            count = 1
+            get doubled() {
+              return this.count * 2
+            }
+          })(),
+        ),
+    ],
+  ] as const)('should notify for an %s getter', (_name, createState) => {
+    const state = createState()
+    const handler = vi.fn()
+
+    const unsubscribe = subscribeKey(state, 'doubled', handler, true)
+    state.count = 2
+
+    expect(handler).toHaveBeenCalledTimes(1)
+    expect(handler).toHaveBeenLastCalledWith(4)
+    unsubscribe()
+  })
+
+  it('should notify when deleting a property reveals a getter', () => {
+    class State {
+      count = 1
+      get selected() {
+        return this.count
+      }
+    }
+    const state = proxy(new State())
+    Object.defineProperty(state, 'selected', {
+      value: 1,
+      configurable: true,
+    })
+    const handler = vi.fn()
+
+    subscribeKey(state, 'selected', handler, true)
+    delete (state as { selected?: number }).selected
+    state.count = 2
+
+    expect(handler).toHaveBeenCalledTimes(1)
+    expect(handler).toHaveBeenLastCalledWith(2)
+  })
+
+  it('should only notify for an object key when its proxy is replaced', async () => {
+    const state = proxy({ nested: { count: 0 } })
+    const nested = state.nested
+    const handler = vi.fn()
+
+    subscribeKey(state, 'nested', handler)
+    state.nested.count = 1
+    await vi.advanceTimersByTimeAsync(0)
+    expect(state.nested).toBe(nested)
+    expect(handler).not.toHaveBeenCalled()
+
+    const nextNested = proxy({ count: 2 })
+    state.nested = nextNested
+    await vi.advanceTimersByTimeAsync(0)
+    expect(handler).toHaveBeenCalledTimes(1)
+    expect(handler).toHaveBeenLastCalledWith(nextNested)
+  })
 })

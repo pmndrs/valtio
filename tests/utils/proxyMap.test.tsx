@@ -318,6 +318,25 @@ describe('proxyMap', () => {
   })
 
   describe('proxyMap internal', () => {
+    it('should replace an object value without mutating other references', () => {
+      const shared = { count: 0 }
+      const state = proxyMap([
+        ['a', shared],
+        ['b', shared],
+      ])
+      const previous = state.get('a')
+      const snap = snapshot(state)
+
+      state.set('a', { count: 1 })
+
+      expect(state.get('a')).toEqual({ count: 1 })
+      expect(state.get('a')).not.toBe(previous)
+      expect(state.get('b')).toBe(previous)
+      expect(previous).toEqual({ count: 0 })
+      expect(snap.get('a')).toEqual({ count: 0 })
+      expect(snap.get('b')).toEqual({ count: 0 })
+    })
+
     it('should be sealed', () => {
       expect(Object.isSealed(proxyMap())).toBe(true)
     })
@@ -422,6 +441,19 @@ describe('proxyMap', () => {
   })
 
   describe('snapshot', () => {
+    it('should capture collection data before any snapshot getter is read', () => {
+      const state = proxyMap([['old', 1]])
+      const snap = snapshot(state)
+      state.clear()
+      state.set('new', 2)
+
+      expect(snap.size).toBe(1)
+      expect(snap.has('old')).toBe(true)
+      expect(snap.has('new')).toBe(false)
+      expect(snap.get('old')).toBe(1)
+      expect([...snap]).toEqual([['old', 1]])
+    })
+
     it('should error when trying to mutate a snapshot', () => {
       const state = proxyMap()
       const snap = snapshot(state)

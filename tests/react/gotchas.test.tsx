@@ -211,6 +211,103 @@ describe('gotchas: React.memo with object props', () => {
     expect(screen.getByText('title: c')).toBeInTheDocument()
   })
 
+  it('should retain reads when a memoized child receives the root snapshot', async () => {
+    const state = proxy({ obj: { title: 'a' } })
+    const childRender = vi.fn()
+
+    const Child = memo(function Child({
+      snap,
+    }: {
+      snap: { readonly obj: { readonly title: string } }
+    }) {
+      childRender()
+      return <div>title: {snap.obj.title}</div>
+    })
+
+    const Parent = () => {
+      const [, rerender] = useState(0)
+      const snap = useSnapshot(state)
+      return (
+        <>
+          <button onClick={() => rerender((value) => value + 1)}>
+            rerender
+          </button>
+          <Child snap={snap} />
+        </>
+      )
+    }
+
+    render(<Parent />)
+    fireEvent.click(screen.getByText('rerender'))
+    expect(childRender).toHaveBeenCalledTimes(1)
+
+    state.obj.title = 'b'
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('title: b')).toBeInTheDocument()
+    expect(childRender).toHaveBeenCalledTimes(2)
+  })
+
+  it('should subscribe to keys read by an independently rendered child', async () => {
+    const state = proxy({ first: 'a', second: 'b' })
+    const parentRender = vi.fn()
+
+    const Child = ({ snap }: { snap: typeof state }) => {
+      const [key, setKey] = useState<'first' | 'second'>('first')
+      return (
+        <>
+          <button onClick={() => setKey('second')}>switch</button>
+          <div>value: {snap[key]}</div>
+        </>
+      )
+    }
+
+    const Parent = () => {
+      parentRender()
+      const snap = useSnapshot(state)
+      return <Child snap={snap} />
+    }
+
+    render(<Parent />)
+    fireEvent.click(screen.getByText('switch'))
+    expect(screen.getByText('value: b')).toBeInTheDocument()
+    expect(parentRender).toHaveBeenCalledTimes(1)
+
+    state.second = 'c'
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('value: c')).toBeInTheDocument()
+    expect(parentRender).toHaveBeenCalledTimes(2)
+  })
+
+  it('should subscribe to proxies read by an independently rendered child', async () => {
+    const state = proxy({
+      first: { value: 'a' },
+      second: { value: 'b' },
+    })
+
+    const Child = ({ snap }: { snap: typeof state }) => {
+      const [key, setKey] = useState<'first' | 'second'>('first')
+      return (
+        <>
+          <button onClick={() => setKey('second')}>switch</button>
+          <div>value: {snap[key].value}</div>
+        </>
+      )
+    }
+
+    const Parent = () => {
+      const snap = useSnapshot(state)
+      return <Child snap={snap} />
+    }
+
+    render(<Parent />)
+    fireEvent.click(screen.getByText('switch'))
+    expect(screen.getByText('value: b')).toBeInTheDocument()
+
+    state.second.value = 'c'
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('value: c')).toBeInTheDocument()
+  })
+
   it('should update a memoized child that subscribes to the proxy it was passed', async () => {
     const state = proxy({
       objects: [

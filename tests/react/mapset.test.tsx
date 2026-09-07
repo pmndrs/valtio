@@ -1,9 +1,64 @@
 import { StrictMode } from 'react'
-import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
+import { proxyMap, proxySet } from 'valtio/utils'
 
 describe('mapset', () => {
+  it('should not treat custom toStringTag values as collections', () => {
+    const method = () => undefined
+    const state = proxy({
+      other: 0,
+      method,
+      get [Symbol.toStringTag]() {
+        return 'Map'
+      },
+    })
+    const renderFn = vi.fn()
+    let snapshotMethod: (() => void) | undefined
+    const Component = () => {
+      const snap = useSnapshot(state, { sync: true })
+      renderFn()
+      snapshotMethod = snap.method
+      return null
+    }
+
+    render(<Component />)
+    expect(snapshotMethod).toBe(method)
+
+    act(() => {
+      state.other += 1
+    })
+    expect(renderFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('should track wrapped proxy collections', () => {
+    const map = proxyMap([['first', 1]])
+    const set = proxySet([1])
+    const wrappedMap = proxy(proxy(map))
+    const wrappedSet = proxy(proxy(set))
+
+    const Component = () => {
+      const mapSnap = useSnapshot(wrappedMap, { sync: true })
+      const setSnap = useSnapshot(wrappedSet, { sync: true })
+      return (
+        <div>
+          values: {mapSnap.size}, {String(mapSnap.has('second'))},{' '}
+          {setSnap.size}, {String(setSnap.has(2))}
+        </div>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('values: 1, false, 1, false')).toBeInTheDocument()
+
+    act(() => {
+      map.set('second', 2)
+      set.add(2)
+    })
+    expect(screen.getByText('values: 2, true, 2, true')).toBeInTheDocument()
+  })
+
   it('unsupported map', async () => {
     const obj = proxy({ map: new Map([['count', 0]]) })
 

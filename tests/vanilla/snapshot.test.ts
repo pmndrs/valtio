@@ -75,6 +75,28 @@ describe('snapshot', () => {
     consoleWarn.mockRestore()
   })
 
+  it('should evaluate getters that read ancestor properties in cyclic graphs', () => {
+    type Root = {
+      child: {
+        parent: Root
+        readonly selected: number
+      }
+      value: number
+    }
+    const root = {} as Root
+    root.child = {
+      parent: root,
+      get selected() {
+        return this.parent.value
+      },
+    }
+    root.value = 1
+
+    const snap = snapshot(proxy(root))
+
+    expect(snap.child.selected).toBe(1)
+  })
+
   it('should reuse the snapshot while the state is unchanged', () => {
     const state = proxy({ count: 0 })
     expect(snapshot(state)).toBe(snapshot(state))

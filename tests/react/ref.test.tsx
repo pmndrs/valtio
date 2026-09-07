@@ -111,4 +111,66 @@ describe('ref', () => {
     ++obj.nested.count
     expect(callback).not.toBeCalled()
   })
+
+  it('should not wrap a proxy wrapped in ref', async () => {
+    const child = ref(proxy({ count: 0 }))
+    const state = proxy({ nested: child })
+    const renderFn = vi.fn()
+    let nested: object | undefined
+
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      nested = snap.nested
+      return <div>count: {snap.nested.count}</div>
+    }
+
+    render(<Component />)
+    expect(nested).toBe(child)
+
+    child.count += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.nested = ref(proxy({ count: 2 }))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 2')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it.each([
+    ['object', false],
+    ['object', true],
+    ['proxy', false],
+    ['proxy', true],
+  ] as const)(
+    'should subscribe after replacing a ref %s with its proxy (sync: %s)',
+    async (kind, sync) => {
+      const value = ref(kind === 'object' ? { count: 0 } : proxy({ count: 0 }))
+      const state = proxy<{ child: { count: number } }>({ child: value })
+      const renderFn = vi.fn()
+      const Component = () => {
+        const snap = useSnapshot(state, { sync })
+        renderFn()
+        return <div>count: {snap.child.count}</div>
+      }
+
+      render(<Component />)
+      expect(screen.getByText('count: 0')).toBeInTheDocument()
+
+      await act(async () => {
+        state.child = proxy(value)
+        await vi.advanceTimersByTimeAsync(0)
+      })
+      expect(renderFn).toHaveBeenCalledTimes(2)
+
+      await act(async () => {
+        state.child.count++
+        await vi.advanceTimersByTimeAsync(0)
+      })
+      expect(screen.getByText('count: 1')).toBeInTheDocument()
+      expect(renderFn).toHaveBeenCalledTimes(3)
+    },
+  )
 })

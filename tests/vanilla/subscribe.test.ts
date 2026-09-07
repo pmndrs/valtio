@@ -256,4 +256,90 @@ describe('subscribe with op', () => {
     expect(handler).toBeCalledTimes(2)
     expect(handler).lastCalledWith([['delete', ['nested', 'count'], 1]])
   })
+
+  it.each([false, true])(
+    'should preserve queued child ops before replacing a parent with reordered keys (sync: %s)',
+    async (sync) => {
+      const state = proxy({ node: { child: { count: 0 }, other: 0 } })
+      const previous = state.node
+      const child = state.node.child
+      const handler = vi.fn()
+      const unsubscribe = subscribe(state, handler, sync)
+
+      state.node.child.count = 1
+      state.node = { other: 0, child }
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(state.node.child).toBe(child)
+      expect(Object.keys(state.node)).toEqual(['other', 'child'])
+      expect(handler.mock.calls.flatMap(([ops]) => ops)).toEqual([
+        ['set', ['node', 'child', 'count'], 1, 0],
+        ['set', ['node'], { other: 0, child }, previous],
+      ])
+
+      handler.mockClear()
+      state.node.child.count = 2
+      await vi.advanceTimersByTimeAsync(0)
+      expect(handler).toHaveBeenCalledExactlyOnceWith([
+        ['set', ['node', 'child', 'count'], 2, 1],
+      ])
+
+      unsubscribe()
+      handler.mockClear()
+      state.node.child.count = 3
+      await vi.advanceTimersByTimeAsync(0)
+      expect(handler).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each([false, true])(
+    'should preserve queued child ops before replacing a cyclic parent (sync: %s)',
+    async (sync) => {
+      type Node = { child?: { count: number; parent: Node } }
+      const node: Node = {}
+      node.child = { count: 0, parent: node }
+      const state = proxy({ node })
+      const previous = state.node
+      const child = state.node.child!
+      const handler = vi.fn()
+      const unsubscribe = subscribe(state, handler, sync)
+
+      child.count = 1
+      state.node = { child: { count: 1, parent: {} } }
+      await vi.advanceTimersByTimeAsync(0)
+
+      expect(state.node.child).not.toBe(child)
+      expect(child.count).toBe(1)
+      expect(handler.mock.calls.flatMap(([ops]) => ops)).toEqual([
+        ['set', ['node', 'child', 'count'], 1, 0],
+        ['set', ['node'], { child: { count: 1, parent: {} } }, previous],
+      ])
+
+      handler.mockClear()
+      state.node.child!.count = 2
+      await vi.advanceTimersByTimeAsync(0)
+      expect(handler).toHaveBeenCalledExactlyOnceWith([
+        ['set', ['node', 'child', 'count'], 2, 1],
+      ])
+
+      unsubscribe()
+      handler.mockClear()
+      state.node.child!.count = 3
+      await vi.advanceTimersByTimeAsync(0)
+      expect(handler).not.toHaveBeenCalled()
+    },
+  )
+
+  it('should report replacement ops when assigned keys are reordered', () => {
+    const state = proxy({ node: { toString: 1, value: 2 } })
+    const handler = vi.fn()
+
+    const previous = state.node
+    subscribe(state, handler, true)
+    state.node = { value: 2, toString: 1 }
+
+    expect(handler.mock.calls.map(([ops]) => ops[0])).toEqual([
+      ['set', ['node'], { value: 2, toString: 1 }, previous],
+    ])
+  })
 })
