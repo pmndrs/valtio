@@ -46,6 +46,25 @@ describe('class', () => {
     expect(screen.getByText('count: 1')).toBeInTheDocument()
   })
 
+  it('does not evaluate an inherited toStringTag getter', () => {
+    class CountClass {
+      #tag = 'CountClass'
+      count = 0
+
+      get [Symbol.toStringTag]() {
+        return this.#tag
+      }
+    }
+    const state = proxy(new CountClass())
+    const Component = () => {
+      const snap = useSnapshot(state)
+      return <div>count: {snap.count}</div>
+    }
+
+    expect(() => render(<Component />)).not.toThrow()
+    expect(screen.getByText('count: 0')).toBeInTheDocument()
+  })
+
   it('no extra re-renders with class', async () => {
     class CountClass {
       public count: number

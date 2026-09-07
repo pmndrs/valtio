@@ -348,6 +348,18 @@ describe('proxySet', () => {
   })
 
   describe('snapshot behavior', () => {
+    it('should capture collection data before any snapshot getter is read', () => {
+      const state = proxySet(['old'])
+      const snap = snapshot(state)
+      state.clear()
+      state.add('new')
+
+      expect(snap.size).toBe(1)
+      expect(snap.has('old')).toBe(true)
+      expect(snap.has('new')).toBe(false)
+      expect([...snap]).toEqual(['old'])
+    })
+
     it('should error when trying to mutate a snapshot', () => {
       const state = proxySet()
       const snap = snapshot(state)

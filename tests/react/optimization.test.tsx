@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Suspense, startTransition, useLayoutEffect, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
@@ -56,6 +56,460 @@ describe('optimization', () => {
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('Count: 1')).toBeInTheDocument()
     expect(renderFn).toBeCalledTimes(2)
+  })
+
+  it('should not track snapshots assigned outside render', async () => {
+    const source = proxy({ nested: { count: 0, other: 0 } })
+    const destination = proxy<{ value?: object }>({})
+    let nested!: object
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(source)
+      nested = snap.nested
+      renderFn(snap.nested.count)
+      return null
+    }
+
+    render(<Component />)
+    destination.value = nested
+    snapshot(destination)
+    source.nested.other = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(renderFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('should unwrap nested snapshots assigned outside render', async () => {
+    const source = proxy({ nested: { count: 0, other: 0 } })
+    const destination = proxy<{ value: { nested?: object } }>({ value: {} })
+    let nested!: object
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(source)
+      nested = snap.nested
+      renderFn(snap.nested.count)
+      return null
+    }
+
+    render(<Component />)
+    destination.value = { nested }
+    snapshot(destination)
+    source.nested.other = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(renderFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('should not rerender for deleting a non-own property', async () => {
+    const base = Object.create({ inherited: 1 }) as {
+      missing?: number
+      inherited?: number
+    }
+    const state = proxy(base)
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return (
+        <div>
+          Values: {String(snap.missing)}, {snap.inherited}
+        </div>
+      )
+    }
+
+    render(<Component />)
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    delete state.missing
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    delete state.inherited
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('should update subscriptions when accessed keys change', async () => {
+    const state = proxy({ useA: true, a: 0, b: 0 })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return <div>Count: {snap.useA ? snap.a : snap.b}</div>
+    }
+
+    render(<Component />)
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.b += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.useA = false
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Count: 1')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    state.a += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    state.b += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Count: 2')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(3)
+  })
+
+  it('should retain keys accessed before a prop change', async () => {
+    const state = proxy({ a: 0, b: 0 })
+    const renderFn = vi.fn()
+    const Component = ({ useA }: { useA: boolean }) => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return <div>Count: {useA ? snap.a : snap.b}</div>
+    }
+
+    const { rerender } = render(<Component useA />)
+    rerender(<Component useA={false} />)
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    state.a += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(3)
+
+    state.b += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Count: 1')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(4)
+  })
+
+  it('should detect a new-key mutation before passive subscription', async () => {
+    const state = proxy({ a: 0, b: 0 })
+    const Component = ({ useA }: { useA: boolean }) => {
+      const snap = useSnapshot(state)
+      useLayoutEffect(() => {
+        if (!useA) {
+          state.b += 1
+        }
+      }, [useA])
+      return <div>Count: {useA ? snap.a : snap.b}</div>
+    }
+
+    const { rerender } = render(<Component useA />)
+    rerender(<Component useA={false} />)
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Count: 1')).toBeInTheDocument()
+  })
+
+  it('should update subscriptions when the root proxy changes', async () => {
+    const first = proxy({ count: 0 })
+    const second = proxy({ count: 0 })
+    const renderFn = vi.fn()
+    const Component = ({ state }: { state: { count: number } }) => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return <div>Count: {snap.count}</div>
+    }
+
+    const { rerender } = render(<Component state={first} />)
+    rerender(<Component state={second} />)
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    first.count += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    second.count += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Count: 1')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(3)
+  })
+
+  it('should keep committed subscriptions during a suspended render', async () => {
+    const state = proxy({ a: 0, b: 0 })
+    const promise = new Promise<void>(() => {})
+    const Component = ({ useA }: { useA: boolean }) => {
+      const snap = useSnapshot(state)
+      if (!useA) {
+        void snap.b
+        throw promise
+      }
+      return <div>Count: {snap.a}</div>
+    }
+    const App = () => {
+      const [useA, setUseA] = useState(true)
+      return (
+        <>
+          <button onClick={() => startTransition(() => setUseA(false))}>
+            switch
+          </button>
+          <Suspense fallback="loading">
+            <Component useA={useA} />
+          </Suspense>
+        </>
+      )
+    }
+
+    render(<App />)
+    fireEvent.click(screen.getByText('switch'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Count: 0')).toBeInTheDocument()
+
+    state.a += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Count: 1')).toBeInTheDocument()
+  })
+
+  it('should grow committed subscriptions during a suspended render', async () => {
+    const state = proxy({ a: 0, b: 0 })
+    const promise = new Promise<void>(() => {})
+    const Child = ({ snap }: { snap: typeof state }) => {
+      const [useB, setUseB] = useState(false)
+      return (
+        <>
+          <button onClick={() => setUseB(true)}>use b</button>
+          <div>Count: {useB ? snap.b : snap.a}</div>
+        </>
+      )
+    }
+    const Component = ({ suspend }: { suspend: boolean }) => {
+      const snap = useSnapshot(state)
+      if (suspend) {
+        throw promise
+      }
+      return <Child snap={snap} />
+    }
+    const App = () => {
+      const [suspend, setSuspend] = useState(false)
+      return (
+        <>
+          <button onClick={() => startTransition(() => setSuspend(true))}>
+            suspend
+          </button>
+          <Suspense fallback="loading">
+            <Component suspend={suspend} />
+          </Suspense>
+        </>
+      )
+    }
+
+    render(<App />)
+    fireEvent.click(screen.getByText('suspend'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    fireEvent.click(screen.getByText('use b'))
+    expect(screen.getByText('Count: 0')).toBeInTheDocument()
+
+    state.b = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Count: 1')).toBeInTheDocument()
+  })
+
+  it('should track property existence with the in operator', async () => {
+    const state = proxy<{ value?: number; other: number }>({
+      value: 1,
+      other: 0,
+    })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return <div>Value: {'value' in snap ? 'present' : 'absent'}</div>
+    }
+
+    render(<Component />)
+    expect(screen.getByText('Value: present')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.value = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.other += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    delete state.value
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Value: absent')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    state.value = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Value: present')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(3)
+  })
+
+  it('should track own-property checks', async () => {
+    const state = proxy<{ value?: number; other: number }>({
+      value: 1,
+      other: 0,
+    })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return (
+        <div>
+          Value:{' '}
+          {Object.prototype.hasOwnProperty.call(snap, 'value')
+            ? 'present'
+            : 'absent'}
+        </div>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('Value: present')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.value = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.other += 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    delete state.value
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Value: absent')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    state.value = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Value: present')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(3)
+  })
+
+  it('should track property enumeration', async () => {
+    const state = proxy<{
+      first?: number
+      second?: number
+      nested: { count: number }
+    }>({ first: 1, nested: { count: 0 } })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return <div>Keys: {Object.keys(snap).join(',')}</div>
+    }
+
+    render(<Component />)
+    expect(screen.getByText('Keys: first,nested')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.first = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.nested.count = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.second = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Keys: first,nested,second')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    delete state.first
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Keys: nested,second')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(3)
+  })
+
+  it('should rerender when replacement changes key order', async () => {
+    const state = proxy({ nested: { a: 1, b: 2 } })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return <div>Keys: {Object.keys(snap.nested).join(',')}</div>
+    }
+
+    render(<Component />)
+    expect(screen.getByText('Keys: a,b')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.nested = { b: 2, a: 1 }
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Keys: b,a')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should track object spread', async () => {
+    const state = proxy<{ first?: number; second?: number }>({ first: 1 })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return <div>Value: {JSON.stringify({ ...snap })}</div>
+    }
+
+    render(<Component />)
+    expect(screen.getByText('Value: {"first":1}')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.first = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Value: {"first":2}')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    state.second = 3
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(
+      screen.getByText('Value: {"first":2,"second":3}'),
+    ).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(3)
+  })
+
+  it('should rerender when raw assignment adds or deletes an accessed leaf', async () => {
+    const state = proxy<{
+      nested: { value?: number; other: number }
+    }>({ nested: { value: 1, other: 0 } })
+    const nested = state.nested
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return <div>Value: {snap.nested.value ?? 'missing'}</div>
+    }
+
+    render(<Component />)
+    expect(screen.getByText('Value: 1')).toBeInTheDocument()
+
+    state.nested = { other: 0 }
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Value: missing')).toBeInTheDocument()
+    expect(state.nested).not.toBe(nested)
+
+    state.nested = { value: 2, other: 0 }
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('Value: 2')).toBeInTheDocument()
+    expect(state.nested).not.toBe(nested)
+    expect(renderFn).toHaveBeenCalledTimes(3)
+  })
+
+  it('should follow shared children after replacement', async () => {
+    const state = proxy({
+      root: { a: { count: 0 }, b: { count: 1 } },
+    })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const snap = useSnapshot(state)
+      renderFn()
+      return <div>Count: {snap.root.b.count}</div>
+    }
+
+    render(<Component />)
+    expect(screen.getByText('Count: 1')).toBeInTheDocument()
+
+    const shared = { count: 2 }
+    state.root = { a: shared, b: shared }
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
+    expect(screen.getByText('Count: 2')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+    expect(state.root.a).toBe(state.root.b)
   })
 
   it('regression: useSnapshot renders should not fail consistency check with extra render (nested useSnapshot)', async () => {
