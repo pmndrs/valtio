@@ -18,10 +18,10 @@ describe('circular', () => {
     obj.object.count = 0
 
     const Counter = () => {
-      const snap = useSnapshot(obj) as any
+      const tracked = useSnapshot(obj) as any
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={() => ++obj.count}>button</button>
         </>
       )

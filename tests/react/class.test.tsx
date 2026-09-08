@@ -24,10 +24,10 @@ describe('class', () => {
     const obj = proxy(new CountClass())
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={() => ++obj.count}>button</button>
         </>
       )
@@ -57,8 +57,8 @@ describe('class', () => {
     }
     const state = proxy(new CountClass())
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>count: {snap.count}</div>
+      const tracked = useSnapshot(state)
+      return <div>count: {tracked.count}</div>
     }
 
     expect(() => render(<Component />)).not.toThrow()
@@ -78,11 +78,11 @@ describe('class', () => {
     const obj = proxy(new CountClass())
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
           <div>
-            count: {snap.count} ({useCommitCount()})
+            count: {tracked.count} ({useCommitCount()})
           </div>
           <button onClick={() => ++obj.count}>button</button>
         </>
@@ -90,11 +90,11 @@ describe('class', () => {
     }
 
     const Counter2 = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
           <div>
-            count2: {snap.count2} ({useCommitCount()})
+            count2: {tracked.count2} ({useCommitCount()})
           </div>
           <button onClick={() => ++obj.count2}>button2</button>
         </>
@@ -140,10 +140,10 @@ describe('class', () => {
     const obj = proxy(new CountClass())
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={() => ++obj.count}>button</button>
         </>
       )
@@ -176,11 +176,11 @@ describe('class', () => {
     const obj = proxy(new CountClass())
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
           <div>
-            doubled: {snap.doubled()} ({useCommitCount()})
+            doubled: {tracked.doubled()} ({useCommitCount()})
           </div>
           <button onClick={() => ++obj.count}>button</button>
         </>
@@ -188,10 +188,10 @@ describe('class', () => {
     }
 
     const Counter2 = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <div>
-          count: {snap.count} ({useCommitCount()})
+          count: {tracked.count} ({useCommitCount()})
         </div>
       )
     }
@@ -233,11 +233,11 @@ describe('class', () => {
     const obj = proxy(new CountClass())
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
           <div>
-            doubled: {snap.doubled()} ({useCommitCount()})
+            doubled: {tracked.doubled()} ({useCommitCount()})
           </div>
           <button onClick={() => ++obj.count}>button</button>
         </>
@@ -245,11 +245,11 @@ describe('class', () => {
     }
 
     const Counter2 = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
           <div>
-            count2: {snap.count2} ({useCommitCount()})
+            count2: {tracked.count2} ({useCommitCount()})
           </div>
           <button onClick={() => ++obj.count2}>button2</button>
         </>
@@ -296,11 +296,11 @@ describe('class', () => {
     const obj = proxy(new CountClass())
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
           <div>
-            count: {snap.count1} ({useCommitCount()})
+            count: {tracked.count1} ({useCommitCount()})
           </div>
           <button onClick={() => ++obj.count}>button</button>
         </>
@@ -308,11 +308,11 @@ describe('class', () => {
     }
 
     const Counter2 = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
           <div>
-            sum: {snap.sum} ({useCommitCount()})
+            sum: {tracked.sum} ({useCommitCount()})
           </div>
           <button onClick={() => ++obj.count2}>button2</button>
         </>

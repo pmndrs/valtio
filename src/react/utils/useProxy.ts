@@ -26,11 +26,11 @@ export function useProxy<T extends object>(
   proxy: T,
   options?: NonNullable<Parameters<typeof useSnapshot>[1]>,
 ): T {
-  const snapshot = useSnapshot(proxy, options) as T
+  const tracked = useSnapshot(proxy, options) as T
 
-  // touch dummy prop so that it doesn't trigger re-renders when no props are touched.
+  // touch dummy key so that it doesn't trigger re-renders when no keys are touched.
   // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-  ;(snapshot as any)[DUMMY_SYMBOL]
+  ;(tracked as any)[DUMMY_SYMBOL]
 
   let isRendering = true
   // eslint-disable-next-line react-hooks/immutability
@@ -42,8 +42,8 @@ export function useProxy<T extends object>(
   })
 
   return new Proxy(proxy, {
-    get(target, prop) {
-      return isRendering ? snapshot[prop as keyof T] : target[prop as keyof T]
+    get(target, key) {
+      return isRendering ? tracked[key as keyof T] : target[key as keyof T]
     },
   })
 }
