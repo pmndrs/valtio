@@ -7,8 +7,8 @@ describe('server rendering', () => {
     const obj = proxy({ count: 1 })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
-      return <div>{`count: ${snap.count}`}</div>
+      const tracked = useSnapshot(obj)
+      return <div>{`count: ${tracked.count}`}</div>
     }
 
     expect(renderToString(<Counter />)).toContain('count: 1')
@@ -18,8 +18,8 @@ describe('server rendering', () => {
     const obj = proxy({ nested: { text: 'hello' } })
 
     const Text = () => {
-      const snap = useSnapshot(obj)
-      return <div>{snap.nested.text}</div>
+      const tracked = useSnapshot(obj)
+      return <div>{tracked.nested.text}</div>
     }
 
     expect(renderToString(<Text />)).toContain('hello')

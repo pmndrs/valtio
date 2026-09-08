@@ -16,10 +16,10 @@ describe('object', () => {
     const obj = proxy({ object: { count: 0 } })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>count: {snap.object.count}</div>
+          <div>count: {tracked.object.count}</div>
           <button onClick={() => ++obj.object.count}>button</button>
         </>
       )
@@ -46,8 +46,8 @@ describe('object', () => {
     })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
-      return <div>ticks: {snap.nested?.ticks ?? 'none'}</div>
+      const tracked = useSnapshot(obj)
+      return <div>ticks: {tracked.nested?.ticks ?? 'none'}</div>
     }
 
     render(
@@ -71,10 +71,10 @@ describe('object', () => {
     const obj = proxy<{ count?: number }>({ count: 1 })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>count: {snap.count ?? 'none'}</div>
+          <div>count: {tracked.count ?? 'none'}</div>
           <button onClick={() => delete obj.count}>button</button>
         </>
       )

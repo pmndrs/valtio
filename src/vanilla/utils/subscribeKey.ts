@@ -1,4 +1,4 @@
-import { subscribe } from '../../vanilla.ts'
+import { subscribe } from '../../vanilla.js'
 
 /**
  * subscribeKey

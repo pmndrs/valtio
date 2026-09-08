@@ -1,6 +1,6 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
-import { isProxyMap, proxyMap } from './proxyMap.ts'
-import { isProxySet, proxySet } from './proxySet.ts'
+import { proxy, unstable_getInternalStates } from '../../vanilla.js'
+import { isProxyMap, proxyMap } from './proxyMap.js'
+import { isProxySet, proxySet } from './proxySet.js'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null

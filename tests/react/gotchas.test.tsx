@@ -18,9 +18,9 @@ describe('gotchas: property access decides the re-render scope', () => {
 
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>count: {snap.obj.count}</div>
+      return <div>count: {tracked.obj.count}</div>
     }
 
     render(<Component />)
@@ -40,8 +40,8 @@ describe('gotchas: property access decides the re-render scope', () => {
 
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
-      const obj = snap.obj
+      const tracked = useSnapshot(state)
+      const obj = tracked.obj
       renderFn()
       return <div>obj: {obj ? 'present' : 'absent'}</div>
     }
@@ -63,9 +63,9 @@ describe('gotchas: property access decides the re-render scope', () => {
 
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state.obj)
+      const tracked = useSnapshot(state.obj)
       renderFn()
-      return <div>obj: {snap ? 'present' : 'absent'}</div>
+      return <div>obj: {tracked ? 'present' : 'absent'}</div>
     }
 
     render(<Component />)
@@ -77,7 +77,7 @@ describe('gotchas: property access decides the re-render scope', () => {
   })
 })
 
-describe('gotchas: state versus snap', () => {
+describe('gotchas: state versus tracked', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })
@@ -90,10 +90,10 @@ describe('gotchas: state versus snap', () => {
     const state = proxy({ count: 0 })
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={() => ++state.count}>button</button>
         </>
       )
@@ -140,11 +140,11 @@ describe('gotchas: sync option', () => {
     const state = proxy({ text: 'hello' })
 
     const Input = () => {
-      const snap = useSnapshot(state, { sync: true })
+      const tracked = useSnapshot(state, { sync: true })
       return (
         <input
           aria-label="text"
-          value={snap.text}
+          value={tracked.text}
           onChange={(e) => {
             state.text = e.target.value
           }}
@@ -164,9 +164,9 @@ describe('gotchas: sync option', () => {
 
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>count: {snap.count}</div>
+      return <div>count: {tracked.count}</div>
     }
 
     render(<Component />)
@@ -199,8 +199,8 @@ describe('gotchas: React.memo with object props', () => {
     })
 
     const Parent = () => {
-      const snap = useSnapshot(state)
-      return <Child obj={snap.obj} />
+      const tracked = useSnapshot(state)
+      return <Child obj={tracked.obj} />
     }
 
     render(<Parent />)
@@ -216,23 +216,23 @@ describe('gotchas: React.memo with object props', () => {
     const childRender = vi.fn()
 
     const Child = memo(function Child({
-      snap,
+      tracked,
     }: {
-      snap: { readonly obj: { readonly title: string } }
+      tracked: { readonly obj: { readonly title: string } }
     }) {
       childRender()
-      return <div>title: {snap.obj.title}</div>
+      return <div>title: {tracked.obj.title}</div>
     })
 
     const Parent = () => {
       const [, rerender] = useState(0)
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
           <button onClick={() => rerender((value) => value + 1)}>
             rerender
           </button>
-          <Child snap={snap} />
+          <Child tracked={tracked} />
         </>
       )
     }
@@ -251,20 +251,20 @@ describe('gotchas: React.memo with object props', () => {
     const state = proxy({ first: 'a', second: 'b' })
     const parentRender = vi.fn()
 
-    const Child = ({ snap }: { snap: typeof state }) => {
+    const Child = ({ tracked }: { tracked: typeof state }) => {
       const [key, setKey] = useState<'first' | 'second'>('first')
       return (
         <>
           <button onClick={() => setKey('second')}>switch</button>
-          <div>value: {snap[key]}</div>
+          <div>value: {tracked[key]}</div>
         </>
       )
     }
 
     const Parent = () => {
       parentRender()
-      const snap = useSnapshot(state)
-      return <Child snap={snap} />
+      const tracked = useSnapshot(state)
+      return <Child tracked={tracked} />
     }
 
     render(<Parent />)
@@ -284,19 +284,19 @@ describe('gotchas: React.memo with object props', () => {
       second: { value: 'b' },
     })
 
-    const Child = ({ snap }: { snap: typeof state }) => {
+    const Child = ({ tracked }: { tracked: typeof state }) => {
       const [key, setKey] = useState<'first' | 'second'>('first')
       return (
         <>
           <button onClick={() => setKey('second')}>switch</button>
-          <div>value: {snap[key].value}</div>
+          <div>value: {tracked[key].value}</div>
         </>
       )
     }
 
     const Parent = () => {
-      const snap = useSnapshot(state)
-      return <Child snap={snap} />
+      const tracked = useSnapshot(state)
+      return <Child tracked={tracked} />
     }
 
     render(<Parent />)
@@ -325,16 +325,16 @@ describe('gotchas: React.memo with object props', () => {
       objectProxy: { label: string }
       index: number
     }) {
-      const snap = useSnapshot(objectProxy)
+      const tracked = useSnapshot(objectProxy)
       renderFns[index]!()
-      return <div>label: {snap.label}</div>
+      return <div>label: {tracked.label}</div>
     })
 
     const List = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          {Array.from({ length: snap.objects.length }, (_, index) => (
+          {Array.from({ length: tracked.objects.length }, (_, index) => (
             <Item
               key={state.objects[index]!.id}
               index={index}

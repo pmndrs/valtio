@@ -66,7 +66,7 @@ describe('snapshot', () => {
     expect(snap2.obj).toBe(snap1.obj)
   })
 
-  it('should warn and throw for a non-proxy object', () => {
+  it('[DEV-ONLY] should warn and throw for a non-proxy object', () => {
     const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 
     expect(() => snapshot({} as any)).toThrow()

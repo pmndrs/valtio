@@ -1,4 +1,4 @@
-import { snapshot, subscribe, unstable_enableOp } from '../../vanilla.ts'
+import { snapshot, subscribe, unstable_enableOp } from '../../vanilla.js'
 import type {} from '@redux-devtools/extension'
 
 // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
@@ -43,13 +43,13 @@ export function devtools<T extends object>(
   let extension: (typeof window)['__REDUX_DEVTOOLS_EXTENSION__'] | false
   try {
     extension =
-      (enabled ?? import.meta.env?.MODE !== 'production') &&
+      (enabled ?? process.env.NODE_ENV !== 'production') &&
       window.__REDUX_DEVTOOLS_EXTENSION__
   } catch {
     // ignored
   }
   if (!extension) {
-    if (import.meta.env?.MODE !== 'production' && enabled) {
+    if (process.env.NODE_ENV !== 'production' && enabled) {
       console.warn('[Warning] Please install/enable Redux devtools extension')
     }
     return

@@ -1,3 +1,3 @@
-export * from './useIsomorphicLayoutEffect'
-export * from './useTheme'
-export * from './useCodesandboxTheme'
+export { useCodesandboxTheme } from './useCodesandboxTheme'
+export { useIsomorphicLayoutEffect } from './useIsomorphicLayoutEffect'
+export { useTheme } from './useTheme'
