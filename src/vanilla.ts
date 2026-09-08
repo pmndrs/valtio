@@ -121,22 +121,22 @@ const createSnapshotDefault = <T extends object>(
 
 const createHandlerDefault = <T extends object>(
   isInitializing: () => boolean,
-  addPropListener: (prop: string | symbol, propValue: unknown) => void,
-  removePropListener: (prop: string | symbol) => void,
+  addChildListener: (key: string | symbol, value: unknown) => void,
+  removeChildListener: (key: string | symbol) => void,
   notifyUpdate: (op: Op | undefined) => void,
 ): ProxyHandler<T> => ({
-  deleteProperty(target: T, prop: string | symbol) {
-    const prevValue = Reflect.get(target, prop)
-    removePropListener(prop)
-    const deleted = Reflect.deleteProperty(target, prop)
+  deleteProperty(target: T, key: string | symbol) {
+    const prevValue = Reflect.get(target, key)
+    removeChildListener(key)
+    const deleted = Reflect.deleteProperty(target, key)
     if (deleted) {
-      notifyUpdate(createOp?.('delete', prop, prevValue))
+      notifyUpdate(createOp?.('delete', key, prevValue))
     }
     return deleted
   },
-  set(target: T, prop: string | symbol, value: any, receiver: object) {
-    const hasPrevValue = !isInitializing() && Reflect.has(target, prop)
-    const prevValue = Reflect.get(target, prop, receiver)
+  set(target: T, key: string | symbol, value: any, receiver: object) {
+    const hasPrevValue = !isInitializing() && Reflect.has(target, key)
+    const prevValue = Reflect.get(target, key, receiver)
     if (
       hasPrevValue &&
       (objectIs(prevValue, value) ||
@@ -144,24 +144,24 @@ const createHandlerDefault = <T extends object>(
     ) {
       return true
     }
-    removePropListener(prop)
+    removeChildListener(key)
     if (isObject(value)) {
       value = getUntracked(value) || value
     }
     const nextValue =
       !proxyStateMap.has(value) && canProxy(value) ? proxy(value) : value
-    addPropListener(prop, nextValue)
-    Reflect.set(target, prop, nextValue, receiver)
-    notifyUpdate(createOp?.('set', prop, value, prevValue))
+    addChildListener(key, nextValue)
+    Reflect.set(target, key, nextValue, receiver)
+    notifyUpdate(createOp?.('set', key, value, prevValue))
     return true
   },
 })
 
 const createOpDefault = (
   type: 'set' | 'delete',
-  prop: symbol | string,
+  key: symbol | string,
   ...args: unknown[]
-) => [type, [prop], ...args] as Op
+) => [type, [key], ...args] as Op
 
 // internal states
 const proxyStateMap: WeakMap<ProxyObject, ProxyState> = new WeakMap()
@@ -206,69 +206,69 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   const ensureVersion = (nextCheckVersion = versionHolder[0]) => {
     if (checkVersion !== nextCheckVersion) {
       checkVersion = nextCheckVersion
-      propProxyStates.forEach(([propProxyState]) => {
-        const propVersion = propProxyState[1](nextCheckVersion)
-        if (propVersion > version) {
-          version = propVersion
+      childProxyStates.forEach(([childProxyState]) => {
+        const childVersion = childProxyState[1](nextCheckVersion)
+        if (childVersion > version) {
+          version = childVersion
         }
       })
     }
     return version
   }
-  const createPropListener =
-    (prop: string | symbol): Listener =>
+  const createChildListener =
+    (key: string | symbol): Listener =>
     (op, nextVersion) => {
       let newOp: Op | undefined
       if (op) {
         newOp = [...op]
-        newOp[1] = [prop, ...(newOp[1] as Path)]
+        newOp[1] = [key, ...(newOp[1] as Path)]
       }
       notifyUpdate(newOp, nextVersion)
     }
-  const propProxyStates = new Map<
+  const childProxyStates = new Map<
     string | symbol,
     readonly [ProxyState, RemoveListener?]
   >()
-  const addPropListener = (prop: string | symbol, propValue: unknown) => {
-    const propProxyState =
-      !refSet.has(propValue as object) && proxyStateMap.get(propValue as object)
-    if (propProxyState) {
-      if (process.env.NODE_ENV !== 'production' && propProxyStates.has(prop)) {
-        throw new Error('prop listener already exists')
+  const addChildListener = (key: string | symbol, value: unknown) => {
+    const childProxyState =
+      !refSet.has(value as object) && proxyStateMap.get(value as object)
+    if (childProxyState) {
+      if (process.env.NODE_ENV !== 'production' && childProxyStates.has(key)) {
+        throw new Error('child listener already exists')
       }
       if (listeners.size) {
-        const remove = propProxyState[2](createPropListener(prop))
-        propProxyStates.set(prop, [propProxyState, remove])
+        const remove = childProxyState[2](createChildListener(key))
+        childProxyStates.set(key, [childProxyState, remove])
       } else {
-        propProxyStates.set(prop, [propProxyState])
+        childProxyStates.set(key, [childProxyState])
       }
     }
   }
-  const removePropListener = (prop: string | symbol) => {
-    const entry = propProxyStates.get(prop)
+  const removeChildListener = (key: string | symbol) => {
+    const entry = childProxyStates.get(key)
     if (entry) {
-      propProxyStates.delete(prop)
+      childProxyStates.delete(key)
       entry[1]?.()
     }
   }
   const addListener = (listener: Listener) => {
     listeners.add(listener)
     if (listeners.size === 1) {
-      propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
+      childProxyStates.forEach(([childProxyState, prevRemove], key) => {
         if (process.env.NODE_ENV !== 'production' && prevRemove) {
           throw new Error('remove already exists')
         }
-        const remove = propProxyState[2](createPropListener(prop))
-        propProxyStates.set(prop, [propProxyState, remove])
+        const remove = childProxyState[2](createChildListener(key))
+        childProxyStates.set(key, [childProxyState, remove])
       })
     }
     const removeListener = () => {
       listeners.delete(listener)
       if (listeners.size === 0) {
-        propProxyStates.forEach(([propProxyState, remove], prop) => {
+        childProxyStates.forEach(([childProxyState, remove], key) => {
           if (remove) {
             remove()
-            propProxyStates.set(prop, [propProxyState])
+            childProxyStates.set(key, [childProxyState])
           }
         })
       }
@@ -278,8 +278,8 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   let initializing = true
   const handler = createHandler<T>(
     () => initializing,
-    addPropListener,
-    removePropListener,
+    addChildListener,
+    removeChildListener,
     notifyUpdate,
   )
   const proxyObject = newProxy(baseObject, handler)

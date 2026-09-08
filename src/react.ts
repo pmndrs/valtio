@@ -46,17 +46,17 @@ type Options = {
 /**
  * useSnapshot
  *
- * Create a local snapshot that catches changes. This hook actually returns a wrapped snapshot in a proxy for
+ * Create a local tracked snapshot that catches changes. This hook actually returns a wrapped snapshot in a proxy for
  * render optimization instead of a plain object compared to `snapshot()` method.
- * Rule of thumb: read from snapshots, mutate the source.
+ * Rule of thumb: read from tracked snapshots, mutate the source.
  * The component will only re-render when the parts of the state you access have changed, it is render-optimized.
  *
  * @example A
  * function Counter() {
- *   const snap = useSnapshot(state)
+ *   const tracked = useSnapshot(state)
  *   return (
  *     <div>
- *       {snap.count}
+ *       {tracked.count}
  *       <button onClick={() => ++state.count}>+1</button>
  *     </div>
  *   )
@@ -68,10 +68,10 @@ type Options = {
  *
  * @example B
  * function ProfileName() {
- *   const snap = useSnapshot(state.profile)
+ *   const tracked = useSnapshot(state.profile)
  *   return (
  *     <div>
- *       {snap.name}
+ *       {tracked.name}
  *     </div>
  *   )
  * }
@@ -101,10 +101,10 @@ type Options = {
  * because it is render-optimized.
  *
  * @example C
- * const snap = useSnapshot(state)
+ * const tracked = useSnapshot(state)
  * return (
  *   <div>
- *     {snap.profile.name}
+ *     {tracked.profile.name}
  *   </div>
  * )
  *
