@@ -4,7 +4,7 @@ import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 
 // Behavior described in docs/guides/computed-properties.mdx
 describe('computed properties: object getters', () => {
-  it('should recompute on the proxy and freeze the value in a snapshot', () => {
+  it('should recompute using the proxy or snapshot receiver', () => {
     const state = proxy({
       count: 1,
       get doubled() {

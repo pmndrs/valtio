@@ -45,6 +45,12 @@ unstable_enableOp(true)
 
 Once enabled, the `subscribe` callback receives an array of these operations as its first argument.
 
+Replacing or deleting a child also invalidates subscriptions rooted in its
+old subtree. Those callbacks can receive an empty operations array: the old
+proxies were detached, not mutated. The parent subscription receives the real
+replacement or deletion operation. Subscriptions rooted in an old proxy remain
+attached to that proxy; they do not follow its replacement.
+
 ```javascript
 import { proxy, subscribe, unstable_enableOp } from 'valtio'
 

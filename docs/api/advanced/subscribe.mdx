@@ -35,6 +35,37 @@ subscribe(state.arr, () => console.log('state.arr has changed to', state.arr))
 state.arr.push('world')
 ```
 
+## Subscribe to specific keys
+
+Use the `keys` option to observe selected branches, including their proxied
+descendants:
+
+```js
+const state = proxy({ x: { y: 1 }, text: 'hello' })
+
+subscribe(state, () => console.log('state.x changed'), { keys: ['x'] })
+
+state.text = 'world' // does not notify
+state.x.y = 2 // notifies
+state.x = { y: 2 } // replaces and notifies
+delete state.x // notifies
+```
+
+The subscription follows replacements. Mutating the detached old child no
+longer notifies it. Values marked with `ref` are not traversed.
+
+Multiple keys can share one subscription:
+
+```js
+subscribe(state, callback, { keys: ['x', 'text'] })
+```
+
+Registration for scalar keys is O(1) per key. Observing an object-valued branch
+installs recursive child listeners. Omitting `keys` observes all branches.
+
+Traversal follows stored proxy children, not getter dependencies. Use
+[`subscribeKey`](../utils/subscribeKey.mdx) to observe a derived getter value.
+
 ## Codesandbox demo in VanillaJS
 
 https://codesandbox.io/s/valtio-photo-booth-demo-forked-xp8hs?file=/src/main.js

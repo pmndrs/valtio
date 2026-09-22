@@ -71,12 +71,12 @@ See [#327](https://github.com/pmndrs/valtio/issues/327) for more information.
 Internally, `useSnapshot` calls `snapshot` in valtio/vanilla,
 and wraps the snapshot object with another proxy to detect property access.
 We call this a tracked snapshot and name it `tracked`, reserving `snap` for the vanilla `snapshot()` result.
-This feature is based on [proxy-compare](https://github.com/dai-shi/proxy-compare).
+The access-tracking proxy subscribes directly to the keys used during render.
 
 Two kinds of proxies are used for different purposes:
 
 - `proxy()` from `valtio/vanilla` is for mutation tracking or write tracking.
-- `createProxy()` from `proxy-compare` is for usage tracking or read tracking.
+- `useSnapshot()` creates a Valtio proxy for usage tracking or read tracking.
 </details>
 
 <details>

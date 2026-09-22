@@ -1,7 +1,7 @@
 import { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import { proxy, snapshot, useSnapshot } from 'valtio'
 import { devtools } from 'valtio/utils'
 
 describe('devtools', () => {
@@ -241,6 +241,97 @@ describe('devtools', () => {
   })
 
   describe('when it receives an message of type...', () => {
+    it.each(['ACTION', 'JUMP_TO_STATE', 'JUMP_TO_ACTION', 'IMPORT_STATE'])(
+      'should restore writable properties around a getter with %s',
+      async (type) => {
+        const state = proxy({
+          count: 1,
+          get doubled() {
+            return this.count * 2
+          },
+          text: 'saved',
+        })
+        const saved = JSON.parse(JSON.stringify(snapshot(state)))
+        state.count = 2
+        state.text = 'changed'
+        const unsubscribe = devtools(state, { enabled: true })
+        const consoleError = vi
+          .spyOn(console, 'error')
+          .mockImplementation(() => {})
+
+        try {
+          const message =
+            type === 'ACTION'
+              ? { type, payload: JSON.stringify(saved) }
+              : type === 'IMPORT_STATE'
+                ? {
+                    type: 'DISPATCH',
+                    payload: {
+                      type,
+                      nextLiftedState: {
+                        actionsById: ['saved'],
+                        computedStates: [{ state: saved }],
+                      },
+                    },
+                  }
+                : {
+                    type: 'DISPATCH',
+                    payload: { type },
+                    state: JSON.stringify(saved),
+                  }
+          expect(() => extensionSubscriber!(message)).not.toThrow()
+          await vi.advanceTimersByTimeAsync(0)
+
+          expect(consoleError).not.toHaveBeenCalled()
+          expect(state.count).toBe(1)
+          expect(state.doubled).toBe(2)
+          expect(state.text).toBe('saved')
+          expect(
+            Object.getOwnPropertyDescriptor(state, 'doubled')?.get,
+          ).toBeDefined()
+
+          state.count = 3
+          expect(state.doubled).toBe(6)
+        } finally {
+          unsubscribe?.()
+          consoleError.mockRestore()
+        }
+      },
+    )
+
+    it('should skip inherited getter-only properties but invoke setters', () => {
+      class State {
+        count = 1
+        text = 'changed'
+        get doubled() {
+          return this.count * 2
+        }
+        get selected() {
+          return this.count
+        }
+        set selected(value: number) {
+          this.count = value
+        }
+      }
+      const state = proxy(new State())
+      const unsubscribe = devtools(state, { enabled: true })
+
+      try {
+        expect(() =>
+          extensionSubscriber!({
+            type: 'DISPATCH',
+            payload: { type: 'JUMP_TO_STATE' },
+            state: JSON.stringify({ doubled: 6, selected: 3, text: 'saved' }),
+          }),
+        ).not.toThrow()
+        expect(state.count).toBe(3)
+        expect(state.doubled).toBe(6)
+        expect(state.text).toBe('saved')
+      } finally {
+        unsubscribe?.()
+      }
+    })
+
     it('updating state with ACTION', async () => {
       const obj = proxy({ count: 0 })
       devtools(obj, { enabled: true })

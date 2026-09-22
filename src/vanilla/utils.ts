@@ -1,3 +1,4 @@
+export { applyChanges } from './utils/applyChanges.js'
 export { subscribeKey } from './utils/subscribeKey.js'
 export { devtools } from './utils/devtools.js'
 export { deepClone } from './utils/deepClone.js'

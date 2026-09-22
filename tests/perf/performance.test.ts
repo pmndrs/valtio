@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { proxy, snapshot, subscribe } from 'valtio'
+import { subscribeKey } from 'valtio/utils'
 
 const DEPTHS = [4, 8, 16, 32, 64, 128, 256]
+const KEYS = [4, 8, 16, 32, 64, 128, 256, 512, 1024]
 const REPEATS = 5000
 
 const measurePerformance = (
@@ -49,6 +51,14 @@ const buildNestedObj = (depth: number) => {
   return { obj, leaf }
 }
 
+const buildManyKeysObj = (keys: number) => {
+  const obj: Record<string, number> = {}
+  for (let i = 0; i < keys; i++) {
+    obj[`key${i}`] = 1
+  }
+  return obj
+}
+
 describe('performance with nested objects', () => {
   it('snapshot with subscription', async () => {
     const medians: number[] = []
@@ -78,4 +88,53 @@ describe('performance with nested objects', () => {
   })
 
   // TODO add more performance tests
+})
+
+describe('performance with many keys', () => {
+  const measureManyKeys = (
+    subscribeToKey: (
+      proxyObject: Record<string, number>,
+      key: string,
+    ) => () => void,
+  ) => {
+    const medians: number[] = []
+    for (const keyCount of KEYS) {
+      const unsubs: (() => void)[] = []
+      let proxyObj: Record<string, number> | undefined
+      const median = measurePerformance(
+        () => {
+          const obj = buildManyKeysObj(keyCount)
+          proxyObj = proxy(obj)
+          for (const key in obj) {
+            unsubs.push(subscribeToKey(proxyObj, key))
+          }
+          snapshot(proxyObj)
+        },
+        () => {
+          proxyObj!.key0 = proxyObj!.key0! + 1
+        },
+        () => {
+          unsubs.forEach((unsub) => unsub())
+        },
+      )
+      medians.push(median)
+    }
+    return logSlope(KEYS, medians)
+  }
+
+  it('subscribe with keys update is O(1)', () => {
+    expect(
+      measureManyKeys((proxyObject, key) =>
+        subscribe(proxyObject, () => {}, { keys: [key] }),
+      ),
+    ).toBeLessThan(0.1)
+  })
+
+  it('subscribeKey update is O(1)', () => {
+    expect(
+      measureManyKeys((proxyObject, key) =>
+        subscribeKey(proxyObject, key, () => {}),
+      ),
+    ).toBeLessThan(0.1)
+  })
 })

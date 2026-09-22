@@ -1,10 +1,57 @@
-import { memo, useLayoutEffect, useState } from 'react'
+import {
+  Suspense,
+  memo,
+  startTransition,
+  useLayoutEffect,
+  useState,
+} from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import {
+  proxy,
+  trackKey,
+  unstable_getInternalStates,
+  useSnapshot,
+} from 'valtio'
 import type { Snapshot } from 'valtio'
 
 describe('container tracking', () => {
+  it('keeps committed container usage while a narrowing render suspends', async () => {
+    const state = proxy({ obj: { count: 1, nested: { other: 0 } } })
+    const promise = new Promise<void>(() => {})
+    const effect = vi.fn()
+    const Component = ({ suspend }: { suspend: boolean }) => {
+      const tracked = useSnapshot(state)
+      useLayoutEffect(effect, [tracked.obj])
+      if (suspend) {
+        void tracked.obj.count
+        throw promise
+      }
+      return <div>ready</div>
+    }
+    const App = () => {
+      const [suspend, setSuspend] = useState(false)
+      return (
+        <>
+          <button onClick={() => startTransition(() => setSuspend(true))}>
+            suspend
+          </button>
+          <Suspense fallback="loading">
+            <Component suspend={suspend} />
+          </Suspense>
+        </>
+      )
+    }
+    render(<App />)
+    fireEvent.click(screen.getByText('suspend'))
+    await act(() => Promise.resolve())
+    expect(effect).toHaveBeenCalledTimes(1)
+    await act(async () => {
+      state.obj.nested.other++
+    })
+    expect(effect).toHaveBeenCalledTimes(2)
+  })
+
   it('rechecks a container discovered after an unused mutation', async () => {
     const state = proxy({ obj: { count: 1 } })
     let observed: object | null = null
@@ -55,6 +102,28 @@ describe('container tracking', () => {
     expect(screen.getByText('child: 3')).toBeInTheDocument()
   })
 
+  it('switches from leaf usage to container usage without a store change', async () => {
+    const state = proxy({ obj: { count: 1, nested: { other: 0 } } })
+    const effect = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      const [container, setContainer] = useState(false)
+      useLayoutEffect(effect, [container ? tracked.obj : null])
+      return (
+        <button onClick={() => setContainer(true)}>
+          {container ? 'container' : tracked.obj.count}
+        </button>
+      )
+    }
+    render(<Component />)
+    fireEvent.click(screen.getByRole('button'))
+    expect(effect).toHaveBeenCalledTimes(2)
+    await act(async () => {
+      state.obj.nested.other++
+    })
+    expect(effect).toHaveBeenCalledTimes(3)
+  })
+
   it('updates an object identity comparison after a descendant mutation', async () => {
     const state = proxy({ obj: { nested: { count: 1 } } })
     let savedObj: object | undefined
@@ -69,6 +138,23 @@ describe('container tracking', () => {
       state.obj.nested.count++
     })
     expect(screen.getByText('different')).toBeInTheDocument()
+  })
+
+  it('does not install recursive listeners for a leaf read', () => {
+    const state = proxy({ obj: { count: 1, unused: { nested: { count: 2 } } } })
+    const { proxyStateMap } = unstable_getInternalStates()
+    const addListener = vi.spyOn(proxyStateMap.get(state.obj.unused)!, '2')
+    try {
+      const Component = () => {
+        const tracked = useSnapshot(state)
+        return <div>{tracked.obj.count}</div>
+      }
+      const { unmount } = render(<Component />)
+      expect(addListener).not.toHaveBeenCalled()
+      unmount()
+    } finally {
+      addListener.mockRestore()
+    }
   })
 
   it('observes arbitrary descendants of an object-only read', async () => {
@@ -128,6 +214,22 @@ describe('container tracking', () => {
     })
     expect(screen.getByText('2')).toBeInTheDocument()
     expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('retains explicitly tracked containers alongside leaf reads', async () => {
+    const state = proxy({ obj: { count: 1, nested: { other: 0 } } })
+    const effect = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      trackKey(tracked, 'obj')
+      useLayoutEffect(effect, [tracked.obj])
+      return <div>{tracked.obj.count}</div>
+    }
+    render(<Component />)
+    await act(async () => {
+      state.obj.nested.other++
+    })
+    expect(effect).toHaveBeenCalledTimes(2)
   })
 
   it('observes containers returned by getters', async () => {
@@ -200,5 +302,20 @@ describe('container tracking', () => {
       state.obj.nested.count++
     })
     expect(effect).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not subscribe when the hook result is discarded', async () => {
+    const state = proxy({ obj: { count: 1 } })
+    const renderFn = vi.fn()
+    const Component = () => {
+      useSnapshot(state)
+      renderFn()
+      return null
+    }
+    render(<Component />)
+    await act(async () => {
+      state.obj.count++
+    })
+    expect(renderFn).toHaveBeenCalledTimes(1)
   })
 })
