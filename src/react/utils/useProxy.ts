@@ -41,9 +41,18 @@ export function useProxy<T extends object>(
     isRendering = false
   })
 
-  return new Proxy(proxy, {
+  const proxyWithSnapshot: T = new Proxy(proxy, {
     get(target, key) {
       return isRendering ? tracked[key as keyof T] : target[key as keyof T]
     },
+    set(target, key, value, receiver): boolean {
+      return Reflect.set(
+        target,
+        key,
+        value,
+        receiver === proxyWithSnapshot ? target : receiver,
+      )
+    },
   })
+  return proxyWithSnapshot
 }

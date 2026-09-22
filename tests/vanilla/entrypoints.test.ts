@@ -39,6 +39,7 @@ describe('entry points', () => {
 
   it('should expose the utils from valtio/vanilla/utils', () => {
     expect(exportsOf(vanillaUtils)).toEqual([
+      'applyChanges',
       'deepClone',
       'devtools',
       'isProxyMap',
@@ -51,7 +52,7 @@ describe('entry points', () => {
   })
 
   it('should expose useSnapshot from valtio/react and useProxy from valtio/react/utils', () => {
-    expect(exportsOf(react)).toEqual(['useSnapshot'])
+    expect(exportsOf(react)).toEqual(['trackKey', 'useSnapshot'])
     expect(exportsOf(reactUtils)).toEqual(['useProxy'])
   })
 

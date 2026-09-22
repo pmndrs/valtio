@@ -1,0 +1,38 @@
+---
+title: 'applyChanges'
+section: 'API'
+subSection: 'Utils'
+description: 'Update ordinary proxy objects and arrays in place.'
+---
+
+# `applyChanges`
+
+`applyChanges(state, next)` updates an existing proxy instead of replacing it.
+It recursively updates compatible ordinary objects and arrays, skips equal
+values, and deletes keys absent from `next`.
+
+```js
+import { proxy } from 'valtio'
+import { applyChanges } from 'valtio/utils'
+
+const state = proxy({ obj: { count: 1 } })
+const previous = state.obj
+
+applyChanges(state, { obj: { count: 2 } })
+state.obj === previous // true
+
+applyChanges(state, { obj: { count: 2 } }) // no notification
+```
+
+Use this to avoid renders caused by replacing containers whose used leaves
+have not changed. Plain assignment continues to replace the property.
+
+The root must be a mutable proxy holding an ordinary object or array, with
+the same prototype as `next`. Explicit proxy and ref values are assigned as
+values instead of recursively merged into existing children.
+
+This small utility does not copy property descriptors or key order, preserve
+arbitrary source alias topology, or provide transactional updates. Source
+accessors and additions shadowing inherited keys are rejected. Failed writes
+throw, and earlier changes are not rolled back. Synchronous subscribers may
+observe intermediate writes; ordinary asynchronous subscriptions batch them.

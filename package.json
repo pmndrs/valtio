@@ -93,9 +93,6 @@
     "url": "https://github.com/pmndrs/valtio/issues"
   },
   "homepage": "https://github.com/pmndrs/valtio",
-  "dependencies": {
-    "proxy-compare": "^3.0.1"
-  },
   "devDependencies": {
     "@eslint/js": "9.39.4",
     "@redux-devtools/extension": "^4.0.0",

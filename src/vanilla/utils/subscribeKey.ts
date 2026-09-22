@@ -1,5 +1,17 @@
 import { subscribe } from '../../vanilla.js'
 
+const hasAnyGetter = (object: object, key: PropertyKey) => {
+  let current: object | null = object
+  while (current) {
+    const descriptor = Reflect.getOwnPropertyDescriptor(current, key)
+    if (descriptor?.get) {
+      return true
+    }
+    current = Reflect.getPrototypeOf(current)
+  }
+  return false
+}
+
 /**
  * subscribeKey
  *
@@ -26,6 +38,11 @@ export function subscribeKey<T extends object, K extends keyof T>(
         callback((prevValue = nextValue))
       }
     },
-    notifyInSync,
+    hasAnyGetter(proxyObject, key)
+      ? notifyInSync
+      : {
+          keys: [key],
+          sync: notifyInSync,
+        },
   )
 }

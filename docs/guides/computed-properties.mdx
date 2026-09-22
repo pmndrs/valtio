@@ -41,16 +41,22 @@ state.count = 10
 console.log(snap.doubled) // 2
 ```
 
-When you call `state.doubled` on the `state` proxy, it is not cached, and will be re-calculated on every call (if you must cache this result, see the section below on `proxy-memoize`).
+When you call `state.doubled` on the `state` proxy, it is not cached, and will
+be re-calculated on every call. The `proxy-memoize` recipe below provides
+caching for snapshot reads only.
 
-However, when you make a snapshot, calls to `snap.doubled` are effectively cached, because the value of an object getter is copied during the snapshot process.
+In v3, snapshot getters are not cached either. `snap.doubled` runs on every
+access, but reads the captured `snap.count`, so later mutations of the state
+do not change that snapshot's computed value. Keep getters pure.
 
 <br />
 
 <blockquote className="note">
 ℹ️ &nbsp; Note
 
-In the current implementation a computed property should only reference \*\*\_sibling\*\*\* properties, otherwise you'll encounter weird bugs. For example:
+Computed properties should read dependencies through `this`. Nested reads
+such as `this.user.name` are supported, but `this` is the object on which the
+getter was accessed, not necessarily the root state. For example:
 
 </blockquote>
 
@@ -135,17 +141,10 @@ subscribe(user, () => {
 })
 ```
 
-Or with `watch`.
+For managed computed state and cross-store dependencies, see
+[valtio-reactive](https://github.com/valtiojs/valtio-reactive).
 
-```js
-const user = proxy({
-  name: 'John',
-})
-const greetings = proxy({})
-watch((get) => {
-  greetings.greetingEn = 'Hello ' + get(user).name
-})
-```
+{/* TODO: Verify and document valtio-reactive computed after v3 support. */}
 
 ## Object getter and setter
 
@@ -155,10 +154,10 @@ Setters are also supported:
 const state = proxy({
   count: 1,
   get doubled() {
-    return state.count * 2
+    return this.count * 2
   },
   set doubled(newValue) {
-    state.count = newValue / 2
+    this.count = newValue / 2
   },
 })
 
@@ -178,7 +177,8 @@ snap.doubled = 2
 
 As with getters, setter calls within `set doubled` (i.e. `this.count = newValue / 2`) are themselves invoked against the `state` proxy, so the new `count` value will be correctly updated (and subscribers/snapshots notified of the new change).
 
-If you make a snapshot, all properties become readonly, so `snap.doubled = 2` will be a compile error, and will also fail at runtime because `snapshot` objects are frozen.
+Own setters are omitted from snapshots, so `snap.doubled = 2` is a compile
+error and also fails at runtime.
 
 ## Class getters and setters
 
@@ -207,31 +207,52 @@ console.log(snap.doubled) // 2
 
 Similar to object getters, class getters on the `state` proxy are not cached.
 
-However, unlike object getters, class getters on the `snapshot` object are not cached, and are re-evaulated on every access to `snap.doubled`. As mentioned in the `snapshot` docs, this should be fine because the expectation is that getters are as cheap to evaluate as they would be to cache.
+Like object getters in v3, class getters on snapshots are not cached and are
+re-evaluated on every access to `snap.doubled`.
 
-Also unlike object setters on snapshots (which immediately fail at runtime when called), class setters on snapshots will technically start evaluating, but any mutations they do internally (i.e. `this.count = newValue / 2`) will then fail at runtime because `this` will be a snapshot instance and the snapshots are frozen by `Object.freeze`.
+Unlike own setters, inherited class setters remain on the prototype. They can
+start executing, but attempts to assign captured data properties through `this`
+fail because those properties are read-only.
 
-## State usage tracking with `proxy-memoize`
+## Snapshot getter memoization with `proxy-memoize`
 
-If you need to cache getter results even for the `state` proxy itself, you can use Valtio's sister project [proxy-memoize](https://github.com/dai-shi/proxy-memoize).
+To cache getter results when reading snapshots, use Valtio's sister project
+[proxy-memoize](https://github.com/dai-shi/proxy-memoize).
 
-`proxy-memoize` uses a similar usage-based tracking approach as Valtio's `snapshot` function, so it will only re-calculate the getter if fields accessed by the getter logic have actually changed.
+When a getter is accessed through a snapshot, `this` is the immutable snapshot
+receiver and can be passed directly to `memoize`:
 
 ```js
 import { memoize } from 'proxy-memoize'
 
-const memoizedDoubled = memoize((snap) => snap.count * 2)
+const memoizedDoubled = memoize((input) => input.count * 2)
 
 const state = proxy({
   count: 1,
   text: 'hello',
   get doubled() {
-    return memoizedDoubled(snapshot(state))
+    return memoizedDoubled(this)
   },
 })
+
+const snap = snapshot(state)
+snap.doubled // computes the result
+snap.doubled // reuses the cached result
 ```
 
-With this implementation, when `text` property changes (but `count` has not), the memoized function won't be re-executed.
+Repeated snapshot reads use the identity-cache fast path without constructing
+a new input object. When `text` changes but `count` has not, reading from a
+new snapshot can also reuse the computed result. This getter can also be read
+through `useSnapshot(state)`.
+
+This is a snapshot-only recipe: reading `state.doubled` passes a mutable proxy
+to `memoize` and can return stale results after mutation. Do not call
+`snapshot(this)` inside the getter; `this` is already a snapshot when the
+getter is accessed through one, and `snapshot()` does not accept snapshots.
+
+Memoization saves computation and can preserve result identity. It does not
+prevent `useSnapshot` from re-rendering when an accessed input key changes,
+even if the computed result is equal.
 
 ## Note about using `this`
 
@@ -239,6 +260,7 @@ You can use `this` inside of getters and setters, however you should be familiar
 
 So if you call `state.doubled`, then `this` will be the `state` proxy.
 
-And if you call `snap.doubled`, then `this` will be the snapshot object (except for object getters & setters, where the current value is copied during the snapshot process, so object getters & setters are never invoked on snapshots).
+And if you call `snap.doubled`, then `this` will be the snapshot object,
+including the access-tracking wrapper when using `useSnapshot`.
 
 Despite this nuance, you should be able to use `this` as you would expect, and things will "just work".

@@ -58,7 +58,7 @@ describe('gotchas: property access decides the re-render scope', () => {
     expect(renderFn).toBeCalledTimes(3)
   })
 
-  it('should behave the same when snapshotting the inner proxy without property access', async () => {
+  it('should not subscribe without property access', async () => {
     const state = proxy({ obj: { count: 0, text: 'hello' } })
 
     const renderFn = vi.fn()
@@ -73,7 +73,7 @@ describe('gotchas: property access decides the re-render scope', () => {
 
     state.obj.text = 'world'
     await act(() => vi.advanceTimersByTimeAsync(0))
-    expect(renderFn).toBeCalledTimes(2)
+    expect(renderFn).toBeCalledTimes(1)
   })
 })
 
@@ -194,21 +194,73 @@ describe('gotchas: React.memo with object props', () => {
   it('should update a memoized child that receives a snapshot object', async () => {
     const state = proxy({ obj: { title: 'a', description: 'b' } })
 
+    const childRender = vi.fn()
+
     const Child = memo(function Child({ obj }: { obj: { title: string } }) {
+      childRender()
       return <div>title: {obj.title}</div>
     })
 
     const Parent = () => {
+      const [, rerender] = useState(0)
       const tracked = useSnapshot(state)
-      return <Child obj={tracked.obj} />
+      return (
+        <>
+          <button onClick={() => rerender((value) => value + 1)}>
+            rerender
+          </button>
+          <Child obj={tracked.obj} />
+        </>
+      )
     }
 
     render(<Parent />)
     expect(screen.getByText('title: a')).toBeInTheDocument()
+    expect(childRender).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByText('rerender'))
+    expect(childRender).toHaveBeenCalledTimes(1)
 
     state.obj.title = 'c'
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('title: c')).toBeInTheDocument()
+    expect(childRender).toHaveBeenCalledTimes(2)
+  })
+
+  it('should refresh stale keys read by an independently rendered child', async () => {
+    const state = proxy({ count: 0, nested: { count: 0 } })
+    const parentRender = vi.fn()
+
+    const Child = ({ tracked }: { tracked: typeof state }) => {
+      const [show, setShow] = useState(false)
+      return (
+        <>
+          <button onClick={() => setShow(true)}>show</button>
+          {show && (
+            <div>
+              count: {tracked.count}/{tracked.nested.count}
+            </div>
+          )}
+        </>
+      )
+    }
+
+    const Parent = () => {
+      parentRender()
+      const tracked = useSnapshot(state)
+      return <Child tracked={tracked} />
+    }
+
+    render(<Parent />)
+    state.count = 1
+    state.nested.count = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(parentRender).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByText('show'))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1/1')).toBeInTheDocument()
+    expect(parentRender).toHaveBeenCalledTimes(2)
   })
 
   it('should retain reads when a memoized child receives the root snapshot', async () => {

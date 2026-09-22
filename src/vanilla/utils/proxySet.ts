@@ -1,6 +1,8 @@
 import { proxy, unstable_getInternalStates } from '../../vanilla.js'
+import { registerSnapshotInitializer } from './snapshot.js'
 
-const { proxyStateMap, snapCache } = unstable_getInternalStates()
+const { proxyStateMap } = unstable_getInternalStates()
+const SNAPSHOT_INDEX = Symbol()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
 
@@ -10,7 +12,7 @@ type InternalProxySet<T> = Set<T> & {
   data: T[]
   toJSON: () => object
   index: number
-  epoch: number
+  epoch: { value: number }
   intersection<U>(other: RSetLike<U>): Set<T & U>
   intersection(other: Set<T>): Set<T>
   union<U>(other: RSetLike<U>): Set<T | U>
@@ -59,16 +61,13 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   const indexMap = new Map<T, number>()
   let initialIndex = 0
 
-  const snapMapCache = new WeakMap<object, Map<T, number>>()
-  const registerSnapMap = () => {
-    const cache = snapCache.get(vObject)
-    const latestSnap = cache?.[1]
-    if (latestSnap && !snapMapCache.has(latestSnap)) {
-      const clonedMap = new Map(indexMap)
-      snapMapCache.set(latestSnap, clonedMap)
+  const getMapForThis = (x: any) => {
+    if (isProxy(x)) {
+      return indexMap
     }
+    x.epoch.value
+    return (x[SNAPSHOT_INDEX] as Map<T, number> | undefined) || indexMap
   }
-  const getMapForThis = (x: any) => snapMapCache.get(x) || indexMap
 
   if (initialValues) {
     if (typeof initialValues[Symbol.iterator] !== 'function') {
@@ -110,7 +109,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<T>()
     for (const value of this.values()) {
@@ -130,7 +128,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<unknown>()
     for (const v of this.values()) result.add(v)
@@ -147,7 +144,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<T> {
-    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<T>()
     for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
@@ -166,7 +162,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<unknown>()
     for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
@@ -178,17 +173,13 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   const vObject: InternalProxySet<T> = {
     data: initialData,
     index: initialIndex,
-    epoch: 0,
+    epoch: { value: 0 },
     get size() {
-      if (!isProxy(this)) {
-        registerSnapMap()
-      }
-      return indexMap.size
+      return getMapForThis(this).size
     },
     has(value: T) {
       const map = getMapForThis(this)
       const v = maybeProxify(value)
-      this.epoch // touch property for tracking
       return map.has(v)
     },
     add(value: T) {
@@ -199,7 +190,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (!indexMap.has(v)) {
         indexMap.set(v, this.index)
         this.data[this.index++] = v
-        this.epoch++
+        this.epoch.value++
       }
       return this
     },
@@ -214,7 +205,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
       delete this.data[index]
       indexMap.delete(v)
-      this.epoch++
+      this.epoch.value++
       return true
     },
     clear() {
@@ -223,29 +214,25 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
       this.data.length = 0 // empty array
       this.index = 0
-      this.epoch++
+      this.epoch.value++
       indexMap.clear()
     },
     forEach(cb: (value: T, valueAgain: T, set: Set<T>) => void) {
-      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       map.forEach((index) => {
         cb(this.data[index]!, this.data[index]!, this)
       })
     },
     *values(): ReturnType<Set<T>['values']> {
-      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         yield this.data[index]!
       }
     },
     keys(): ReturnType<Set<T>['keys']> {
-      this.epoch // touch property for tracking
       return this.values()
     },
     *entries(): ReturnType<Set<T>['entries']> {
-      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         const value = this.data[index]!
@@ -266,23 +253,27 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     difference: differenceImpl,
     symmetricDifference: symmetricDifferenceImpl,
     isSubsetOf(other: RSetLike<T>) {
-      this.epoch // touch property for tracking
       for (const v of this.values()) if (!other.has(v)) return false
       return true
     },
     isSupersetOf(other: RSetLike<T>) {
-      this.epoch // touch property for tracking
       const it = asIterable(other)
       for (const v of it) if (!this.has(v)) return false
       return true
     },
     isDisjointFrom(other: RSetLike<T>) {
-      this.epoch // touch property for tracking
       for (const v of this.values()) if (other.has(v)) return false
       return true
     },
   }
 
+  registerSnapshotInitializer(vObject, (snapshotObject) => {
+    if (!Reflect.has(snapshotObject, SNAPSHOT_INDEX)) {
+      Object.defineProperty(snapshotObject, SNAPSHOT_INDEX, {
+        value: new Map(indexMap),
+      })
+    }
+  })
   const proxiedObject = proxy(vObject)
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },

@@ -135,72 +135,89 @@ function ProfileName() {
 
 ## Gotchas
 
-Beware of replacing the child proxy with something else, breaking your `snapshot`. This will replace the reference of the proxy with what you assign it to which removes the proxy's traps. You can see an example below.
+Subscriptions are attached directly to the proxy that owns an accessed key.
+Reading `tracked.profile.name` subscribes to `name` on `state.profile`.
+Replacing or deleting `state.profile` also invalidates these subscribers,
+so the component follows the new value:
 
 ```js
-console.log(state)
-{
-  profile: {
-    name: 'valtio'
-  }
-}
-childState = state.profile
-console.log(childState)
-{
-  name: 'valtio'
-}
-state.profile.name = 'react'
-console.log(childState)
-{
-  name: 'react'
-}
+const previous = state.profile
 state.profile = { name: 'new name' }
-console.log(childState)
-{
-  name: 'react'
-}
-console.log(state)
-{
-  profile: {
-    name: 'new name'
-  }
-}
+
+state.profile === previous // false
 ```
 
-`useSnapshot()` depends on the original reference of the child proxy so if you replace it with a new one, the component
-that is subscribed to the old proxy won't receive new updates because it is still subscribed to the old one.
+Replacing a child can cause a render even when the used leaves are equal.
+Use direct leaf updates or [`applyChanges`](../utils/applyChanges.mdx) to
+update compatible ordinary objects and arrays in place.
 
-In this case, we recommend one of the approaches below. In neither example do you need to worry about re-renders because it is render-optimized.
+Reading an object or array without reading its properties observes its entire
+subtree. For example, `useEffect(effect, [tracked.profile])` reacts to changes
+anywhere inside `profile`. Nested property reads narrow that tracking.
 
-```jsx
+Use `trackKey` to retain whole-container tracking alongside nested reads:
+
+```js
 const tracked = useSnapshot(state)
-
-return <div>{tracked.profile.name}</div>
+const profile = trackKey(tracked, 'profile')
+profile.name
 ```
 
-```jsx
-const { profile } = useSnapshot(state)
+Now changes to unread descendants also trigger a render because the
+`profile` snapshot identity changes. Leaf-key subscriptions have O(1)
+registration; container subscriptions recursively observe their descendants.
+Calling `useSnapshot(state)` without using its result does not subscribe.
 
-return <div>{profile.name}</div>
+Getters execute on every access, using the render snapshot as `this`.
+`useSnapshot` subscribes to the keys read by the getter, without caching or
+comparing its result:
+
+```js
+const state = proxy({
+  count: 0,
+  get selected() {
+    return { value: this.count % 2 }
+  },
+})
+
+function Component() {
+  const tracked = useSnapshot(state)
+  return <div>{tracked.selected.value}</div>
+}
 ```
 
-## Dev Mode Debug Values
+Changing `count` from `0` to `2` re-renders `Component` because the accessed
+`count` key changed. This also applies when a getter returns a primitive with
+the same value. See the [v3 migration guide](../../guides/migrating-to-v3.mdx)
+for explicit memoization with `proxy-memoize` and the `valtio-reactive`
+migration path for managed computed state.
 
-In dev mode, `useSnapshot` uses React's `useDebugValue` to output a list of fields that were accessed during rendering, i.e. which specific fields will trigger re-render when the tracking proxy changes.
+{/* TODO: Document valtio-reactive computed as a mitigation after v3 support. */}
 
-<br />
+Functions are passed through unchanged. Reading a function-valued key tracks
+that key, but calling it does not automatically track state read through
+closures. This applies to stored functions and functions returned by getters.
+If a getter returns a closure capturing `this`, accessing it through `tracked`
+captures the render snapshot, so subsequent reads through that receiver can
+also subscribe.
 
-<blockquote className="important">
-!! &nbsp; There are two disclaimers to using the debug value
+A method called through the render snapshot can track reads through `this`:
 
-1. Due to the way `useSnapshot` uses a proxy to recorded accesses _after_ `useSnapshot` has returned, the fields listed in `useDebugValue` are technically from the _previous_ render.
-2. Object getter and class getter calls are not included in the `useDebugValue` output, but don't worry, they are actually correctly tracked internally and correctly trigger re-renders when changed.
+```js
+const state = proxy({
+  count: 0,
+  select() {
+    return this.count
+  },
+})
 
-</blockquote>
+function Component() {
+  const tracked = useSnapshot(state)
+  return <div>{tracked.select()}</div>
+}
+```
 
-<br />
-
-<br />
+Here `this` is `tracked`, so reading `this.count` subscribes to `count`.
 
 ## Codesandbox demo
 

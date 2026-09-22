@@ -4,9 +4,7 @@ title: 'Some gotchas'
 
 # Some gotchas
 
-## `useSnapshot(state)` without property access will always trigger re-render
-
-Ref: https://github.com/pmndrs/valtio/issues/209#issuecomment-896859395
+## `useSnapshot(state)` without property access does not subscribe
 
 Suppose we have this state (or store).
 
@@ -26,27 +24,30 @@ const tracked = useSnapshot(state)
 tracked.obj.count
 ```
 
-it will re-render only if `count` changes.
+it will re-render if `count` changes or its owning subtree is replaced.
 
-If the property access is obj,
+Accessing only the object observes changes anywhere inside it:
 
 ```js
 const tracked = useSnapshot(state)
 tracked.obj
 ```
 
-then, it will re-render if `obj` changes. This includes `count` changes and `text` changes.
-
-Now, we can subscribe to the portion of the state.
+Use `trackKey` to retain whole-container tracking even when its properties
+are also accessed:
 
 ```js
-const tracked = useSnapshot(state.obj)
-tracked
+const tracked = useSnapshot(state)
+const obj = trackKey(tracked, 'obj')
+obj.count
 ```
 
-This is technically same as the previous one. It doesn't touch the property of `tracked`, so it will re-render if `obj` changes.
+This also observes changes to unread descendants, such as `state.obj.text`.
+Ordinary object assignment replaces the child. To update its values in place,
+use direct writes or the opt-in `applyChanges` utility.
 
-In summary, if a snapshot object (nested or not) is not accessed with any properties, it assumes the entire object is accessed, so any change inside the object will trigger re-render.
+Calling `useSnapshot(state)` without accessing any properties does not
+subscribe to changes.
 
 ## Using `React.memo` with object props may result in unexpected behavior (v1 only)
 

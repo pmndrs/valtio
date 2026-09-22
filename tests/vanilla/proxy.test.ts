@@ -74,6 +74,54 @@ describe('proxy creation', () => {
     expect(handler).toHaveBeenCalledTimes(2)
     unsubscribe()
   })
+
+  it.each([false, true])(
+    'should notify wrapped setters returning the same ref (inherited: %s)',
+    (inherited) => {
+      const object = {
+        current: new Date(0),
+        get date() {
+          return this.current
+        },
+        set date(value: Date) {
+          this.current.setTime(value.getTime())
+        },
+      }
+      const state = proxy(
+        inherited ? (Object.create(object) as typeof object) : object,
+      )
+      const wrapped = new Proxy(state, {})
+      const handler = vi.fn()
+      const unsubscribe = subscribe(state, handler, {
+        keys: ['date'],
+        sync: true,
+      })
+
+      wrapped.date = new Date(1000)
+
+      expect(state.date.getTime()).toBe(1000)
+      expect(handler).toHaveBeenCalledTimes(1)
+      unsubscribe()
+    },
+  )
+
+  it('should not notify when a different receiver owns the assignment', () => {
+    const state = proxy({ count: 0, child: { count: 0 } })
+    const derived = Object.create(state) as typeof state
+    const handler = vi.fn()
+    const unsubscribe = subscribe(state, handler, true)
+    const snap = snapshot(state)
+
+    derived.count = 0
+    derived.child = { count: 1 }
+
+    expect(Object.hasOwn(derived, 'count')).toBe(true)
+    expect(Object.hasOwn(derived, 'child')).toBe(true)
+    expect(state.child.count).toBe(0)
+    expect(snapshot(state)).toBe(snap)
+    expect(handler).not.toHaveBeenCalled()
+    unsubscribe()
+  })
 })
 
 describe('proxy nested values', () => {
@@ -362,6 +410,73 @@ describe('proxy nested values', () => {
     state.node = next
 
     expect(state.node.self?.self).toBe(explicit)
+  })
+
+  it('should preserve a replacement from a synchronous subscriber', () => {
+    const state = proxy<{
+      node: {
+        child: { value: number }
+        sibling: number
+        extra?: number
+      }
+    }>({ node: { child: { value: 0 }, sibling: 0 } })
+    const replacement = proxy({ value: 2 })
+    const unsubscribe = subscribe(
+      state.node.child,
+      () => {
+        state.node.child = replacement
+        state.node.sibling = 2
+        state.node.extra = 3
+      },
+      { sync: true },
+    )
+
+    state.node = { child: { value: 1 }, sibling: 1 }
+    unsubscribe()
+
+    expect(state.node.child).toBe(replacement)
+    expect(state.node.child.value).toBe(2)
+    expect(state.node.sibling).toBe(2)
+    expect(state.node.extra).toBe(3)
+  })
+
+  it('should preserve a reentrant replacement from a synchronous subscriber', () => {
+    const state = proxy({ node: { a: 0, b: 0 } })
+    let once = false
+    const unsubscribe = subscribe(
+      state.node,
+      () => {
+        if (!once) {
+          once = true
+          state.node = { a: 10, b: 10 }
+        }
+      },
+      { sync: true },
+    )
+
+    state.node = { a: 1, b: 1 }
+    unsubscribe()
+
+    expect(state.node).toEqual({ a: 10, b: 10 })
+  })
+
+  it('should reuse the raw assignment target in a synchronous subscriber', () => {
+    const state = proxy({ node: { child: { value: 0 } } })
+    const next = { child: { value: 1 } }
+    let created: typeof next | undefined
+    const unsubscribe = subscribe(
+      state.node.child,
+      () => {
+        created = proxy(next)
+      },
+      { sync: true },
+    )
+
+    state.node = next
+    unsubscribe()
+
+    expect(created).toBeDefined()
+    expect(created).toBe(state.node)
   })
 
   it('should preserve an assigned ancestor cycle', () => {
@@ -921,6 +1036,19 @@ describe('proxy property descriptors', () => {
     expect(isProxy(state.computed)).toBe(false)
   })
 
+  it('should evaluate snapshot getters with a snapshot receiver', () => {
+    const child = proxy({ count: 0 })
+    const state = proxy({
+      child,
+      get same() {
+        return this.child === child
+      },
+    })
+
+    expect(state.same).toBe(true)
+    expect(snapshot(state).same).toBe(false)
+  })
+
   it('should preserve accessors in assigned objects', () => {
     let value = 1
     const state = proxy({ nested: { value: 0 } })
@@ -1029,6 +1157,19 @@ describe('proxy arrays', () => {
     await Promise.resolve()
     expect([...state]).toEqual([0])
     expect(handler).toBeCalledTimes(1)
+  })
+
+  it('should preserve length coercion and notify truncated keys', () => {
+    const state = proxy([0, 1, 2])
+    const handler = vi.fn()
+    const valueOf = vi.fn(() => 1)
+    subscribe(state, handler, { keys: [2], sync: true })
+
+    Reflect.set(state, 'length', { valueOf })
+
+    expect(valueOf).toHaveBeenCalledTimes(2)
+    expect(state.length).toBe(1)
+    expect(handler).toHaveBeenCalledTimes(1)
   })
 
   it('should proxy objects pushed into an array', () => {
@@ -1150,5 +1291,24 @@ describe('getVersion', () => {
     const before = getVersion(state)
     state.count = 0
     expect(getVersion(state)).toBe(before)
+  })
+
+  it('should not decrease after child detachment notifications', () => {
+    const state = proxy({ node: { child: { count: 0 }, sibling: 0 } })
+    let observed = 0
+    const unsubscribeChild = subscribe(
+      state.node.child,
+      () => {
+        observed = getVersion(state.node) as number
+      },
+      { sync: true },
+    )
+    const unsubscribeNode = subscribe(state.node, () => {}, { sync: true })
+
+    state.node = { child: { count: 1 }, sibling: 1 }
+    unsubscribeChild()
+    unsubscribeNode()
+
+    expect(getVersion(state.node)).toBeGreaterThanOrEqual(observed)
   })
 })

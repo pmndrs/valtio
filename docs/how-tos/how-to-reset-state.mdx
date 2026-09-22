@@ -28,7 +28,7 @@ const reset = () => {
 
 Note that we're using the `deepClone()` utility function from `valtio/utils` to copy the initial object in _both_ the `reset` function and the `state` proxy. Using deepClone in the proxy function is a new requirement in v2. Valtio no longer clones the initial state by default. If you reuse the object you pass into the proxy function, you may get unexpected results.
 
-Alternatively, you can store the object in another object, which make the reset logic easier:
+Alternatively, you can store the object in another object, which makes the reset logic easier. Assigning a raw object replaces the nested proxy:
 
 ```js
 const state = proxy({ obj: initialObj })

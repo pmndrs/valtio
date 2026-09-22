@@ -140,7 +140,7 @@ valtio has two kinds of proxies, for write and read. We intentionally separate t
 
 `proxy()` creates a proxy object to detect mutation, "proxy for write"
 `snapshot()` creates an immutable object from the proxy object
-`useSnapshot()` wraps the snapshot object again with another proxy (with `proxy-compare`) to detect property access, "proxy for read"
+`useSnapshot()` wraps the snapshot object again with a Valtio proxy to detect property access, "proxy for read"
 
 ### snapshot creation is optimized
 

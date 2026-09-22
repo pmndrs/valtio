@@ -1,12 +1,15 @@
 import { proxy, unstable_getInternalStates } from '../../vanilla.js'
+import { registerSnapshotInitializer } from './snapshot.js'
 
-const { proxyStateMap, snapCache } = unstable_getInternalStates()
+const { proxyStateMap } = unstable_getInternalStates()
+const SNAPSHOT_INDEX = Symbol()
+const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<V>
   index: number
-  epoch: number
+  epoch: { value: number }
   toJSON: () => Map<K, V>
 }
 
@@ -57,16 +60,13 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   let initialIndex = 0
   const indexMap = new Map<K, number>()
 
-  const snapMapCache = new WeakMap<object, Map<K, number>>()
-  const registerSnapMap = () => {
-    const cache = snapCache.get(vObject)
-    const latestSnap = cache?.[1]
-    if (latestSnap && !snapMapCache.has(latestSnap)) {
-      const clonedMap = new Map(indexMap)
-      snapMapCache.set(latestSnap, clonedMap)
+  const getMapForThis = (x: any) => {
+    if (isProxy(x)) {
+      return indexMap
     }
+    x.epoch.value
+    return (x[SNAPSHOT_INDEX] as Map<K, number> | undefined) || indexMap
   }
-  const getMapForThis = (x: any) => snapMapCache.get(x) || indexMap
 
   if (entries) {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -83,11 +83,8 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const vObject: InternalProxyObject<K, V> = {
     data: initialData,
     index: initialIndex,
-    epoch: 0,
+    epoch: { value: 0 },
     get size() {
-      if (!isProxy(this)) {
-        registerSnapMap()
-      }
       const map = getMapForThis(this)
       return map.size
     },
@@ -95,14 +92,12 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       const map = getMapForThis(this)
       const index = map.get(key)
       if (index === undefined) {
-        this.epoch // touch property for tracking
         return undefined
       }
       return this.data[index]
     },
     has(key: K) {
       const map = getMapForThis(this)
-      this.epoch // touch property for tracking
       return map.has(key)
     },
     set(key: K, value: V) {
@@ -114,9 +109,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         indexMap.set(key, this.index)
         this.data[this.index++] = value
       } else {
-        this.data[index] = value
+        this.data[index] = maybeProxify(value)
       }
-      this.epoch++
+      this.epoch.value++
       return this
     },
     delete(key: K) {
@@ -129,7 +124,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
       delete this.data[index]
       indexMap.delete(key)
-      this.epoch++
+      this.epoch.value++
       return true
     },
     clear() {
@@ -138,32 +133,28 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       }
       this.data.length = 0 // empty array
       this.index = 0
-      this.epoch++
+      this.epoch.value++
       indexMap.clear()
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
-      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       map.forEach((index, key) => {
         cb(this.data[index]!, key, this)
       })
     },
     *entries(): ReturnType<Map<K, V>['entries']> {
-      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const [key, index] of map) {
         yield [key, this.data[index]!]
       }
     },
     *keys(): ReturnType<Map<K, V>['keys']> {
-      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const key of map.keys()) {
         yield key
       }
     },
     *values(): ReturnType<Map<K, V>['values']> {
-      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         yield this.data[index]!
@@ -187,6 +178,13 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     },
   }
 
+  registerSnapshotInitializer(vObject, (snapshotObject) => {
+    if (!Reflect.has(snapshotObject, SNAPSHOT_INDEX)) {
+      Object.defineProperty(snapshotObject, SNAPSHOT_INDEX, {
+        value: new Map(indexMap),
+      })
+    }
+  })
   const proxiedObject = proxy(vObject)
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },

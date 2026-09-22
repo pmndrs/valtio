@@ -441,6 +441,19 @@ describe('proxyMap', () => {
   })
 
   describe('snapshot', () => {
+    it('should preserve snapshot indexes through a transparent proxy', () => {
+      const state = proxyMap([['first', 1]])
+      const snap = new Proxy(snapshot(state), {})
+
+      state.set('second', 2)
+      state.delete('first')
+
+      expect(snap.size).toBe(1)
+      expect(snap.get('first')).toBe(1)
+      expect(snap.has('second')).toBe(false)
+      expect([...snap.keys()]).toEqual(['first'])
+    })
+
     it('should capture collection data before any snapshot getter is read', () => {
       const state = proxyMap([['old', 1]])
       const snap = snapshot(state)
