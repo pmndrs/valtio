@@ -18,6 +18,20 @@ subscribeKey(state, 'count', (v) =>
 )
 ```
 
+For data properties, `subscribeKey` is a convenience wrapper around the
+key-based `subscribe` API:
+
+```js
+subscribe(state, callback, { keys: ['count'] })
+```
+
+For getter properties, `subscribeKey` uses a whole-proxy subscription so that
+changes to the getter's dependencies can update the subscribed value.
+
+The callback runs only when `state[key]` changes according to `Object.is`.
+For an object-valued key, descendant mutations do not change that reference.
+Use `subscribe(state, callback, { keys: [key] })` to observe those mutations too.
+
 ## Codesandbox demo
 
 https://codesandbox.io/s/dynamic-ui-with-valtio-9gme46?file=/src/ComplexCounter.tsx

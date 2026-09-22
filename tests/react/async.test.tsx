@@ -3,7 +3,7 @@
 import ReactExports, { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import { proxy, trackKey, useSnapshot } from 'valtio'
 import { sleep } from '../test-utils.js'
 
 const { use } = ReactExports
@@ -63,7 +63,7 @@ describe('async', () => {
       const tracked = useSnapshot(state)
       return (
         <>
-          <div>text: {use2(tracked.object).text}</div>
+          <div>text: {use2(trackKey(tracked, 'object')).text}</div>
           <button onClick={delayedObject}>button</button>
         </>
       )

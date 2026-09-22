@@ -1,4 +1,5 @@
 export {
+  applyChanges,
   deepClone,
   devtools,
   isProxyMap,

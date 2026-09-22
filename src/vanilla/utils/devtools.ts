@@ -58,6 +58,22 @@ export function devtools<T extends object>(
   unstable_enableOp()
   let isTimeTraveling = false
   const devtools = extension.connect({ name, ...rest })
+  const setState = (state: Record<string, unknown>) => {
+    Object.keys(state || {}).forEach((key) => {
+      let target: object | null = proxyObject
+      while (target) {
+        const descriptor = Reflect.getOwnPropertyDescriptor(target, key)
+        if (descriptor) {
+          if (descriptor.get && !descriptor.set) {
+            return
+          }
+          break
+        }
+        target = Reflect.getPrototypeOf(target)
+      }
+      ;(proxyObject as Record<string, unknown>)[key] = state[key]
+    })
+  }
   const unsub1 = subscribe(proxyObject, (unstable_ops) => {
     const action = unstable_ops
       .filter(([_, path]) => path[0] !== DEVTOOLS)
@@ -92,7 +108,7 @@ export function devtools<T extends object>(
   ).subscribe((message) => {
     if (message.type === 'ACTION' && message.payload) {
       try {
-        Object.assign(proxyObject, JSON.parse(message.payload))
+        setState(JSON.parse(message.payload))
       } catch (e) {
         console.error(
           'please dispatch a serializable value that JSON.parse() and proxy() support\n',
@@ -108,7 +124,7 @@ export function devtools<T extends object>(
         isTimeTraveling = true
 
         const state = JSON.parse(message.state)
-        Object.assign(proxyObject, state)
+        setState(state)
       }
       ;(proxyObject as any)[DEVTOOLS] = message
     } else if (
@@ -129,7 +145,7 @@ export function devtools<T extends object>(
       computedStates.forEach(({ state }: { state: any }, index: number) => {
         const action = actions[index] || 'No action found'
 
-        Object.assign(proxyObject, state)
+        setState(state)
 
         if (index === 0) {
           devtools.init(snapshot(proxyObject))

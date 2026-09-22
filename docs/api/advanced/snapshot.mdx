@@ -9,7 +9,8 @@ description: 'Create a snapshot of current state'
 
 `snapshot` takes a proxy and returns an immutable object, unwrapped from the proxy.
 
-Immutability is achieved by _efficiently_ deep copying & freezing the object (see the [Copy on Write](#copy-on-write) section for details).
+Snapshot data is captured with structural sharing and read-only properties
+(see the [Copy on Write](#copy-on-write) section for details).
 
 Briefly, in sequential `snapshot` calls, when the values in the proxy have not changed, the previous snapshot's object reference is returned. This allows for shallow comparison in render functions, preventing spurious renders.
 
@@ -70,7 +71,8 @@ Even though this example only reused one of the four existing snapshot instances
 
 ## Classes
 
-Snapshots maintain the original objects' prototypes, so methods and getters work, and correctly evaluate against the snapshot's frozen state.
+Snapshots maintain the original objects' prototypes, so methods and getters work,
+and evaluate against the snapshot's captured state.
 
 ```js
 import { proxy, snapshot } from 'valtio'
@@ -98,6 +100,12 @@ console.log(snap.fullName()) // 'f l'
 ```
 
 Note that the results of getters and methods are not cached, and are re-evaluated on every call.
+
+This also applies to own object getters in v3: `snapshot()` preserves their
+accessors without evaluating them. A getter returning a new object therefore
+returns a different identity on each access. Exceptions from getters are
+thrown when reading them, not when taking the snapshot. Own setters are not
+copied to snapshots.
 
 This should be fine, because the expectation is that they execute very quickly (faster than the overhead of caching them would be worth) and are also deterministic, so the return value is based only on the already-frozen snapshot state.
 

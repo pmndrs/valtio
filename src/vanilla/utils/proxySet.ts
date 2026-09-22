@@ -1,8 +1,7 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.js'
+import { isProxyObject as isProxy, proxy, ref } from '../../vanilla.js'
+import { clearIndex, createIndex, getIndexKey } from './collectionIndex.js'
 
-const { proxyStateMap, snapCache } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
-const isProxy = (x: any) => proxyStateMap.has(x)
 
 type RSetLike<T> = { has(value: T): boolean }
 
@@ -10,7 +9,7 @@ type InternalProxySet<T> = Set<T> & {
   data: T[]
   toJSON: () => object
   index: number
-  epoch: number
+  lookup: ReturnType<typeof createIndex<T>>
   intersection<U>(other: RSetLike<U>): Set<T & U>
   intersection(other: Set<T>): Set<T>
   union<U>(other: RSetLike<U>): Set<T | U>
@@ -31,7 +30,7 @@ export const isProxySet = (obj: object): boolean => {
   return (
     Symbol.toStringTag in obj &&
     obj[Symbol.toStringTag] === 'Set' &&
-    proxyStateMap.has(obj)
+    isProxy(obj)
   )
 }
 
@@ -59,24 +58,38 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   const indexMap = new Map<T, number>()
   let initialIndex = 0
 
-  const snapMapCache = new WeakMap<object, Map<T, number>>()
-  const registerSnapMap = () => {
-    const cache = snapCache.get(vObject)
-    const latestSnap = cache?.[1]
-    if (latestSnap && !snapMapCache.has(latestSnap)) {
-      const clonedMap = new Map(indexMap)
-      snapMapCache.set(latestSnap, clonedMap)
+  const indexes = new WeakMap<object, Map<T, number>>()
+  const getMapForThis = (x: any) => {
+    if (isProxy(x)) return indexMap
+    const entries = x.lookup
+    entries.version
+    let map = indexes.get(entries)
+    if (!map) {
+      map = new Map()
+      Object.keys(entries).forEach((key) => {
+        const entry = entries[key]
+        if (typeof entry === 'object' && entry !== null) {
+          map!.set(entry.key, +key)
+        }
+      })
+      indexes.set(entries, map)
     }
+    return map
   }
-  const getMapForThis = (x: any) => snapMapCache.get(x) || indexMap
+
+  const getIndexForThis = (x: any, key: T) => {
+    if (isProxy(x)) return indexMap.get(key)
+    x.lookup.version
+    return x.lookup[getIndexKey(key)] as number | undefined
+  }
 
   if (initialValues) {
     if (typeof initialValues[Symbol.iterator] !== 'function') {
       throw new TypeError('not iterable')
     }
     for (const value of initialValues) {
-      if (!indexMap.has(value)) {
-        const v = maybeProxify(value)
+      const v = maybeProxify(value)
+      if (!indexMap.has(v)) {
         indexMap.set(v, initialIndex)
         initialData[initialIndex++] = v
       }
@@ -110,7 +123,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<T>()
     for (const value of this.values()) {
@@ -130,7 +142,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<unknown>()
     for (const v of this.values()) result.add(v)
@@ -147,7 +158,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<T> {
-    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<T>()
     for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
@@ -166,7 +176,6 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch // touch property for tracking
     const otherSet = proxySet(asIterable(other))
     const result = proxySet<unknown>()
     for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
@@ -175,21 +184,19 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     return proxySet(result)
   }
 
+  const lookup = createIndex(indexMap)
   const vObject: InternalProxySet<T> = {
     data: initialData,
     index: initialIndex,
-    epoch: 0,
+    lookup,
     get size() {
-      if (!isProxy(this)) {
-        registerSnapMap()
-      }
-      return indexMap.size
+      if (isProxy(this)) return indexMap.size
+      this.lookup.version
+      return this.lookup.size
     },
     has(value: T) {
-      const map = getMapForThis(this)
       const v = maybeProxify(value)
-      this.epoch // touch property for tracking
-      return map.has(v)
+      return getIndexForThis(this, v) !== undefined
     },
     add(value: T) {
       if (!isProxy(this)) {
@@ -198,8 +205,11 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       const v = maybeProxify(value)
       if (!indexMap.has(v)) {
         indexMap.set(v, this.index)
+        lookup[getIndexKey(v)] = this.index
+        lookup[this.index] = ref({ key: v })
         this.data[this.index++] = v
-        this.epoch++
+        lookup.size++
+        this.lookup.version++
       }
       return this
     },
@@ -214,7 +224,10 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
       delete this.data[index]
       indexMap.delete(v)
-      this.epoch++
+      delete lookup[getIndexKey(v)]
+      delete lookup[index]
+      lookup.size--
+      this.lookup.version++
       return true
     },
     clear() {
@@ -223,29 +236,26 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
       this.data.length = 0 // empty array
       this.index = 0
-      this.epoch++
       indexMap.clear()
+      clearIndex(lookup)
+      this.lookup.version++
     },
     forEach(cb: (value: T, valueAgain: T, set: Set<T>) => void) {
-      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       map.forEach((index) => {
         cb(this.data[index]!, this.data[index]!, this)
       })
     },
     *values(): ReturnType<Set<T>['values']> {
-      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         yield this.data[index]!
       }
     },
     keys(): ReturnType<Set<T>['keys']> {
-      this.epoch // touch property for tracking
       return this.values()
     },
     *entries(): ReturnType<Set<T>['entries']> {
-      this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         const value = this.data[index]!
@@ -266,18 +276,15 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     difference: differenceImpl,
     symmetricDifference: symmetricDifferenceImpl,
     isSubsetOf(other: RSetLike<T>) {
-      this.epoch // touch property for tracking
       for (const v of this.values()) if (!other.has(v)) return false
       return true
     },
     isSupersetOf(other: RSetLike<T>) {
-      this.epoch // touch property for tracking
       const it = asIterable(other)
       for (const v of it) if (!this.has(v)) return false
       return true
     },
     isDisjointFrom(other: RSetLike<T>) {
-      this.epoch // touch property for tracking
       for (const v of this.values()) if (other.has(v)) return false
       return true
     },
@@ -288,7 +295,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     size: { enumerable: false },
     data: { enumerable: false },
     index: { enumerable: false },
-    epoch: { enumerable: false },
+    lookup: { enumerable: false },
     toJSON: { enumerable: false },
   })
   Object.seal(proxiedObject)

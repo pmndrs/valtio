@@ -1,4 +1,3 @@
-import { createProxy, getUntracked } from 'proxy-compare'
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { proxy, snapshot } from 'valtio'
 import type { Snapshot } from 'valtio'
@@ -24,23 +23,6 @@ describe('snapshot', () => {
     expect(snap1).toBe(snap2)
   })
 
-  it('should not cause proxy-compare to copy', async () => {
-    const state = proxy({ foo: 1 })
-    const snap1 = snapshot(state)
-    // Ensure configurable is true, otherwise proxy-compare will copy the object
-    // so that its Proxy.get trap can work, and we don't want that perf overhead.
-    expect(Object.getOwnPropertyDescriptor(snap1, 'foo')).toEqual({
-      configurable: true,
-      enumerable: true,
-      value: 1,
-      writable: false,
-    })
-    // Technically getUntracked is smart enough to not return the copy, so this
-    // assertion doesn't strictly mean we avoided the copy
-    const cmp = createProxy(snap1, new WeakMap())
-    expect(getUntracked(cmp)).toBe(snap1)
-  })
-
   it('should create a new proxy from a snapshot', async () => {
     const state = proxy({ c: 0 })
     const snap1 = snapshot(state)
@@ -64,6 +46,91 @@ describe('snapshot', () => {
     state.count++
     const snap2 = snapshot(state)
     expect(snap2.obj).toBe(snap1.obj)
+  })
+
+  it('should preserve getters without evaluating or caching them', () => {
+    const compute = vi.fn((count: number) => ({ doubled: count * 2 }))
+    const state = proxy({
+      count: 1,
+      get info() {
+        return compute(this.count)
+      },
+    })
+    const snap = snapshot(state)
+
+    expect(compute).not.toHaveBeenCalled()
+    expect(Object.getOwnPropertyDescriptor(snap, 'info')?.get).toBe(
+      Object.getOwnPropertyDescriptor(state, 'info')?.get,
+    )
+    const first = snap.info
+    const second = snap.info
+    expect(first).toEqual({ doubled: 2 })
+    expect(second).toEqual(first)
+    expect(second).not.toBe(first)
+    expect(compute).toHaveBeenCalledTimes(2)
+    expect(snapshot(state)).toBe(snap)
+  })
+
+  it('should evaluate previously unread getters against old snapshot data', () => {
+    const state = proxy({
+      nested: { count: 1 },
+      get info() {
+        return { nested: this.nested, doubled: this.nested.count * 2 }
+      },
+    })
+    const snap = snapshot(state)
+    state.nested.count = 2
+
+    expect(snap.info).toEqual({ nested: { count: 1 }, doubled: 2 })
+    expect(snap.info.nested).toBe(snap.nested)
+    expect(snapshot(state).info.doubled).toBe(4)
+  })
+
+  it('should throw from getters only when they are read', () => {
+    const state = proxy({
+      get value(): number {
+        throw new Error('getter error')
+      },
+    })
+    const snap = snapshot(state)
+
+    expect(() => snap.value).toThrow('getter error')
+  })
+
+  it('should omit setters from snapshot accessors', () => {
+    const state = proxy({
+      count: 1,
+      get doubled() {
+        return this.count * 2
+      },
+      set doubled(value: number) {
+        this.count = value / 2
+      },
+    })
+    const snap = snapshot(state)
+
+    expect(Object.getOwnPropertyDescriptor(snap, 'doubled')?.get).toBeDefined()
+    expect(
+      Object.getOwnPropertyDescriptor(snap, 'doubled')?.set,
+    ).toBeUndefined()
+    expect(Reflect.set(snap, 'doubled', 4)).toBe(false)
+    expect(state.count).toBe(1)
+  })
+
+  it('should preserve sparse array lengths before evaluating getters', () => {
+    const values: number[] = []
+    values.length = 3
+    const state = proxy({
+      values,
+      get length() {
+        return this.values.length
+      },
+    })
+
+    const snap = snapshot(state)
+
+    expect(snap.values.length).toBe(3)
+    expect(snap.length).toBe(3)
   })
 
   it('[DEV-ONLY] should warn and throw for a non-proxy object', () => {
@@ -104,6 +171,36 @@ describe('snapshot', () => {
     const snap1 = snapshot(state)
     state.count += 1
     expect(snapshot(state)).not.toBe(snap1)
+  })
+
+  it('should update all members of nested cycles without changing other snapshots', () => {
+    type Root = {
+      child: {
+        inner: { parent: Root['child'] }
+        outer: { root: Root }
+      }
+      value: { count: number }
+      stable: { value: number }
+    }
+    const raw = {} as Root
+    const child = {} as Root['child']
+    raw.child = child
+    raw.value = { count: 0 }
+    raw.stable = { value: 1 }
+    child.inner = { parent: child }
+    child.outer = { root: raw }
+    const state = proxy(raw)
+    const previous = snapshot(state)
+
+    state.value.count = 1
+    const snap = snapshot(state)
+
+    expect(snap.child.inner.parent.outer.root.value.count).toBe(1)
+    expect(snap.child.inner.parent).toBe(snap.child)
+    expect(snap.child.outer.root).toBe(snap)
+    expect(snap.stable).toBe(previous.stable)
+    expect(previous.child.inner.parent.outer.root.value.count).toBe(0)
+    expect(snapshot(state)).toBe(snap)
   })
 
   it('should produce read-only properties', () => {

@@ -1,7 +1,16 @@
 import { Suspense, startTransition, useLayoutEffect, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, useSnapshot } from 'valtio'
+import {
+  proxy,
+  ref,
+  snapshot,
+  trackKey,
+  unstable_getInternalStates,
+  unstable_replaceInternalFunction,
+  useSnapshot,
+} from 'valtio'
+import { applyChanges, deepClone } from 'valtio/utils'
 import { useCommitCount } from '../test-utils.js'
 
 describe('optimization', () => {
@@ -25,14 +34,14 @@ describe('optimization', () => {
           <div>Count: {tracked.nested.count}</div>
           <button
             onClick={() => {
-              state.nested = { count: 0 }
+              applyChanges(state.nested, { count: 0 })
             }}
           >
             button-zero
           </button>
           <button
             onClick={() => {
-              state.nested = { count: 1 }
+              applyChanges(state.nested, { count: 1 })
             }}
           >
             button-one
@@ -58,10 +67,10 @@ describe('optimization', () => {
     expect(renderFn).toBeCalledTimes(2)
   })
 
-  it('should not track snapshots assigned outside render', async () => {
+  it('should allow independent writes to cloned snapshots assigned outside render', async () => {
     const source = proxy({ nested: { count: 0, other: 0 } })
-    const destination = proxy<{ value?: object }>({})
-    let nested!: object
+    const destination = proxy<{ value?: typeof source.nested }>({})
+    let nested!: typeof source.nested
     const renderFn = vi.fn()
     const Component = () => {
       const tracked = useSnapshot(source)
@@ -71,18 +80,23 @@ describe('optimization', () => {
     }
 
     render(<Component />)
-    destination.value = nested
+    destination.value = deepClone(nested)
+    destination.value.other = 1
     snapshot(destination)
-    source.nested.other = 1
     await act(() => vi.advanceTimersByTimeAsync(0))
 
+    expect(source.nested.other).toBe(0)
+    expect(nested.other).toBe(0)
+    expect(snapshot(destination).value).toEqual({ count: 0, other: 1 })
     expect(renderFn).toHaveBeenCalledTimes(1)
   })
 
-  it('should unwrap nested snapshots assigned outside render', async () => {
+  it('should clone nested snapshots before assigning them outside render', async () => {
     const source = proxy({ nested: { count: 0, other: 0 } })
-    const destination = proxy<{ value: { nested?: object } }>({ value: {} })
-    let nested!: object
+    const destination = proxy<{
+      value: { nested?: typeof source.nested }
+    }>({ value: {} })
+    let nested!: typeof source.nested
     const renderFn = vi.fn()
     const Component = () => {
       const tracked = useSnapshot(source)
@@ -92,11 +106,14 @@ describe('optimization', () => {
     }
 
     render(<Component />)
-    destination.value = { nested }
+    destination.value = deepClone({ nested })
+    destination.value.nested!.other = 1
     snapshot(destination)
-    source.nested.other = 1
     await act(() => vi.advanceTimersByTimeAsync(0))
 
+    expect(source.nested.other).toBe(0)
+    expect(nested.other).toBe(0)
+    expect(snapshot(destination).value.nested).toEqual({ count: 0, other: 1 })
     expect(renderFn).toHaveBeenCalledTimes(1)
   })
 
@@ -127,6 +144,129 @@ describe('optimization', () => {
     delete state.inherited
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(renderFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('should track an explicit proxy replacement without trackKey', async () => {
+    const state = proxy({ nested: { count: 0 } })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>Count: {tracked.nested.count}</div>
+    }
+
+    render(<Component />)
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.nested.count = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+    expect(screen.getByText('Count: 1')).toBeInTheDocument()
+
+    state.nested = proxy({ count: 2 })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(3)
+    expect(screen.getByText('Count: 2')).toBeInTheDocument()
+  })
+
+  it('should track both a key and its accessed leaf with trackKey', async () => {
+    const state = proxy({ nested: { count: 0 } })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      const nested = trackKey(tracked, 'nested')
+      renderFn()
+      return <div>Count: {nested.count}</div>
+    }
+
+    render(<Component />)
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    state.nested = { count: 1 }
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+    expect(screen.getByText('Count: 1')).toBeInTheDocument()
+
+    state.nested = proxy({ count: 2 })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(3)
+    expect(screen.getByText('Count: 2')).toBeInTheDocument()
+  })
+
+  it('should observe trackKey snapshot identity when filtering existence notifications', async () => {
+    const state = proxy({ child: { count: 0 }, extra: 1 })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      trackKey(tracked, 'child')
+      renderFn()
+      return <div>extra: {String('extra' in tracked)}</div>
+    }
+
+    render(<Component />)
+    const child = state.child
+    state.child.count = 1
+    state.extra = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(state.child).toBe(child)
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    state.child = proxy({ count: 1 })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(3)
+
+    child.count = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(3)
+  })
+
+  it('should track references alongside getter dependencies', async () => {
+    const state = proxy({
+      child: { count: 0 },
+      get parity() {
+        return this.child.count % 2
+      },
+    })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      trackKey(tracked, 'child')
+      renderFn()
+      return <div>parity: {tracked.parity}</div>
+    }
+
+    render(<Component />)
+    state.child.count = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    state.child = proxy({ count: 2 })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(3)
+
+    state.child.count = 3
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('parity: 1')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(4)
+  })
+
+  it('should preserve ref snapshot identity when comparing trackKey values', async () => {
+    const source = proxy({ count: 0 })
+    const state = proxy({ child: ref(snapshot(source)) })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      const child = trackKey(tracked, 'child')
+      renderFn()
+      return <div>count: {child.count}</div>
+    }
+
+    render(<Component />)
+    source.count = 1
+    state.child = ref(snapshot(source))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
   })
 
   it('should update subscriptions when accessed keys change', async () => {
@@ -201,6 +341,74 @@ describe('optimization', () => {
     expect(screen.getByText('Count: 1')).toBeInTheDocument()
   })
 
+  it.each([
+    { nested: false, sync: false },
+    { nested: true, sync: false },
+    { nested: false, sync: true },
+    { nested: true, sync: true },
+  ])(
+    'should ignore unread layout-effect changes (nested: $nested, sync: $sync)',
+    async ({ nested, sync }) => {
+      const state = proxy({ count: 0, nested: { count: 0 }, other: 0 })
+      const renderFn = vi.fn()
+      const Component = () => {
+        const tracked = useSnapshot(state, { sync })
+        renderFn()
+        useLayoutEffect(() => {
+          state.other += 1
+        })
+        return <div>Count: {nested ? tracked.nested.count : tracked.count}</div>
+      }
+
+      render(<Component />)
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(screen.getByText('Count: 0')).toBeInTheDocument()
+      expect(renderFn).toHaveBeenCalledTimes(1)
+
+      const counter = nested ? state.nested : state
+      await act(async () => {
+        counter.count = 1
+        await vi.advanceTimersByTimeAsync(0)
+      })
+      expect(screen.getByText('Count: 1')).toBeInTheDocument()
+      expect(renderFn).toHaveBeenCalledTimes(2)
+    },
+  )
+
+  it('should replay indexed snapshot usage in linear work per render', () => {
+    const countReads = (length: number) => {
+      const state = proxy({
+        items: Array.from({ length }, (_, id) => ({ id })),
+      })
+      const counts: number[] = []
+      const Component = () => {
+        const tracked = useSnapshot(state)
+        const get = vi.spyOn(Map.prototype, 'get')
+        let total = 0
+        try {
+          for (let index = 0; index < length; index += 1) {
+            total += tracked.items[index]!.id
+          }
+          counts.push(get.mock.calls.length)
+        } finally {
+          get.mockRestore()
+        }
+        return <div>Total: {total}</div>
+      }
+      const { rerender, unmount } = render(<Component />)
+      rerender(<Component />)
+      unmount()
+      return counts
+    }
+
+    const small = countReads(20)
+    const large = countReads(80)
+    expect(large).toHaveLength(2)
+    large.forEach((count, index) => {
+      expect(count).toBeLessThan(small[index]! * 5)
+    })
+  })
+
   it('should update subscriptions when the root proxy changes', async () => {
     const first = proxy({ count: 0 })
     const second = proxy({ count: 0 })
@@ -223,6 +431,117 @@ describe('optimization', () => {
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('Count: 1')).toBeInTheDocument()
     expect(renderFn).toHaveBeenCalledTimes(3)
+  })
+
+  it('should not retain subscriptions to previous root proxies', () => {
+    const states = [
+      proxy({ count: 0 }),
+      proxy({ count: 0 }),
+      proxy({ count: 0 }),
+    ]
+    const { proxyStateMap } = unstable_getInternalStates()
+    const addKeyListeners = states.map((state) => {
+      const proxyState = proxyStateMap.get(state)!
+      const [, , , addKeyListener] = proxyState
+      const addKeyListenerMock = vi.fn(addKeyListener)
+      const mutableProxyState = proxyState as unknown as [
+        unknown,
+        unknown,
+        unknown,
+        typeof addKeyListener,
+      ]
+      mutableProxyState[3] = addKeyListenerMock
+      return addKeyListenerMock
+    })
+    const Component = ({ state }: { state: { count: number } }) => {
+      const tracked = useSnapshot(state)
+      return <div>Count: {tracked.count}</div>
+    }
+
+    const { rerender } = render(<Component state={states[0]!} />)
+    rerender(<Component state={states[1]!} />)
+    rerender(<Component state={states[2]!} />)
+
+    expect(
+      addKeyListeners.map((listener) => listener.mock.calls.length),
+    ).toEqual([1, 1, 1])
+  })
+
+  it('should share getter subscription baselines', () => {
+    const items = Array.from({ length: 4 }, (_, value) => proxy({ value }))
+    const state = proxy({
+      items,
+      get total() {
+        return this.items.reduce((total, item) => total + item.value, 0)
+      },
+    })
+    const { proxyStateMap } = unstable_getInternalStates()
+    const targets = items.map((item) => proxyStateMap.get(item)![0])
+    const calls = new Map(targets.map((target) => [target, 0]))
+    let original: any
+    unstable_replaceInternalFunction('createSnapshot', (prev) => {
+      original = prev
+      return (target, version) => {
+        if (calls.has(target)) {
+          calls.set(target, calls.get(target)! + 1)
+        }
+        return prev(target, version)
+      }
+    })
+
+    try {
+      const Component = () => {
+        const tracked = useSnapshot(state)
+        return <div>Total: {tracked.total}</div>
+      }
+      render(<Component />)
+      expect(targets.map((target) => calls.get(target))).toEqual([2, 2, 2, 2])
+    } finally {
+      unstable_replaceInternalFunction('createSnapshot', () => original)
+    }
+  })
+
+  it('should batch getter dependency changes without comparing getter results', async () => {
+    const items = Array.from({ length: 4 }, () => proxy({ count: 0 }))
+    const state = proxy({
+      items,
+      get parity() {
+        return this.items.reduce((total, item) => total + item.count, 0) % 2
+      },
+    })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>Parity: {tracked.parity}</div>
+    }
+    render(<Component />)
+
+    const { proxyStateMap } = unstable_getInternalStates()
+    const targets = items.map((item) => proxyStateMap.get(item)![0])
+    const calls = new Map(targets.map((target) => [target, 0]))
+    let original: any
+    unstable_replaceInternalFunction('createSnapshot', (prev) => {
+      original = prev
+      return (target, version) => {
+        if (calls.has(target)) {
+          calls.set(target, calls.get(target)! + 1)
+        }
+        return prev(target, version)
+      }
+    })
+
+    try {
+      items.forEach((item) => {
+        item.count += 2
+      })
+      await act(() => vi.advanceTimersByTimeAsync(0))
+
+      expect(renderFn).toHaveBeenCalledTimes(2)
+      expect(targets.map((target) => calls.get(target))).toEqual([4, 2, 2, 2])
+    } finally {
+      unstable_replaceInternalFunction('createSnapshot', () => original)
+    }
   })
 
   it('should keep committed subscriptions during a suspended render', async () => {
@@ -416,6 +735,43 @@ describe('optimization', () => {
     expect(screen.getByText('Keys: nested,second')).toBeInTheDocument()
     expect(renderFn).toHaveBeenCalledTimes(3)
   })
+
+  it.each([false, true])(
+    'should track enumeration after re-adding a non-enumerable key (getter: %s)',
+    async (useGetter) => {
+      const child: { value?: number } = {}
+      Object.defineProperty(child, 'value', {
+        value: 1,
+        writable: true,
+        configurable: true,
+      })
+      const state = proxy({
+        child,
+        get keys() {
+          return Object.keys(this.child).join(',')
+        },
+      })
+      const renderFn = vi.fn()
+      const Component = () => {
+        const tracked = useSnapshot(state)
+        renderFn()
+        const keys = useGetter
+          ? tracked.keys
+          : Object.keys(tracked.child).join(',')
+        return <div>Keys: {keys || 'none'}</div>
+      }
+
+      render(<Component />)
+      expect(screen.getByText('Keys: none')).toBeInTheDocument()
+
+      delete state.child.value
+      state.child.value = 1
+      await act(() => vi.advanceTimersByTimeAsync(0))
+
+      expect(screen.getByText('Keys: value')).toBeInTheDocument()
+      expect(renderFn).toHaveBeenCalledTimes(2)
+    },
+  )
 
   it('should rerender when replacement changes key order', async () => {
     const state = proxy({ nested: { a: 1, b: 2 } })

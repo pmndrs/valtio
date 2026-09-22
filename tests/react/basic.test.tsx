@@ -1,7 +1,7 @@
 import { StrictMode, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import { proxy, snapshot, useSnapshot } from 'valtio'
 import { useCommitCount } from '../test-utils.js'
 
 describe('basic', () => {
@@ -39,6 +39,34 @@ describe('basic', () => {
     expect(screen.getByText('count: 1')).toBeInTheDocument()
     unmount()
   })
+
+  it.each([false, true])(
+    'should update a leaf reached through a cyclic path (sync: %s)',
+    async (sync) => {
+      type State = { b: { a: State }; c: { count: number } }
+      const raw = {} as State
+      raw.b = { a: raw }
+      raw.c = { count: 0 }
+      const state = proxy(raw)
+      const previous = snapshot(state)
+      const Component = () => {
+        const tracked = useSnapshot(state, { sync })
+        return <div>count: {tracked.b.a.c.count}</div>
+      }
+
+      render(<Component />)
+      expect(screen.getByText('count: 0')).toBeInTheDocument()
+
+      await act(async () => {
+        state.c.count = 1
+        await vi.advanceTimersByTimeAsync(0)
+      })
+      expect(screen.getByText('count: 1')).toBeInTheDocument()
+      const snap = snapshot(state)
+      expect(snap.b.a).toBe(snap)
+      expect(previous.b.a.c.count).toBe(0)
+    },
+  )
 
   it('render from outside', async () => {
     const obj = proxy({ count: 0, anotherCount: 0 })
@@ -128,5 +156,23 @@ describe('basic', () => {
     fireEvent.click(screen.getByText('button'))
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('count: 2 (3)')).toBeInTheDocument()
+  })
+
+  it.each([
+    ['frozen', (value: object) => Object.freeze(value)],
+    ['sealed', (value: object) => Object.seal(value)],
+  ] as const)('rejects %s snapshots', (_, lock) => {
+    const state = proxy({ nested: { count: 0 } })
+    const snap = snapshot(state)
+    lock(snap)
+
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      return <div>count: {tracked.nested.count}</div>
+    }
+
+    expect(() => render(<Component />)).toThrow(
+      'non-extensible snapshots are not supported',
+    )
   })
 })

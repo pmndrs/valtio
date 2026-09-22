@@ -1,0 +1,329 @@
+---
+title: 'Migrating to Valtio v3'
+section: 'Guides'
+description: 'How to migrate applications from Valtio v2 to v3.'
+---
+
+# Migrating to Valtio v3
+
+## Access snapshot properties to subscribe
+
+In Valtio v2, calling `useSnapshot` without accessing any properties subscribed
+the component to the whole state:
+
+```js
+const tracked = useSnapshot(state)
+// No properties are accessed.
+```
+
+The component re-rendered after any change to `state`. Valtio v3 does not
+subscribe until a property is accessed. Read the properties that determine the
+rendered output:
+
+```js
+const tracked = useSnapshot(state)
+
+return <div>{tracked.count}</div>
+```
+
+## Do not make snapshots non-extensible
+
+Valtio v2 could wrap a frozen or sealed snapshot with `proxy-compare`. Valtio
+v3 rejects non-extensible snapshots when `useSnapshot` wraps them for tracking.
+Do not call `Object.freeze`, `Object.seal`, or `Object.preventExtensions` on a
+value returned by `snapshot`.
+
+## Clone read snapshots before assigning them to state
+
+Valtio v2 automatically unwrapped the access-tracking proxies returned by
+`useSnapshot` when assigning them to state. Valtio v3 no longer does this:
+vanilla state does not recognize React's tracking proxies.
+
+Assigning these proxies directly, including inside a new object or array or
+as input to `proxy()`, is unsupported. This restriction is not checked at
+runtime. Use `deepClone` to copy the snapshot data first:
+
+```js
+import { deepClone } from 'valtio/utils'
+
+// In an event handler, copying the version rendered from tracked:
+destination.child = deepClone(tracked.child)
+```
+
+Clone the whole payload if it contains nested read snapshots, for example
+`destination.value = deepClone({ child: snap.child })`. `applyChanges` is not
+an alternative to cloning these inputs.
+
+Cloning reads the snapshot's properties, so those reads participate in
+tracking. Subsequent operations on the copy do not. Values marked with `ref`
+retain their identity rather than being cloned.
+
+## Object replacements can cause extra renders
+
+Object assignments keep JavaScript replacement semantics, as in v2:
+
+```js
+const state = proxy({ obj: { count: 1 } })
+const previous = state.obj
+
+state.obj = { count: 2 }
+state.obj === previous // false
+previous.count // 1
+```
+
+In v3, replacing or deleting a child invalidates subscribers to that child's
+subtree. A component reading `tracked.obj.count` follows the replacement even
+though it subscribed directly to the old child's `count` key. Replacing
+`state.obj` with another `{ count: 2 }` also triggers a render; v2 could skip
+that render by comparing the used leaves.
+
+To avoid these extra renders, update leaves directly or use the opt-in
+[`applyChanges`](../api/utils/applyChanges.mdx) utility:
+
+```js
+import { applyChanges } from 'valtio/utils'
+
+state.obj.count = 3
+applyChanges(state, { obj: { count: 3 } }) // equal leaves: no notification
+applyChanges(state, { obj: { count: 4 } }) // updates the existing child
+```
+
+`applyChanges` updates ordinary objects and arrays in place and deletes keys
+absent from the incoming value. It is not a general-purpose graph or
+property-descriptor reconciliation API.
+
+A hook called with `useSnapshot(previous)` remains bound to that old proxy;
+it does not follow replacements in another object.
+
+## Container reads still observe descendants
+
+An object or array read without accessing its properties observes changes
+anywhere inside that container:
+
+```js
+const tracked = useSnapshot(state)
+useEffect(effect, [tracked.obj])
+```
+
+Reading nested properties narrows tracking to those properties, as in v2.
+Use `trackKey` when the container's snapshot identity also matters; see below.
+Ordinary leaf-key subscriptions have O(1) registration. Whole-container
+subscriptions recursively observe the subtree.
+
+## Snapshot getters are no longer cached
+
+Valtio v2 evaluated own object getters while creating a snapshot and stored
+their results. Valtio v3 preserves getters as getters, just like inherited
+class getters. Each access evaluates the getter using the receiving snapshot:
+
+```js
+const state = proxy({
+  count: 1,
+  get info() {
+    return { doubled: this.count * 2 }
+  },
+})
+
+const snap = snapshot(state)
+state.count = 2
+
+snap.info.doubled // 2: still reads the captured count of 1
+snap.info === snap.info // false: each access creates a new object
+```
+
+This is an intentional behavioral regression from v2. Getters may run more
+often, including once per access in each component. Exceptions are thrown on
+access, not during snapshot creation. Keep getters pure and read their input
+through `this`; do not depend on evaluation counts or use getters for side
+effects. Snapshot data and unchanged snapshot identities remain cached.
+
+### Memoize snapshot getters explicitly
+
+Use [proxy-memoize](https://github.com/dai-shi/proxy-memoize) to cache expensive
+computations when reading getters through snapshots:
+
+```js
+import { memoize } from 'proxy-memoize'
+
+const getInfo = memoize((input) => ({ isEven: input.count % 2 === 0 }))
+const state = proxy({
+  count: 0,
+  get info() {
+    return getInfo(this)
+  },
+})
+
+const snap = snapshot(state)
+const info = snap.info // computes the result
+snap.info === info // true: reuses the cached result
+```
+
+When reading `snap.info`, `this` is the snapshot. Repeated reads pass the same
+immutable input to `memoize`, allowing its identity-cache fast path without
+constructing a new input object. The getter also works through
+`useSnapshot(state)`. A new snapshot allows the computation to be invalidated
+when an accessed input changes.
+
+This recipe is snapshot-only. Do not read `state.info`: that passes the mutable
+state proxy to `memoize`, whose identity cache can return stale results after
+mutation. Do not call `snapshot(this)` inside the getter either; when accessed
+through a snapshot, `this` is already a snapshot, and `snapshot()` only accepts
+mutable Valtio proxies.
+
+### Getter dependencies drive renders
+
+`useSnapshot` tracks keys read while executing a getter, without comparing
+the previous and next getter results:
+
+```js
+const state = proxy({
+  count: 0,
+  get isEven() {
+    return this.count % 2 === 0
+  },
+})
+
+const tracked = useSnapshot(state)
+tracked.isEven
+
+state.count = 2 // re-renders even though isEven is still true
+```
+
+Memoizing a computation does not suppress renders caused by changing its
+input keys. `proxy-memoize` can inspect additional properties internally,
+causing extra renders for keys the computation does not read, even when the
+computation remains cached.
+
+For separately maintained computed state, shared computations,
+and dependencies across stores, the migration path is
+[valtio-reactive](https://github.com/valtiojs/valtio-reactive)'s `computed` API.
+Its v3 integration will be documented separately.
+
+{/* TODO: Verify and document valtio-reactive computed after v3 support. */}
+
+## Use `this` for getter dependencies
+
+In Valtio v2, an object getter could reference its own proxy through a closure:
+
+```js
+const state = proxy({
+  count: 1,
+  get doubled() {
+    return state.count * 2
+  },
+})
+```
+
+Valtio v3 only tracks getter dependencies accessed through `this`. Rewrite the
+getter to use its receiver:
+
+```js
+const state = proxy({
+  count: 1,
+  get doubled() {
+    return this.count * 2
+  },
+})
+```
+
+Proxy state accessed through closures is not tracked as a dependency of the
+getter.
+
+## Function calls track reads through their receiver
+
+Functions are passed through unchanged. Reading a function-valued key tracks
+that key, but Valtio does not wrap the function to track its execution. This
+applies to stored functions as well as functions returned by getters.
+
+Reading through a captured snapshot receiver is tracked; reading a mutable
+proxy through a closure is not:
+
+```js
+const state = proxy({
+  count: 0,
+  readCount: () => state.count,
+  get select() {
+    return () => this.count
+  },
+})
+
+const tracked = useSnapshot(state)
+tracked.readCount() // reads the live state; does not subscribe to count
+tracked.select() // captures tracked as this; subscribes to count
+```
+
+The getter runs when accessed, so the returned arrow function captures the
+receiving snapshot. The function itself is not wrapped or cached by Valtio.
+
+To track the read, use a method called through the render snapshot:
+
+```js
+const state = proxy({
+  count: 0,
+  select() {
+    return this.count
+  },
+})
+
+const tracked = useSnapshot(state)
+tracked.select() // `this` is `tracked`, so reading `count` subscribes to it
+```
+
+## Keep identity-sensitive ref operations outside `proxy-memoize`
+
+Valtio v2 marked values created with `ref` as untracked by `proxy-compare`.
+Because Valtio v3 no longer depends on `proxy-compare`, `proxy-memoize` can wrap
+a plain ref value while evaluating a selector. Identity-sensitive operations
+inside the selector can therefore receive a wrapper instead of the original
+object:
+
+```js
+const value = ref({})
+const lookup = new WeakMap([[value, 'found']])
+const state = proxy({ value })
+
+const select = memoize((snap) => lookup.get(snap.value))
+select(snapshot(state)) // `undefined` in Valtio v3
+```
+
+The ref itself still preserves its identity in Valtio snapshots. Select it
+first and perform the identity-sensitive operation outside the memoized
+function:
+
+```js
+const selectValue = memoize((snap) => snap.value)
+lookup.get(selectValue(snapshot(state))) // 'found'
+```
+
+## Replace `trackMemo` from `proxy-compare`
+
+Some Valtio v2 applications imported `trackMemo` directly from
+`proxy-compare`:
+
+```js
+import { trackMemo } from 'proxy-compare'
+
+const x = tracked.x
+trackMemo(x)
+```
+
+This marked the entire `x` snapshot as used. A replacement of `state.x` or a
+mutation anywhere inside it could change its snapshot identity and trigger a
+re-render.
+
+Valtio v3 no longer uses `proxy-compare`. Use `trackKey` from `valtio`:
+
+```js
+import { trackKey } from 'valtio'
+
+const x = trackKey(tracked, 'x')
+x.y
+```
+
+This explicitly observes the entire `x` snapshot, even when its properties are
+also read. Replacements, deletions, and mutations to unread descendants can
+trigger a re-render.
+
+Without `trackKey`, accessing `tracked.x.y` narrows tracking to `y`.
+A separate identity comparison such as `tracked.x === savedX` cannot be detected
+by the tracking proxy, just as it could not be detected in v2.

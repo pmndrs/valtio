@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
+  getVersion,
   proxy,
   snapshot,
   subscribe,
@@ -64,6 +65,33 @@ describe('unstable_getInternalStates', () => {
     state.count += 1
     expect(versionHolder[0]).toBeGreaterThan(before)
   })
+
+  it('should check each child edge once when updating cyclic versions', () => {
+    type State = { cycle: { root: State }; items: { count: number }[] }
+    const raw = {} as State
+    raw.cycle = { root: raw }
+    raw.items = Array.from({ length: 1000 }, () => ({ count: 0 }))
+    const state = proxy(raw)
+    const states = [state, state.cycle, state.items, ...state.items]
+    const { proxyStateMap } = unstable_getInternalStates()
+    const checks = states.map((state) =>
+      vi.spyOn(proxyStateMap.get(state)!, '1'),
+    )
+    try {
+      snapshot(state)
+      checks.forEach((check) => check.mockClear())
+      state.items[0]!.count++
+
+      getVersion(state)
+
+      // Guard linear traversal without depending on wall-clock timing.
+      expect(
+        checks.reduce((total, check) => total + check.mock.calls.length, 0),
+      ).toBe(states.length + 1)
+    } finally {
+      checks.forEach((check) => check.mockRestore())
+    }
+  })
 })
 
 describe('unstable_replaceInternalFunction', () => {
@@ -80,6 +108,67 @@ describe('unstable_replaceInternalFunction', () => {
     const state = proxy({ count: 0 })
     state.count = 1
     expect(objectIs).toHaveBeenCalled()
+  })
+
+  it('should bound reconciliation work for cyclic aliases', () => {
+    interface Node {
+      [key: string]: number | Node
+    }
+    const current: Node[] = Array.from({ length: 5 }, () => ({}))
+    Object.assign(current[0]!, {
+      id: 0,
+      a: current[1],
+      b: current[4],
+    })
+    Object.assign(current[1]!, {
+      id: 1,
+      b: current[3],
+      c: current[0],
+    })
+    current[3]!.leaf = 1
+    Object.assign(current[4]!, { id: 2, b: current[0] })
+    const next: Node[] = Array.from({ length: 6 }, () => ({}))
+    Object.assign(next[0]!, {
+      id: 0,
+      a: next[1],
+      b: next[3],
+      c: next[2],
+    })
+    Object.assign(next[1]!, {
+      id: 4,
+      a: next[2],
+      b: next[0],
+      c: next[2],
+    })
+    Object.assign(next[2]!, {
+      id: 5,
+      a: next[1],
+      b: next[1],
+      c: next[2],
+    })
+    Object.assign(next[3]!, {
+      id: 1,
+      a: next[4],
+      b: next[0],
+      c: next[5],
+    })
+    Object.assign(next[4]!, {
+      id: 3,
+      a: next[4],
+      b: next[0],
+      c: next[1],
+    })
+    Object.assign(next[5]!, { id: 2, b: next[0] })
+    let calls = 0
+    replace('objectIs', (prev) => (a: unknown, b: unknown) => {
+      ++calls
+      return prev(a, b)
+    })
+    const state = proxy({ node: current[0]! })
+
+    state.node = next[0]!
+
+    expect(calls).toBeLessThan(10_000)
   })
 
   it('should replace newProxy', () => {
@@ -135,6 +224,31 @@ describe('unstable_replaceInternalFunction', () => {
 
     state.count += 1
     expect(state.count).toBe(1)
+  })
+
+  it('should apply snapshot customization to nested proxies', () => {
+    const state = proxy({ child: { count: 1 } })
+    const { proxyStateMap } = unstable_getInternalStates()
+    const childTarget = proxyStateMap.get(state.child)![0]
+    const initialize = vi.fn()
+    replace(
+      'createSnapshot',
+      (prev: any) => (target: object, version: number) => {
+        const snap = prev(target, version)
+        if (target === childTarget) {
+          initialize(snap)
+        }
+        return snap
+      },
+    )
+
+    const snap = snapshot(state)
+
+    expect(initialize).toHaveBeenCalledExactlyOnceWith(snap.child)
+    state.child.count = 2
+    const next = snapshot(state)
+    expect(initialize).toHaveBeenLastCalledWith(next.child)
+    expect(snap.child.count).toBe(1)
   })
 })
 

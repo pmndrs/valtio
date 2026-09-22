@@ -1,7 +1,7 @@
 import { StrictMode, memo, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import { proxy, snapshot, useSnapshot } from 'valtio'
 import { proxyMap, proxySet } from 'valtio/utils'
 
 describe('getter', () => {
@@ -38,6 +38,29 @@ describe('getter', () => {
     expect(renderFn).toHaveBeenCalledTimes(2)
   })
 
+  it('should evaluate getters on access through each snapshot receiver', () => {
+    const compute = vi.fn((count: number) => count * 2)
+    const state = proxy({
+      count: 1,
+      get value() {
+        return compute(this.count)
+      },
+    })
+    const snap = snapshot(state)
+    expect(compute).not.toHaveBeenCalled()
+
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      return <div>value: {tracked.value}</div>
+    }
+
+    render(<Component />)
+    expect(screen.getByText('value: 2')).toBeInTheDocument()
+    expect(compute).toHaveBeenCalledTimes(1)
+    expect(snap.value).toBe(2)
+    expect(compute).toHaveBeenCalledTimes(2)
+  })
+
   it('should track nested getter dependencies', async () => {
     const computeDouble = vi.fn((x: number) => x * 2)
     const state = proxy({
@@ -67,6 +90,64 @@ describe('getter', () => {
     expect(computeDouble).toBeCalledTimes(1)
   })
 
+  it.each([
+    [
+      'stored closure',
+      () => {
+        const state = proxy({ count: 1, select: (): number => state.count })
+        return state
+      },
+      false,
+    ],
+    [
+      'getter-returned closure',
+      () =>
+        proxy({
+          count: 1,
+          get select() {
+            return () => this.count
+          },
+        }),
+      true,
+    ],
+    [
+      'method called through the snapshot',
+      () =>
+        proxy({
+          count: 1,
+          select() {
+            return this.count
+          },
+        }),
+      true,
+    ],
+  ] as const)(
+    'should use the receiver captured or passed to a %s',
+    async (kind, createState, tracksCount) => {
+      const state = createState()
+      const renderFn = vi.fn()
+      const Component = () => {
+        const tracked = useSnapshot(state)
+        expect(tracked.select === snapshot(state).select).toBe(
+          kind !== 'getter-returned closure',
+        )
+        renderFn()
+        return <div>value: {tracked.select()}</div>
+      }
+
+      render(<Component />)
+      expect(screen.getByText('value: 1')).toBeInTheDocument()
+
+      state.count = 2
+      await act(() => vi.advanceTimersByTimeAsync(0))
+
+      expect(
+        screen.getByText(`value: ${tracksCount ? 2 : 1}`),
+      ).toBeInTheDocument()
+      expect(renderFn).toHaveBeenCalledTimes(tracksCount ? 2 : 1)
+    },
+  )
+
   it('should track each getter independently', async () => {
     const state = proxy({
       firstCount: 1,
@@ -94,6 +175,38 @@ describe('getter', () => {
     state.firstCount = 2
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('count: 2')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should not add escaped receiver reads to another getter', async () => {
+    const state = proxy({
+      a: 1,
+      b: 2,
+      get first() {
+        return () => this.a
+      },
+      get second() {
+        return this.b
+      },
+    })
+    const first = snapshot(state).first
+    expect(first()).toBe(1)
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>second: {tracked.second}</div>
+    }
+
+    render(<Component />)
+    state.a = 3
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+    expect(first()).toBe(1)
+
+    state.b = 4
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('second: 4')).toBeInTheDocument()
     expect(renderFn).toHaveBeenCalledTimes(2)
   })
 
@@ -245,6 +358,121 @@ describe('getter', () => {
     expect(screen.getByText('value: 5')).toBeInTheDocument()
     expect(renderFn).toHaveBeenCalledTimes(4)
   })
+
+  it('should update dynamic getter dependencies when the result is unchanged', async () => {
+    const state = proxy({
+      a: 1,
+      b: 1,
+      useA: true,
+      get selected() {
+        return this.useA ? this.a : this.b
+      },
+    })
+    const renderFn = vi.fn()
+
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>value: {tracked.selected}</div>
+    }
+
+    render(<Component />)
+    state.useA = false
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    state.b = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('value: 2')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(3)
+
+    state.a = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(3)
+  })
+
+  it('should track structural and descriptor reads in getters', async () => {
+    const state = proxy<{
+      nested: { value?: number; extra?: number }
+      summary: string
+    }>({
+      nested: { value: 1 },
+      get summary() {
+        return `${'value' in this.nested}:${Object.hasOwn(this.nested, 'value')}:${Object.keys(this.nested).join(',')}`
+      },
+    })
+    const renderFn = vi.fn()
+
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>summary: {tracked.summary}</div>
+    }
+
+    render(<Component />)
+    state.nested.value = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    state.nested.extra = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(
+      screen.getByText('summary: true:true:value,extra'),
+    ).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(3)
+
+    delete state.nested.value
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('summary: false:false:extra')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(4)
+  })
+
+  it.each([
+    [
+      'object',
+      () =>
+        proxy({
+          nested: { count: 0 },
+          get parity() {
+            return this.nested.count % 2
+          },
+        }),
+    ],
+    [
+      'inherited',
+      () => {
+        class State {
+          nested = { count: 0 }
+          get parity() {
+            return this.nested.count % 2
+          }
+        }
+        return proxy(new State())
+      },
+    ],
+  ])(
+    'should rerender for %s getter dependencies even if the result is equal',
+    async (_name, createState) => {
+      const state = createState()
+      const renderFn = vi.fn()
+
+      const Component = () => {
+        const tracked = useSnapshot(state)
+        renderFn()
+        return <div>parity: {tracked.parity}</div>
+      }
+
+      render(<Component />)
+      state.nested.count = 2
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(renderFn).toHaveBeenCalledTimes(2)
+
+      state.nested.count = 3
+      await act(() => vi.advanceTimersByTimeAsync(0))
+      expect(screen.getByText('parity: 1')).toBeInTheDocument()
+      expect(renderFn).toHaveBeenCalledTimes(3)
+    },
+  )
 
   it('should preserve direct usage of a getter dependency', async () => {
     const state = proxy({
@@ -467,6 +695,37 @@ describe('getter', () => {
     expect(childRender).toHaveBeenCalledTimes(2)
   })
 
+  it('should track a getter revealed by deleting a property', async () => {
+    class State {
+      count = 1
+      get selected() {
+        return this.count
+      }
+    }
+    const state = proxy(new State())
+    Object.defineProperty(state, 'selected', {
+      value: 1,
+      configurable: true,
+    })
+    const renderFn = vi.fn()
+
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>value: {tracked.selected}</div>
+    }
+
+    render(<Component />)
+    delete (state as { selected?: number }).selected
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+
+    state.count = 2
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(screen.getByText('value: 2')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(3)
+  })
+
   it('should track properties read from a proxy returned by a getter', async () => {
     const state = proxy({
       nested: { count: 0, other: 0 },
@@ -572,7 +831,7 @@ describe('getter', () => {
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('A count: 2')).toBeInTheDocument()
     expect(screen.getByText('B count: 2')).toBeInTheDocument()
-    expect(computeDouble).toBeCalledTimes(1)
+    expect(computeDouble).toBeCalledTimes(4)
   })
 
   it('object getters returning object', async () => {
@@ -612,6 +871,6 @@ describe('getter', () => {
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('A count: 2')).toBeInTheDocument()
     expect(screen.getByText('B count: 2')).toBeInTheDocument()
-    expect(computeDouble).toBeCalledTimes(1)
+    expect(computeDouble).toBeCalledTimes(4)
   })
 })

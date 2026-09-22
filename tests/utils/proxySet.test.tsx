@@ -348,6 +348,19 @@ describe('proxySet', () => {
   })
 
   describe('snapshot behavior', () => {
+    it('should preserve snapshot indexes through a transparent proxy', () => {
+      const state = proxySet([1])
+      const snap = new Proxy(snapshot(state), {})
+
+      state.add(2)
+      state.delete(1)
+
+      expect(snap.size).toBe(1)
+      expect(snap.has(1)).toBe(true)
+      expect(snap.has(2)).toBe(false)
+      expect([...snap.values()]).toEqual([1])
+    })
+
     it('should capture collection data before any snapshot getter is read', () => {
       const state = proxySet(['old'])
       const snap = snapshot(state)
