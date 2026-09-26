@@ -250,6 +250,7 @@ export function getDocsNav(): NavigationTree {
       pages['component-state'],
       pages['computed-properties'],
       pages['migrating-to-v2'],
+      pages['migrating-to-v3'],
     ],
     API: {
       Basic: [pages['proxy'], pages['useSnapshot']],
@@ -261,7 +262,6 @@ export function getDocsNav(): NavigationTree {
       ],
       Utils: [
         pages['subscribeKey'],
-        pages['watch'],
         pages['devtools'],
         pages['derive'],
         pages['proxyWithHistory'],

@@ -204,11 +204,11 @@ describe('proxyMap', () => {
         const state = proxyMap(value as any)
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           return (
             <>
-              <div>size: {snap.size}</div>
+              <div>size: {tracked.size}</div>
               <button onClick={() => state.clear()}>button</button>
             </>
           )
@@ -238,11 +238,11 @@ describe('proxyMap', () => {
         })
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           return (
             <>
-              <div>size: {snap.map.size}</div>
+              <div>size: {tracked.map.size}</div>
               <button onClick={() => state.map.set(value, value)}>
                 button
               </button>
@@ -287,11 +287,11 @@ describe('proxyMap', () => {
         const firstKey = firstValue && firstValue[0]
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           return (
             <>
-              <div>size: {snap.map.size}</div>
+              <div>size: {tracked.map.size}</div>
               <button onClick={() => state.map.delete(firstKey)}>button</button>
             </>
           )
@@ -401,10 +401,10 @@ describe('proxyMap', () => {
       })
 
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
         return (
           <div>
-            {Array.from(snap.todos.values())
+            {Array.from(tracked.todos.values())
               .map((todo) => `${todo.name}:${todo.completed}`)
               .join(',')}
           </div>
@@ -516,11 +516,11 @@ describe('proxyMap', () => {
     it('should update ui when calling has before and after setting and deleting a key', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has key: {`${snap.has('key')}`}</p>
+            <p>has key: {`${tracked.has('key')}`}</p>
             <button onClick={() => state.set('key', 'value')}>set key</button>
             <button onClick={() => state.delete('key')}>delete key</button>
           </>
@@ -547,12 +547,12 @@ describe('proxyMap', () => {
     it('should update ui when calling has before and after settiing and deleting multiple keys', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has key: {`${snap.has('key')}`}</p>
-            <p>has key2: {`${snap.has('key2')}`}</p>
+            <p>has key: {`${tracked.has('key')}`}</p>
+            <p>has key2: {`${tracked.has('key2')}`}</p>
             <button
               onClick={() => {
                 state.set('key', 'value')
@@ -596,11 +596,11 @@ describe('proxyMap', () => {
     it('should update ui when calling get with absent key that has been added later', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>value: {`${snap.get('key')}`}</p>
+            <p>value: {`${tracked.get('key')}`}</p>
             <button
               onClick={() => {
                 state.set('key', 'value')
@@ -628,12 +628,12 @@ describe('proxyMap', () => {
     it('should update ui when calling has before and after settiing multile keys and deleting a single one (first item)', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has key: {`${snap.has('key')}`}</p>
-            <p>has key2: {`${snap.has('key2')}`}</p>
+            <p>has key: {`${tracked.has('key')}`}</p>
+            <p>has key2: {`${tracked.has('key2')}`}</p>
             <button
               onClick={() => {
                 state.set('key', 'value')
@@ -676,14 +676,14 @@ describe('proxyMap', () => {
     it('should update ui when calling has/get before and after settiing multile keys and deleting a single one multiple times', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has key1: {`${snap.has('key')}`}</p>
-            <p>value1: {`${snap.get('key')}`}</p>
-            <p>has key2: {`${snap.has('key2')}`}</p>
-            <p>value2: {`${snap.get('key2')}`}</p>
+            <p>has key1: {`${tracked.has('key')}`}</p>
+            <p>value1: {`${tracked.get('key')}`}</p>
+            <p>has key2: {`${tracked.has('key2')}`}</p>
+            <p>value2: {`${tracked.get('key2')}`}</p>
 
             <button
               onClick={() => {
@@ -747,8 +747,8 @@ describe('proxyMap', () => {
     it('should update ui when calling only one get with absent key added later', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
-        expect(snap).toBeDefined()
+        const tracked = useSnapshot(state)
+        expect(tracked).toBeDefined()
 
         return (
           <>
@@ -771,11 +771,11 @@ describe('proxyMap', () => {
       }
 
       const SeparateComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>value: {`${snap.get('key')}`}</p>
+            <p>value: {`${tracked.get('key')}`}</p>
           </>
         )
       }
@@ -801,14 +801,14 @@ describe('proxyMap', () => {
     it('should update ui when clearing the map', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has key: {`${snap.has('key')}`}</p>
-            <p>has key2: {`${snap.has('key2')}`}</p>
-            <p>value1: {`${snap.get('key')}`}</p>
-            <p>value2: {`${snap.get('key2')}`}</p>
+            <p>has key: {`${tracked.has('key')}`}</p>
+            <p>has key2: {`${tracked.has('key2')}`}</p>
+            <p>value1: {`${tracked.get('key')}`}</p>
+            <p>value2: {`${tracked.get('key2')}`}</p>
             <button
               onClick={() => {
                 state.set('key', 'value')
@@ -866,7 +866,7 @@ describe('proxyMap', () => {
         }
         const state = proxyMap<number, MapItem>()
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           const addItem = (id: number) => {
             const item: MapItem = {
@@ -877,16 +877,16 @@ describe('proxyMap', () => {
           }
 
           const methods = {
-            entries: Array.from(snap.entries()).map(([id, item]) => (
+            entries: Array.from(tracked.entries()).map(([id, item]) => (
               <li key={id}>{`item.name: ${item.name}; item.id: ${item.id}`}</li>
             )),
-            values: Array.from(snap.values()).map((item) => (
+            values: Array.from(tracked.values()).map((item) => (
               <li
                 key={item.id}
               >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
             )),
-            keys: Array.from(snap.keys()).map((id) => {
-              const item = snap.get(id)!
+            keys: Array.from(tracked.keys()).map((id) => {
+              const item = tracked.get(id)!
               return (
                 <li
                   key={id}
@@ -937,7 +937,7 @@ describe('proxyMap', () => {
         const state = proxyMap<number, MapItem>()
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           const addItem = (id: number) => {
             const item: MapItem = {
@@ -975,19 +975,19 @@ describe('proxyMap', () => {
               </button>
               <ul>
                 {iteratorMethod === 'entries'
-                  ? Array.from(snap[iteratorMethod]()).map(([id, item]) => (
+                  ? Array.from(tracked[iteratorMethod]()).map(([id, item]) => (
                       <li
                         key={id}
                       >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
                     ))
                   : iteratorMethod === 'values'
-                    ? Array.from(snap[iteratorMethod]()).map((item) => (
+                    ? Array.from(tracked[iteratorMethod]()).map((item) => (
                         <li
                           key={item.id}
                         >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
                       ))
-                    : Array.from(snap[iteratorMethod]()).map((id) => {
-                        const item = snap.get(id)!
+                    : Array.from(tracked[iteratorMethod]()).map((id) => {
+                        const item = tracked.get(id)!
                         return (
                           <li
                             key={id}

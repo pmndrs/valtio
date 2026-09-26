@@ -16,10 +16,10 @@ describe('array', () => {
     const obj = proxy({ counts: [0, 1, 2] })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>counts: {snap.counts.join(',')}</div>
+          <div>counts: {tracked.counts.join(',')}</div>
           <button onClick={() => obj.counts.push(obj.counts.length)}>
             button
           </button>
@@ -44,10 +44,10 @@ describe('array', () => {
     const arr = proxy([0, 1, 2])
 
     const Counter = () => {
-      const snap = useSnapshot(arr)
+      const tracked = useSnapshot(arr)
       return (
         <>
-          <div>counts: {snap.join(',')}</div>
+          <div>counts: {tracked.join(',')}</div>
           <button onClick={() => arr.pop()}>button</button>
           <button onClick={() => arr.splice(1, 0, 10, 11)}>button2</button>
         </>
@@ -75,11 +75,11 @@ describe('array', () => {
     const obj = proxy({ counts: [0, 1, 2] })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>counts: {snap.counts.join(',')}</div>
-          <div>length: {snap.counts.length}</div>
+          <div>counts: {tracked.counts.join(',')}</div>
+          <div>length: {tracked.counts.length}</div>
           <button
             onClick={() => (obj.counts[obj.counts.length] = obj.counts.length)}
           >
@@ -117,8 +117,8 @@ describe('array', () => {
     const state = proxy([0, 1, 2])
 
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>value: {snap[2] ?? 'missing'}</div>
+      const tracked = useSnapshot(state)
+      return <div>value: {tracked[2] ?? 'missing'}</div>
     }
 
     render(<Component />)

@@ -18,8 +18,8 @@ describe('regression (react)', () => {
     state.obj = initialObject
 
     const Counter = () => {
-      const snap = useSnapshot(state)
-      return <div>count: {snap.obj ? 1 : snap.count}</div>
+      const tracked = useSnapshot(state)
+      return <div>count: {tracked.obj ? 1 : tracked.count}</div>
     }
 
     render(
@@ -37,8 +37,8 @@ describe('regression (react)', () => {
     expect('prop' in obj).toBe(true)
 
     const Component = () => {
-      const snap = useSnapshot(obj)
-      return <div>has prop: {JSON.stringify('prop' in snap)}</div>
+      const tracked = useSnapshot(obj)
+      return <div>has prop: {JSON.stringify('prop' in tracked)}</div>
     }
 
     render(
@@ -58,8 +58,8 @@ describe('regression (react)', () => {
     }>({ id: 'prop1', prop1: 'value1' })
 
     const Child = ({ id }: { id: 'prop1' | 'prop2' }) => {
-      const snap = useSnapshot(obj)
-      return <div>Child: {snap[id]}</div>
+      const tracked = useSnapshot(obj)
+      return <div>Child: {tracked[id]}</div>
     }
 
     const handleClick = () => {
@@ -68,11 +68,11 @@ describe('regression (react)', () => {
     }
 
     const Parent = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>Parent: {snap[snap.id]}</div>
-          <Child id={snap.id} />
+          <div>Parent: {tracked[tracked.id]}</div>
+          <Child id={tracked.id} />
           <button onClick={handleClick}>button</button>
         </>
       )
@@ -139,15 +139,15 @@ describe('regression (react)', () => {
     const commitFn = vi.fn()
     const Component = () => {
       const [showAnotherValue, setShowAnotherValue] = useState(false)
-      const snap = useSnapshot(obj)
-      const value = showAnotherValue ? snap.anotherValue : 'hidden'
+      const tracked = useSnapshot(obj)
+      const value = showAnotherValue ? tracked.anotherValue : 'hidden'
       useLayoutEffect(() => {
         commitFn(value)
       }, [value])
       return (
         <>
-          <div>count: {snap.count}</div>
-          {showAnotherValue && <div>anotherValue: {snap.anotherValue}</div>}
+          <div>count: {tracked.count}</div>
+          {showAnotherValue && <div>anotherValue: {tracked.anotherValue}</div>}
           <button onClick={() => setShowAnotherValue(true)}>
             showAnotherValue
           </button>

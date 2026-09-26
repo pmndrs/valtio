@@ -1,1 +1,1 @@
-export * from './useThemeState'
+export { themeState } from './useThemeState'

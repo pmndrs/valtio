@@ -40,10 +40,10 @@ describe('devtools', () => {
     devtools(obj, { enabled: true })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={() => ++obj.count}>button</button>
         </>
       )
@@ -74,10 +74,10 @@ describe('devtools', () => {
       const obj = proxy({ count: 0 })
       devtools(obj)
       const Counter = () => {
-        const snap = useSnapshot(obj)
+        const tracked = useSnapshot(obj)
         return (
           <>
-            <div>count: {snap.count}</div>
+            <div>count: {tracked.count}</div>
             <button onClick={() => ++obj.count}>button</button>
           </>
         )
@@ -95,10 +95,10 @@ describe('devtools', () => {
       const obj = proxy({ count: 0 })
       devtools(obj)
       const Counter = () => {
-        const snap = useSnapshot(obj)
+        const tracked = useSnapshot(obj)
         return (
           <>
-            <div>count: {snap.count}</div>
+            <div>count: {tracked.count}</div>
             <button onClick={() => ++obj.count}>button</button>
           </>
         )
@@ -115,10 +115,10 @@ describe('devtools', () => {
       const obj = proxy({ count: 0 })
       devtools(obj, { enabled: true })
       const Counter = () => {
-        const snap = useSnapshot(obj)
+        const tracked = useSnapshot(obj)
         return (
           <>
-            <div>count: {snap.count}</div>
+            <div>count: {tracked.count}</div>
             <button onClick={() => ++obj.count}>button</button>
           </>
         )
@@ -137,10 +137,10 @@ describe('devtools', () => {
       const obj = proxy({ count: 0 })
       devtools(obj, { enabled: true })
       const Counter = () => {
-        const snap = useSnapshot(obj)
+        const tracked = useSnapshot(obj)
         return (
           <>
-            <div>count: {snap.count}</div>
+            <div>count: {tracked.count}</div>
             <button onClick={() => ++obj.count}>button</button>
           </>
         )
@@ -159,10 +159,10 @@ describe('devtools', () => {
     devtools(obj, { enabled: true })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={() => ++obj.count}>button</button>
         </>
       )
@@ -246,10 +246,10 @@ describe('devtools', () => {
       devtools(obj, { enabled: true })
 
       const Counter = () => {
-        const snap = useSnapshot(obj)
+        const tracked = useSnapshot(obj)
         return (
           <>
-            <div>count: {snap.count}</div>
+            <div>count: {tracked.count}</div>
             <button onClick={() => ++obj.count}>button</button>
           </>
         )
@@ -289,10 +289,10 @@ describe('devtools', () => {
         devtools(obj, { enabled: true })
 
         const Counter = () => {
-          const snap = useSnapshot(obj)
+          const tracked = useSnapshot(obj)
           return (
             <>
-              <div>count: {snap.count}</div>
+              <div>count: {tracked.count}</div>
               <button onClick={() => ++obj.count}>button</button>
             </>
           )
@@ -333,10 +333,10 @@ describe('devtools', () => {
         devtools(obj, { enabled: true })
 
         const Counter = () => {
-          const snap = useSnapshot(obj)
+          const tracked = useSnapshot(obj)
           return (
             <>
-              <div>count: {snap.count}</div>
+              <div>count: {tracked.count}</div>
               <button onClick={() => ++obj.count}>button</button>
             </>
           )
@@ -383,10 +383,10 @@ describe('devtools', () => {
           devtools(obj, { enabled: true })
 
           const Counter = () => {
-            const snap = useSnapshot(obj)
+            const tracked = useSnapshot(obj)
             return (
               <>
-                <div>count: {snap.count}</div>
+                <div>count: {tracked.count}</div>
                 <button onClick={() => ++obj.count}>button</button>
               </>
             )

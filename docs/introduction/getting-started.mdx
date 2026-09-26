@@ -46,11 +46,13 @@ To access the data in this store, we'll use [`useSnapshot`](../api/basic/useSnap
 
 ```tsx
 const Todos = () => {
-  const snap = useSnapshot(store)
+  const tracked = useSnapshot(store)
   return (
     <ul>
-      {snap.todos
-        .filter(({ status }) => status === snap.filter || snap.filter === 'all')
+      {tracked.todos
+        .filter(
+          ({ status }) => status === tracked.filter || tracked.filter === 'all',
+        )
         .map(({ description, status, id }) => {
           return (
             <li key={id}>
@@ -68,7 +70,7 @@ const Todos = () => {
 
 #### 3. actions
 
-Finally, we need to create, update, and delete our todos. To do so, we simply mutate properties on the store we created, not the snap. Commonly, these mutations are wrapped up in functions called actions.
+Finally, we need to create, update, and delete our todos. To do so, we simply mutate properties on the store we created, not the tracked. Commonly, these mutations are wrapped up in functions called actions.
 
 ```ts
 const addTodo = (description: string) => {
@@ -134,8 +136,8 @@ import { formatTimeDelta, calcTimeDelta } from './utils'
 import { store } from './App'
 
 export const Countdown = ({ index }: { index: number }) => {
-  const snap = useSnapshot(store.todos[index])
-  const delta = calcTimeDelta(snap.timeLeft)
+  const tracked = useSnapshot(store.todos[index])
+  const delta = calcTimeDelta(tracked.timeLeft)
   const { days, hours, minutes, seconds } = formatTimeDelta(delta)
   return (
     <span className="countdown-time">

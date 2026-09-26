@@ -17,9 +17,9 @@ describe('mapset', () => {
     const renderFn = vi.fn()
     let snapshotMethod: (() => void) | undefined
     const Component = () => {
-      const snap = useSnapshot(state, { sync: true })
+      const tracked = useSnapshot(state, { sync: true })
       renderFn()
-      snapshotMethod = snap.method
+      snapshotMethod = tracked.method
       return null
     }
 
@@ -39,12 +39,12 @@ describe('mapset', () => {
     const wrappedSet = proxy(proxy(set))
 
     const Component = () => {
-      const mapSnap = useSnapshot(wrappedMap, { sync: true })
-      const setSnap = useSnapshot(wrappedSet, { sync: true })
+      const trackedMap = useSnapshot(wrappedMap, { sync: true })
+      const trackedSet = useSnapshot(wrappedSet, { sync: true })
       return (
         <div>
-          values: {mapSnap.size}, {String(mapSnap.has('second'))},{' '}
-          {setSnap.size}, {String(setSnap.has(2))}
+          values: {trackedMap.size}, {String(trackedMap.has('second'))},{' '}
+          {trackedSet.size}, {String(trackedSet.has(2))}
         </div>
       )
     }
@@ -63,10 +63,10 @@ describe('mapset', () => {
     const obj = proxy({ map: new Map([['count', 0]]) })
 
     const Counter = () => {
-      const snap = useSnapshot(obj) as any
+      const tracked = useSnapshot(obj) as any
       return (
         <>
-          <div>count: {snap.map.get('count')}</div>
+          <div>count: {tracked.map.get('count')}</div>
           <button onClick={() => obj.map.set('count', 1)}>button</button>
         </>
       )
@@ -88,10 +88,10 @@ describe('mapset', () => {
     const obj = proxy({ set: new Set([1, 2, 3]) })
 
     const Counter = () => {
-      const snap = useSnapshot(obj) as any
+      const tracked = useSnapshot(obj) as any
       return (
         <>
-          <div>count: {[...snap.set].join(',')}</div>
+          <div>count: {[...tracked.set].join(',')}</div>
           <button onClick={() => obj.set.add(4)}>button</button>
         </>
       )

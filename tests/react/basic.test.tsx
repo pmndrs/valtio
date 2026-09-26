@@ -2,7 +2,7 @@ import { StrictMode, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
-import { useCommitCount } from '../test-utils'
+import { useCommitCount } from '../test-utils.js'
 
 describe('basic', () => {
   beforeEach(() => {
@@ -17,10 +17,10 @@ describe('basic', () => {
     const obj = proxy({ count: 0 })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={() => ++obj.count}>button</button>
         </>
       )
@@ -45,13 +45,13 @@ describe('basic', () => {
 
     const Counter = () => {
       const [show, setShow] = useState(false)
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
           {show ? (
-            <div>count: {snap.count}</div>
+            <div>count: {tracked.count}</div>
           ) : (
-            <div>anotherCount: {snap.anotherCount}</div>
+            <div>anotherCount: {tracked.anotherCount}</div>
           )}
           <button onClick={() => ++obj.count}>button</button>
           <button onClick={() => setShow((x) => !x)}>toggle</button>
@@ -85,8 +85,8 @@ describe('basic', () => {
       const state = proxy({ count: 0 })
       const wrapped = wrap(state)
       const Counter = () => {
-        const snap = useSnapshot(state)
-        return <div>count: {snap.count}</div>
+        const tracked = useSnapshot(state)
+        return <div>count: {tracked.count}</div>
       }
 
       render(<Counter />)
@@ -102,11 +102,11 @@ describe('basic', () => {
     const obj = proxy({ count: 0 })
 
     const Counter = () => {
-      const snap = useSnapshot(obj, { sync: true })
+      const tracked = useSnapshot(obj, { sync: true })
       return (
         <>
           <div>
-            count: {snap.count} ({useCommitCount(1)})
+            count: {tracked.count} ({useCommitCount(1)})
           </div>
           <button onClick={() => ++obj.count}>button</button>
         </>

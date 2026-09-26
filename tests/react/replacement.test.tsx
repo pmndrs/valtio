@@ -9,11 +9,11 @@ describe('replacement and detachment', () => {
   it('catches replacement between render and subscription', async () => {
     const state = proxy({ obj: { count: 1 } })
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       useLayoutEffect(() => {
         state.obj = { count: 2 }
       }, [])
-      return <div>{snap.obj.count}</div>
+      return <div>{tracked.obj.count}</div>
     }
     render(<Component />)
     await act(() => Promise.resolve())
@@ -27,8 +27,8 @@ describe('replacement and detachment', () => {
         items: [{ nested: { count: 1 } }],
       })
       const Component = () => {
-        const snap = useSnapshot(state)
-        return <div>{snap.items?.[0]?.nested.count ?? 'missing'}</div>
+        const tracked = useSnapshot(state)
+        return <div>{tracked.items?.[0]?.nested.count ?? 'missing'}</div>
       }
       render(<Component />)
       await act(async () => {
@@ -44,10 +44,10 @@ describe('replacement and detachment', () => {
     const shared = proxy({ count: 1 })
     const state = proxy({ left: { child: shared }, right: shared })
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <div>
-          {snap.left.child.count}/{snap.right.count}
+          {tracked.left.child.count}/{tracked.right.count}
         </div>
       )
     }
@@ -71,8 +71,8 @@ describe('replacement and detachment', () => {
     const previous = state.child
     const previousSnapshot = snapshot(previous)
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>{snap.child.self?.count ?? snap.child.count}</div>
+      const tracked = useSnapshot(state)
+      return <div>{tracked.child.self?.count ?? tracked.child.count}</div>
     }
     render(<Component />)
     await act(async () => {
@@ -87,9 +87,9 @@ describe('replacement and detachment', () => {
     const state = proxy({ obj: { count: 1 } })
     let previous: Snapshot<typeof state> | undefined
     const Component = () => {
-      const snap = useSnapshot(state)
-      previous ||= snap
-      return <div>{snap.obj.count}</div>
+      const tracked = useSnapshot(state)
+      previous ||= tracked
+      return <div>{tracked.obj.count}</div>
     }
     render(<Component />)
     await act(async () => {
@@ -103,14 +103,14 @@ describe('replacement and detachment', () => {
     const state = proxy({ obj: { count: 1 } })
     const previous = state.obj
     const Child = () => {
-      const snap = useSnapshot(previous)
-      return <div>child:{snap.count}</div>
+      const tracked = useSnapshot(previous)
+      return <div>child:{tracked.count}</div>
     }
     const Parent = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>parent:{snap.obj.count}</div>
+          <div>parent:{tracked.obj.count}</div>
           <Child />
         </>
       )
@@ -143,8 +143,8 @@ describe('replacement and detachment', () => {
       )
     })
     const Parent = () => {
-      const snap = useSnapshot(state)
-      return <Child obj={snap.obj} />
+      const tracked = useSnapshot(state)
+      return <Child obj={tracked.obj} />
     }
     render(<Parent />)
     await act(async () => {
@@ -166,8 +166,8 @@ describe('getters with replacement', () => {
     })
     const state = proxy({ child: makeChild(1) })
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>{snap.child.doubled}</div>
+      const tracked = useSnapshot(state)
+      return <div>{tracked.child.doubled}</div>
     }
     render(<Component />)
     await act(async () => {
@@ -188,8 +188,8 @@ describe('getters with replacement', () => {
       },
     })
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>{snap.selected}</div>
+      const tracked = useSnapshot(state)
+      return <div>{tracked.selected}</div>
     }
     render(<Component />)
     await act(async () => {
@@ -210,8 +210,8 @@ describe('getters with replacement', () => {
       },
     })
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>{snap.select()}</div>
+      const tracked = useSnapshot(state)
+      return <div>{tracked.select()}</div>
     }
     render(<Component />)
     expect(screen.getByText('1')).toBeInTheDocument()
@@ -229,8 +229,8 @@ describe('getters with replacement', () => {
       },
     })
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>{snap.selected}</div>
+      const tracked = useSnapshot(state)
+      return <div>{tracked.selected}</div>
     }
     render(<Component />)
     await act(async () => {

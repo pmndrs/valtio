@@ -18,8 +18,8 @@ describe('getter results', () => {
         },
       })
       const Component = () => {
-        const snap = useSnapshot(state, { sync })
-        return <div>time: {snap.timestamp}</div>
+        const tracked = useSnapshot(state, { sync })
+        return <div>time: {tracked.timestamp}</div>
       }
 
       render(<Component />)
@@ -42,11 +42,11 @@ describe('getter results', () => {
       },
     })
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       useLayoutEffect(() => {
         state.timestamp = 1000
       }, [])
-      return <div>time: {snap.timestamp}</div>
+      return <div>time: {tracked.timestamp}</div>
     }
 
     render(<Component />)
@@ -73,12 +73,12 @@ describe('getter results', () => {
     })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
       useLayoutEffect(() => {
         state.otherTimestamp++
       })
-      return <div>time: {snap.timestamp}</div>
+      return <div>time: {tracked.timestamp}</div>
     }
 
     render(<Component />)
@@ -98,9 +98,9 @@ describe('getter results', () => {
     })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>{snap.filtered.map((item) => item.label).join(',')}</div>
+      return <div>{tracked.filtered.map((item) => item.label).join(',')}</div>
     }
 
     render(<Component />)
@@ -142,8 +142,8 @@ describe('getter results', () => {
       )
     })
     const Parent = () => {
-      const snap = useSnapshot(state)
-      return <Child child={snap.view.child} />
+      const tracked = useSnapshot(state)
+      return <Child child={tracked.view.child} />
     }
 
     render(<Parent />)
@@ -164,9 +164,9 @@ describe('getter results', () => {
       },
     })
     const Component = () => {
-      const snap = useSnapshot(state)
-      expect(snap.view.child).toBe(child)
-      return <div>{snap.view.child.label}</div>
+      const tracked = useSnapshot(state)
+      expect(tracked.view.child).toBe(child)
+      return <div>{tracked.view.child.label}</div>
     }
 
     render(<Component />)
@@ -182,20 +182,20 @@ describe('getter results', () => {
     })
     const childRender = vi.fn()
     const Child = memo(function Child({
-      snap,
+      tracked,
     }: {
-      snap: { readonly selected: { readonly label: string } }
+      tracked: { readonly selected: { readonly label: string } }
     }) {
       childRender()
-      return <div>{snap.selected.label}</div>
+      return <div>{tracked.selected.label}</div>
     })
     const Parent = () => {
       const [, rerender] = useState(0)
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
           <button onClick={() => rerender((value) => value + 1)}>parent</button>
-          <Child snap={snap} />
+          <Child tracked={tracked} />
         </>
       )
     }
@@ -222,8 +222,8 @@ describe('getter results', () => {
     })
     const initial = state.info
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>even: {String(snap.info.isEven)}</div>
+      const tracked = useSnapshot(state)
+      return <div>even: {String(tracked.info.isEven)}</div>
     }
 
     render(

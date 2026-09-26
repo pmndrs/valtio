@@ -4,7 +4,7 @@ import ReactExports, { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
-import { sleep } from '../test-utils'
+import { sleep } from '../test-utils.js'
 
 const { use } = ReactExports
 const use2 = <T,>(x: T): Awaited<T> =>
@@ -27,10 +27,10 @@ describe('async', () => {
     }
 
     const Counter = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>count: {use2(snap.count)}</div>
+          <div>count: {use2(tracked.count)}</div>
           <button onClick={delayedIncrement}>button</button>
         </>
       )
@@ -60,10 +60,10 @@ describe('async', () => {
     }
 
     const Counter = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>text: {use2(snap.object).text}</div>
+          <div>text: {use2(tracked.object).text}</div>
           <button onClick={delayedObject}>button</button>
         </>
       )
@@ -99,11 +99,11 @@ describe('async', () => {
       }
 
       const Counter = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
         return (
           <>
-            <div>text: {use2(snap.object).text}</div>
-            <div>count: {use2(snap.object).count}</div>
+            <div>text: {use2(tracked.object).text}</div>
+            <div>count: {use2(tracked.object).count}</div>
             <button onClick={updateObject}>button</button>
           </>
         )
@@ -141,10 +141,10 @@ describe('async', () => {
     }
 
     const Counter = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>value: {String(use2(snap.value))}</div>
+          <div>value: {String(use2(tracked.value))}</div>
           <button onClick={delayedValue}>button</button>
         </>
       )
