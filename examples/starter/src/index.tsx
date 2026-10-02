@@ -9,11 +9,11 @@ import './index.css'
 const state = proxy({ count: 0 })
 
 const Counter = () => {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
 
   return (
     <>
-      <span className="text-3xl">{snap.count}</span>
+      <span className="text-3xl">{tracked.count}</span>
       <button
         className="bg-sky-400 font-bold py-2 px-4 rounded"
         onClick={() => ++state.count}

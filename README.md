@@ -32,15 +32,15 @@ setInterval(() => {
 
 #### React via useSnapshot
 
-Create a local snapshot that catches changes. Rule of thumb: read from snapshots in render function, otherwise use the source. The component will only re-render when the parts of the state you access have changed, it is render-optimized.
+Create a local tracked snapshot that catches changes. Rule of thumb: read from tracked snapshots in render function, otherwise use the source. The component will only re-render when the parts of the state you access have changed, it is render-optimized.
 
 ```jsx
 // This will re-render on `state.count` change but not on `state.text` change
 function Counter() {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   return (
     <div>
-      {snap.count}
+      {tracked.count}
       <button onClick={() => ++state.count}>+1</button>
     </div>
   )
@@ -50,7 +50,7 @@ function Counter() {
 <details>
 <summary>Note for TypeScript users: Return type of useSnapshot can be too strict.</summary>
 
-The `snap` variable returned by `useSnapshot` is a (deeply) read-only object.
+The `tracked` variable returned by `useSnapshot` is a (deeply) read-only object.
 Its type has `readonly` attribute, which may be too strict for some use cases.
 
 To mitigate typing difficulties, you might want to loosen the type definition:
@@ -70,6 +70,7 @@ See [#327](https://github.com/pmndrs/valtio/issues/327) for more information.
 
 Internally, `useSnapshot` calls `snapshot` in valtio/vanilla,
 and wraps the snapshot object with another proxy to detect property access.
+We call this a tracked snapshot and name it `tracked`, reserving `snap` for the vanilla `snapshot()` result.
 This feature is based on [proxy-compare](https://github.com/dai-shi/proxy-compare).
 
 Two kinds of proxies are used for different purposes:
@@ -92,8 +93,8 @@ const state = proxy({
   },
 })
 state.inc() // `this` points to `state` and it works fine
-const snap = useSnapshot(state)
-snap.inc() // `this` points to `snap` and it doesn't work because snapshot is frozen
+const tracked = useSnapshot(state)
+tracked.inc() // `this` points to `tracked` and it doesn't work because snapshot is frozen
 ```
 
 To avoid this pitfall, the recommended pattern is not to use `this` and prefer arrow function.
@@ -150,17 +151,6 @@ subscribeKey(state, 'count', (v) =>
 )
 ```
 
-There is another util `watch` which might be convenient in some cases.
-
-```jsx
-import { watch } from 'valtio/utils'
-
-const state = proxy({ count: 0 })
-const stop = watch((get) => {
-  console.log('state has changed to', get(state)) // auto-subscribe on use
-})
-```
-
 #### Suspend your components
 
 Valtio is compatible with React 19 `use` hook. This eliminates all the async back-and-forth, you can access your data directly while the parent is responsible for fallback state and error handling.
@@ -172,8 +162,8 @@ import { use } from 'react' // React 19
 const state = proxy({ post: fetch(url).then((res) => res.json()) })
 
 function Post() {
-  const snap = useSnapshot(state)
-  return <div>{use(snap.post).title}</div>
+  const tracked = useSnapshot(state)
+  return <div>{use(tracked.post).title}</div>
 }
 
 function App() {
@@ -233,9 +223,12 @@ The known use case of this is `<input>` [#270](https://github.com/pmndrs/valtio/
 
 ```jsx
 function TextBox() {
-  const snap = useSnapshot(state, { sync: true })
+  const tracked = useSnapshot(state, { sync: true })
   return (
-    <input value={snap.text} onChange={(e) => (state.text = e.target.value)} />
+    <input
+      value={tracked.text}
+      onChange={(e) => (state.text = e.target.value)}
+    />
   )
 }
 ```

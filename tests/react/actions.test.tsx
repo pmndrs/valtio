@@ -15,10 +15,10 @@ describe('organizing actions', () => {
 
   const renderCounter = (state: { count: number }, inc: () => void) => {
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={inc}>button</button>
         </>
       )
@@ -155,11 +155,11 @@ describe('resetting state', () => {
     }
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>text: {snap.text}</div>
-          <div>arr: {snap.arr.join(',')}</div>
+          <div>text: {tracked.text}</div>
+          <div>arr: {tracked.arr.join(',')}</div>
           <button onClick={reset}>reset</button>
         </>
       )
@@ -188,10 +188,10 @@ describe('resetting state', () => {
     }
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>text: {snap.obj.text}</div>
+          <div>text: {tracked.obj.text}</div>
           <button onClick={reset}>reset</button>
         </>
       )

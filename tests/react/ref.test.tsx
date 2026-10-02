@@ -3,7 +3,7 @@ import type { ReactElement } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
-import { useCommitCount } from '../test-utils'
+import { useCommitCount } from '../test-utils.js'
 
 describe('ref', () => {
   beforeEach(() => {
@@ -18,11 +18,11 @@ describe('ref', () => {
     const obj = proxy({ nested: ref({ count: 0 }) })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
           <div>
-            count: {snap.nested.count} ({useCommitCount(1)})
+            count: {tracked.nested.count} ({useCommitCount(1)})
           </div>
           <button onClick={() => (obj.nested = ref({ count: 0 }))}>
             button
@@ -48,10 +48,10 @@ describe('ref', () => {
     const obj = proxy<{ ui: ReactElement | null }>({ ui: null })
 
     const Component = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          {snap.ui || <span>original</span>}
+          {tracked.ui || <span>original</span>}
           <button onClick={() => (obj.ui = ref(<span>replace</span>))}>
             button
           </button>
@@ -76,10 +76,10 @@ describe('ref', () => {
     const obj = proxy({ nested: ref({ count: 0 }) })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>count: {snap.nested.count}</div>
+          <div>count: {tracked.nested.count}</div>
           <button onClick={() => ++obj.nested.count}>button</button>
         </>
       )
@@ -119,10 +119,10 @@ describe('ref', () => {
     let nested: object | undefined
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      nested = snap.nested
-      return <div>count: {snap.nested.count}</div>
+      nested = tracked.nested
+      return <div>count: {tracked.nested.count}</div>
     }
 
     render(<Component />)
@@ -151,9 +151,9 @@ describe('ref', () => {
       const state = proxy<{ child: { count: number } }>({ child: value })
       const renderFn = vi.fn()
       const Component = () => {
-        const snap = useSnapshot(state, { sync })
+        const tracked = useSnapshot(state, { sync })
         renderFn()
-        return <div>count: {snap.child.count}</div>
+        return <div>count: {tracked.child.count}</div>
       }
 
       render(<Component />)

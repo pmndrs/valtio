@@ -1,0 +1,72 @@
+---
+title: 'How to Migrate to v3 from v2'
+description: 'Changes to supported environments, packaging, and utilities in Valtio v3.'
+---
+
+# How to Migrate to v3 from v2
+
+Valtio v3 updates its environment requirements and package layout, and removes the deprecated `watch` utility.
+This guide explains how to update code and tooling affected by these changes.
+
+## Requirements
+
+- TypeScript 5.5 or newer (v2 supports TypeScript 4.5 and newer).
+- Node.js 22.12 or newer (v2 supports Node.js 12.20 and newer). Node.js 26 is included in the v3 test matrix.
+- React 18 or newer. This was also the declared peer requirement in v2; v3 no longer tests React 16 or 17.
+
+The published JavaScript now targets ES2020 instead of ES2018.
+Transpile Valtio in your build if you need to run it in environments without ES2020 support.
+
+## Package and import changes
+
+Valtio is now an ESM package. It no longer publishes a separate CommonJS build.
+Use ESM imports when possible; supported Node.js versions can also load the ESM entry points with `require()` from CommonJS.
+
+The package exposes these public entry points:
+
+- `valtio`
+- `valtio/utils`
+- `valtio/vanilla`
+- `valtio/vanilla/utils`
+- `valtio/react`
+- `valtio/react/utils`
+- `valtio/package.json`
+
+The previous `dist/esm` directory is gone; the package is now built with TypeScript instead of Rollup.
+Deep imports into implementation files are no longer supported.
+Import from a public entry point:
+
+```js
+import { subscribeKey } from 'valtio/vanilla/utils'
+```
+
+The published files use `process.env.NODE_ENV` directly for development-only checks.
+Bundlers usually replace this expression for browser builds.
+If you load Valtio in a browser without a bundler, provide `process.env.NODE_ENV` before importing it.
+
+## Removed `watch` utility
+
+The deprecated `watch` utility is no longer exported from `valtio/utils` or `valtio/vanilla/utils`.
+For a callback observing one proxy, use `subscribe` and run the callback once yourself if you need `watch`'s initial invocation:
+
+```js
+import { proxy, subscribe } from 'valtio'
+
+const state = proxy({ count: 0 })
+const logCount = () => console.log(state.count)
+
+logCount()
+const unsubscribe = subscribe(state, logCount)
+```
+
+`subscribe` does not run a cleanup function returned by its callback.
+If your `watch` callback returned one, handle that cleanup separately.
+
+For `watch` callbacks that observe multiple proxies or change their dependencies dynamically,
+see [valtio-reactive](https://github.com/valtiojs/valtio-reactive).
+
+## Naming in examples
+
+The docs now typically use `state` for `proxy(...)`, `snap` for `snapshot(state)`,
+and `tracked` for `useSnapshot(state)`.
+This naming change does not affect the API or require changes to your code.

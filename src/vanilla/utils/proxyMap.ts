@@ -1,4 +1,4 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
+import { proxy, unstable_getInternalStates } from '../../vanilla.js'
 
 const { proxyStateMap, snapCache } = unstable_getInternalStates()
 const isProxy = (x: any) => proxyStateMap.has(x)
@@ -148,21 +148,21 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         cb(this.data[index]!, key, this)
       })
     },
-    *entries(): MapIterator<[K, V]> {
+    *entries(): ReturnType<Map<K, V>['entries']> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const [key, index] of map) {
         yield [key, this.data[index]!]
       }
     },
-    *keys(): MapIterator<K> {
+    *keys(): ReturnType<Map<K, V>['keys']> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const key of map.keys()) {
         yield key
       }
     },
-    *values(): MapIterator<V> {
+    *values(): ReturnType<Map<K, V>['values']> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
@@ -178,7 +178,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     toJSON(): Map<K, V> {
       return new Map(this.entries())
     },
-    // [ONLY-TS-5.9.3] [ONLY-TS-5.8.3] [ONLY-TS-5.7.3] [ONLY-TS-5.6.3] @ts-expect-error ignore
+    // [ONLY-TS-5.9.3] [ONLY-TS-5.8.3] [ONLY-TS-5.7.3] [ONLY-TS-5.6.3] [ONLY-TS-5.5.4] @ts-expect-error ignore
     getOrInsert() {
       throw new Error('not implemented')
     },

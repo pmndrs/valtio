@@ -1,6 +1,12 @@
-import LeakDetector from 'jest-leak-detector'
+import LeakDetectorModule from 'jest-leak-detector'
 import { describe, expect, it } from 'vitest'
 import { proxy, subscribe } from 'valtio'
+
+const LeakDetector = (
+  'default' in LeakDetectorModule
+    ? LeakDetectorModule.default
+    : LeakDetectorModule
+) as typeof import('jest-leak-detector').default
 
 describe('no memory leaks with proxy', () => {
   it('empty object', async () => {

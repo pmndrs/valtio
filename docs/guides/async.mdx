@@ -39,8 +39,8 @@ import { use } from 'react' // React 19
 const state = proxy({ post: fetch(url).then((res) => res.json()) })
 
 function Post() {
-  const snap = useSnapshot(state)
-  return <div>{use(snap.post).title}</div>
+  const tracked = useSnapshot(state)
+  return <div>{use(tracked.post).title}</div>
 }
 
 function App() {

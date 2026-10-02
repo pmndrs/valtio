@@ -21,10 +21,10 @@ const MyProvider = ({ children }) => {
 
 const MyCounter = () => {
   const state = useContext(MyContext)
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   return (
     <>
-      {snap.count} <button onClick={() => ++state.count}>+1</button>
+      {tracked.count} <button onClick={() => ++state.count}>+1</button>
     </>
   )
 }
