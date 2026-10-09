@@ -98,11 +98,11 @@ describe('basic', () => {
     },
   )
 
-  it('counter with sync option', async () => {
+  it('counter commits once per update', async () => {
     const obj = proxy({ count: 0 })
 
     const Counter = () => {
-      const tracked = useSnapshot(obj, { sync: true })
+      const tracked = useSnapshot(obj)
       return (
         <>
           <div>

@@ -1,7 +1,7 @@
 import { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import { batch, proxy, subscribe, useSnapshot } from 'valtio'
 import { devtools } from 'valtio/utils'
 
 describe('devtools', () => {
@@ -56,6 +56,39 @@ describe('devtools', () => {
     )
 
     expect(extension.init).toHaveBeenLastCalledWith({ count: 0 })
+  })
+
+  it('sends one message for a burst of writes', async () => {
+    const obj = proxy({ count: 0, text: 'a' })
+    devtools(obj, { enabled: true })
+
+    obj.count = 1
+    obj.text = 'b'
+    expect(extension.send).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenCalledTimes(1)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:count, set:text' }),
+      { count: 1, text: 'b' },
+    )
+  })
+
+  it('sends one message for a batch larger than the argument limit', async () => {
+    const obj = proxy<Record<string, number>>({})
+    devtools(obj, { enabled: true })
+    const count = 200_000
+
+    batch(() => {
+      for (let i = 0; i < count; i++) {
+        obj['k' + i] = i
+      }
+    })
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenCalledTimes(1)
+    const [action] = extension.send.mock.lastCall as [{ type: string }]
+    expect(action.type.split(', ')).toHaveLength(count)
   })
 
   describe('If there is no extension installed...', () => {
@@ -238,6 +271,82 @@ describe('devtools', () => {
 
     await vi.advanceTimersByTimeAsync(0)
     expect(extension.send).toBeCalledTimes(0)
+  })
+
+  describe('applying an incoming state', () => {
+    const setup = () => {
+      const obj = proxy({ a: 0, b: 0 })
+      devtools(obj, { enabled: true })
+      const seen: number[][] = []
+      subscribe(obj, () => {
+        seen.push([obj.a, obj.b])
+      })
+      return { obj, seen }
+    }
+
+    it('should notify once with the whole ACTION payload applied', () => {
+      const { seen } = setup()
+      ;(extensionSubscriber as (message: any) => void)({
+        type: 'ACTION',
+        payload: JSON.stringify({ a: 1, b: 1 }),
+      })
+      expect(seen).toEqual([[1, 1]])
+    })
+
+    it('should notify once with the whole jumped-to state applied', () => {
+      const { seen } = setup()
+      ;(extensionSubscriber as (message: any) => void)({
+        type: 'DISPATCH',
+        state: JSON.stringify({ a: 1, b: 1 }),
+        payload: { type: 'JUMP_TO_STATE' },
+      })
+      expect(seen).toEqual([[1, 1]])
+    })
+
+    it('should notify once with the last imported state applied', () => {
+      const { seen } = setup()
+      ;(extensionSubscriber as (message: any) => void)({
+        type: 'DISPATCH',
+        payload: {
+          type: 'IMPORT_STATE',
+          nextLiftedState: {
+            actionsById: ['1', '2'],
+            computedStates: [
+              { state: { a: 1, b: 1 } },
+              { state: { a: 2, b: 2 } },
+            ],
+          },
+        },
+      })
+      expect(seen).toEqual([[2, 2]])
+      expect(extension.init).toHaveBeenLastCalledWith({ a: 1, b: 1 })
+      expect(extension.send).toHaveBeenLastCalledWith('2', { a: 2, b: 2 })
+    })
+
+    it('should not report a subscriber error as an ACTION payload error', () => {
+      const { obj } = setup()
+      subscribe(obj, () => {
+        throw new Error('boom')
+      })
+      const consoleError = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
+      const queueMicrotaskSpy = vi
+        .spyOn(globalThis, 'queueMicrotask')
+        .mockImplementation(() => {})
+
+      try {
+        ;(extensionSubscriber as (message: any) => void)({
+          type: 'ACTION',
+          payload: JSON.stringify({ a: 1, b: 1 }),
+        })
+        expect(consoleError).not.toHaveBeenCalled()
+        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1)
+      } finally {
+        queueMicrotaskSpy.mockRestore()
+        consoleError.mockRestore()
+      }
+    })
   })
 
   describe('when it receives an message of type...', () => {

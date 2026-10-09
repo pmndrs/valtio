@@ -17,7 +17,7 @@ describe('mapset', () => {
     const renderFn = vi.fn()
     let snapshotMethod: (() => void) | undefined
     const Component = () => {
-      const tracked = useSnapshot(state, { sync: true })
+      const tracked = useSnapshot(state)
       renderFn()
       snapshotMethod = tracked.method
       return null
@@ -39,8 +39,8 @@ describe('mapset', () => {
     const wrappedSet = proxy(proxy(set))
 
     const Component = () => {
-      const trackedMap = useSnapshot(wrappedMap, { sync: true })
-      const trackedSet = useSnapshot(wrappedSet, { sync: true })
+      const trackedMap = useSnapshot(wrappedMap)
+      const trackedSet = useSnapshot(wrappedSet)
       return (
         <div>
           values: {trackedMap.size}, {String(trackedMap.has('second'))},{' '}

@@ -21,6 +21,7 @@ const exportsOf = (ns: object) =>
 describe('entry points', () => {
   it('should expose the core from valtio/vanilla', () => {
     expect(exportsOf(vanilla)).toEqual([
+      'batch',
       'getVersion',
       'proxy',
       'ref',
@@ -64,14 +65,15 @@ describe('entry points', () => {
     )
   })
 
-  it('should work end to end through valtio/vanilla alone', async () => {
+  it('should work end to end through valtio/vanilla alone', () => {
     const state = vanilla.proxy({ count: 0, nested: { text: 'a' } })
     const handler = vi.fn()
     vanilla.subscribe(state, handler)
 
-    state.count += 1
-    state.nested.text = 'b'
-    await Promise.resolve()
+    vanilla.batch(() => {
+      state.count += 1
+      state.nested.text = 'b'
+    })
 
     expect(handler).toBeCalledTimes(1)
     expect(vanilla.snapshot(state)).toEqual({ count: 1, nested: { text: 'b' } })

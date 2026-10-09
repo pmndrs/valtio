@@ -127,7 +127,7 @@ describe('gotchas: state versus tracked', () => {
   })
 })
 
-describe('gotchas: sync option', () => {
+describe('gotchas: synchronous updates', () => {
   beforeEach(() => {
     vi.useFakeTimers()
   })
@@ -140,7 +140,7 @@ describe('gotchas: sync option', () => {
     const state = proxy({ text: 'hello' })
 
     const Input = () => {
-      const tracked = useSnapshot(state, { sync: true })
+      const tracked = useSnapshot(state)
       return (
         <input
           aria-label="text"
@@ -159,7 +159,7 @@ describe('gotchas: sync option', () => {
     expect(input.value).toBe('hello world')
   })
 
-  it('should batch without the sync option', async () => {
+  it('should render once for writes in the same tick', async () => {
     const state = proxy({ count: 0 })
 
     const renderFn = vi.fn()
@@ -272,8 +272,11 @@ describe('gotchas: React.memo with object props', () => {
     expect(screen.getByText('value: b')).toBeInTheDocument()
     expect(parentRender).toHaveBeenCalledTimes(1)
 
-    state.second = 'c'
-    await act(() => vi.advanceTimersByTimeAsync(0))
+    // The write notifies synchronously, so make it inside act. On React 18,
+    // a store update outside act renders once more in tests.
+    await act(async () => {
+      state.second = 'c'
+    })
     expect(screen.getByText('value: c')).toBeInTheDocument()
     expect(parentRender).toHaveBeenCalledTimes(2)
   })

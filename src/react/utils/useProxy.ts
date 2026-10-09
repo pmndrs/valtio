@@ -22,11 +22,14 @@ const DUMMY_SYMBOL = Symbol()
  * }
  *
  */
-export function useProxy<T extends object>(
-  proxy: T,
-  options?: NonNullable<Parameters<typeof useSnapshot>[1]>,
-): T {
-  const tracked = useSnapshot(proxy, options) as T
+export function useProxy<T extends object>(proxy: T): T {
+  // eslint-disable-next-line prefer-rest-params
+  if (arguments[1] !== undefined) {
+    throw new Error(
+      'useProxy() no longer accepts an options argument. Updates are synchronous.',
+    )
+  }
+  const tracked = useSnapshot(proxy) as T
 
   // touch dummy key so that it doesn't trigger re-renders when no keys are touched.
   // eslint-disable-next-line @typescript-eslint/no-unused-expressions

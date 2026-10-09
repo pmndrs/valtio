@@ -258,6 +258,7 @@ export function getDocsNav(): NavigationTree {
         pages['ref'],
         pages['subscribe'],
         pages['subscribe-ops'],
+        pages['batch'],
         pages['snapshot'],
       ],
       Utils: [

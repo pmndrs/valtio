@@ -1,11 +1,11 @@
 ---
 title: 'How to Migrate to v3 from v2'
-description: 'Changes to supported environments, packaging, and utilities in Valtio v3.'
+description: 'Changes to supported environments, packaging, utilities, and notifications in Valtio v3.'
 ---
 
 # How to Migrate to v3 from v2
 
-Valtio v3 updates its environment requirements and package layout, and removes the deprecated `watch` utility.
+Valtio v3 updates its environment requirements and package layout, removes the deprecated `watch` utility, and makes notifications synchronous.
 This guide explains how to update code and tooling affected by these changes.
 
 ## Requirements
@@ -64,6 +64,26 @@ If your `watch` callback returned one, handle that cleanup separately.
 
 For `watch` callbacks that observe multiple proxies or change their dependencies dynamically,
 see [valtio-reactive](https://github.com/valtiojs/valtio-reactive).
+
+## Notifications are synchronous
+
+In v2, `subscribe` callbacks were batched and called once per microtask, unless `notifyInSync` was passed. In v3, every callback runs synchronously after each change.
+
+- **Callbacks run once per change.** Code that makes several changes and expects one notification should wrap them in [`batch`](../api/advanced/batch). If you prefer the v2 delivery, see the coalescing recipe in [`subscribe`](../api/advanced/subscribe#notifications-are-synchronous).
+- **Errors thrown by callbacks are rethrown in a microtask.** An assignment never throws because of a subscriber, and the other subscribers still run. Inside [`batch`](../api/advanced/batch), the errors are thrown from `batch` as an `AggregateError` instead. In v2, these errors were unhandled promise rejections; now they are uncaught errors (the `error` event, or `uncaughtException` in Node.js).
+- **The `sync` options are gone.** `useSnapshot` and `useProxy` are always synchronous, so the controlled-input caret workaround is no longer needed.
+- **Native array methods notify once per internal change.** `splice`, `sort` and similar methods make several changes, and each one notifies, so a subscriber can see the array in between. Wrap them in `batch` to notify once, with the final array.
+- **Unbatched loops are slower with `useSnapshot`, for now.** A component using `useSnapshot` takes a snapshot on every notification, so a loop of unbatched changes takes one snapshot per change. Wrap the loop in `batch`. A later v3 change removes this cost.
+
+| v2                                              | v3                                     |
+| ----------------------------------------------- | -------------------------------------- |
+| `subscribe(state, callback, true)`              | `subscribe(state, callback)`           |
+| `subscribeKey(state, 'key', callback, true)`    | `subscribeKey(state, 'key', callback)` |
+| `useSnapshot(state, { sync: true })`            | `useSnapshot(state)`                   |
+| `useProxy(state, { sync: true })`               | `useProxy(state)`                      |
+| Several changes, one notification per microtask | `batch(() => { ... })`                 |
+
+Passing the removed arguments is a TypeScript error, and it also throws at runtime.
 
 ## Naming in examples
 

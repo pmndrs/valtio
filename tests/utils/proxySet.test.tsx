@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, useSnapshot } from 'valtio'
+import { batch, proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { proxySet } from 'valtio/utils'
 
 // used to initialize proxySet during tests
@@ -1014,5 +1014,64 @@ describe('proxySet', () => {
         ).toThrow(TypeError)
       })
     })
+  })
+})
+
+describe('proxySet notifications', () => {
+  it('should notify once per writing call, after the index and data match', () => {
+    const set = proxySet<number>([1])
+    const seen: unknown[] = []
+    subscribe(set, () => {
+      seen.push([set.size, set.has(2)])
+    })
+
+    set.add(2)
+    expect(seen).toEqual([[2, true]])
+
+    set.delete(2)
+    expect(seen).toEqual([
+      [2, true],
+      [1, false],
+    ])
+
+    set.clear()
+    expect(seen).toEqual([
+      [2, true],
+      [1, false],
+      [0, false],
+    ])
+  })
+
+  it('should not notify a call that writes nothing', () => {
+    const set = proxySet<number>([1])
+    const handler = vi.fn()
+    subscribe(set, handler)
+
+    set.add(1)
+    set.delete(2)
+
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('should rethrow subscriber errors in a microtask, like an assignment', () => {
+    const set = proxySet<number>()
+    subscribe(set, () => {
+      throw new Error('boom')
+    })
+    const queueMicrotaskSpy = vi
+      .spyOn(globalThis, 'queueMicrotask')
+      .mockImplementation(() => {})
+
+    try {
+      set.add(1)
+      set.add(2)
+      set.delete(1)
+      set.clear()
+      expect(queueMicrotaskSpy).toHaveBeenCalledTimes(4)
+    } finally {
+      queueMicrotaskSpy.mockRestore()
+    }
+    expect(set.size).toBe(0)
+    expect(() => batch(() => set.add(3))).toThrow(AggregateError)
   })
 })
