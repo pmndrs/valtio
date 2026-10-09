@@ -101,17 +101,13 @@ const setFilter = (filter: Filter) => {
 }
 ```
 
-Finally, we wire up these actions to our inputs and buttons - check the demo below for the full code.
+Finally, we wire up these actions to our inputs and buttons.
 
 ```tsx
 <button className="remove" onClick={() => removeTodo(id)}>
   x
 </button>
 ```
-
-## Codesandbox demo
-
-https://codesandbox.io/s/valtio-to-do-list-forked-6w9h3z
 
 #### Mutating state outside of components
 
@@ -200,12 +196,8 @@ const addTodo = (e: React.SyntheticEvent, reset: VoidFunction) => {
 }
 ```
 
-Please see the rest of the changes in the demo below.
+The remaining changes follow the same pattern.
 
 #### Subscribe in module scope
 
 Being able to mutate state outside of components is a huge benefit. We can also [`subscribe`](../api/advanced/subscribe) to state changes in module scope. We will leave it to you to try this out. You might, for instance, persist your todos to local storage as in [this example](https://github.com/pmndrs/valtio/wiki/How-to-persist-states#persist-with-localstorage).
-
-## Codesandbox demo
-
-https://codesandbox.io/s/valtio-countdown-to-do-list-xkgmri
