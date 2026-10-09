@@ -1,0 +1,37 @@
+---
+title: 'batch'
+section: 'API'
+subSection: 'Advanced'
+description: 'Group changes into one notification'
+---
+
+# `batch`
+
+Subscribers are notified synchronously after each change. `batch` groups several changes so that each subscriber is notified once.
+
+```js
+import { batch, proxy, subscribe } from 'valtio'
+
+const state = proxy({ count: 0, text: 'hello' })
+subscribe(state, () => console.log('changed'))
+
+batch(() => {
+  state.count = 1
+  state.text = 'world'
+}) // logs 'changed' once
+```
+
+- `batch(fn)` runs `fn` synchronously and returns its result.
+- Changes are visible immediately inside the batch, both on the proxy and in `snapshot()`.
+- Subscribers run once when the outermost `batch` returns, with the ops of all their changes in order. Nested `batch` calls join the outer one.
+- Only the synchronous part of an `async` function is batched.
+- If subscribers throw, the errors are thrown together from `batch` as an `AggregateError`, after `fn` has completed and every subscriber has run. Without `batch`, they are rethrown in a microtask instead.
+- If `fn` throws, subscribers are still notified of the changes it made, and then the error is rethrown. If subscribers also throw, all errors are thrown together as an `AggregateError`, with the error from `fn` first.
+
+Native array methods such as `splice` and `sort` make several changes, and notify once per change, so a subscriber can see the array in between. Wrap them in `batch` if you want one notification, with the final array:
+
+```js
+batch(() => {
+  state.items.splice(1, 2)
+})
+```

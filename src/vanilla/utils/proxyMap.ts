@@ -1,6 +1,6 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
+import { proxy, unstable_getInternalStates } from '../../vanilla.js'
 
-const { proxyStateMap, snapCache } = unstable_getInternalStates()
+const { proxyStateMap, snapCache, batchAsWrite } = unstable_getInternalStates()
 const isProxy = (x: any) => proxyStateMap.has(x)
 
 type InternalProxyObject<K, V> = Map<K, V> & {
@@ -109,14 +109,17 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const index = indexMap.get(key)
-      if (index === undefined) {
-        indexMap.set(key, this.index)
-        this.data[this.index++] = value
-      } else {
-        this.data[index] = value
-      }
-      this.epoch++
+      // TODO: Don't notify when an existing key gets an equal value.
+      batchAsWrite(() => {
+        const index = indexMap.get(key)
+        if (index === undefined) {
+          indexMap.set(key, this.index)
+          this.data[this.index++] = value
+        } else {
+          this.data[index] = value
+        }
+        this.epoch++
+      })
       return this
     },
     delete(key: K) {
@@ -127,19 +130,24 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (index === undefined) {
         return false
       }
-      delete this.data[index]
-      indexMap.delete(key)
-      this.epoch++
+      batchAsWrite(() => {
+        delete this.data[index]
+        indexMap.delete(key)
+        this.epoch++
+      })
       return true
     },
     clear() {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      this.data.length = 0 // empty array
-      this.index = 0
-      this.epoch++
-      indexMap.clear()
+      // TODO: Don't notify when the collection is already empty.
+      batchAsWrite(() => {
+        this.data.length = 0 // empty array
+        this.index = 0
+        this.epoch++
+        indexMap.clear()
+      })
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
       this.epoch // touch property for tracking
@@ -148,21 +156,21 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         cb(this.data[index]!, key, this)
       })
     },
-    *entries(): MapIterator<[K, V]> {
+    *entries(): ReturnType<Map<K, V>['entries']> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const [key, index] of map) {
         yield [key, this.data[index]!]
       }
     },
-    *keys(): MapIterator<K> {
+    *keys(): ReturnType<Map<K, V>['keys']> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const key of map.keys()) {
         yield key
       }
     },
-    *values(): MapIterator<V> {
+    *values(): ReturnType<Map<K, V>['values']> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
@@ -178,7 +186,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     toJSON(): Map<K, V> {
       return new Map(this.entries())
     },
-    // [ONLY-TS-5.9.3] [ONLY-TS-5.8.3] [ONLY-TS-5.7.3] [ONLY-TS-5.6.3] @ts-expect-error ignore
+    // [ONLY-TS-5.9.3] [ONLY-TS-5.8.3] [ONLY-TS-5.7.3] [ONLY-TS-5.6.3] [ONLY-TS-5.5.4] @ts-expect-error ignore
     getOrInsert() {
       throw new Error('not implemented')
     },

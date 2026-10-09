@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, useSnapshot } from 'valtio'
+import { batch, proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { proxySet } from 'valtio/utils'
 
 // used to initialize proxySet during tests
@@ -220,11 +220,11 @@ describe('proxySet', () => {
         })
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           return (
             <>
-              <div>size: {snap.set.size}</div>
+              <div>size: {tracked.set.size}</div>
               <button onClick={() => state.set.clear()}>button</button>
             </>
           )
@@ -253,11 +253,11 @@ describe('proxySet', () => {
         })
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           return (
             <>
-              <div>size: {snap.set.size}</div>
+              <div>size: {tracked.set.size}</div>
               <button onClick={() => state.set.add(value)}>button</button>
             </>
           )
@@ -291,11 +291,11 @@ describe('proxySet', () => {
         const initialSize = valuesToDelete.length
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           return (
             <>
-              <div>size: {snap.set.size}</div>
+              <div>size: {tracked.set.size}</div>
               {valuesToDelete.map((value, index) => (
                 <button key={index} onClick={() => state.set.delete(value)}>
                   {`delete ${index}`}
@@ -395,11 +395,11 @@ describe('proxySet', () => {
     it('should update ui when calling has before and after setting anddeleting a value', async () => {
       const state = proxySet()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has value: {`${snap.has('value')}`}</p>
+            <p>has value: {`${tracked.has('value')}`}</p>
             <button
               onClick={() => {
                 state.add('value')
@@ -433,12 +433,12 @@ describe('proxySet', () => {
     it('should update ui when calling has before and after settiing and deleting multiple values', async () => {
       const state = proxySet()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has value: {`${snap.has('value')}`}</p>
-            <p>has value2: {`${snap.has('value2')}`}</p>
+            <p>has value: {`${tracked.has('value')}`}</p>
+            <p>has value2: {`${tracked.has('value2')}`}</p>
             <button
               onClick={() => {
                 state.add('value')
@@ -482,12 +482,12 @@ describe('proxySet', () => {
     it('should update ui when calling has before and after settiing multiple values and deleting a single one (first item)', async () => {
       const state = proxySet()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has value: {`${snap.has('value')}`}</p>
-            <p>has value2: {`${snap.has('value2')}`}</p>
+            <p>has value: {`${tracked.has('value')}`}</p>
+            <p>has value2: {`${tracked.has('value2')}`}</p>
             <button
               onClick={() => {
                 state.add('value')
@@ -530,12 +530,12 @@ describe('proxySet', () => {
     it('should update ui when calling has before and after settiing multiple values and deleting a single one (second item)', async () => {
       const state = proxySet()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has value: {`${snap.has('value')}`}</p>
-            <p>has value2: {`${snap.has('value2')}`}</p>
+            <p>has value: {`${tracked.has('value')}`}</p>
+            <p>has value2: {`${tracked.has('value2')}`}</p>
             <button
               onClick={() => {
                 state.add('value')
@@ -578,12 +578,12 @@ describe('proxySet', () => {
     it('should update ui when clearing the set', async () => {
       const state = proxySet()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has value: {`${snap.has('value')}`}</p>
-            <p>has value2: {`${snap.has('value2')}`}</p>
+            <p>has value: {`${tracked.has('value')}`}</p>
+            <p>has value2: {`${tracked.has('value2')}`}</p>
             <button
               onClick={() => {
                 state.add('value')
@@ -627,7 +627,7 @@ describe('proxySet', () => {
       const state = proxySet<number>()
 
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         const addItem = () => {
           const item = 1
@@ -638,7 +638,7 @@ describe('proxySet', () => {
           <>
             <button onClick={addItem}>Add Item</button>
             <ul>
-              {Array.from(snap.values()).map((setItem) => (
+              {Array.from(tracked.values()).map((setItem) => (
                 <li key={setItem}>{`${setItem}`}</li>
               ))}
             </ul>
@@ -661,7 +661,7 @@ describe('proxySet', () => {
       const state = proxySet<number>()
 
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         const addItem = () => {
           const item = 1
@@ -672,7 +672,7 @@ describe('proxySet', () => {
           <>
             <button onClick={addItem}>Add Item</button>
             <ul>
-              {Array.from(snap.keys()).map((setKey) => (
+              {Array.from(tracked.keys()).map((setKey) => (
                 <li key={setKey}>{`item key: ${setKey}`}</li>
               ))}
             </ul>
@@ -695,7 +695,7 @@ describe('proxySet', () => {
       const state = proxySet<number>()
 
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         const addItem = () => {
           const item = 1
@@ -706,7 +706,7 @@ describe('proxySet', () => {
           <>
             <button onClick={addItem}>Add Item</button>
             <ul>
-              {Array.from(snap.entries()).map(([setKey, setValue]) => (
+              {Array.from(tracked.entries()).map(([setKey, setValue]) => (
                 <li key={setValue}>{`key: ${setKey}; value: ${setValue}`}</li>
               ))}
             </ul>
@@ -737,7 +737,7 @@ describe('proxySet', () => {
         const state = proxySet<MapItem>()
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           const addItem = (id: number) => {
             const item: MapItem = {
@@ -748,17 +748,17 @@ describe('proxySet', () => {
           }
 
           const methods = {
-            entries: Array.from(snap.entries()).map(([item]) => (
+            entries: Array.from(tracked.entries()).map(([item]) => (
               <li
                 key={item.id}
               >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
             )),
-            values: Array.from(snap.values()).map((item) => (
+            values: Array.from(tracked.values()).map((item) => (
               <li
                 key={item.id}
               >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
             )),
-            keys: Array.from(snap.keys()).map((item) => {
+            keys: Array.from(tracked.keys()).map((item) => {
               return (
                 <li
                   key={item.id}
@@ -796,7 +796,7 @@ describe('proxySet', () => {
         const state = proxySet<MapItem>()
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           const addItem = (id: number) => {
             const item: MapItem = {
@@ -818,18 +818,18 @@ describe('proxySet', () => {
               </button>
               <ul>
                 {iteratorMethod === 'entries'
-                  ? Array.from(snap[iteratorMethod]()).map(([item]) => (
+                  ? Array.from(tracked[iteratorMethod]()).map(([item]) => (
                       <li
                         key={item.id}
                       >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
                     ))
                   : iteratorMethod === 'values'
-                    ? Array.from(snap[iteratorMethod]()).map((item) => (
+                    ? Array.from(tracked[iteratorMethod]()).map((item) => (
                         <li
                           key={item.id}
                         >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
                       ))
-                    : Array.from(snap[iteratorMethod]()).map((item) => {
+                    : Array.from(tracked[iteratorMethod]()).map((item) => {
                         return (
                           <li
                             key={item.id}
@@ -1014,5 +1014,64 @@ describe('proxySet', () => {
         ).toThrow(TypeError)
       })
     })
+  })
+})
+
+describe('proxySet notifications', () => {
+  it('should notify once per writing call, after the index and data match', () => {
+    const set = proxySet<number>([1])
+    const seen: unknown[] = []
+    subscribe(set, () => {
+      seen.push([set.size, set.has(2)])
+    })
+
+    set.add(2)
+    expect(seen).toEqual([[2, true]])
+
+    set.delete(2)
+    expect(seen).toEqual([
+      [2, true],
+      [1, false],
+    ])
+
+    set.clear()
+    expect(seen).toEqual([
+      [2, true],
+      [1, false],
+      [0, false],
+    ])
+  })
+
+  it('should not notify a call that writes nothing', () => {
+    const set = proxySet<number>([1])
+    const handler = vi.fn()
+    subscribe(set, handler)
+
+    set.add(1)
+    set.delete(2)
+
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('should rethrow subscriber errors in a microtask, like an assignment', () => {
+    const set = proxySet<number>()
+    subscribe(set, () => {
+      throw new Error('boom')
+    })
+    const queueMicrotaskSpy = vi
+      .spyOn(globalThis, 'queueMicrotask')
+      .mockImplementation(() => {})
+
+    try {
+      set.add(1)
+      set.add(2)
+      set.delete(1)
+      set.clear()
+      expect(queueMicrotaskSpy).toHaveBeenCalledTimes(4)
+    } finally {
+      queueMicrotaskSpy.mockRestore()
+    }
+    expect(set.size).toBe(0)
+    expect(() => batch(() => set.add(3))).toThrow(AggregateError)
   })
 })

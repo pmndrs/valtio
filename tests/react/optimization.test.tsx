@@ -2,7 +2,7 @@ import { Suspense, startTransition, useLayoutEffect, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, snapshot, useSnapshot } from 'valtio'
-import { useCommitCount } from '../test-utils'
+import { useCommitCount } from '../test-utils.js'
 
 describe('optimization', () => {
   beforeEach(() => {
@@ -18,11 +18,11 @@ describe('optimization', () => {
 
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
       return (
         <>
-          <div>Count: {snap.nested.count}</div>
+          <div>Count: {tracked.nested.count}</div>
           <button
             onClick={() => {
               state.nested = { count: 0 }
@@ -64,9 +64,9 @@ describe('optimization', () => {
     let nested!: object
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(source)
-      nested = snap.nested
-      renderFn(snap.nested.count)
+      const tracked = useSnapshot(source)
+      nested = tracked.nested
+      renderFn(tracked.nested.count)
       return null
     }
 
@@ -85,9 +85,9 @@ describe('optimization', () => {
     let nested!: object
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(source)
-      nested = snap.nested
-      renderFn(snap.nested.count)
+      const tracked = useSnapshot(source)
+      nested = tracked.nested
+      renderFn(tracked.nested.count)
       return null
     }
 
@@ -108,11 +108,11 @@ describe('optimization', () => {
     const state = proxy(base)
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
       return (
         <div>
-          Values: {String(snap.missing)}, {snap.inherited}
+          Values: {String(tracked.missing)}, {tracked.inherited}
         </div>
       )
     }
@@ -133,9 +133,9 @@ describe('optimization', () => {
     const state = proxy({ useA: true, a: 0, b: 0 })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>Count: {snap.useA ? snap.a : snap.b}</div>
+      return <div>Count: {tracked.useA ? tracked.a : tracked.b}</div>
     }
 
     render(<Component />)
@@ -164,9 +164,9 @@ describe('optimization', () => {
     const state = proxy({ a: 0, b: 0 })
     const renderFn = vi.fn()
     const Component = ({ useA }: { useA: boolean }) => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>Count: {useA ? snap.a : snap.b}</div>
+      return <div>Count: {useA ? tracked.a : tracked.b}</div>
     }
 
     const { rerender } = render(<Component useA />)
@@ -186,13 +186,13 @@ describe('optimization', () => {
   it('should detect a new-key mutation before passive subscription', async () => {
     const state = proxy({ a: 0, b: 0 })
     const Component = ({ useA }: { useA: boolean }) => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       useLayoutEffect(() => {
         if (!useA) {
           state.b += 1
         }
       }, [useA])
-      return <div>Count: {useA ? snap.a : snap.b}</div>
+      return <div>Count: {useA ? tracked.a : tracked.b}</div>
     }
 
     const { rerender } = render(<Component useA />)
@@ -206,9 +206,9 @@ describe('optimization', () => {
     const second = proxy({ count: 0 })
     const renderFn = vi.fn()
     const Component = ({ state }: { state: { count: number } }) => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>Count: {snap.count}</div>
+      return <div>Count: {tracked.count}</div>
     }
 
     const { rerender } = render(<Component state={first} />)
@@ -229,12 +229,12 @@ describe('optimization', () => {
     const state = proxy({ a: 0, b: 0 })
     const promise = new Promise<void>(() => {})
     const Component = ({ useA }: { useA: boolean }) => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       if (!useA) {
-        void snap.b
+        void tracked.b
         throw promise
       }
-      return <div>Count: {snap.a}</div>
+      return <div>Count: {tracked.a}</div>
     }
     const App = () => {
       const [useA, setUseA] = useState(true)
@@ -263,21 +263,21 @@ describe('optimization', () => {
   it('should grow committed subscriptions during a suspended render', async () => {
     const state = proxy({ a: 0, b: 0 })
     const promise = new Promise<void>(() => {})
-    const Child = ({ snap }: { snap: typeof state }) => {
+    const Child = ({ tracked }: { tracked: typeof state }) => {
       const [useB, setUseB] = useState(false)
       return (
         <>
           <button onClick={() => setUseB(true)}>use b</button>
-          <div>Count: {useB ? snap.b : snap.a}</div>
+          <div>Count: {useB ? tracked.b : tracked.a}</div>
         </>
       )
     }
     const Component = ({ suspend }: { suspend: boolean }) => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       if (suspend) {
         throw promise
       }
-      return <Child snap={snap} />
+      return <Child tracked={tracked} />
     }
     const App = () => {
       const [suspend, setSuspend] = useState(false)
@@ -311,9 +311,9 @@ describe('optimization', () => {
     })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>Value: {'value' in snap ? 'present' : 'absent'}</div>
+      return <div>Value: {'value' in tracked ? 'present' : 'absent'}</div>
     }
 
     render(<Component />)
@@ -346,12 +346,12 @@ describe('optimization', () => {
     })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
       return (
         <div>
           Value:{' '}
-          {Object.prototype.hasOwnProperty.call(snap, 'value')
+          {Object.prototype.hasOwnProperty.call(tracked, 'value')
             ? 'present'
             : 'absent'}
         </div>
@@ -389,9 +389,9 @@ describe('optimization', () => {
     }>({ first: 1, nested: { count: 0 } })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>Keys: {Object.keys(snap).join(',')}</div>
+      return <div>Keys: {Object.keys(tracked).join(',')}</div>
     }
 
     render(<Component />)
@@ -421,9 +421,9 @@ describe('optimization', () => {
     const state = proxy({ nested: { a: 1, b: 2 } })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>Keys: {Object.keys(snap.nested).join(',')}</div>
+      return <div>Keys: {Object.keys(tracked.nested).join(',')}</div>
     }
 
     render(<Component />)
@@ -440,9 +440,9 @@ describe('optimization', () => {
     const state = proxy<{ first?: number; second?: number }>({ first: 1 })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>Value: {JSON.stringify({ ...snap })}</div>
+      return <div>Value: {JSON.stringify({ ...tracked })}</div>
     }
 
     render(<Component />)
@@ -469,9 +469,9 @@ describe('optimization', () => {
     const nested = state.nested
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>Value: {snap.nested.value ?? 'missing'}</div>
+      return <div>Value: {tracked.nested.value ?? 'missing'}</div>
     }
 
     render(<Component />)
@@ -495,9 +495,9 @@ describe('optimization', () => {
     })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>Count: {snap.root.b.count}</div>
+      return <div>Count: {tracked.root.b.count}</div>
     }
 
     render(<Component />)
@@ -517,11 +517,11 @@ describe('optimization', () => {
 
     const childRenderFn = vi.fn()
     const Child = () => {
-      const snap = useSnapshot(obj)
-      childRenderFn(snap.childCount)
+      const tracked = useSnapshot(obj)
+      childRenderFn(tracked.childCount)
       return (
         <>
-          <div>childCount: {snap.childCount}</div>
+          <div>childCount: {tracked.childCount}</div>
           <button onClick={() => ++obj.childCount}>childButton</button>
         </>
       )
@@ -529,11 +529,11 @@ describe('optimization', () => {
 
     const parentRenderFn = vi.fn()
     const Parent = () => {
-      const snap = useSnapshot(obj)
-      parentRenderFn(snap.parentCount)
+      const tracked = useSnapshot(obj)
+      parentRenderFn(tracked.parentCount)
       return (
         <>
-          <div>parentCount: {snap.parentCount}</div>
+          <div>parentCount: {tracked.parentCount}</div>
           <button onClick={() => ++obj.parentCount}>parentButton</button>
           <Child />
         </>
@@ -567,11 +567,11 @@ describe('optimization', () => {
 
     const childRenderFn = vi.fn()
     const Child = () => {
-      const snap = useSnapshot(obj)
-      childRenderFn(snap.childCount)
+      const tracked = useSnapshot(obj)
+      childRenderFn(tracked.childCount)
       return (
         <>
-          <div>childCount: {snap.childCount}</div>
+          <div>childCount: {tracked.childCount}</div>
           <button onClick={() => ++obj.childCount}>childButton</button>
         </>
       )
@@ -620,11 +620,11 @@ describe('optimization', () => {
     const obj = proxy({ count: 0, count2: 0 })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
           <div>
-            count: {snap.count} ({useCommitCount(1)})
+            count: {tracked.count} ({useCommitCount(1)})
           </div>
           <button onClick={() => ++obj.count}>button</button>
         </>
@@ -632,11 +632,11 @@ describe('optimization', () => {
     }
 
     const Counter2 = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
           <div>
-            count2: {snap.count2} ({useCommitCount(1)})
+            count2: {tracked.count2} ({useCommitCount(1)})
           </div>
           <button onClick={() => ++obj.count2}>button2</button>
         </>
@@ -669,11 +669,11 @@ describe('optimization', () => {
 
     const renderFn = vi.fn()
     const Counter = () => {
-      const snap = useSnapshot(obj)
-      renderFn(snap.count)
+      const tracked = useSnapshot(obj)
+      renderFn(tracked.count)
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={() => ++obj.count}>button</button>
         </>
       )
@@ -681,11 +681,11 @@ describe('optimization', () => {
 
     const renderFn2 = vi.fn()
     const Counter2 = () => {
-      const snap = useSnapshot(obj)
-      renderFn2(snap.count2)
+      const tracked = useSnapshot(obj)
+      renderFn2(tracked.count2)
       return (
         <>
-          <div>count2: {snap.count2}</div>
+          <div>count2: {tracked.count2}</div>
           <button onClick={() => ++obj.count2}>button2</button>
         </>
       )

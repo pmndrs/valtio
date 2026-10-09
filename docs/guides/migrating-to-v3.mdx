@@ -1,0 +1,92 @@
+---
+title: 'How to Migrate to v3 from v2'
+description: 'Changes to supported environments, packaging, utilities, and notifications in Valtio v3.'
+---
+
+# How to Migrate to v3 from v2
+
+Valtio v3 updates its environment requirements and package layout, removes the deprecated `watch` utility, and makes notifications synchronous.
+This guide explains how to update code and tooling affected by these changes.
+
+## Requirements
+
+- TypeScript 5.5 or newer (v2 supports TypeScript 4.5 and newer).
+- Node.js 22.12 or newer (v2 supports Node.js 12.20 and newer). Node.js 26 is included in the v3 test matrix.
+- React 18 or newer. This was also the declared peer requirement in v2; v3 no longer tests React 16 or 17.
+
+The published JavaScript now targets ES2020 instead of ES2018.
+Transpile Valtio in your build if you need to run it in environments without ES2020 support.
+
+## Package and import changes
+
+Valtio is now an ESM package. It no longer publishes a separate CommonJS build.
+Use ESM imports when possible; supported Node.js versions can also load the ESM entry points with `require()` from CommonJS.
+
+The package exposes these public entry points:
+
+- `valtio`
+- `valtio/utils`
+- `valtio/vanilla`
+- `valtio/vanilla/utils`
+- `valtio/react`
+- `valtio/react/utils`
+- `valtio/package.json`
+
+The previous `dist/esm` directory is gone; the package is now built with TypeScript instead of Rollup.
+Deep imports into implementation files are no longer supported.
+Import from a public entry point:
+
+```js
+import { subscribeKey } from 'valtio/vanilla/utils'
+```
+
+The published files use `process.env.NODE_ENV` directly for development-only checks.
+Bundlers usually replace this expression for browser builds.
+If you load Valtio in a browser without a bundler, provide `process.env.NODE_ENV` before importing it.
+
+## Removed `watch` utility
+
+The deprecated `watch` utility is no longer exported from `valtio/utils` or `valtio/vanilla/utils`.
+For a callback observing one proxy, use `subscribe` and run the callback once yourself if you need `watch`'s initial invocation:
+
+```js
+import { proxy, subscribe } from 'valtio'
+
+const state = proxy({ count: 0 })
+const logCount = () => console.log(state.count)
+
+logCount()
+const unsubscribe = subscribe(state, logCount)
+```
+
+`subscribe` does not run a cleanup function returned by its callback.
+If your `watch` callback returned one, handle that cleanup separately.
+
+For `watch` callbacks that observe multiple proxies or change their dependencies dynamically,
+see [valtio-reactive](https://github.com/valtiojs/valtio-reactive).
+
+## Notifications are synchronous
+
+In v2, `subscribe` callbacks were batched and called once per microtask, unless `notifyInSync` was passed. In v3, every callback runs synchronously after each change.
+
+- **Callbacks run once per change.** Code that makes several changes and expects one notification should wrap them in [`batch`](../api/advanced/batch). If you prefer the v2 delivery, see the coalescing recipe in [`subscribe`](../api/advanced/subscribe#notifications-are-synchronous).
+- **Errors thrown by callbacks are rethrown in a microtask.** An assignment never throws because of a subscriber, and the other subscribers still run. Inside [`batch`](../api/advanced/batch), the errors are thrown from `batch` as an `AggregateError` instead. In v2, these errors were unhandled promise rejections; now they are uncaught errors (the `error` event, or `uncaughtException` in Node.js).
+- **The `sync` options are gone.** `useSnapshot` and `useProxy` are always synchronous, so the controlled-input caret workaround is no longer needed.
+- **Native array methods notify once per internal change.** `splice`, `sort` and similar methods make several changes, and each one notifies, so a subscriber can see the array in between. Wrap them in `batch` to notify once, with the final array.
+- **Unbatched loops are slower with `useSnapshot`, for now.** A component using `useSnapshot` takes a snapshot on every notification, so a loop of unbatched changes takes one snapshot per change. Wrap the loop in `batch`. A later v3 change removes this cost.
+
+| v2                                              | v3                                     |
+| ----------------------------------------------- | -------------------------------------- |
+| `subscribe(state, callback, true)`              | `subscribe(state, callback)`           |
+| `subscribeKey(state, 'key', callback, true)`    | `subscribeKey(state, 'key', callback)` |
+| `useSnapshot(state, { sync: true })`            | `useSnapshot(state)`                   |
+| `useProxy(state, { sync: true })`               | `useProxy(state)`                      |
+| Several changes, one notification per microtask | `batch(() => { ... })`                 |
+
+Passing the removed arguments is a TypeScript error, and it also throws at runtime.
+
+## Naming in examples
+
+The docs now typically use `state` for `proxy(...)`, `snap` for `snapshot(state)`,
+and `tracked` for `useSnapshot(state)`.
+This naming change does not affect the API or require changes to your code.

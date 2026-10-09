@@ -1,6 +1,6 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
+import { proxy, unstable_getInternalStates } from '../../vanilla.js'
 
-const { proxyStateMap, snapCache } = unstable_getInternalStates()
+const { proxyStateMap, snapCache, batchAsWrite } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
 const isProxy = (x: any) => proxyStateMap.has(x)
 
@@ -197,9 +197,11 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       }
       const v = maybeProxify(value)
       if (!indexMap.has(v)) {
-        indexMap.set(v, this.index)
-        this.data[this.index++] = v
-        this.epoch++
+        batchAsWrite(() => {
+          indexMap.set(v, this.index)
+          this.data[this.index++] = v
+          this.epoch++
+        })
       }
       return this
     },
@@ -212,19 +214,24 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (index === undefined) {
         return false
       }
-      delete this.data[index]
-      indexMap.delete(v)
-      this.epoch++
+      batchAsWrite(() => {
+        delete this.data[index]
+        indexMap.delete(v)
+        this.epoch++
+      })
       return true
     },
     clear() {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      this.data.length = 0 // empty array
-      this.index = 0
-      this.epoch++
-      indexMap.clear()
+      // TODO: Don't notify when the collection is already empty.
+      batchAsWrite(() => {
+        this.data.length = 0 // empty array
+        this.index = 0
+        this.epoch++
+        indexMap.clear()
+      })
     },
     forEach(cb: (value: T, valueAgain: T, set: Set<T>) => void) {
       this.epoch // touch property for tracking
@@ -233,18 +240,18 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
         cb(this.data[index]!, this.data[index]!, this)
       })
     },
-    *values(): SetIterator<T> {
+    *values(): ReturnType<Set<T>['values']> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {
         yield this.data[index]!
       }
     },
-    keys(): SetIterator<T> {
+    keys(): ReturnType<Set<T>['keys']> {
       this.epoch // touch property for tracking
       return this.values()
     },
-    *entries(): SetIterator<[T, T]> {
+    *entries(): ReturnType<Set<T>['entries']> {
       this.epoch // touch property for tracking
       const map = getMapForThis(this)
       for (const index of map.values()) {

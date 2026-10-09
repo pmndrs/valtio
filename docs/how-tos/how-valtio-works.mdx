@@ -97,14 +97,14 @@ const MyComponent = () => {
   const { text, counter, { foo }} = useSnapshot(state)
 
   // Assigning to a snapshot obeject
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
 
 
   return (() => {
     <div id="main">
       <h1>{ `${foo} - ${text}` }</h1>
       {/* - or - */}
-      <h1>{ `${snap.foo.bar} = `${snap.text}}</h1>
+      <h1>{ `${tracked.foo.bar} = `${tracked.text}}</h1>
       <div>
         <input
           type="input"
@@ -113,7 +113,7 @@ const MyComponent = () => {
           value={text}
 
           {/* the line above equivalent to this */}
-          value={snap.text}
+          value={tracked.text}
 
           {/* we use the proxy (s1) for mutations */}
           onChange={e => {

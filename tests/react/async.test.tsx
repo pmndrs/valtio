@@ -4,11 +4,19 @@ import ReactExports, { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { proxy, useSnapshot } from 'valtio'
-import { sleep } from '../test-utils'
+import { sleep } from '../test-utils.js'
 
 const { use } = ReactExports
 const use2 = <T,>(x: T): Awaited<T> =>
   x instanceof Promise ? use(x) : (x as Awaited<T>)
+
+// The click suspends a component. Its update must run inside an awaited
+// act, or React never retries the suspended render in tests.
+const clickInAwaitedAct = (text: string) =>
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  act(async () => {
+    fireEvent.click(screen.getByText(text))
+  })
 
 describe('async', () => {
   beforeEach(() => {
@@ -27,10 +35,10 @@ describe('async', () => {
     }
 
     const Counter = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>count: {use2(snap.count)}</div>
+          <div>count: {use2(tracked.count)}</div>
           <button onClick={delayedIncrement}>button</button>
         </>
       )
@@ -46,7 +54,7 @@ describe('async', () => {
 
     expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('button'))
+    await clickInAwaitedAct('button')
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(300))
@@ -60,10 +68,10 @@ describe('async', () => {
     }
 
     const Counter = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>text: {use2(snap.object).text}</div>
+          <div>text: {use2(tracked.object).text}</div>
           <button onClick={delayedObject}>button</button>
         </>
       )
@@ -79,7 +87,7 @@ describe('async', () => {
 
     expect(screen.getByText('text: none')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('button'))
+    await clickInAwaitedAct('button')
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(300))
@@ -99,11 +107,11 @@ describe('async', () => {
       }
 
       const Counter = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
         return (
           <>
-            <div>text: {use2(snap.object).text}</div>
-            <div>count: {use2(snap.object).count}</div>
+            <div>text: {use2(tracked.object).text}</div>
+            <div>count: {use2(tracked.object).count}</div>
             <button onClick={updateObject}>button</button>
           </>
         )
@@ -125,7 +133,7 @@ describe('async', () => {
       expect(screen.getByText('text: counter')).toBeInTheDocument()
       expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-      fireEvent.click(screen.getByText('button'))
+      await clickInAwaitedAct('button')
       await act(() => vi.advanceTimersByTimeAsync(0))
       expect(screen.getByText('loading')).toBeInTheDocument()
       await act(() => vi.advanceTimersByTimeAsync(300))
@@ -141,10 +149,10 @@ describe('async', () => {
     }
 
     const Counter = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>value: {String(use2(snap.value))}</div>
+          <div>value: {String(use2(tracked.value))}</div>
           <button onClick={delayedValue}>button</button>
         </>
       )
@@ -160,7 +168,7 @@ describe('async', () => {
 
     expect(screen.getByText('value: true')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('button'))
+    await clickInAwaitedAct('button')
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(300))

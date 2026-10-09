@@ -121,22 +121,22 @@ const createSnapshotDefault = <T extends object>(
 
 const createHandlerDefault = <T extends object>(
   isInitializing: () => boolean,
-  addPropListener: (prop: string | symbol, propValue: unknown) => void,
-  removePropListener: (prop: string | symbol) => void,
+  addChildListener: (key: string | symbol, value: unknown) => void,
+  removeChildListener: (key: string | symbol) => void,
   notifyUpdate: (op: Op | undefined) => void,
 ): ProxyHandler<T> => ({
-  deleteProperty(target: T, prop: string | symbol) {
-    const prevValue = Reflect.get(target, prop)
-    removePropListener(prop)
-    const deleted = Reflect.deleteProperty(target, prop)
+  deleteProperty(target: T, key: string | symbol) {
+    const prevValue = Reflect.get(target, key)
+    removeChildListener(key)
+    const deleted = Reflect.deleteProperty(target, key)
     if (deleted) {
-      notifyUpdate(createOp?.('delete', prop, prevValue))
+      notifyUpdate(createOp?.('delete', key, prevValue))
     }
     return deleted
   },
-  set(target: T, prop: string | symbol, value: any, receiver: object) {
-    const hasPrevValue = !isInitializing() && Reflect.has(target, prop)
-    const prevValue = Reflect.get(target, prop, receiver)
+  set(target: T, key: string | symbol, value: any, receiver: object) {
+    const hasPrevValue = !isInitializing() && Reflect.has(target, key)
+    const prevValue = Reflect.get(target, key, receiver)
     if (
       hasPrevValue &&
       (objectIs(prevValue, value) ||
@@ -144,24 +144,24 @@ const createHandlerDefault = <T extends object>(
     ) {
       return true
     }
-    removePropListener(prop)
+    removeChildListener(key)
     if (isObject(value)) {
       value = getUntracked(value) || value
     }
     const nextValue =
       !proxyStateMap.has(value) && canProxy(value) ? proxy(value) : value
-    addPropListener(prop, nextValue)
-    Reflect.set(target, prop, nextValue, receiver)
-    notifyUpdate(createOp?.('set', prop, value, prevValue))
+    addChildListener(key, nextValue)
+    Reflect.set(target, key, nextValue, receiver)
+    notifyUpdate(createOp?.('set', key, value, prevValue))
     return true
   },
 })
 
 const createOpDefault = (
   type: 'set' | 'delete',
-  prop: symbol | string,
+  key: symbol | string,
   ...args: unknown[]
-) => [type, [prop], ...args] as Op
+) => [type, [key], ...args] as Op
 
 // internal states
 const proxyStateMap: WeakMap<ProxyObject, ProxyState> = new WeakMap()
@@ -170,6 +170,65 @@ const snapCache: WeakMap<object, [version: number, snap: unknown]> =
   new WeakMap()
 const versionHolder = [1] as [number]
 const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
+
+// notification delivery
+type Subscription = {
+  callback: (unstable_ops: Op[]) => void
+  active: boolean
+}
+let batchDepth = 0
+let isDelivering = false
+let pendingSubscriptions = new Map<Subscription, Op[]>()
+
+const deliver = (): unknown[] => {
+  const errors: unknown[] = []
+  isDelivering = true
+  try {
+    // Writes made by callbacks are queued for the next round, and delivered
+    // together, so every subscription receives its ops in write order.
+    while (pendingSubscriptions.size) {
+      const round = pendingSubscriptions
+      pendingSubscriptions = new Map()
+      round.forEach((ops, subscription) => {
+        if (subscription.active) {
+          // Called as a plain function, so `this` isn't the subscription.
+          const { callback } = subscription
+          try {
+            callback(ops)
+          } catch (error) {
+            errors.push(error)
+          }
+        }
+      })
+    }
+  } finally {
+    isDelivering = false
+  }
+  return errors
+}
+
+const noErrors: readonly unknown[] = []
+
+const deliverIfOutermost = (): readonly unknown[] =>
+  batchDepth || isDelivering || !pendingSubscriptions.size
+    ? noErrors
+    : deliver()
+
+const throwIfErrors = (errors: readonly unknown[]) => {
+  if (errors.length) {
+    throw new AggregateError(errors, 'subscribe callback failed')
+  }
+}
+
+// A write outside batch() never throws because of a subscriber,
+// so that multi-step writes such as array methods always complete.
+const reportErrors = (errors: readonly unknown[]) => {
+  errors.forEach((error) =>
+    queueMicrotask(() => {
+      throw error
+    }),
+  )
+}
 
 // internal functions
 let objectIs: (a: unknown, b: unknown) => boolean = Object.is
@@ -199,76 +258,84 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   ) => {
     if (version !== nextVersion) {
       checkVersion = version = nextVersion
-      listeners.forEach((listener) => listener(op, nextVersion))
+      // Every write is delivered like a batch of one, so that all
+      // subscriptions notified by it are queued before any callback runs.
+      ++batchDepth
+      try {
+        listeners.forEach((listener) => listener(op, nextVersion))
+      } finally {
+        --batchDepth
+      }
+      reportErrors(deliverIfOutermost())
     }
   }
   let checkVersion = version
   const ensureVersion = (nextCheckVersion = versionHolder[0]) => {
     if (checkVersion !== nextCheckVersion) {
       checkVersion = nextCheckVersion
-      propProxyStates.forEach(([propProxyState]) => {
-        const propVersion = propProxyState[1](nextCheckVersion)
-        if (propVersion > version) {
-          version = propVersion
+      childProxyStates.forEach(([childProxyState]) => {
+        const childVersion = childProxyState[1](nextCheckVersion)
+        if (childVersion > version) {
+          version = childVersion
         }
       })
     }
     return version
   }
-  const createPropListener =
-    (prop: string | symbol): Listener =>
+  const createChildListener =
+    (key: string | symbol): Listener =>
     (op, nextVersion) => {
       let newOp: Op | undefined
       if (op) {
         newOp = [...op]
-        newOp[1] = [prop, ...(newOp[1] as Path)]
+        newOp[1] = [key, ...(newOp[1] as Path)]
       }
       notifyUpdate(newOp, nextVersion)
     }
-  const propProxyStates = new Map<
+  const childProxyStates = new Map<
     string | symbol,
     readonly [ProxyState, RemoveListener?]
   >()
-  const addPropListener = (prop: string | symbol, propValue: unknown) => {
-    const propProxyState =
-      !refSet.has(propValue as object) && proxyStateMap.get(propValue as object)
-    if (propProxyState) {
-      if (import.meta.env?.MODE !== 'production' && propProxyStates.has(prop)) {
-        throw new Error('prop listener already exists')
+  const addChildListener = (key: string | symbol, value: unknown) => {
+    const childProxyState =
+      !refSet.has(value as object) && proxyStateMap.get(value as object)
+    if (childProxyState) {
+      if (process.env.NODE_ENV !== 'production' && childProxyStates.has(key)) {
+        throw new Error('child listener already exists')
       }
       if (listeners.size) {
-        const remove = propProxyState[2](createPropListener(prop))
-        propProxyStates.set(prop, [propProxyState, remove])
+        const remove = childProxyState[2](createChildListener(key))
+        childProxyStates.set(key, [childProxyState, remove])
       } else {
-        propProxyStates.set(prop, [propProxyState])
+        childProxyStates.set(key, [childProxyState])
       }
     }
   }
-  const removePropListener = (prop: string | symbol) => {
-    const entry = propProxyStates.get(prop)
+  const removeChildListener = (key: string | symbol) => {
+    const entry = childProxyStates.get(key)
     if (entry) {
-      propProxyStates.delete(prop)
+      childProxyStates.delete(key)
       entry[1]?.()
     }
   }
   const addListener = (listener: Listener) => {
     listeners.add(listener)
     if (listeners.size === 1) {
-      propProxyStates.forEach(([propProxyState, prevRemove], prop) => {
-        if (import.meta.env?.MODE !== 'production' && prevRemove) {
+      childProxyStates.forEach(([childProxyState, prevRemove], key) => {
+        if (process.env.NODE_ENV !== 'production' && prevRemove) {
           throw new Error('remove already exists')
         }
-        const remove = propProxyState[2](createPropListener(prop))
-        propProxyStates.set(prop, [propProxyState, remove])
+        const remove = childProxyState[2](createChildListener(key))
+        childProxyStates.set(key, [childProxyState, remove])
       })
     }
     const removeListener = () => {
       listeners.delete(listener)
       if (listeners.size === 0) {
-        propProxyStates.forEach(([propProxyState, remove], prop) => {
+        childProxyStates.forEach(([childProxyState, remove], key) => {
           if (remove) {
             remove()
-            propProxyStates.set(prop, [propProxyState])
+            childProxyStates.set(key, [childProxyState])
           }
         })
       }
@@ -278,8 +345,8 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   let initializing = true
   const handler = createHandler<T>(
     () => initializing,
-    addPropListener,
-    removePropListener,
+    addChildListener,
+    removeChildListener,
     notifyUpdate,
   )
   const proxyObject = newProxy(baseObject, handler)
@@ -309,43 +376,87 @@ export function getVersion(proxyObject: unknown): number | undefined {
 
 /**
  * Subscribes to changes in a proxy object
+ *
+ * The callback runs synchronously after each write, before the write
+ * returns. Use `batch` to group several writes into one notification.
+ * A write made inside a callback is the exception: it returns first, and
+ * is delivered after the current callbacks, together with the other writes
+ * made during them.
+ * An error thrown by the callback is rethrown in a microtask, unless the
+ * write is inside `batch`, which throws it.
  */
 export function subscribe<T extends object>(
   proxyObject: T,
   callback: (unstable_ops: Op[]) => void,
-  notifyInSync?: boolean,
 ): () => void {
+  // eslint-disable-next-line prefer-rest-params
+  if (typeof arguments[2] === 'boolean') {
+    throw new Error(
+      'notifyInSync has been removed. subscribe() is synchronous. Use batch() to group notifications.',
+    )
+  }
   const proxyState = proxyStateMap.get(proxyObject as object)
-  if (import.meta.env?.MODE !== 'production' && !proxyState) {
+  if (process.env.NODE_ENV !== 'production' && !proxyState) {
     console.warn('Please use proxy object')
   }
-  let promise: Promise<void> | undefined
-  const ops: Op[] = []
   const addListener = (proxyState as ProxyState)[2]
-  let isListenerActive = false
+  const subscription: Subscription = { callback, active: false }
   const listener: Listener = (op) => {
+    let ops = pendingSubscriptions.get(subscription)
+    if (!ops) {
+      ops = []
+      pendingSubscriptions.set(subscription, ops)
+    }
     if (op) {
       ops.push(op)
     }
-    if (notifyInSync) {
-      callback(ops.splice(0))
-      return
-    }
-    if (!promise) {
-      promise = Promise.resolve().then(() => {
-        promise = undefined
-        if (isListenerActive) {
-          callback(ops.splice(0))
-        }
-      })
-    }
   }
   const removeListener = addListener(listener)
-  isListenerActive = true
+  subscription.active = true
   return () => {
-    isListenerActive = false
+    subscription.active = false
     removeListener()
   }
+}
+
+/**
+ * Groups writes so that subscribers are notified once
+ *
+ * Callbacks are deferred until the outermost `batch` returns. Each
+ * subscription then runs once with the ops of all its writes, in order.
+ * Writes are visible to reads and `snapshot` immediately.
+ * Errors thrown by callbacks are thrown from `batch` as an `AggregateError`.
+ */
+export function batch<T>(fn: () => T): T {
+  return runBatch(fn, true)
+}
+
+// For utils such as proxyMap: groups writes like batch(), but reports
+// callback errors like a single write, so only the caller's batch() throws.
+const batchAsWrite = <T>(fn: () => T): T => runBatch(fn, false)
+
+const runBatch = <T>(fn: () => T, throwErrors: boolean): T => {
+  ++batchDepth
+  let result: T
+  try {
+    result = fn()
+  } catch (error) {
+    --batchDepth
+    const errors = deliverIfOutermost()
+    if (throwErrors && errors.length) {
+      throw new AggregateError([error, ...errors], 'batch failed')
+    }
+    reportErrors(errors)
+    throw error
+  }
+  --batchDepth
+  const errors = deliverIfOutermost()
+  if (throwErrors) {
+    throwIfErrors(errors)
+  } else {
+    reportErrors(errors)
+  }
+  return result
 }
 
 /**
@@ -353,7 +464,7 @@ export function subscribe<T extends object>(
  */
 export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
   const proxyState = proxyStateMap.get(proxyObject as object)
-  if (import.meta.env?.MODE !== 'production' && !proxyState) {
+  if (process.env.NODE_ENV !== 'production' && !proxyState) {
     console.warn('Please use proxy object')
   }
   const [target, ensureVersion] = proxyState as ProxyState
@@ -381,6 +492,7 @@ export function unstable_getInternalStates(): {
   snapCache: typeof snapCache
   versionHolder: typeof versionHolder
   proxyCache: typeof proxyCache
+  batchAsWrite: typeof batchAsWrite
 } {
   return {
     proxyStateMap,
@@ -388,6 +500,7 @@ export function unstable_getInternalStates(): {
     snapCache,
     versionHolder,
     proxyCache,
+    batchAsWrite,
   }
 }
 

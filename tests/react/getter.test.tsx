@@ -23,9 +23,9 @@ describe('getter', () => {
     })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>same: {String(snap.same)}</div>
+      return <div>same: {String(tracked.same)}</div>
     }
 
     render(<Component />)
@@ -48,8 +48,8 @@ describe('getter', () => {
     })
 
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>count: {snap.doubled}</div>
+      const tracked = useSnapshot(state)
+      return <div>count: {tracked.doubled}</div>
     }
 
     render(<Component />)
@@ -81,9 +81,9 @@ describe('getter', () => {
     const renderFn = vi.fn()
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>count: {snap.first}</div>
+      return <div>count: {tracked.first}</div>
     }
 
     render(<Component />)
@@ -107,11 +107,11 @@ describe('getter', () => {
     })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
       return (
         <div>
-          values: {snap.select()},{snap.select()}
+          values: {tracked.select()},{tracked.select()}
         </div>
       )
     }
@@ -137,9 +137,9 @@ describe('getter', () => {
     })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>doubled: {snap.doubled}</div>
+      return <div>doubled: {tracked.doubled}</div>
     }
 
     render(<Component />)
@@ -165,9 +165,9 @@ describe('getter', () => {
     const renderFn = vi.fn()
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>count: {snap.doubled}</div>
+      return <div>count: {tracked.doubled}</div>
     }
 
     render(<Component />)
@@ -190,10 +190,10 @@ describe('getter', () => {
     })
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <div>
-          values: {snap.selected},{snap.nested.b}
+          values: {tracked.selected},{tracked.nested.b}
         </div>
       )
     }
@@ -216,9 +216,9 @@ describe('getter', () => {
     const renderFn = vi.fn()
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>value: {snap.d}</div>
+      return <div>value: {tracked.d}</div>
     }
 
     render(<Component />)
@@ -256,11 +256,11 @@ describe('getter', () => {
     const renderFn = vi.fn()
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
       return (
         <div>
-          value: {snap.parity},{snap.nested.count}
+          value: {tracked.parity},{tracked.nested.count}
         </div>
       )
     }
@@ -283,9 +283,9 @@ describe('getter', () => {
     const renderFn = vi.fn()
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>value: {snap.doubled}</div>
+      return <div>value: {tracked.doubled}</div>
     }
 
     render(<Component />)
@@ -310,8 +310,8 @@ describe('getter', () => {
     const state = proxy(new State())
 
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>value: {snap.doubled}</div>
+      const tracked = useSnapshot(state)
+      return <div>value: {tracked.doubled}</div>
     }
 
     render(<Component />)
@@ -343,9 +343,9 @@ describe('getter', () => {
       ) as { child: { count: number; other: number }; doubled: number }
       const renderFn = vi.fn()
       const Component = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
         renderFn()
-        return <div>value: {snap.doubled}</div>
+        return <div>value: {tracked.doubled}</div>
       }
 
       render(<Component />)
@@ -374,8 +374,8 @@ describe('getter', () => {
     })
 
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>value: {String(snap.doubled)}</div>
+      const tracked = useSnapshot(state)
+      return <div>value: {String(tracked.doubled)}</div>
     }
 
     render(<Component />)
@@ -395,22 +395,22 @@ describe('getter', () => {
     })
     const childRender = vi.fn()
     const Child = memo(function Child({
-      snap,
+      tracked,
     }: {
-      snap: { readonly doubled: number }
+      tracked: { readonly doubled: number }
     }) {
       childRender()
-      return <div>value: {snap.doubled}</div>
+      return <div>value: {tracked.doubled}</div>
     })
     const Parent = () => {
       const [, rerender] = useState(0)
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
           <button onClick={() => rerender((value) => value + 1)}>
             rerender
           </button>
-          <Child snap={snap} />
+          <Child tracked={tracked} />
         </>
       )
     }
@@ -435,22 +435,22 @@ describe('getter', () => {
     const state = proxy(new State())
     const childRender = vi.fn()
     const Child = memo(function Child({
-      snap,
+      tracked,
     }: {
-      snap: { readonly doubled: number }
+      tracked: { readonly doubled: number }
     }) {
       childRender()
-      return <div>value: {snap.doubled}</div>
+      return <div>value: {tracked.doubled}</div>
     })
     const Parent = () => {
       const [, rerender] = useState(0)
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
           <button onClick={() => rerender((value) => value + 1)}>
             rerender
           </button>
-          <Child snap={snap} />
+          <Child tracked={tracked} />
         </>
       )
     }
@@ -477,9 +477,9 @@ describe('getter', () => {
     const renderFn = vi.fn()
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>count: {snap.selected.count}</div>
+      return <div>count: {tracked.selected.count}</div>
     }
 
     render(<Component />)
@@ -502,8 +502,8 @@ describe('getter', () => {
     })
 
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>size: {snap.size}</div>
+      const tracked = useSnapshot(state)
+      return <div>size: {tracked.size}</div>
     }
 
     render(<Component />)
@@ -523,8 +523,8 @@ describe('getter', () => {
     })
 
     const Component = () => {
-      const snap = useSnapshot(state)
-      return <div>size: {snap.size}</div>
+      const tracked = useSnapshot(state)
+      return <div>size: {tracked.size}</div>
     }
 
     render(<Component />)
@@ -545,11 +545,11 @@ describe('getter', () => {
     })
 
     const Counter = ({ name }: { name: string }) => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
           <div>
-            {name} count: {snap.doubled}
+            {name} count: {tracked.doubled}
           </div>
           <button onClick={() => ++state.count}>{name} button</button>
         </>
@@ -585,11 +585,11 @@ describe('getter', () => {
     })
 
     const Counter = ({ name }: { name: string }) => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
           <div>
-            {name} count: {snap.doubled.value}
+            {name} count: {tracked.doubled.value}
           </div>
           <button onClick={() => ++state.count}>{name} button</button>
         </>

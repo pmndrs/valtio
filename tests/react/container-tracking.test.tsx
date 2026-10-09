@@ -8,15 +8,15 @@ describe('container tracking', () => {
   it('rechecks a container discovered after an unused mutation', async () => {
     const state = proxy({ obj: { count: 1 } })
     let observed: object | null = null
-    const Child = ({ snap }: { snap: Snapshot<typeof state> }) => {
+    const Child = ({ tracked }: { tracked: Snapshot<typeof state> }) => {
       const [visible, setVisible] = useState(false)
-      const obj = visible ? snap.obj : null
+      const obj = visible ? tracked.obj : null
       useLayoutEffect(() => {
         observed = obj
       }, [obj])
       return <button onClick={() => setVisible(true)}>show</button>
     }
-    const Component = () => <Child snap={useSnapshot(state)} />
+    const Component = () => <Child tracked={useSnapshot(state)} />
     render(<Component />)
     await act(async () => {
       state.obj.count = 2
@@ -29,21 +29,21 @@ describe('container tracking', () => {
   it('keeps skipped child reads alongside fresh parent reads of the same snapshot', async () => {
     const state = proxy({ a: 1, b: 2 })
     const Child = memo(function Child({
-      snap,
+      tracked,
     }: {
-      snap: Snapshot<typeof state>
+      tracked: Snapshot<typeof state>
     }) {
-      return <div>child: {snap.b}</div>
+      return <div>child: {tracked.b}</div>
     })
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       const [count, setCount] = useState(0)
       return (
         <>
           <button onClick={() => setCount(count + 1)}>
-            {snap.a}: {count}
+            {tracked.a}: {count}
           </button>
-          <Child snap={snap} />
+          <Child tracked={tracked} />
         </>
       )
     }
@@ -59,9 +59,9 @@ describe('container tracking', () => {
     const state = proxy({ obj: { nested: { count: 1 } } })
     let savedObj: object | undefined
     const Component = () => {
-      const snap = useSnapshot(state)
-      savedObj ||= snap.obj
-      return <div>{snap.obj === savedObj ? 'same' : 'different'}</div>
+      const tracked = useSnapshot(state)
+      savedObj ||= tracked.obj
+      return <div>{tracked.obj === savedObj ? 'same' : 'different'}</div>
     }
     render(<Component />)
     expect(screen.getByText('same')).toBeInTheDocument()
@@ -75,8 +75,8 @@ describe('container tracking', () => {
     const state = proxy({ obj: { nested: { count: 1 } }, other: 0 })
     const effect = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
-      useLayoutEffect(effect, [snap.obj])
+      const tracked = useSnapshot(state)
+      useLayoutEffect(effect, [tracked.obj])
       return null
     }
     render(<Component />)
@@ -94,8 +94,8 @@ describe('container tracking', () => {
     const state = proxy({ items: [{ nested: { count: 1 } }] })
     const effect = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
-      useLayoutEffect(effect, [snap.items])
+      const tracked = useSnapshot(state)
+      useLayoutEffect(effect, [tracked.items])
       return null
     }
     render(<Component />)
@@ -113,9 +113,9 @@ describe('container tracking', () => {
     const state = proxy({ obj: { nested: { count: 1, other: 0 }, other: 0 } })
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>{snap.obj.nested.count}</div>
+      return <div>{tracked.obj.nested.count}</div>
     }
     render(<Component />)
     await act(async () => {
@@ -139,8 +139,8 @@ describe('container tracking', () => {
     })
     const effect = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
-      useLayoutEffect(effect, [snap.selected])
+      const tracked = useSnapshot(state)
+      useLayoutEffect(effect, [tracked.selected])
       return null
     }
     render(<Component />)
@@ -161,8 +161,8 @@ describe('container tracking', () => {
     })
     const effect = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
-      useLayoutEffect(effect, [snap.selected])
+      const tracked = useSnapshot(state)
+      useLayoutEffect(effect, [tracked.selected])
       return null
     }
     render(<Component />)
@@ -176,20 +176,20 @@ describe('container tracking', () => {
     const state = proxy({ obj: { nested: { count: 1 } } })
     const effect = vi.fn()
     const Child = memo(function Child({
-      snap,
+      tracked,
     }: {
-      snap: Snapshot<typeof state>
+      tracked: Snapshot<typeof state>
     }) {
-      useLayoutEffect(effect, [snap.obj])
+      useLayoutEffect(effect, [tracked.obj])
       return null
     })
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       const [count, setCount] = useState(0)
       return (
         <>
           <button onClick={() => setCount(count + 1)}>local {count}</button>
-          <Child snap={snap} />
+          <Child tracked={tracked} />
         </>
       )
     }
