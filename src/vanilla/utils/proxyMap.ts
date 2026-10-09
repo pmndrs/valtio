@@ -109,6 +109,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
+      // TODO: Don't notify when an existing key gets an equal value.
       batchAsWrite(() => {
         const index = indexMap.get(key)
         if (index === undefined) {
@@ -140,6 +141,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
+      // TODO: Don't notify when the collection is already empty.
       batchAsWrite(() => {
         this.data.length = 0 // empty array
         this.index = 0

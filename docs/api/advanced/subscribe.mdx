@@ -62,7 +62,7 @@ Native array methods such as `splice` and `sort` make several changes, and notif
 
 If a callback throws, the other subscribers still run. The error is then rethrown in a microtask, so an assignment never throws because of a subscriber. Inside `batch`, the errors are instead thrown together from `batch` as an `AggregateError`, after `fn` has completed.
 
-A `proxyMap` or `proxySet` method such as `set` or `delete` counts as one assignment: it notifies once, or not at all when it writes nothing, such as `delete` of a missing key. It never throws because of a subscriber.
+A `proxyMap` or `proxySet` method such as `set` or `delete` counts as one assignment: it notifies once, and never throws because of a subscriber. `add` of a value already present and `delete` of a missing key don't notify.
 
 If you prefer to be notified once per microtask, as in Valtio v2, coalesce inside your callback:
 

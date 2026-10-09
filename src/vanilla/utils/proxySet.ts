@@ -225,6 +225,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (!isProxy(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
+      // TODO: Don't notify when the collection is already empty.
       batchAsWrite(() => {
         this.data.length = 0 // empty array
         this.index = 0
