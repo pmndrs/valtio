@@ -5,31 +5,28 @@ import { describe, expect, it, vi } from 'vitest'
 import { proxy, ref, snapshot, useSnapshot } from 'valtio'
 
 describe('getter results', () => {
-  it.each([false, true])(
-    'should notify direct accessor assignments (sync: %s)',
-    async (sync) => {
-      const state = proxy({
-        date: new Date(0),
-        get timestamp() {
-          return this.date.getTime()
-        },
-        set timestamp(value: number) {
-          this.date.setTime(value)
-        },
-      })
-      const Component = () => {
-        const tracked = useSnapshot(state, { sync })
-        return <div>time: {tracked.timestamp}</div>
-      }
+  it('should notify direct accessor assignments', async () => {
+    const state = proxy({
+      date: new Date(0),
+      get timestamp() {
+        return this.date.getTime()
+      },
+      set timestamp(value: number) {
+        this.date.setTime(value)
+      },
+    })
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      return <div>time: {tracked.timestamp}</div>
+    }
 
-      render(<Component />)
-      expect(screen.getByText('time: 0')).toBeInTheDocument()
-      await act(async () => {
-        state.timestamp = 1000
-      })
-      expect(screen.getByText('time: 1000')).toBeInTheDocument()
-    },
-  )
+    render(<Component />)
+    expect(screen.getByText('time: 0')).toBeInTheDocument()
+    await act(async () => {
+      state.timestamp = 1000
+    })
+    expect(screen.getByText('time: 1000')).toBeInTheDocument()
+  })
 
   it('should detect an accessor assignment before subscribing', async () => {
     const state = proxy({

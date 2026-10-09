@@ -10,6 +10,14 @@ const { use } = ReactExports
 const use2 = <T,>(x: T): Awaited<T> =>
   x instanceof Promise ? use(x) : (x as Awaited<T>)
 
+// The click suspends a component. Its update must run inside an awaited
+// act, or React never retries the suspended render in tests.
+const clickInAwaitedAct = (text: string) =>
+  // eslint-disable-next-line testing-library/no-unnecessary-act
+  act(async () => {
+    fireEvent.click(screen.getByText(text))
+  })
+
 describe('async', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -46,7 +54,7 @@ describe('async', () => {
 
     expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('button'))
+    await clickInAwaitedAct('button')
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(300))
@@ -79,7 +87,7 @@ describe('async', () => {
 
     expect(screen.getByText('text: none')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('button'))
+    await clickInAwaitedAct('button')
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(300))
@@ -125,7 +133,7 @@ describe('async', () => {
       expect(screen.getByText('text: counter')).toBeInTheDocument()
       expect(screen.getByText('count: 0')).toBeInTheDocument()
 
-      fireEvent.click(screen.getByText('button'))
+      await clickInAwaitedAct('button')
       await act(() => vi.advanceTimersByTimeAsync(0))
       expect(screen.getByText('loading')).toBeInTheDocument()
       await act(() => vi.advanceTimersByTimeAsync(300))
@@ -160,7 +168,7 @@ describe('async', () => {
 
     expect(screen.getByText('value: true')).toBeInTheDocument()
 
-    fireEvent.click(screen.getByText('button'))
+    await clickInAwaitedAct('button')
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(screen.getByText('loading')).toBeInTheDocument()
     await act(() => vi.advanceTimersByTimeAsync(300))

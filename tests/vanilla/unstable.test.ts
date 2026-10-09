@@ -41,6 +41,7 @@ describe('unstable_getInternalStates', () => {
   it('should expose the internal registries', () => {
     const states = unstable_getInternalStates()
     expect(Object.keys(states).sort()).toEqual([
+      'batchAsWrite',
       'proxyCache',
       'proxyStateMap',
       'refSet',

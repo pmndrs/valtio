@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { getVersion, proxy, ref, snapshot, subscribe } from 'valtio'
+import { batch, getVersion, proxy, ref, snapshot, subscribe } from 'valtio'
 
 const isProxy = (x: unknown) => getVersion(x) !== undefined
 
@@ -47,7 +47,7 @@ describe('proxy creation', () => {
       const state = proxy({ count: 0 })
       const wrapped = wrap(state)
       const handler = vi.fn()
-      const unsubscribe = subscribe(state, handler, true)
+      const unsubscribe = subscribe(state, handler)
       const snap = snapshot(state)
 
       wrapped.count = 1
@@ -64,7 +64,7 @@ describe('proxy creation', () => {
     const state = proxy({ child: { count: 0 } })
     const wrapped = new Proxy(state, {})
     const handler = vi.fn()
-    const unsubscribe = subscribe(state, handler, true)
+    const unsubscribe = subscribe(state, handler)
     snapshot(state)
 
     wrapped.child = { count: 1 }
@@ -1005,16 +1005,13 @@ describe('proxy arrays', () => {
     const handler = vi.fn()
     subscribe(state, handler)
 
-    state.push(3)
-    await Promise.resolve()
+    batch(() => state.push(3))
     expect([...state]).toEqual([0, 1, 2, 3])
 
-    state.pop()
-    await Promise.resolve()
+    batch(() => state.pop())
     expect([...state]).toEqual([0, 1, 2])
 
-    state.splice(1, 1, 10, 11)
-    await Promise.resolve()
+    batch(() => state.splice(1, 1, 10, 11))
     expect([...state]).toEqual([0, 10, 11, 2])
 
     expect(handler).toBeCalledTimes(3)

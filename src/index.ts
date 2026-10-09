@@ -1,4 +1,5 @@
 export {
+  batch,
   getVersion,
   proxy,
   ref,

@@ -35,6 +35,59 @@ subscribe(state.arr, () => console.log('state.arr has changed to', state.arr))
 state.arr.push('world')
 ```
 
+## Notifications are synchronous
+
+The callback runs synchronously after each change, before the assignment returns. Several changes notify several times, unless they are wrapped in [`batch`](./batch) or made inside a callback (see below):
+
+```js
+import { batch, proxy, subscribe } from 'valtio'
+
+const state = proxy({ a: 0, b: 0 })
+subscribe(state, () => console.log('changed'))
+
+state.a = 1 // logs 'changed'
+state.b = 1 // logs 'changed'
+
+batch(() => {
+  state.a = 2
+  state.b = 2
+}) // logs 'changed' once
+```
+
+Each subscriber receives changes in the order they were made.
+
+A change made inside a callback is delivered after every subscriber has received the current change. The changes made during the same round of callbacks are delivered together, as if they were batched. Such an assignment returns before its own subscribers run.
+
+Native array methods such as `splice` and `sort` make several changes, and notify once per change, so a subscriber can see the array in between. Wrap them in `batch` to notify once, with the final array.
+
+If a callback throws, the other subscribers still run. The error is then rethrown in a microtask, so an assignment never throws because of a subscriber. Inside `batch`, the errors are instead thrown together from `batch` as an `AggregateError`, after `fn` has completed.
+
+A `proxyMap` or `proxySet` method such as `set` or `delete` counts as one assignment: it notifies once, or not at all when it writes nothing, such as `delete` of a missing key. It never throws because of a subscriber.
+
+If you prefer to be notified once per microtask, as in Valtio v2, coalesce inside your callback:
+
+```js
+const subscribeCoalesced = (proxyObject, callback) => {
+  const ops = []
+  let scheduled = false
+  let active = true
+  const unsubscribe = subscribe(proxyObject, (newOps) => {
+    newOps.forEach((op) => ops.push(op))
+    if (!scheduled) {
+      scheduled = true
+      queueMicrotask(() => {
+        scheduled = false
+        if (active) callback(ops.splice(0))
+      })
+    }
+  })
+  return () => {
+    active = false
+    unsubscribe()
+  }
+}
+```
+
 ## Advanced: Listening to "Ops"
 
 The `subscribe` callback can also receive **Ops** (Operations), which are detailed records of exactly what changed (e.g., which property was set or deleted). This is useful for advanced scenarios like synchronization or undo/redo.

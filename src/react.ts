@@ -39,10 +39,6 @@ const condUseAffectedDebugValue = useAffectedDebugValue
 // Ref: https://github.com/pmndrs/valtio/issues/519
 const targetCache = new WeakMap<object, unknown>()
 
-type Options = {
-  sync?: boolean
-}
-
 /**
  * useSnapshot
  *
@@ -116,11 +112,13 @@ type Options = {
  *   </div>
  * )
  */
-export function useSnapshot<T extends object>(
-  proxyObject: T,
-  options?: Options,
-): Snapshot<T> {
-  const notifyInSync = options?.sync
+export function useSnapshot<T extends object>(proxyObject: T): Snapshot<T> {
+  // eslint-disable-next-line prefer-rest-params
+  if (arguments[1] !== undefined) {
+    throw new Error(
+      'useSnapshot() no longer accepts an options argument. Updates are synchronous.',
+    )
+  }
   // per-proxy & per-hook affected, it's not ideal but memo compatible
   const affected = useMemo(
     () => proxyObject && new WeakMap<object, unknown>(),
@@ -131,13 +129,16 @@ export function useSnapshot<T extends object>(
   const currSnapshot = useSyncExternalStore(
     useCallback(
       (callback) => {
-        const unsub = subscribe(proxyObject, callback, notifyInSync)
+        const unsub = subscribe(proxyObject, callback)
         callback() // Note: do we really need this?
         return unsub
       },
-      [proxyObject, notifyInSync],
+      [proxyObject],
     ),
     () => {
+      // TODO: This takes a snapshot on every notification, so a loop of
+      // unbatched writes takes one snapshot per write. Replace it with a
+      // per-hook counter when subscriptions become key-level.
       const nextSnapshot = snapshot(proxyObject)
       try {
         if (

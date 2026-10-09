@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
+import { batch, proxy, snapshot, subscribe, useSnapshot } from 'valtio'
 import { proxyMap, proxySet } from 'valtio/utils'
 
 const initialValues = [
@@ -381,10 +381,11 @@ describe('proxyMap', () => {
       const handler = vi.fn()
       subscribe(state, handler)
 
-      state.todos.forEach((todo) => {
-        todo.completed = true
+      batch(() => {
+        state.todos.forEach((todo) => {
+          todo.completed = true
+        })
       })
-      await vi.advanceTimersByTimeAsync(0)
 
       expect(handler).toBeCalledTimes(1)
       expect(Array.from(state.todos.values())).toEqual([
@@ -1024,5 +1025,63 @@ describe('proxyMap', () => {
         ).toBeInTheDocument()
       })
     })
+  })
+})
+
+describe('proxyMap notifications', () => {
+  it('should notify once per writing call, after the index and data match', () => {
+    const map = proxyMap<string, number>([['a', 1]])
+    const seen: unknown[] = []
+    subscribe(map, () => {
+      seen.push([map.size, map.get('b')])
+    })
+
+    map.set('b', 2)
+    expect(seen).toEqual([[2, 2]])
+
+    map.delete('b')
+    expect(seen).toEqual([
+      [2, 2],
+      [1, undefined],
+    ])
+
+    map.clear()
+    expect(seen).toEqual([
+      [2, 2],
+      [1, undefined],
+      [0, undefined],
+    ])
+  })
+
+  it('should not notify a call that writes nothing', () => {
+    const map = proxyMap<string, number>([['a', 1]])
+    const handler = vi.fn()
+    subscribe(map, handler)
+
+    map.delete('missing')
+
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('should rethrow subscriber errors in a microtask, like an assignment', () => {
+    const map = proxyMap<string, number>()
+    subscribe(map, () => {
+      throw new Error('boom')
+    })
+    const queueMicrotaskSpy = vi
+      .spyOn(globalThis, 'queueMicrotask')
+      .mockImplementation(() => {})
+
+    try {
+      map.set('a', 1)
+      map.set('b', 2)
+      map.delete('a')
+      map.clear()
+      expect(queueMicrotaskSpy).toHaveBeenCalledTimes(4)
+    } finally {
+      queueMicrotaskSpy.mockRestore()
+    }
+    expect(map.size).toBe(0)
+    expect(() => batch(() => map.set('c', 3))).toThrow(AggregateError)
   })
 })

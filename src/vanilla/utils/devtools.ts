@@ -1,4 +1,10 @@
-import { snapshot, subscribe, unstable_enableOp } from '../../vanilla.js'
+import {
+  snapshot,
+  subscribe,
+  unstable_enableOp,
+  unstable_getInternalStates,
+} from '../../vanilla.js'
+import type { INTERNAL_Op } from '../../vanilla.js'
 import type {} from '@redux-devtools/extension'
 
 // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
@@ -10,6 +16,8 @@ type Message = {
 
 const DEVTOOLS = Symbol()
 
+const { batchAsWrite } = unstable_getInternalStates()
+
 type Config = Parameters<
   (Window extends { __REDUX_DEVTOOLS_EXTENSION__?: infer T }
     ? T
@@ -20,6 +28,34 @@ type Options = {
   enabled?: boolean
   name?: string
 } & Config
+
+// subscribe() is synchronous, so coalesce a burst of writes into one
+// callback to keep sending one devtools message per burst.
+const subscribeCoalesced = (
+  proxyObject: object,
+  callback: (unstable_ops: INTERNAL_Op[]) => void,
+): (() => void) => {
+  const ops: INTERNAL_Op[] = []
+  let scheduled = false
+  let active = true
+  const unsubscribe = subscribe(proxyObject, (newOps) => {
+    // Not ops.push(...newOps): a large batch exceeds the argument limit.
+    newOps.forEach((op) => ops.push(op))
+    if (!scheduled) {
+      scheduled = true
+      Promise.resolve().then(() => {
+        scheduled = false
+        if (active) {
+          callback(ops.splice(0))
+        }
+      })
+    }
+  })
+  return () => {
+    active = false
+    unsubscribe()
+  }
+}
 
 /**
  * Connects a proxy object to Redux DevTools Extension for state debugging
@@ -58,7 +94,7 @@ export function devtools<T extends object>(
   unstable_enableOp()
   let isTimeTraveling = false
   const devtools = extension.connect({ name, ...rest })
-  const unsub1 = subscribe(proxyObject, (unstable_ops) => {
+  const unsub1 = subscribeCoalesced(proxyObject, (unstable_ops) => {
     const action = unstable_ops
       .filter(([_, path]) => path[0] !== DEVTOOLS)
       .map(([op, path]) => `${op}:${path.map(String).join('.')}`)
@@ -92,7 +128,9 @@ export function devtools<T extends object>(
   ).subscribe((message) => {
     if (message.type === 'ACTION' && message.payload) {
       try {
-        Object.assign(proxyObject, JSON.parse(message.payload))
+        const state = JSON.parse(message.payload)
+        // batchAsWrite reports subscriber errors, so they don't reach the catch.
+        batchAsWrite(() => Object.assign(proxyObject, state))
       } catch (e) {
         console.error(
           'please dispatch a serializable value that JSON.parse() and proxy() support\n',
@@ -101,16 +139,19 @@ export function devtools<T extends object>(
       }
     }
     if (message.type === 'DISPATCH' && message.state) {
-      if (
-        message.payload?.type === 'JUMP_TO_ACTION' ||
-        message.payload?.type === 'JUMP_TO_STATE'
-      ) {
-        isTimeTraveling = true
+      // Subscribers see the state once it's fully applied.
+      batchAsWrite(() => {
+        if (
+          message.payload?.type === 'JUMP_TO_ACTION' ||
+          message.payload?.type === 'JUMP_TO_STATE'
+        ) {
+          isTimeTraveling = true
 
-        const state = JSON.parse(message.state)
-        Object.assign(proxyObject, state)
-      }
-      ;(proxyObject as any)[DEVTOOLS] = message
+          const state = JSON.parse(message.state)
+          Object.assign(proxyObject, state)
+        }
+        ;(proxyObject as any)[DEVTOOLS] = message
+      })
     } else if (
       message.type === 'DISPATCH' &&
       message.payload?.type === 'COMMIT'
@@ -126,16 +167,19 @@ export function devtools<T extends object>(
 
       isTimeTraveling = true
 
-      computedStates.forEach(({ state }: { state: any }, index: number) => {
-        const action = actions[index] || 'No action found'
+      // Subscribers see only the last state, once.
+      batchAsWrite(() => {
+        computedStates.forEach(({ state }: { state: any }, index: number) => {
+          const action = actions[index] || 'No action found'
 
-        Object.assign(proxyObject, state)
+          Object.assign(proxyObject, state)
 
-        if (index === 0) {
-          devtools.init(snapshot(proxyObject))
-        } else {
-          devtools.send(action, snapshot(proxyObject))
-        }
+          if (index === 0) {
+            devtools.init(snapshot(proxyObject))
+          } else {
+            devtools.send(action, snapshot(proxyObject))
+          }
+        })
       })
     }
   })

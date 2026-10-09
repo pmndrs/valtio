@@ -139,19 +139,14 @@ describe('ref', () => {
     expect(renderFn).toHaveBeenCalledTimes(2)
   })
 
-  it.each([
-    ['object', false],
-    ['object', true],
-    ['proxy', false],
-    ['proxy', true],
-  ] as const)(
-    'should subscribe after replacing a ref %s with its proxy (sync: %s)',
-    async (kind, sync) => {
+  it.each(['object', 'proxy'] as const)(
+    'should subscribe after replacing a ref %s with its proxy',
+    async (kind) => {
       const value = ref(kind === 'object' ? { count: 0 } : proxy({ count: 0 }))
       const state = proxy<{ child: { count: number } }>({ child: value })
       const renderFn = vi.fn()
       const Component = () => {
-        const tracked = useSnapshot(state, { sync })
+        const tracked = useSnapshot(state)
         renderFn()
         return <div>count: {tracked.child.count}</div>
       }

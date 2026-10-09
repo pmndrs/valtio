@@ -155,11 +155,11 @@ describe('useProxy', () => {
     expect(screen.getByText('Jane Smith')).toBeInTheDocument()
   })
 
-  it('should work with sync option', async () => {
+  it('should update a counter in StrictMode', async () => {
     const state = proxy({ count: 0 })
 
     const Counter = () => {
-      const store = useProxy(state, { sync: true })
+      const store = useProxy(state)
       return (
         <>
           <div>count: {store.count}</div>

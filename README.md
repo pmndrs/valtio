@@ -215,23 +215,21 @@ function Foo() {
   // ...
 ```
 
-#### Update synchronously
+#### Batching updates
 
-By default, state mutations are batched before triggering re-render.
-Sometimes, we want to disable the batching.
-The known use case of this is `<input>` [#270](https://github.com/pmndrs/valtio/issues/270).
+Subscribers, including components using `useSnapshot`, are notified synchronously after each mutation.
+Wrap several mutations in `batch` to notify subscribers once.
 
-```jsx
-function TextBox() {
-  const tracked = useSnapshot(state, { sync: true })
-  return (
-    <input
-      value={tracked.text}
-      onChange={(e) => (state.text = e.target.value)}
-    />
-  )
-}
+```js
+import { batch } from 'valtio'
+
+batch(() => {
+  state.count += 1
+  state.text = 'updated'
+})
 ```
+
+Because updates are synchronous, controlled `<input>` elements keep their caret position ([#270](https://github.com/pmndrs/valtio/issues/270)).
 
 #### Dev tools
 
