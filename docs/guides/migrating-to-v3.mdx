@@ -82,9 +82,19 @@ const isProxy = isProxyObject(value)
 const changed = snapshot(state) !== lastSnapshot
 ```
 
-## `deepClone` takes one argument
+## `deepClone` takes an `isRef` function
 
-`deepClone`'s second argument, a function returning a `WeakSet` of objects to keep by reference, is removed. `deepClone` now keeps the objects marked with [`ref`](../api/advanced/ref), so mark them with `ref` instead. TypeScript reports the extra argument; at runtime it is ignored.
+The second argument of `deepClone` and `unstable_deepProxy` was a function returning a `WeakSet` of objects to keep by reference. It is now a function that takes an object and returns whether to keep it by reference. By default, the objects marked with [`ref`](../api/advanced/ref) are kept.
+
+```js
+// v2
+deepClone(value, () => keptObjects)
+
+// v3
+deepClone(value, (obj) => keptObjects.has(obj))
+```
+
+A v2 function passed unchanged returns a `WeakSet`, which is truthy, so every object would be kept by reference.
 
 ## Notifications are synchronous
 

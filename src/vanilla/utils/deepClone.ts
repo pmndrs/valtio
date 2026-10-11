@@ -5,9 +5,15 @@ const isObject = (x: unknown): x is object =>
 
 /**
  * Creates a deep clone of an object, maintaining proxy behavior for Maps and Sets
+ *
+ * Objects for which `isRef` returns true are kept by reference. By default,
+ * those are the objects marked with `ref`.
  */
-export function deepClone<T>(obj: T): T {
-  if (!isObject(obj) || unstable_isRef(obj)) {
+export function deepClone<T>(
+  obj: T,
+  isRef: (x: object) => boolean = unstable_isRef,
+): T {
+  if (!isObject(obj) || isRef(obj)) {
     return obj
   }
 
@@ -15,7 +21,7 @@ export function deepClone<T>(obj: T): T {
     ? []
     : Object.create(Object.getPrototypeOf(obj))
   Reflect.ownKeys(obj).forEach((key) => {
-    baseObject[key as keyof T] = deepClone(obj[key as keyof T])
+    baseObject[key as keyof T] = deepClone(obj[key as keyof T], isRef)
   })
   return baseObject
 }

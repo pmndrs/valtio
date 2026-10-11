@@ -13,15 +13,19 @@ const cloneContainer = <T extends object>(src: T): T => {
 
 /**
  * Deeply proxies an input while normalizing Maps/Sets into proxyMap/proxySet.
- * - Values marked with ref() and primitives are returned as-is.
+ * - Primitives, and objects for which isRef returns true, are returned as-is.
+ *   By default, those are the objects marked with ref().
  * - Map/proxyMap and Set/proxySet are re-instantiated by passing their existing iterables directly.
  * - Arrays/objects are rebuilt recursively and wrapped with proxy().
  */
-export function unstable_deepProxy<T>(obj: T): T {
+export function unstable_deepProxy<T>(
+  obj: T,
+  isRef: (x: object) => boolean = unstable_isRef,
+): T {
   const memo = new WeakMap<object, unknown>()
 
   const visit = (value: unknown) => {
-    if (!isObject(value) || unstable_isRef(value)) return value
+    if (!isObject(value) || isRef(value)) return value
 
     // Normalize Sets: deep-visit each element before wrapping
     if (value instanceof Set || isProxySet(value as object)) {

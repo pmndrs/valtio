@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { proxy, ref } from 'valtio'
+import { proxy, ref, unstable_isRef } from 'valtio'
 import {
   unstable_deepProxy as deepProxy,
   isProxyMap,
@@ -336,6 +336,22 @@ describe('deepProxy – additional edge cases', () => {
     expect(cloned.date.getUTCFullYear()).toBe(2020)
     expect(cloned.re.test('XYZabc')).toBe(true)
     expect(cloned.u8[0]).toBe(123)
+  })
+
+  it('passes through the objects a custom isRef selects, without marking them', () => {
+    const date = new Date('2020-01-02T03:04:05.000Z')
+    const buf = new ArrayBuffer(8)
+    const kept = new WeakSet<object>([date, buf])
+
+    const cloned = deepProxy({ date, buf, nested: { date } }, (x) =>
+      kept.has(x),
+    )
+
+    expect(cloned.date).toBe(date)
+    expect(cloned.buf).toBe(buf)
+    expect(cloned.nested.date).toBe(date)
+    expect(cloned.date.getUTCFullYear()).toBe(2020)
+    expect(unstable_isRef(date)).toBe(false)
   })
 
   it('deeply proxies inside a proxied state object while keeping primitives by value', () => {
