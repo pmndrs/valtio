@@ -1,17 +1,9 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.js'
+import { proxy, unstable_isRef } from '../../vanilla.js'
 import { isProxyMap, proxyMap } from './proxyMap.js'
 import { isProxySet, proxySet } from './proxySet.js'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
-
-let defaultRefSet: WeakSet<object> | undefined
-const getDefaultRefSet = (): WeakSet<object> => {
-  if (!defaultRefSet) {
-    defaultRefSet = unstable_getInternalStates().refSet
-  }
-  return defaultRefSet
-}
 
 const cloneContainer = <T extends object>(src: T): T => {
   return (
@@ -21,18 +13,15 @@ const cloneContainer = <T extends object>(src: T): T => {
 
 /**
  * Deeply proxies an input while normalizing Maps/Sets into proxyMap/proxySet.
- * - Values in refSet or primitives are returned as-is.
+ * - Values marked with ref() and primitives are returned as-is.
  * - Map/proxyMap and Set/proxySet are re-instantiated by passing their existing iterables directly.
  * - Arrays/objects are rebuilt recursively and wrapped with proxy().
  */
-export function unstable_deepProxy<T>(
-  obj: T,
-  getRefSet: () => WeakSet<object> = getDefaultRefSet,
-): T {
+export function unstable_deepProxy<T>(obj: T): T {
   const memo = new WeakMap<object, unknown>()
 
   const visit = (value: unknown) => {
-    if (!isObject(value) || getRefSet().has(value)) return value
+    if (!isObject(value) || unstable_isRef(value)) return value
 
     // Normalize Sets: deep-visit each element before wrapping
     if (value instanceof Set || isProxySet(value as object)) {

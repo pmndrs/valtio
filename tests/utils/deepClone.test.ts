@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { proxy } from 'valtio'
+import { proxy, ref } from 'valtio'
 import { deepClone } from 'valtio/utils'
 
 describe('deepClone', () => {
@@ -53,5 +53,14 @@ describe('deepClone', () => {
 
     expect(cloned).toEqual(original)
     expect(cloned).not.toBe(original)
+  })
+
+  it('should keep objects marked with ref by identity', () => {
+    const inner = ref({ count: 0 })
+    const original = { inner, nested: { inner } }
+    const cloned = deepClone(original)
+
+    expect(cloned.inner).toBe(inner)
+    expect(cloned.nested.inner).toBe(inner)
   })
 })

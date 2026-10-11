@@ -65,6 +65,27 @@ If your `watch` callback returned one, handle that cleanup separately.
 For `watch` callbacks that observe multiple proxies or change their dependencies dynamically,
 see [valtio-reactive](https://github.com/valtiojs/valtio-reactive).
 
+## Removed `getVersion`
+
+`getVersion` is no longer exported. The version it returned is internal.
+
+- To check whether a value is a proxy, use [`isProxyObject`](../api/advanced/isProxyObject).
+- To check whether a proxy has changed, compare snapshots: `snapshot(state)` returns the same object until something in `state` changes. Alternatively, set a flag in a [`subscribe`](../api/advanced/subscribe) callback.
+
+```js
+// v2
+const isProxy = getVersion(value) !== undefined
+const changed = getVersion(state) !== lastVersion
+
+// v3
+const isProxy = isProxyObject(value)
+const changed = snapshot(state) !== lastSnapshot
+```
+
+## `deepClone` takes one argument
+
+`deepClone`'s second argument, a function returning a `WeakSet` of objects to keep by reference, is removed. `deepClone` now keeps the objects marked with [`ref`](../api/advanced/ref), so mark them with `ref` instead. TypeScript reports the extra argument; at runtime it is ignored.
+
 ## Notifications are synchronous
 
 In v2, `subscribe` callbacks were batched and called once per microtask, unless `notifyInSync` was passed. In v3, every callback runs synchronously after each change.

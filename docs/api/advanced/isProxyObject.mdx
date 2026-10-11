@@ -1,0 +1,27 @@
+---
+title: 'isProxyObject'
+section: 'API'
+subSection: 'Advanced'
+description: 'Check whether a value is a proxy'
+---
+
+# `isProxyObject`
+
+`isProxyObject` checks whether a value is a proxy object created by [`proxy`](../basic/proxy).
+
+```js
+import { isProxyObject, proxy, ref, snapshot } from 'valtio'
+
+const state = proxy({ nested: { count: 0 }, plain: ref({}) })
+
+isProxyObject(state) // true
+isProxyObject(state.nested) // true
+isProxyObject(snapshot(state)) // false
+isProxyObject(state.plain) // false
+isProxyObject({}) // false
+```
+
+- Snapshots, plain objects and objects marked with [`ref`](./ref) are not proxy objects.
+- A proxy marked with `ref` is still a proxy object.
+- It only checks the value. It doesn't read the proxy's state, so it never takes a snapshot.
+- It returns a `boolean` and doesn't narrow the type, because a proxy has the same type as the object it wraps.

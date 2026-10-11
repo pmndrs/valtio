@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { proxy } from 'valtio'
+import { proxy, ref } from 'valtio'
 import {
   unstable_deepProxy as deepProxy,
   isProxyMap,
@@ -308,14 +308,12 @@ describe('deepProxy – additional edge cases', () => {
     expect(d.value).toBe('info')
   })
 
-  it('respects a provided refSet: passes through exotic instances by identity', () => {
-    const date = new Date('2020-01-02T03:04:05.000Z')
-    const re = /abc/gi
-    const buf = new ArrayBuffer(8)
-    const u8 = new Uint8Array(buf)
+  it('passes through objects marked with ref by identity', () => {
+    const date = ref(new Date('2020-01-02T03:04:05.000Z'))
+    const re = ref(/abc/gi)
+    const buf = ref(new ArrayBuffer(8))
+    const u8 = ref(new Uint8Array(buf))
     u8[0] = 123
-
-    const refSet = new WeakSet<object>([date, re, buf, u8])
 
     const obj = {
       date,
@@ -325,7 +323,7 @@ describe('deepProxy – additional edge cases', () => {
       nested: { date, u8 },
     }
 
-    const cloned = deepProxy(obj, () => refSet)
+    const cloned = deepProxy(obj)
 
     expect(cloned.date).toBe(date)
     expect(cloned.re).toBe(re)

@@ -1,24 +1,13 @@
-import { unstable_getInternalStates } from '../../vanilla.js'
+import { unstable_isRef } from '../../vanilla.js'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
-let defaultRefSet: WeakSet<object> | undefined
-const getDefaultRefSet = (): WeakSet<object> => {
-  if (!defaultRefSet) {
-    defaultRefSet = unstable_getInternalStates().refSet
-  }
-  return defaultRefSet
-}
-
 /**
  * Creates a deep clone of an object, maintaining proxy behavior for Maps and Sets
  */
-export function deepClone<T>(
-  obj: T,
-  getRefSet: () => WeakSet<object> = getDefaultRefSet,
-): T {
-  if (!isObject(obj) || getRefSet().has(obj)) {
+export function deepClone<T>(obj: T): T {
+  if (!isObject(obj) || unstable_isRef(obj)) {
     return obj
   }
 
@@ -26,7 +15,7 @@ export function deepClone<T>(
     ? []
     : Object.create(Object.getPrototypeOf(obj))
   Reflect.ownKeys(obj).forEach((key) => {
-    baseObject[key as keyof T] = deepClone(obj[key as keyof T], getRefSet)
+    baseObject[key as keyof T] = deepClone(obj[key as keyof T])
   })
   return baseObject
 }

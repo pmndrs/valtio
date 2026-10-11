@@ -1,8 +1,11 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.js'
+import {
+  isProxyObject,
+  proxy,
+  unstable_getInternalStates,
+} from '../../vanilla.js'
 
-const { proxyStateMap, snapCache, batchAsWrite } = unstable_getInternalStates()
+const { snapCache, batchAsWrite } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
-const isProxy = (x: any) => proxyStateMap.has(x)
 
 type RSetLike<T> = { has(value: T): boolean }
 
@@ -31,7 +34,7 @@ export const isProxySet = (obj: object): boolean => {
   return (
     Symbol.toStringTag in obj &&
     obj[Symbol.toStringTag] === 'Set' &&
-    proxyStateMap.has(obj)
+    isProxyObject(obj)
   )
 }
 
@@ -180,7 +183,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     index: initialIndex,
     epoch: 0,
     get size() {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         registerSnapMap()
       }
       return indexMap.size
@@ -192,7 +195,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return map.has(v)
     },
     add(value: T) {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       const v = maybeProxify(value)
@@ -206,7 +209,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return this
     },
     delete(value: T) {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       const v = maybeProxify(value)
@@ -222,7 +225,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       return true
     },
     clear() {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       // TODO: Don't notify when the collection is already empty.

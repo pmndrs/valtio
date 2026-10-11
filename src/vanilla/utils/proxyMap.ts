@@ -1,7 +1,10 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.js'
+import {
+  isProxyObject,
+  proxy,
+  unstable_getInternalStates,
+} from '../../vanilla.js'
 
-const { proxyStateMap, snapCache, batchAsWrite } = unstable_getInternalStates()
-const isProxy = (x: any) => proxyStateMap.has(x)
+const { snapCache, batchAsWrite } = unstable_getInternalStates()
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<V>
@@ -17,7 +20,7 @@ export const isProxyMap = (obj: object): boolean => {
   return (
     Symbol.toStringTag in obj &&
     obj[Symbol.toStringTag] === 'Map' &&
-    proxyStateMap.has(obj)
+    isProxyObject(obj)
   )
 }
 
@@ -85,7 +88,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     index: initialIndex,
     epoch: 0,
     get size() {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         registerSnapMap()
       }
       const map = getMapForThis(this)
@@ -106,7 +109,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return map.has(key)
     },
     set(key: K, value: V) {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       // TODO: Don't notify when an existing key gets an equal value.
@@ -123,7 +126,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return this
     },
     delete(key: K) {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       const index = indexMap.get(key)
@@ -138,7 +141,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       return true
     },
     clear() {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
       // TODO: Don't notify when the collection is already empty.
