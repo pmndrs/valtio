@@ -367,11 +367,13 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
 }
 
 /**
- * Gets the current version number of a proxy object
+ * Checks whether a value is a proxy object created by `proxy`
+ *
+ * Snapshots, plain objects and objects marked with `ref` are not proxy
+ * objects. A proxy marked with `ref` is still a proxy object.
  */
-export function getVersion(proxyObject: unknown): number | undefined {
-  const proxyState = proxyStateMap.get(proxyObject as object)
-  return proxyState?.[1]()
+export function isProxyObject(x: unknown): boolean {
+  return proxyStateMap.has(x as object)
 }
 
 /**
@@ -485,6 +487,13 @@ export function ref<T extends object>(obj: T) {
 // ------------------------------------------------
 // unstable APIs (subject to change without notice)
 // ------------------------------------------------
+
+/**
+ * Checks whether an object is marked with `ref`
+ */
+export function unstable_isRef(x: unknown): boolean {
+  return refSet.has(x as object)
+}
 
 export function unstable_getInternalStates(): {
   proxyStateMap: typeof proxyStateMap

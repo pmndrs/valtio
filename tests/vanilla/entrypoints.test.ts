@@ -22,13 +22,14 @@ describe('entry points', () => {
   it('should expose the core from valtio/vanilla', () => {
     expect(exportsOf(vanilla)).toEqual([
       'batch',
-      'getVersion',
+      'isProxyObject',
       'proxy',
       'ref',
       'snapshot',
       'subscribe',
       'unstable_enableOp',
       'unstable_getInternalStates',
+      'unstable_isRef',
       'unstable_replaceInternalFunction',
     ])
   })
