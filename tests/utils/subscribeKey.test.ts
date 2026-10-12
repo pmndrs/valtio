@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, subscribe } from 'valtio'
+import { batch, proxy, snapshot, subscribe } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 
 describe('subscribeKey', () => {
@@ -57,10 +57,11 @@ describe('subscribeKey', () => {
     const handler = vi.fn()
 
     subscribeKey(state, 'count', handler)
-    state.count = 1
-    state.count = 0
+    batch(() => {
+      state.count = 1
+      state.count = 0
+    })
 
-    await vi.advanceTimersByTimeAsync(0)
     expect(handler).not.toHaveBeenCalled()
   })
 
@@ -91,7 +92,7 @@ describe('subscribeKey', () => {
     const state = createState()
     const handler = vi.fn()
 
-    const unsubscribe = subscribeKey(state, 'doubled', handler, true)
+    const unsubscribe = subscribeKey(state, 'doubled', handler)
     state.count = 2
 
     expect(handler).toHaveBeenCalledTimes(1)
@@ -113,7 +114,7 @@ describe('subscribeKey', () => {
     })
     const handler = vi.fn()
 
-    subscribeKey(state, 'selected', handler, true)
+    subscribeKey(state, 'selected', handler)
     delete (state as { selected?: number }).selected
     state.count = 2
 

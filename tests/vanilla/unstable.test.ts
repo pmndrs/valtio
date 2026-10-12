@@ -41,6 +41,7 @@ describe('unstable_getInternalStates', () => {
   it('should expose the internal registries', () => {
     const states = unstable_getInternalStates()
     expect(Object.keys(states).sort()).toEqual([
+      'batchAsWrite',
       'proxyCache',
       'proxyStateMap',
       'refSet',
@@ -162,7 +163,7 @@ describe('unstable_enableOp', () => {
 
   it('should accept a custom op factory', async () => {
     unstable_enableOp(
-      (type, prop, ...args) => [type, [prop], ...args, 'extra'] as any,
+      (type, key, ...args) => [type, [key], ...args, 'extra'] as any,
     )
     const state = proxy({ count: 0 })
     const handler = vi.fn()

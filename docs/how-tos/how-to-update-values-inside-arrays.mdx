@@ -31,12 +31,12 @@ function Counter({ item }) {
 }
 
 function CounterList() {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   return (
     <div>
-      <h1>{snap.title}</h1>
-      {/* Touching snap.items causes the whole list to re-render when any child updates */}
-      {snap.items.map((item) => (
+      <h1>{tracked.title}</h1>
+      {/* Touching tracked.items causes the whole list to re-render when any child updates */}
+      {tracked.items.map((item) => (
         <Counter key={item.id} item={item} />
       ))}
     </div>
@@ -61,23 +61,23 @@ const state = proxy({
 })
 
 function Counter({ item }) {
-  const snap = useSnapshot(item)
+  const tracked = useSnapshot(item)
   return (
     <div>
-      <span>{snap.count}</span>
+      <span>{tracked.count}</span>
       <button onClick={() => item.count++}>+1</button>
     </div>
   )
 }
 
 function CounterList() {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   return (
     <div>
-      <h1>{snap.title}</h1>
-      {/* Only the length is accessed from snap, so only updated children re-render */}
-      {Array.from({ length: snap.items.length }, (_, index) => (
-        {/* Note that we are passing the proxy object (state) instead of the snapshot (snap) to the child component */}
+      <h1>{tracked.title}</h1>
+      {/* Only the length is accessed from tracked, so only updated children re-render */}
+      {Array.from({ length: tracked.items.length }, (_, index) => (
+        {/* Note that we are passing the proxy object (state) instead of the snapshot (tracked) to the child component */}
         <Counter key={state.items[index].id} item={state.items[index]} />
       ))}
     </div>
@@ -89,4 +89,4 @@ function CounterList() {
 
 Because the proxy (in this case: `state.items[index]`) is a proxy object instead of a snapshot object, accessing it does not track usage. This prevents the parent component from "subscribing" to the item's internal changes, effectively isolating updates to the child component.
 
-When you call `snap.items.map()`, you access every item in the array, causing Valtio to re-render whenever _any_ item changes. By only accessing `snap.items.length`, Valtio only re-renders when the array length changes. Using `Array.from({ length: n }, (_, i) => ...)` creates an array by index without touching snapshot items, letting you access the proxy directly.
+When you call `tracked.items.map()`, you access every item in the array, causing Valtio to re-render whenever _any_ item changes. By only accessing `tracked.items.length`, Valtio only re-renders when the array length changes. Using `Array.from({ length: n }, (_, i) => ...)` creates an array by index without touching snapshot items, letting you access the proxy directly.

@@ -14,7 +14,7 @@ describe('detachment dispatch', () => {
     raw.child.parent = raw
     const state = proxy(raw)
     const listener = vi.fn()
-    const remove = subscribe(state, listener, true)
+    const remove = subscribe(state, listener)
     state.child = { count: 2 }
     expect(listener).toHaveBeenCalledTimes(1)
     expect(listener.mock.calls[0]![0]).toHaveLength(1)
@@ -51,14 +51,9 @@ describe('source-derived replacement fixtures', () => {
   it('notifies object-valued subscribeKey consumers on raw replacement', () => {
     const state = proxy({ plan: { exceeded: false } })
     let copied = false
-    const remove = subscribeKey(
-      state,
-      'plan',
-      (plan) => {
-        copied = plan.exceeded
-      },
-      true,
-    )
+    const remove = subscribeKey(state, 'plan', (plan) => {
+      copied = plan.exceeded
+    })
     state.plan = { exceeded: true }
     expect(copied).toBe(true)
     remove()
