@@ -96,6 +96,20 @@ deepClone(value, (obj) => keptObjects.has(obj))
 
 A v2 function passed unchanged returns a `WeakSet`, which is truthy, so every object would be kept by reference.
 
+## `proxy-compare` is no longer a dependency
+
+`useSnapshot` uses its own copy of proxy-compare. Functions from the `proxy-compare` package don't work on the objects `useSnapshot` returns, so import `getUntracked` and `trackMemo` from `valtio/react` instead. Other functions from `proxy-compare`, such as `markToTrack`, no longer affect `useSnapshot`.
+
+```js
+// v2
+import { getUntracked, trackMemo } from 'proxy-compare'
+
+// v3
+import { getUntracked, trackMemo } from 'valtio/react'
+```
+
+proxy-memoize uses the `proxy-compare` package, so if a component depends on the identity of an object from the snapshot that a memoized function returns, directly or inside a new object, call `trackMemo` on that object, such as `trackMemo(result.child)`.
+
 ## Notifications are synchronous
 
 In v2, `subscribe` callbacks were batched and called once per microtask, unless `notifyInSync` was passed. In v3, every callback runs synchronously after each change.

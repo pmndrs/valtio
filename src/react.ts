@@ -11,7 +11,7 @@ import {
   affectedToPathList,
   createProxy as createProxyToCompare,
   isChanged,
-} from 'proxy-compare'
+} from './vanilla/proxyCompare.js'
 import { snapshot, subscribe } from './vanilla.js'
 import type { Snapshot } from './vanilla.js'
 
@@ -27,7 +27,7 @@ const useAffectedDebugValue = (
 ) => {
   const pathList = useRef<(string | number | symbol)[][]>(undefined)
   useEffect(() => {
-    pathList.current = affectedToPathList(state, affected, true)
+    pathList.current = affectedToPathList(state, affected)
   })
   // TODO should we use useState instead?
   // eslint-disable-next-line react-hooks/refs
@@ -173,3 +173,5 @@ export function useSnapshot<T extends object>(proxyObject: T): Snapshot<T> {
   const proxyCache = useMemo(() => new WeakMap<object, unknown>(), []) // per-hook proxyCache
   return createProxyToCompare(currSnapshot, affected, proxyCache, targetCache)
 }
+
+export { getUntracked, trackMemo } from './vanilla/proxyCompare.js'

@@ -1,4 +1,4 @@
-import { getUntracked, markToTrack } from 'proxy-compare'
+import { getUntracked, markToTrack } from './vanilla/proxyCompare.js'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -101,7 +101,7 @@ const createSnapshotDefault = <T extends object>(
     const desc: PropertyDescriptor = {
       value,
       enumerable: enumerable as boolean,
-      // This is intentional to avoid copying with proxy-compare.
+      // This is intentional to avoid copying in createProxy.
       // It's still non-writable, so it avoids assigning a value.
       configurable: true,
     }
