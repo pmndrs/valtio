@@ -108,7 +108,7 @@ import { getUntracked, trackMemo } from 'proxy-compare'
 import { getUntracked, trackMemo } from 'valtio/react'
 ```
 
-proxy-memoize uses the `proxy-compare` package, so if a component uses a memoized result only by identity, such as an effect dependency, call `trackMemo(result)`.
+proxy-memoize uses the `proxy-compare` package, so if a memoized function returns an object from the snapshot and a component uses that object only by identity, such as an effect dependency, call `trackMemo` on it.
 
 ## Notifications are synchronous
 
