@@ -108,6 +108,8 @@ import { getUntracked, trackMemo } from 'proxy-compare'
 import { getUntracked, trackMemo } from 'valtio/react'
 ```
 
+proxy-memoize uses the `proxy-compare` package, so if a component uses a memoized result only by identity, such as an effect dependency, call `trackMemo(result)`.
+
 ## Notifications are synchronous
 
 In v2, `subscribe` callbacks were batched and called once per microtask, unless `notifyInSync` was passed. In v3, every callback runs synchronously after each change.
