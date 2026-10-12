@@ -11,4 +11,4 @@ export {
   unstable_replaceInternalFunction,
 } from './vanilla.js'
 export type { INTERNAL_Op, Snapshot } from './vanilla.js'
-export { useSnapshot } from './react.js'
+export { getUntracked, trackMemo, useSnapshot } from './react.js'

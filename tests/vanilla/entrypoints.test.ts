@@ -53,7 +53,11 @@ describe('entry points', () => {
   })
 
   it('should expose useSnapshot from valtio/react and useProxy from valtio/react/utils', () => {
-    expect(exportsOf(react)).toEqual(['useSnapshot'])
+    expect(exportsOf(react)).toEqual([
+      'getUntracked',
+      'trackMemo',
+      'useSnapshot',
+    ])
     expect(exportsOf(reactUtils)).toEqual(['useProxy'])
   })
 
