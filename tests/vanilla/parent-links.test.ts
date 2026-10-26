@@ -92,6 +92,20 @@ describe('versions pushed through parent links', () => {
     expect(snapshot(c).next?.next.leaf.count).toBe(1)
   })
 
+  it('pushes a write up a deep chain without growing the call stack', () => {
+    const leaf = proxy({ count: 0 })
+    let root: object = leaf
+    for (let i = 0; i < 20000; i++) {
+      root = proxy({ child: root })
+      // links one level at a time; unsubscribing keeps the link
+      subscribe(root, () => {})()
+    }
+    const callback = vi.fn()
+    subscribe(root, callback)
+    leaf.count = 1
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
   it('still notifies an ancestor when a callback detaches the subtree', () => {
     const state = proxy<{ mid: { leaf: { count: number } } | null }>({
       mid: { leaf: { count: 0 } },

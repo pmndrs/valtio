@@ -55,11 +55,16 @@ export type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
 type RemoveListener = () => void
 type AddListener = (listener: Listener) => RemoveListener
 
-type NotifyUpdate = (op: Op | undefined, nextVersion?: number) => void
+// Updates a proxy for a write and queues its listeners. It returns the
+// proxy's parent links the first time the write reaches it.
+type Visit = (
+  op: Op | undefined,
+  nextVersion: number,
+) => Set<ParentLink> | undefined
 
 // A link from a child to one parent, under one key.
 // It is weak, so a parent that is no longer used can be collected.
-type ParentLink = readonly [parent: WeakRef<NotifyUpdate>, key: string | symbol]
+type ParentLink = readonly [parent: WeakRef<Visit>, key: string | symbol]
 
 type ProxyState = readonly [
   target: object,
@@ -179,7 +184,7 @@ const versionHolder = [1] as [number]
 const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
 // Children reach their parents only through WeakRef, so a proxy with
 // listeners is held here until they are removed.
-const subscribedProxies: Set<NotifyUpdate> = new Set()
+const subscribedProxies: Set<Visit> = new Set()
 
 // notification delivery
 type Subscription = {
@@ -240,6 +245,45 @@ const reportErrors = (errors: readonly unknown[]) => {
   )
 }
 
+// Pushes a write's version to every ancestor linked when it starts, depth
+// first like a recursion would, but without growing the call stack.
+const pushVersion = (visit: Visit, op: Op | undefined, nextVersion: number) => {
+  // Every write is delivered like a batch of one, so that all
+  // subscriptions notified by it are queued before any callback runs.
+  ++batchDepth
+  try {
+    const stack: (readonly [Visit, Op | undefined])[] = [[visit, op]]
+    while (stack.length) {
+      const [visitNode, nodeOp] = stack.pop()!
+      const parentLinks = visitNode(nodeOp, nextVersion)
+      if (!parentLinks) {
+        continue
+      }
+      const parents: (readonly [Visit, Op | undefined])[] = []
+      parentLinks.forEach((link) => {
+        const visitParent = link[0].deref()
+        if (!visitParent) {
+          parentLinks.delete(link)
+          return
+        }
+        let parentOp: Op | undefined
+        if (nodeOp) {
+          parentOp = [...nodeOp]
+          parentOp[1] = [link[1], ...(nodeOp[1] as Path)]
+        }
+        parents.push([visitParent, parentOp])
+      })
+      // pushed in reverse, so that the first parent is visited first
+      for (let i = parents.length - 1; i >= 0; --i) {
+        stack.push(parents[i]!)
+      }
+    }
+  } finally {
+    --batchDepth
+  }
+  reportErrors(deliverIfOutermost())
+}
+
 // internal functions
 let objectIs: (a: unknown, b: unknown) => boolean = Object.is
 let newProxy = <T extends object>(target: T, handler: ProxyHandler<T>): T =>
@@ -267,42 +311,25 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   }
   let version = versionHolder[0]
   let linked = false
-  let selfRef: WeakRef<NotifyUpdate> | undefined
+  let selfRef: WeakRef<Visit> | undefined
   const listeners = new Set<Listener>()
   const parentLinks = new Set<ParentLink>()
-  const notifyUpdate: NotifyUpdate = (op, nextVersion = ++versionHolder[0]) => {
-    if (version !== nextVersion) {
-      version = nextVersion
-      // Every write is delivered like a batch of one, so that all
-      // subscriptions notified by it are queued before any callback runs.
-      ++batchDepth
-      try {
-        listeners.forEach((listener) => listener(op, nextVersion))
-        parentLinks.forEach((link) => {
-          const notifyParent = link[0].deref()
-          if (!notifyParent) {
-            parentLinks.delete(link)
-            return
-          }
-          let parentOp: Op | undefined
-          if (op) {
-            parentOp = [...op]
-            parentOp[1] = [link[1], ...(op[1] as Path)]
-          }
-          notifyParent(parentOp, nextVersion)
-        })
-      } finally {
-        --batchDepth
-      }
-      reportErrors(deliverIfOutermost())
+  const visit: Visit = (op, nextVersion) => {
+    if (version === nextVersion) {
+      return undefined
     }
+    version = nextVersion
+    listeners.forEach((listener) => listener(op, nextVersion))
+    return parentLinks
   }
+  const notifyUpdate = (op: Op | undefined) =>
+    pushVersion(visit, op, ++versionHolder[0])
   const childProxyStates = new Map<
     string | symbol,
     readonly [ProxyState, ParentLink | undefined]
   >()
   const linkChild = (key: string | symbol, childProxyState: ProxyState) => {
-    selfRef ||= new WeakRef(notifyUpdate)
+    selfRef ||= new WeakRef(visit)
     const link: ParentLink = [selfRef, key]
     childProxyState[3].add(link)
     childProxyState[1]() // link the child's subtree
@@ -347,11 +374,11 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   const addListener = (listener: Listener) => {
     ensureVersion()
     listeners.add(listener)
-    subscribedProxies.add(notifyUpdate)
+    subscribedProxies.add(visit)
     const removeListener = () => {
       listeners.delete(listener)
       if (!listeners.size) {
-        subscribedProxies.delete(notifyUpdate)
+        subscribedProxies.delete(visit)
       }
     }
     return removeListener
