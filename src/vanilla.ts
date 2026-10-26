@@ -245,22 +245,16 @@ const reportErrors = (errors: readonly unknown[]) => {
   )
 }
 
-// Pushes a write's version to every ancestor linked when it starts, depth
-// first like a recursion would, but without growing the call stack.
+// Pushes a write's version to every ancestor linked when it starts,
+// nearest first, without growing the call stack.
 const pushVersion = (visit: Visit, op: Op | undefined, nextVersion: number) => {
   // Every write is delivered like a batch of one, so that all
   // subscriptions notified by it are queued before any callback runs.
   ++batchDepth
   try {
-    const stack: (readonly [Visit, Op | undefined])[] = [[visit, op]]
-    while (stack.length) {
-      const [visitNode, nodeOp] = stack.pop()!
-      const parentLinks = visitNode(nodeOp, nextVersion)
-      if (!parentLinks) {
-        continue
-      }
-      const parents: (readonly [Visit, Op | undefined])[] = []
-      parentLinks.forEach((link) => {
+    const queue: (readonly [Visit, Op | undefined])[] = [[visit, op]]
+    for (const [visitNode, nodeOp] of queue) {
+      visitNode(nodeOp, nextVersion)?.forEach((link, _, parentLinks) => {
         const visitParent = link[0].deref()
         if (!visitParent) {
           parentLinks.delete(link)
@@ -271,12 +265,8 @@ const pushVersion = (visit: Visit, op: Op | undefined, nextVersion: number) => {
           parentOp = [...nodeOp]
           parentOp[1] = [link[1], ...(nodeOp[1] as Path)]
         }
-        parents.push([visitParent, parentOp])
+        queue.push([visitParent, parentOp])
       })
-      // pushed in reverse, so that the first parent is visited first
-      for (let i = parents.length - 1; i >= 0; --i) {
-        stack.push(parents[i]!)
-      }
     }
   } finally {
     --batchDepth
