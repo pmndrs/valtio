@@ -55,10 +55,17 @@ export type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
 type RemoveListener = () => void
 type AddListener = (listener: Listener) => RemoveListener
 
+type NotifyUpdate = (op: Op | undefined, nextVersion?: number) => void
+
+// A link from a child to one parent, under one key.
+// It is weak, so a parent that is no longer used can be collected.
+type ParentLink = readonly [parent: WeakRef<NotifyUpdate>, key: string | symbol]
+
 type ProxyState = readonly [
   target: object,
-  ensureVersion: (nextCheckVersion?: number) => number,
+  ensureVersion: () => number,
   addListener: AddListener,
+  parentLinks: Set<ParentLink>,
 ]
 
 const canProxyDefault = (x: unknown): boolean =>
@@ -170,6 +177,9 @@ const snapCache: WeakMap<object, [version: number, snap: unknown]> =
   new WeakMap()
 const versionHolder = [1] as [number]
 const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
+// Children reach their parents only through WeakRef, so a proxy with
+// listeners is held here until they are removed.
+const subscribedProxies: Set<NotifyUpdate> = new Set()
 
 // notification delivery
 type Subscription = {
@@ -246,56 +256,72 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   if (!isObject(baseObject)) {
     throw new Error('object required')
   }
+  if (typeof WeakRef === 'undefined') {
+    throw new Error(
+      'Valtio requires WeakRef. On React Native, use the New Architecture.',
+    )
+  }
   const found = proxyCache.get(baseObject) as T | undefined
   if (found) {
     return found
   }
   let version = versionHolder[0]
+  let linked = false
+  let selfRef: WeakRef<NotifyUpdate> | undefined
   const listeners = new Set<Listener>()
-  const notifyUpdate = (
-    op: Op | undefined,
-    nextVersion = ++versionHolder[0],
-  ) => {
+  const parentLinks = new Set<ParentLink>()
+  const notifyUpdate: NotifyUpdate = (op, nextVersion = ++versionHolder[0]) => {
     if (version !== nextVersion) {
-      checkVersion = version = nextVersion
+      version = nextVersion
       // Every write is delivered like a batch of one, so that all
       // subscriptions notified by it are queued before any callback runs.
       ++batchDepth
       try {
         listeners.forEach((listener) => listener(op, nextVersion))
+        parentLinks.forEach((link) => {
+          const notifyParent = link[0].deref()
+          if (!notifyParent) {
+            parentLinks.delete(link)
+            return
+          }
+          let parentOp: Op | undefined
+          if (op) {
+            parentOp = [...op]
+            parentOp[1] = [link[1], ...(op[1] as Path)]
+          }
+          notifyParent(parentOp, nextVersion)
+        })
       } finally {
         --batchDepth
       }
       reportErrors(deliverIfOutermost())
     }
   }
-  let checkVersion = version
-  const ensureVersion = (nextCheckVersion = versionHolder[0]) => {
-    if (checkVersion !== nextCheckVersion) {
-      checkVersion = nextCheckVersion
-      childProxyStates.forEach(([childProxyState]) => {
-        const childVersion = childProxyState[1](nextCheckVersion)
-        if (childVersion > version) {
-          version = childVersion
-        }
+  const childProxyStates = new Map<
+    string | symbol,
+    readonly [ProxyState, ParentLink | undefined]
+  >()
+  const linkChild = (key: string | symbol, childProxyState: ProxyState) => {
+    selfRef ||= new WeakRef(notifyUpdate)
+    const link: ParentLink = [selfRef, key]
+    childProxyState[3].add(link)
+    childProxyState[1]() // link the child's subtree
+    return link
+  }
+  // Links this proxy's subtree the first time something needs it.
+  // After that, every write in the subtree pushes its version here.
+  const ensureVersion = () => {
+    if (!linked) {
+      linked = true
+      childProxyStates.forEach(([childProxyState], key) => {
+        childProxyStates.set(key, [
+          childProxyState,
+          linkChild(key, childProxyState),
+        ])
       })
     }
     return version
   }
-  const createChildListener =
-    (key: string | symbol): Listener =>
-    (op, nextVersion) => {
-      let newOp: Op | undefined
-      if (op) {
-        newOp = [...op]
-        newOp[1] = [key, ...(newOp[1] as Path)]
-      }
-      notifyUpdate(newOp, nextVersion)
-    }
-  const childProxyStates = new Map<
-    string | symbol,
-    readonly [ProxyState, RemoveListener?]
-  >()
   const addChildListener = (key: string | symbol, value: unknown) => {
     const childProxyState =
       !refSet.has(value as object) && proxyStateMap.get(value as object)
@@ -303,41 +329,29 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
       if (process.env.NODE_ENV !== 'production' && childProxyStates.has(key)) {
         throw new Error('child listener already exists')
       }
-      if (listeners.size) {
-        const remove = childProxyState[2](createChildListener(key))
-        childProxyStates.set(key, [childProxyState, remove])
-      } else {
-        childProxyStates.set(key, [childProxyState])
-      }
+      childProxyStates.set(key, [
+        childProxyState,
+        linked ? linkChild(key, childProxyState) : undefined,
+      ])
     }
   }
   const removeChildListener = (key: string | symbol) => {
     const entry = childProxyStates.get(key)
     if (entry) {
       childProxyStates.delete(key)
-      entry[1]?.()
+      if (entry[1]) {
+        entry[0][3].delete(entry[1])
+      }
     }
   }
   const addListener = (listener: Listener) => {
+    ensureVersion()
     listeners.add(listener)
-    if (listeners.size === 1) {
-      childProxyStates.forEach(([childProxyState, prevRemove], key) => {
-        if (process.env.NODE_ENV !== 'production' && prevRemove) {
-          throw new Error('remove already exists')
-        }
-        const remove = childProxyState[2](createChildListener(key))
-        childProxyStates.set(key, [childProxyState, remove])
-      })
-    }
+    subscribedProxies.add(notifyUpdate)
     const removeListener = () => {
       listeners.delete(listener)
-      if (listeners.size === 0) {
-        childProxyStates.forEach(([childProxyState, remove], key) => {
-          if (remove) {
-            remove()
-            childProxyStates.set(key, [childProxyState])
-          }
-        })
+      if (!listeners.size) {
+        subscribedProxies.delete(notifyUpdate)
       }
     }
     return removeListener
@@ -351,7 +365,12 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   )
   const proxyObject = newProxy(baseObject, handler)
   proxyCache.set(baseObject, proxyObject)
-  const proxyState: ProxyState = [baseObject, ensureVersion, addListener]
+  const proxyState: ProxyState = [
+    baseObject,
+    ensureVersion,
+    addListener,
+    parentLinks,
+  ]
   proxyStateMap.set(proxyObject, proxyState)
   Reflect.ownKeys(baseObject).forEach((key) => {
     const desc = Object.getOwnPropertyDescriptor(

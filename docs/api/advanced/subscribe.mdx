@@ -24,6 +24,8 @@ const unsubscribe = subscribe(state, () =>
 unsubscribe()
 ```
 
+A subscription keeps the proxy in memory until you unsubscribe, so call the returned function when you no longer need it.
+
 You can also subscribe to a portion of state.
 
 ```jsx
