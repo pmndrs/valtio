@@ -12,6 +12,16 @@ const collectGarbage = async () => {
   gc()
 }
 
+// One collection isn't guaranteed to reclaim an object, so this retries
+// over a few turns. An object that stays reachable still fails.
+const expectCollected = async (ref: WeakRef<object>) => {
+  await collectGarbage()
+  for (let i = 0; i < 10 && ref.deref(); i++) {
+    await collectGarbage()
+  }
+  expect(ref.deref()).toBeUndefined()
+}
+
 describe('versions pushed through parent links', () => {
   it('updates a parent snapshot after a nested write', () => {
     const state = proxy({ a: { b: { count: 0 } }, other: { count: 0 } })
@@ -163,8 +173,7 @@ describe('garbage collection', () => {
       snapshot(parent)
       parentRef = new WeakRef(parent)
     })()
-    await collectGarbage()
-    expect(parentRef!.deref()).toBeUndefined()
+    await expectCollected(parentRef!)
     child.count = 1
     expect(snapshot(child).count).toBe(1)
   })
@@ -185,8 +194,7 @@ describe('garbage collection', () => {
     unsubscribe!()
     // the unsubscribe function itself still refers to the parent
     unsubscribe = undefined
-    await collectGarbage()
-    expect(parentRef!.deref()).toBeUndefined()
+    await expectCollected(parentRef!)
     state.a.count = 2
     expect(callback).toHaveBeenCalledTimes(1)
   })
