@@ -89,6 +89,69 @@ describe('devtools', () => {
     expect(extension.send).toHaveBeenCalledTimes(1)
     const [action] = extension.send.mock.lastCall as [{ type: string }]
     expect(action.type.split(', ')).toHaveLength(count)
+  }, 15_000) // the snapshot and its diff take a few seconds under load
+
+  it('names the action after the paths that changed', async () => {
+    const obj = proxy<{
+      nested: { count: number }
+      items: number[]
+      extra?: boolean
+      date: Date
+    }>({ nested: { count: 0 }, items: [1], extra: true, date: new Date(0) })
+    devtools(obj, { enabled: true })
+
+    obj.nested.count = 1
+    obj.items.push(2)
+    delete obj.extra
+    obj.date = new Date(1)
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenCalledTimes(1)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        type: 'set:nested.count, set:items.1, set:items.length, set:date, delete:extra',
+      }),
+      expect.anything(),
+    )
+  })
+
+  it('names a replaced object by the values under it that differ', async () => {
+    const obj = proxy({ user: { name: 'Ann', age: 1 } })
+    devtools(obj, { enabled: true })
+
+    obj.user = { name: 'Bob', age: 1 }
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:user.name' }),
+      { user: { name: 'Bob', age: 1 } },
+    )
+  })
+
+  it('sends nothing for writes reverted within a burst', async () => {
+    const obj = proxy({ nested: { count: 0 } })
+    devtools(obj, { enabled: true })
+
+    obj.nested.count = 1
+    obj.nested.count = 0
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).not.toHaveBeenCalled()
+  })
+
+  it('names the action for a write in a cycle', async () => {
+    type Node = { count: number; self?: Node }
+    const obj = proxy<Node>({ count: 0 })
+    obj.self = obj
+    devtools(obj, { enabled: true })
+
+    obj.count = 1
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:count' }),
+      expect.anything(),
+    )
   })
 
   describe('If there is no extension installed...', () => {

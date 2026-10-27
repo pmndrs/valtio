@@ -1,5 +1,14 @@
 import { subscribe } from '../../vanilla.js'
 
+const hasGetter = (obj: object, key: string | symbol): boolean => {
+  for (let o: object | null = obj; o; o = Object.getPrototypeOf(o)) {
+    if (Reflect.getOwnPropertyDescriptor(o, key)?.get) {
+      return true
+    }
+  }
+  return false
+}
+
 /**
  * subscribeKey
  *
@@ -22,15 +31,18 @@ export function subscribeKey<T extends object, K extends keyof T>(
       'notifyInSync has been removed. subscribeKey() is synchronous. Use batch() to group notifications.',
     )
   }
+  const propertyKey =
+    typeof key === 'number' ? String(key) : (key as string | symbol)
   let prevValue = proxyObject[key]
-  // TODO: Build this on a key-level subscription when subscriptions become
-  // key-level. It reads the live value on every notification of proxyObject,
-  // so a write to key made by an earlier callback in the current round is
-  // reported before the other subscribers receive the current change.
-  return subscribe(proxyObject, () => {
-    const nextValue = proxyObject[key]
-    if (!Object.is(prevValue, nextValue)) {
-      callback((prevValue = nextValue))
-    }
-  })
+  return subscribe(
+    proxyObject,
+    () => {
+      const nextValue = proxyObject[key]
+      if (!Object.is(prevValue, nextValue)) {
+        callback((prevValue = nextValue))
+      }
+    },
+    // A getter can read any key, so it needs every write in the subtree.
+    hasGetter(proxyObject, propertyKey) ? undefined : { keys: [propertyKey] },
+  )
 }

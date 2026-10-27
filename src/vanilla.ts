@@ -9,22 +9,8 @@ type AnyFunction = (...args: any[]) => any
 /** Object that can be proxied */
 type ProxyObject = object
 
-/** Property access path as an array of property names/symbols */
-type Path = (string | symbol)[]
-
-/**
- * Operation performed on a proxy object
- * - 'set': A property was set to a new value
- * - 'delete': A property was deleted
- */
-type Op =
-  | [op: 'set', path: Path, value: unknown, prevValue: unknown]
-  | [op: 'delete', path: Path, prevValue: unknown]
-
 /** Function called when a proxy object changes */
-type Listener = (op: Op | undefined, nextVersion: number) => void
-
-export type INTERNAL_Op = Op
+type Listener = () => void
 
 /** JavaScript primitive types */
 type Primitive = string | number | boolean | null | undefined | symbol | bigint
@@ -53,19 +39,17 @@ export type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
       : T
 
 type RemoveListener = () => void
-type AddListener = (listener: Listener) => RemoveListener
+// Without keys, the listener hears every write in the proxy's subtree.
+// With keys, it hears only direct writes to them, and OWN_KEYS stands for
+// a key being added or removed.
+type AddListener = (
+  listener: Listener,
+  keys?: readonly (string | symbol)[],
+) => RemoveListener
 
-// Updates a proxy for a write and queues its listeners, building the op
-// only if it has any. It returns the proxy's parent links the first time
-// the write reaches it.
-type Visit = (
-  getOp: () => Op | undefined,
-  nextVersion: number,
-) => Set<ParentLink> | undefined
-
-// The keys from a proxy down to the written one, as a linked list, so
-// that passing a write up a chain doesn't copy its path at every level.
-type PathKeys = readonly [key: string | symbol, rest: PathKeys] | undefined
+// Updates a proxy for a write and queues its subtree listeners.
+// It returns the proxy's parent links the first time the write reaches it.
+type Visit = (nextVersion: number) => Set<ParentLink> | undefined
 
 // A link from a child to one parent, under one key.
 // It is weak, so a parent that is no longer used can be collected.
@@ -141,18 +125,21 @@ const createSnapshotDefault = <T extends object>(
   return snap
 }
 
+const hasOwn = (obj: object, key: string | symbol): boolean =>
+  Object.prototype.hasOwnProperty.call(obj, key)
+
 const createHandlerDefault = <T extends object>(
   isInitializing: () => boolean,
   addChildListener: (key: string | symbol, value: unknown) => void,
   removeChildListener: (key: string | symbol) => void,
-  notifyUpdate: (op: Op | undefined) => void,
+  notifyUpdate: (keys: readonly (string | symbol)[]) => void,
 ): ProxyHandler<T> => ({
   deleteProperty(target: T, key: string | symbol) {
-    const prevValue = Reflect.get(target, key)
+    const hadKey = hasOwn(target, key)
     removeChildListener(key)
     const deleted = Reflect.deleteProperty(target, key)
-    if (deleted) {
-      notifyUpdate(createOp?.('delete', key, prevValue))
+    if (deleted && hadKey) {
+      notifyUpdate([key, OWN_KEYS])
     }
     return deleted
   },
@@ -166,6 +153,8 @@ const createHandlerDefault = <T extends object>(
     ) {
       return true
     }
+    const hadKey = hasOwn(target, key)
+    const length = Array.isArray(target) && target.length
     removeChildListener(key)
     if (isObject(value)) {
       value = getUntracked(value) || value
@@ -174,16 +163,28 @@ const createHandlerDefault = <T extends object>(
       !proxyStateMap.has(value) && canProxy(value) ? proxy(value) : value
     addChildListener(key, nextValue)
     Reflect.set(target, key, nextValue, receiver)
-    notifyUpdate(createOp?.('set', key, value, prevValue))
+    const keys = [key]
+    if (!hadKey && hasOwn(target, key)) {
+      keys.push(OWN_KEYS)
+    }
+    if (length !== false) {
+      // An index past the end lengthens an array, and a shorter length
+      // removes the indices past it, neither through this trap.
+      if (key !== 'length' && target.length !== length) {
+        keys.push('length')
+      }
+      for (let i = target.length; i < length; i++) {
+        removeChildListener(String(i))
+        keys.push(String(i))
+      }
+      if (target.length < length) {
+        keys.push(OWN_KEYS)
+      }
+    }
+    notifyUpdate(keys)
     return true
   },
 })
-
-const createOpDefault = (
-  type: 'set' | 'delete',
-  key: symbol | string,
-  ...args: unknown[]
-) => [type, [key], ...args] as Op
 
 // internal states
 const proxyStateMap: WeakMap<ProxyObject, ProxyState> = new WeakMap()
@@ -196,31 +197,34 @@ const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
 // listeners is held here until they are removed. Through its handler, it
 // keeps alive the visit function that the WeakRefs point to.
 const subscribedProxies: Set<object> = new Set()
+// The key that listeners for own keys being added or removed are under.
+const OWN_KEYS = Symbol()
 
 // notification delivery
 type Subscription = {
-  callback: (unstable_ops: Op[]) => void
+  callback: () => void
   active: boolean
 }
 let batchDepth = 0
 let isDelivering = false
-let pendingSubscriptions = new Map<Subscription, Op[]>()
+let pendingSubscriptions = new Set<Subscription>()
 
 const deliver = (): unknown[] => {
   const errors: unknown[] = []
   isDelivering = true
   try {
     // Writes made by callbacks are queued for the next round, and delivered
-    // together, so every subscription receives its ops in write order.
+    // together, so no subscription runs for a write before every
+    // subscription has run for the writes made before it.
     while (pendingSubscriptions.size) {
       const round = pendingSubscriptions
-      pendingSubscriptions = new Map()
-      round.forEach((ops, subscription) => {
+      pendingSubscriptions = new Set()
+      round.forEach((subscription) => {
         if (subscription.active) {
           // Called as a plain function, so `this` isn't the subscription.
           const { callback } = subscription
           try {
-            callback(ops)
+            callback()
           } catch (error) {
             errors.push(error)
           }
@@ -258,32 +262,20 @@ const reportErrors = (errors: readonly unknown[]) => {
 
 // Pushes a write's version to every ancestor linked when it starts,
 // nearest first, without growing the call stack.
-const pushVersion = (visit: Visit, op: Op | undefined, nextVersion: number) => {
+const pushVersion = (visit: Visit, nextVersion: number) => {
   // Every write is delivered like a batch of one, so that all
   // subscriptions notified by it are queued before any callback runs.
   ++batchDepth
   try {
-    const queue: (readonly [Visit, PathKeys])[] = [[visit, undefined]]
-    for (const [visitNode, keys] of queue) {
-      const getOp = () => {
-        if (!op || !keys) {
-          return op
-        }
-        const path: Path = []
-        for (let k: PathKeys = keys; k; k = k[1]) {
-          path.push(k[0])
-        }
-        const nodeOp = [...op] as Op
-        nodeOp[1] = [...path, ...(op[1] as Path)]
-        return nodeOp
-      }
-      visitNode(getOp, nextVersion)?.forEach((link, _, parentLinks) => {
+    const queue = [visit]
+    for (const visitNode of queue) {
+      visitNode(nextVersion)?.forEach((link, _, parentLinks) => {
         const visitParent = link[0].deref()
         if (!visitParent) {
           parentLinks.delete(link)
           return
         }
-        queue.push([visitParent, [link[1], keys]])
+        queue.push(visitParent)
       })
     }
   } finally {
@@ -299,7 +291,6 @@ let newProxy = <T extends object>(target: T, handler: ProxyHandler<T>): T =>
 let canProxy: typeof canProxyDefault = canProxyDefault
 let createSnapshot: typeof createSnapshotDefault = createSnapshotDefault
 let createHandler: typeof createHandlerDefault = createHandlerDefault
-let createOp: typeof createOpDefault | undefined
 
 /**
  * Creates a reactive proxy object that can be tracked for changes
@@ -321,20 +312,22 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   let linked = false
   let selfRef: WeakRef<Visit> | undefined
   const listeners = new Set<Listener>()
+  const keyListeners = new Map<string | symbol, Set<Listener>>()
   const parentLinks = new Set<ParentLink>()
-  const visit: Visit = (getOp, nextVersion) => {
+  const visit: Visit = (nextVersion) => {
     if (version === nextVersion) {
       return undefined
     }
     version = nextVersion
-    if (listeners.size) {
-      const op = getOp()
-      listeners.forEach((listener) => listener(op, nextVersion))
-    }
+    listeners.forEach((listener) => listener())
     return parentLinks
   }
-  const notifyUpdate = (op: Op | undefined) =>
-    pushVersion(visit, op, ++versionHolder[0])
+  const notifyUpdate = (keys: readonly (string | symbol)[]) => {
+    keys.forEach((key) =>
+      keyListeners.get(key)?.forEach((listener) => listener()),
+    )
+    pushVersion(visit, ++versionHolder[0])
+  }
   const childProxyStates = new Map<
     string | symbol,
     readonly [ProxyState, ParentLink | undefined]
@@ -394,13 +387,34 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
       }
     }
   }
-  const addListener = (listener: Listener) => {
-    ensureVersion()
-    listeners.add(listener)
+  const addListener: AddListener = (listener, keys) => {
+    if (keys) {
+      // A key listener doesn't need the subtree, so it links nothing.
+      keys.forEach((key) => {
+        let keyListenerSet = keyListeners.get(key)
+        if (!keyListenerSet) {
+          keyListeners.set(key, (keyListenerSet = new Set()))
+        }
+        keyListenerSet.add(listener)
+      })
+    } else {
+      ensureVersion()
+      listeners.add(listener)
+    }
     subscribedProxies.add(proxyObject)
     const removeListener = () => {
-      listeners.delete(listener)
-      if (!listeners.size) {
+      if (keys) {
+        keys.forEach((key) => {
+          const keyListenerSet = keyListeners.get(key)
+          keyListenerSet?.delete(listener)
+          if (!keyListenerSet?.size) {
+            keyListeners.delete(key)
+          }
+        })
+      } else {
+        listeners.delete(listener)
+      }
+      if (!listeners.size && !keyListeners.size) {
         subscribedProxies.delete(proxyObject)
       }
     }
@@ -448,6 +462,13 @@ export function isProxyObject(x: unknown): boolean {
 /**
  * Subscribes to changes in a proxy object
  *
+ * Without options, the callback runs for every write in the proxy's subtree.
+ * With options, it runs only for what they list:
+ * - `keys`: a set or delete of one of these keys on the proxy itself,
+ *   including an array's `length` changed by writing an index, and the
+ *   indices deleted by a shorter `length`
+ * - `ownKeys`: a key added to or removed from the proxy
+ *
  * The callback runs synchronously after each write, before the write
  * returns. Use `batch` to group several writes into one notification.
  * A write made inside a callback is the exception: it returns first, and
@@ -458,13 +479,20 @@ export function isProxyObject(x: unknown): boolean {
  */
 export function subscribe<T extends object>(
   proxyObject: T,
-  callback: (unstable_ops: Op[]) => void,
+  callback: () => void,
+  options?: {
+    keys?: readonly (string | symbol)[]
+    ownKeys?: boolean
+  },
 ): () => void {
-  // eslint-disable-next-line prefer-rest-params
-  if (typeof arguments[2] === 'boolean') {
+  if (typeof options === 'boolean') {
     throw new Error(
       'notifyInSync has been removed. subscribe() is synchronous. Use batch() to group notifications.',
     )
+  }
+  const keys = options?.keys
+  if (keys !== undefined && !Array.isArray(keys)) {
+    throw new Error('keys must be an array')
   }
   const proxyState = proxyStateMap.get(proxyObject as object)
   if (process.env.NODE_ENV !== 'production' && !proxyState) {
@@ -472,17 +500,10 @@ export function subscribe<T extends object>(
   }
   const addListener = (proxyState as ProxyState)[2]
   const subscription: Subscription = { callback, active: false }
-  const listener: Listener = (op) => {
-    let ops = pendingSubscriptions.get(subscription)
-    if (!ops) {
-      ops = []
-      pendingSubscriptions.set(subscription, ops)
-    }
-    if (op) {
-      ops.push(op)
-    }
-  }
-  const removeListener = addListener(listener)
+  const removeListener = addListener(
+    () => pendingSubscriptions.add(subscription),
+    options && [...(keys || []), ...(options.ownKeys ? [OWN_KEYS] : [])],
+  )
   subscription.active = true
   return () => {
     subscription.active = false
@@ -494,7 +515,7 @@ export function subscribe<T extends object>(
  * Groups writes so that subscribers are notified once
  *
  * Callbacks are deferred until the outermost `batch` returns. Each
- * subscription then runs once with the ops of all its writes, in order.
+ * subscription then runs once.
  * Writes are visible to reads and `snapshot` immediately.
  * Errors thrown by callbacks are thrown from `batch` as an `AggregateError`.
  */
@@ -634,17 +655,5 @@ export function unstable_replaceInternalFunction(
       break
     default:
       throw new Error('unknown function')
-  }
-}
-
-export function unstable_enableOp(
-  enabled: boolean | typeof createOpDefault = true,
-): void {
-  if (enabled === true) {
-    createOp = createOpDefault
-  } else if (enabled === false) {
-    createOp = undefined
-  } else {
-    createOp = enabled
   }
 }

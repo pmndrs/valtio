@@ -118,6 +118,7 @@ In v2, `subscribe` callbacks were batched and called once per microtask, unless 
 - **Callbacks run once per change.** Code that makes several changes and expects one notification should wrap them in [`batch`](../api/advanced/batch). If you prefer the v2 delivery, see the coalescing recipe in [`subscribe`](../api/advanced/subscribe#notifications-are-synchronous).
 - **Errors thrown by callbacks are rethrown in a microtask.** An assignment never throws because of a subscriber, and the other subscribers still run. Inside [`batch`](../api/advanced/batch), the errors are thrown from `batch` as an `AggregateError` instead. In v2, these errors were unhandled promise rejections; now they are uncaught errors (the `error` event, or `uncaughtException` in Node.js).
 - **The `sync` options are gone.** `useSnapshot` and `useProxy` are always synchronous, so the controlled-input caret workaround is no longer needed.
+- **Deleting a missing key doesn't notify.** In v2, `delete state.key` notified even when `state` had no `key`.
 - **Native array methods notify once per internal change.** `splice`, `sort` and similar methods make several changes, and each one notifies, so a subscriber can see the array in between. Wrap them in `batch` to notify once, with the final array.
 - **A proxy's own callbacks run before its parents'.** When a change notifies a proxy and its parents, the callbacks subscribed to the proxy run first, then those of its ancestors, nearest first. An ancestor reached by more than one path is notified once, at its nearest distance. Ancestors at the same distance have no set order.
 - **Unbatched loops are slower with `useSnapshot`, for now.** A component using `useSnapshot` takes a snapshot on every notification, so a loop of unbatched changes takes one snapshot per change. Wrap the loop in `batch`. A later v3 change removes this cost.
@@ -131,6 +132,27 @@ In v2, `subscribe` callbacks were batched and called once per microtask, unless 
 | Several changes, one notification per microtask | `batch(() => { ... })`                 |
 
 Passing the removed arguments is a TypeScript error, and it also throws at runtime.
+
+## Ops are removed
+
+`subscribe` callbacks are called with no arguments, and `unstable_enableOp` is no longer exported. In v2, after `unstable_enableOp()`, a callback received a list of changes, each such as `['set', ['user', 'name'], 'Ann', 'Bob']`.
+
+To find out what changed, subscribe to each object you follow, and compare it with what you saw before, for example with a snapshot:
+
+```js
+let prev = snapshot(state.user)
+subscribe(state.user, () => {
+  const next = snapshot(state.user)
+  new Set([...Object.keys(prev), ...Object.keys(next)]).forEach((key) => {
+    if (prev[key] !== next[key]) console.log('changed', key)
+  })
+  prev = next
+})
+```
+
+To be called only for some keys of a proxy, or for keys being added or removed, pass `keys` or `ownKeys` to [`subscribe`](../api/advanced/subscribe#subscribe-to-keys).
+
+`devtools` names each action after the paths at which two snapshots differ, so a change undone within the same burst is not reported.
 
 ## Unsubscribe when you are done
 

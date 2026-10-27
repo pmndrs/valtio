@@ -1,12 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { batch, proxy, snapshot, subscribe, unstable_enableOp } from 'valtio'
+import { describe, expect, it, vi } from 'vitest'
+import { batch, proxy, snapshot, subscribe } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 
 describe('batch', () => {
-  afterEach(() => {
-    unstable_enableOp(false)
-  })
-
   it('should return the result of fn', () => {
     expect(batch(() => 42)).toBe(42)
   })
@@ -36,8 +32,7 @@ describe('batch', () => {
     })
   })
 
-  it('should deliver every op in write order in one callback', () => {
-    unstable_enableOp(true)
+  it('should call back once, with no arguments', () => {
     const state = proxy({ a: 0, b: 0 })
     const handler = vi.fn()
     subscribe(state, handler)
@@ -48,90 +43,72 @@ describe('batch', () => {
       state.a = 2
     })
 
-    expect(handler).toHaveBeenCalledExactlyOnceWith([
-      ['set', ['a'], 1, 0],
-      ['set', ['b'], 1, 0],
-      ['set', ['a'], 2, 1],
-    ])
-  })
-
-  it('should deliver an empty ops array when ops are disabled', () => {
-    const state = proxy({ count: 0 })
-    const handler = vi.fn()
-    subscribe(state, handler)
-
-    state.count = 1
-
-    expect(handler).toHaveBeenCalledExactlyOnceWith([])
+    expect(handler).toHaveBeenCalledExactlyOnceWith()
   })
 })
 
 describe('delivery order', () => {
-  afterEach(() => {
-    unstable_enableOp(false)
-  })
-
   it.each([
     ['a batched write', (fn: () => void) => batch(fn)],
     ['an unbatched write', (fn: () => void) => fn()],
   ])(
-    'should not let a write made by a callback overtake earlier ops (%s)',
+    'should not let a write made by a callback overtake earlier writes (%s)',
     (_, run) => {
-      unstable_enableOp(true)
       const state = proxy({ a: 0, b: 0 })
-      subscribe(state, (ops) => {
-        if (ops.some(([, path]) => path[0] === 'a')) {
+      subscribe(
+        state,
+        () => {
           state.b = 1
-        }
-      })
-      const seen: unknown[] = []
-      subscribe(state, (ops) => {
-        seen.push(ops.map(([, path]) => path[0]))
-      })
+        },
+        { keys: ['a'] },
+      )
+      const seen: string[] = []
+      subscribe(state, () => seen.push('a'), { keys: ['a'] })
+      subscribe(state, () => seen.push('b'), { keys: ['b'] })
 
       run(() => {
         state.a = 1
       })
 
-      expect(seen).toEqual([['a'], ['b']])
+      expect(seen).toEqual(['a', 'b'])
     },
   )
 
   it('should deliver the writes made by a callback together in the next round', () => {
-    unstable_enableOp(true)
     const state = proxy({ a: 0, b: 0, c: 0 })
-    subscribe(state, () => {
-      if (state.b === 0) {
+    subscribe(
+      state,
+      () => {
         state.b = 1
         state.c = 1
-      }
-    })
-    const seen: unknown[] = []
-    subscribe(state, (ops) => {
-      seen.push(ops.map(([, path]) => path[0]))
-    })
+      },
+      { keys: ['a'] },
+    )
+    const seen: string[] = []
+    subscribe(state, () => seen.push('a'), { keys: ['a'] })
+    subscribe(state, () => seen.push('b or c'), { keys: ['b', 'c'] })
 
     state.a = 1
 
-    expect(seen).toEqual([['a'], ['b', 'c']])
+    expect(seen).toEqual(['a', 'b or c'])
   })
 
   it('should return from a batch called in a callback before its listeners run', () => {
-    unstable_enableOp(true)
     const state = proxy({ a: 0, b: 0 })
     const seen: string[] = []
     let seenWhenInnerBatchReturned: string[] | undefined
-    subscribe(state, () => {
-      if (state.b === 0) {
+    subscribe(
+      state,
+      () => {
         batch(() => {
           state.b = 1
         })
         seenWhenInnerBatchReturned = [...seen]
-      }
-    })
-    subscribe(state, (ops) => {
-      ops.forEach(([, path]) => seen.push(String(path[0])))
-    })
+      },
+      { keys: ['a'] },
+    )
+    subscribe(state, () => seen.push('a'), { keys: ['a'] })
+    subscribe(state, () => seen.push('b'), { keys: ['b'] })
 
     state.a = 1
 
@@ -346,20 +323,15 @@ describe('errors from a batch inside a callback', () => {
 
 describe('coalescing recipe from the subscribe docs', () => {
   // Keep in sync with docs/api/advanced/subscribe.mdx
-  const subscribeCoalesced = (
-    proxyObject: object,
-    callback: (ops: unknown[]) => void,
-  ) => {
-    const ops: unknown[] = []
+  const subscribeCoalesced = (proxyObject: object, callback: () => void) => {
     let scheduled = false
     let active = true
-    const unsubscribe = subscribe(proxyObject, (newOps) => {
-      newOps.forEach((op) => ops.push(op))
+    const unsubscribe = subscribe(proxyObject, () => {
       if (!scheduled) {
         scheduled = true
         queueMicrotask(() => {
           scheduled = false
-          if (active) callback(ops.splice(0))
+          if (active) callback()
         })
       }
     })
@@ -369,12 +341,7 @@ describe('coalescing recipe from the subscribe docs', () => {
     }
   }
 
-  afterEach(() => {
-    unstable_enableOp(false)
-  })
-
-  it('should call back once per burst with every op', async () => {
-    unstable_enableOp(true)
+  it('should call back once per burst', async () => {
     const state = proxy({ a: 0, b: 0 })
     const handler = vi.fn()
     subscribeCoalesced(state, handler)
@@ -384,10 +351,7 @@ describe('coalescing recipe from the subscribe docs', () => {
     expect(handler).not.toHaveBeenCalled()
 
     await Promise.resolve()
-    expect(handler).toHaveBeenCalledExactlyOnceWith([
-      ['set', ['a'], 1, 0],
-      ['set', ['b'], 1, 0],
-    ])
+    expect(handler).toHaveBeenCalledOnce()
   })
 
   it('should not call back after unsubscribing', async () => {
@@ -418,6 +382,15 @@ describe('removed arguments', () => {
     ;(subscribe as any)(state, handler, undefined)
     state.count = 1
     expect(handler).toHaveBeenCalledTimes(1)
+  })
+
+  it('should reject a callback that takes ops, as a type error', () => {
+    const state = proxy({ count: 0 })
+    const callback = vi.fn((ops: unknown[]) => ops)
+    // @ts-expect-error the callback is called with no arguments
+    subscribe(state, callback)
+    state.count = 1
+    expect(callback).toHaveBeenCalledExactlyOnceWith()
   })
 
   it('should throw for a boolean fourth argument of subscribeKey', () => {

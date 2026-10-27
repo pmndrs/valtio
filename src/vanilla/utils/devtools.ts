@@ -1,10 +1,9 @@
 import {
+  isProxyObject,
   snapshot,
   subscribe,
-  unstable_enableOp,
   unstable_getInternalStates,
 } from '../../vanilla.js'
-import type { INTERNAL_Op } from '../../vanilla.js'
 import type {} from '@redux-devtools/extension'
 
 // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
@@ -33,20 +32,17 @@ type Options = {
 // callback to keep sending one devtools message per burst.
 const subscribeCoalesced = (
   proxyObject: object,
-  callback: (unstable_ops: INTERNAL_Op[]) => void,
+  callback: () => void,
 ): (() => void) => {
-  const ops: INTERNAL_Op[] = []
   let scheduled = false
   let active = true
-  const unsubscribe = subscribe(proxyObject, (newOps) => {
-    // Not ops.push(...newOps): a large batch exceeds the argument limit.
-    newOps.forEach((op) => ops.push(op))
+  const unsubscribe = subscribe(proxyObject, () => {
     if (!scheduled) {
       scheduled = true
       Promise.resolve().then(() => {
         scheduled = false
         if (active) {
-          callback(ops.splice(0))
+          callback()
         }
       })
     }
@@ -55,6 +51,56 @@ const subscribeCoalesced = (
     active = false
     unsubscribe()
   }
+}
+
+type Change = [type: 'set' | 'delete', path: (string | symbol)[]]
+
+// Lists the paths at which two snapshots of a proxy differ, reading the
+// proxy alongside the newer one. Unchanged subtrees are the same objects,
+// so they are skipped without being visited.
+const diffSnapshots = (
+  prev: any,
+  next: any,
+  live: any,
+  path: (string | symbol)[],
+  changes: Change[],
+  seen: WeakSet<object>,
+) => {
+  if (Object.is(prev, next)) {
+    return
+  }
+  if (
+    !isProxyObject(live) ||
+    typeof prev !== 'object' ||
+    prev === null ||
+    Object.getPrototypeOf(prev) !== Object.getPrototypeOf(next)
+  ) {
+    changes.push(['set', path])
+    return
+  }
+  if (seen.has(next)) {
+    return // a cycle
+  }
+  seen.add(next)
+  Reflect.ownKeys(next).forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(prev, key)) {
+      diffSnapshots(
+        prev[key],
+        next[key],
+        live[key],
+        [...path, key],
+        changes,
+        seen,
+      )
+    } else {
+      changes.push(['set', [...path, key]])
+    }
+  })
+  Reflect.ownKeys(prev).forEach((key) => {
+    if (!Object.prototype.hasOwnProperty.call(next, key)) {
+      changes.push(['delete', [...path, key]])
+    }
+  })
 }
 
 /**
@@ -91,11 +137,15 @@ export function devtools<T extends object>(
     return
   }
 
-  unstable_enableOp()
   let isTimeTraveling = false
   const devtools = extension.connect({ name, ...rest })
-  const unsub1 = subscribeCoalesced(proxyObject, (unstable_ops) => {
-    const action = unstable_ops
+  let prevSnap: unknown = snapshot(proxyObject)
+  const unsub1 = subscribeCoalesced(proxyObject, () => {
+    const nextSnap = snapshot(proxyObject)
+    const changes: Change[] = []
+    diffSnapshots(prevSnap, nextSnap, proxyObject, [], changes, new WeakSet())
+    prevSnap = nextSnap
+    const action = changes
       .filter(([_, path]) => path[0] !== DEVTOOLS)
       .map(([op, path]) => `${op}:${path.map(String).join('.')}`)
       .join(', ')
@@ -107,7 +157,7 @@ export function devtools<T extends object>(
     if (isTimeTraveling) {
       isTimeTraveling = false
     } else {
-      const snapWithoutDevtools = Object.assign({}, snapshot(proxyObject))
+      const snapWithoutDevtools = Object.assign({}, nextSnap)
       delete (snapWithoutDevtools as any)[DEVTOOLS]
       devtools.send(
         {

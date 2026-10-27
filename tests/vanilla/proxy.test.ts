@@ -1096,16 +1096,16 @@ describe('proxy deletion', () => {
     expect(handler).toBeCalledTimes(1)
   })
 
-  // Reflect.deleteProperty returns true for a key that was never present, so
-  // the delete trap notifies. Setting an unchanged value, by contrast, does not.
-  it('should notify even when deleting an absent property', async () => {
+  // Deleting a key that was never present changes nothing, so like setting
+  // an unchanged value, it notifies nobody.
+  it('should not notify when deleting an absent property', async () => {
     const state = proxy<{ count?: number }>({})
     const handler = vi.fn()
     subscribe(state, handler)
 
     delete state.count
     await Promise.resolve()
-    expect(handler).toBeCalledTimes(1)
+    expect(handler).not.toHaveBeenCalled()
   })
 
   it('should stop tracking a deleted nested proxy', async () => {

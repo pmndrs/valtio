@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { batch, proxy, snapshot, subscribe } from 'valtio'
+import {
+  batch,
+  proxy,
+  snapshot,
+  subscribe,
+  unstable_getInternalStates,
+} from 'valtio'
 import { subscribeKey } from 'valtio/utils'
 
 describe('subscribeKey', () => {
@@ -138,5 +144,41 @@ describe('subscribeKey', () => {
     await vi.advanceTimersByTimeAsync(0)
     expect(handler).toHaveBeenCalledTimes(1)
     expect(handler).toHaveBeenLastCalledWith(nextNested)
+  })
+
+  it('should run in the round that delivers the write to its key', () => {
+    const state = proxy({ a: 0, b: 0 })
+    const seen: string[] = []
+    subscribeKey(state, 'a', () => {
+      seen.push('a')
+      state.b = 1
+    })
+    subscribeKey(state, 'b', () => seen.push('b'))
+    subscribe(state, () => seen.push('state'))
+
+    state.a = 1
+
+    // every subscriber hears a before anything hears b
+    expect(seen).toEqual(['a', 'state', 'b', 'state'])
+  })
+
+  it('should take an array index as a number', () => {
+    const state = proxy([0, 1])
+    const handler = vi.fn()
+
+    subscribeKey(state, 0, handler)
+    state[1] = 2
+    state[0] = 3
+
+    expect(handler).toHaveBeenCalledExactlyOnceWith(3)
+  })
+
+  it('should not link the subtree under its key', () => {
+    const state = proxy({ nested: { count: 0 } })
+    const { proxyStateMap } = unstable_getInternalStates()
+
+    subscribeKey(state, 'nested', () => {})
+
+    expect(proxyStateMap.get(state.nested)![3].size).toBe(0)
   })
 })
