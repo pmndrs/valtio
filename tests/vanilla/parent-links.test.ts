@@ -1,7 +1,13 @@
 import { setFlagsFromString } from 'node:v8'
 import { runInNewContext } from 'node:vm'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, subscribe, unstable_enableOp } from 'valtio'
+import {
+  proxy,
+  snapshot,
+  subscribe,
+  unstable_enableOp,
+  unstable_getInternalStates,
+} from 'valtio'
 
 setFlagsFromString('--expose-gc')
 const gc = runInNewContext('gc') as () => void
@@ -216,6 +222,20 @@ describe('garbage collection', () => {
     child.count = 1
     expect(snapshot(child).count).toBe(1)
   })
+
+  it('drops dead parent links from a child that is never written', async () => {
+    const child = proxy({ count: 0 })
+    const parentLinks =
+      unstable_getInternalStates().proxyStateMap.get(child)![3]
+    for (let round = 0; round < 5; round++) {
+      for (let i = 0; i < 1000; i++) {
+        snapshot(proxy({ child }))
+      }
+      await collectGarbage()
+    }
+    // without a sweep, all 5,000 would stay until the child is written
+    expect(parentLinks.size).toBeLessThan(3000)
+  }, 30_000) // each collection takes a while
 
   it('keeps a subscribed parent alive with no reference left to it', async () => {
     const state = proxy({ a: { count: 0 } })

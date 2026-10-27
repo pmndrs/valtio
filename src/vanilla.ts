@@ -345,6 +345,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     childProxyState[1]() // link the child's subtree
     return link
   }
+  let sweepAt = 8
   // Links this proxy's subtree the first time something needs it.
   // After that, every write in the subtree pushes its version here.
   const ensureVersion = () => {
@@ -356,6 +357,17 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
           linkChild(key, childProxyState),
         ])
       })
+    }
+    // A parent calls this right after linking to this proxy. Dropping
+    // dead links whenever their number has doubled since the last sweep
+    // bounds them even if this proxy is never written.
+    if (parentLinks.size >= sweepAt) {
+      parentLinks.forEach((link) => {
+        if (!link[0].deref()) {
+          parentLinks.delete(link)
+        }
+      })
+      sweepAt = parentLinks.size * 2 + 8
     }
     return version
   }
