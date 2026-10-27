@@ -193,8 +193,9 @@ const snapCache: WeakMap<object, [version: number, snap: unknown]> =
 const versionHolder = [1] as [number]
 const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
 // Children reach their parents only through WeakRef, so a proxy with
-// listeners is held here until they are removed.
-const subscribedProxies: Set<Visit> = new Set()
+// listeners is held here until they are removed. Through its handler, it
+// keeps alive the visit function that the WeakRefs point to.
+const subscribedProxies: Set<object> = new Set()
 
 // notification delivery
 type Subscription = {
@@ -396,11 +397,11 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   const addListener = (listener: Listener) => {
     ensureVersion()
     listeners.add(listener)
-    subscribedProxies.add(visit)
+    subscribedProxies.add(proxyObject)
     const removeListener = () => {
       listeners.delete(listener)
       if (!listeners.size) {
-        subscribedProxies.delete(visit)
+        subscribedProxies.delete(proxyObject)
       }
     }
     return removeListener
