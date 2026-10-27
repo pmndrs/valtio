@@ -159,6 +159,22 @@ describe('versions pushed through parent links', () => {
     expect(calls).toEqual(['leaf', 'left', 'right', 'state'])
   })
 
+  it('notifies an ancestor once, at its nearest distance', () => {
+    const leaf = proxy({ count: 0 })
+    const left = proxy({ leaf })
+    const right = proxy({ leaf })
+    // root also holds leaf directly, so it is as near as left and right
+    const root = proxy({ leaf, left, right })
+    const calls: string[] = []
+    subscribe(root, () => calls.push('root'))
+    subscribe(left, () => calls.push('left'))
+    subscribe(right, () => calls.push('right'))
+    subscribe(leaf, () => calls.push('leaf'))
+    leaf.count = 1
+    expect(calls[0]).toBe('leaf')
+    expect(calls.slice(1).sort()).toEqual(['left', 'right', 'root'])
+  })
+
   it('keeps pushing versions after the last unsubscribe', () => {
     const state = proxy({ child: { count: 0 } })
     const unsubscribe = subscribe(state, () => {})
