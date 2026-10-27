@@ -178,7 +178,21 @@ describe('garbage collection', () => {
     expect(snapshot(child).count).toBe(1)
   })
 
-  it('keeps a subscribed parent alive until it is unsubscribed', async () => {
+  it('keeps a subscribed parent alive with no reference left to it', async () => {
+    const state = proxy({ a: { count: 0 } })
+    const callback = vi.fn()
+    ;(() => {
+      // neither the parent nor the unsubscribe function is kept
+      subscribe(proxy({ a: state.a }), callback)
+    })()
+    for (let i = 0; i < 3; i++) {
+      await collectGarbage()
+    }
+    state.a.count = 1
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
+  it('lets a subscribed parent be collected after it is unsubscribed', async () => {
     const state = proxy({ a: { count: 0 } })
     const callback = vi.fn()
     let parentRef: WeakRef<object> | undefined
