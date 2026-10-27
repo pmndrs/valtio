@@ -1,7 +1,7 @@
 import { setFlagsFromString } from 'node:v8'
 import { runInNewContext } from 'node:vm'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, subscribe } from 'valtio'
+import { proxy, snapshot, subscribe, unstable_enableOp } from 'valtio'
 
 setFlagsFromString('--expose-gc')
 const gc = runInNewContext('gc') as () => void
@@ -161,6 +161,45 @@ describe('versions pushed through parent links', () => {
     state.child.count = 1
     expect(snapshot(state)).not.toBe(snap)
     expect(snapshot(state).child.count).toBe(1)
+  })
+})
+
+describe('ops through ancestors without subscribers', () => {
+  afterEach(() => {
+    unstable_enableOp(false)
+  })
+
+  const pathTo = (depth: number) => [...Array(depth).fill('child'), 'count']
+
+  it('reports the full path above a chain linked only by snapshots', () => {
+    unstable_enableOp()
+    const nodes: object[] = [proxy({ count: 0 })]
+    for (let i = 0; i < 10000; i++) {
+      nodes.push(proxy({ child: nodes[i]! }))
+    }
+    // bottom up, so each snapshot links one level
+    nodes.forEach((node) => snapshot(node))
+    const middleCallback = vi.fn()
+    const rootCallback = vi.fn()
+    subscribe(nodes[5000]!, middleCallback)
+    subscribe(nodes[10000]!, rootCallback)
+    ;(nodes[0] as { count: number }).count = 1
+    expect(middleCallback).toHaveBeenCalledWith([['set', pathTo(5000), 1, 0]])
+    expect(rootCallback).toHaveBeenCalledWith([['set', pathTo(10000), 1, 0]])
+  })
+
+  it('reports the full path above a chain whose subscribers are gone', () => {
+    unstable_enableOp()
+    const leaf = proxy({ count: 0 })
+    let root: object = leaf
+    for (let i = 0; i < 10000; i++) {
+      root = proxy({ child: root })
+      subscribe(root, () => {})()
+    }
+    const callback = vi.fn()
+    subscribe(root, callback)
+    leaf.count = 1
+    expect(callback).toHaveBeenCalledWith([['set', pathTo(10000), 1, 0]])
   })
 })
 

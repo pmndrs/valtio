@@ -55,12 +55,17 @@ export type Snapshot<T> = T extends { $$valtioSnapshot: infer S }
 type RemoveListener = () => void
 type AddListener = (listener: Listener) => RemoveListener
 
-// Updates a proxy for a write and queues its listeners. It returns the
-// proxy's parent links the first time the write reaches it.
+// Updates a proxy for a write and queues its listeners, building the op
+// only if it has any. It returns the proxy's parent links the first time
+// the write reaches it.
 type Visit = (
-  op: Op | undefined,
+  getOp: () => Op | undefined,
   nextVersion: number,
 ) => Set<ParentLink> | undefined
+
+// The keys from a proxy down to the written one, as a linked list, so
+// that passing a write up a chain doesn't copy its path at every level.
+type PathKeys = readonly [key: string | symbol, rest: PathKeys] | undefined
 
 // A link from a child to one parent, under one key.
 // It is weak, so a parent that is no longer used can be collected.
@@ -257,20 +262,27 @@ const pushVersion = (visit: Visit, op: Op | undefined, nextVersion: number) => {
   // subscriptions notified by it are queued before any callback runs.
   ++batchDepth
   try {
-    const queue: (readonly [Visit, Op | undefined])[] = [[visit, op]]
-    for (const [visitNode, nodeOp] of queue) {
-      visitNode(nodeOp, nextVersion)?.forEach((link, _, parentLinks) => {
+    const queue: (readonly [Visit, PathKeys])[] = [[visit, undefined]]
+    for (const [visitNode, keys] of queue) {
+      const getOp = () => {
+        if (!op || !keys) {
+          return op
+        }
+        const path: Path = []
+        for (let k: PathKeys = keys; k; k = k[1]) {
+          path.push(k[0])
+        }
+        const nodeOp = [...op] as Op
+        nodeOp[1] = [...path, ...(op[1] as Path)]
+        return nodeOp
+      }
+      visitNode(getOp, nextVersion)?.forEach((link, _, parentLinks) => {
         const visitParent = link[0].deref()
         if (!visitParent) {
           parentLinks.delete(link)
           return
         }
-        let parentOp: Op | undefined
-        if (nodeOp) {
-          parentOp = [...nodeOp]
-          parentOp[1] = [link[1], ...(nodeOp[1] as Path)]
-        }
-        queue.push([visitParent, parentOp])
+        queue.push([visitParent, [link[1], keys]])
       })
     }
   } finally {
@@ -309,12 +321,15 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   let selfRef: WeakRef<Visit> | undefined
   const listeners = new Set<Listener>()
   const parentLinks = new Set<ParentLink>()
-  const visit: Visit = (op, nextVersion) => {
+  const visit: Visit = (getOp, nextVersion) => {
     if (version === nextVersion) {
       return undefined
     }
     version = nextVersion
-    listeners.forEach((listener) => listener(op, nextVersion))
+    if (listeners.size) {
+      const op = getOp()
+      listeners.forEach((listener) => listener(op, nextVersion))
+    }
     return parentLinks
   }
   const notifyUpdate = (op: Op | undefined) =>
