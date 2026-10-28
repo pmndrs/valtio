@@ -53,12 +53,7 @@ type Visit = (nextVersion: number) => Set<ParentLink> | undefined
 
 // A link from a child to one parent, under one key.
 // It is weak, so a parent that is no longer used can be collected.
-// The parent is a WeakRef, typed by its shape so that the public
-// declarations don't require the ES2021 lib.
-type ParentLink = readonly [
-  parent: { deref(): Visit | undefined },
-  key: string | symbol,
-]
+type ParentLink = readonly [parent: WeakRef<Visit>, key: string | symbol]
 
 type ProxyState = readonly [
   target: object,
