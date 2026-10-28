@@ -124,24 +124,38 @@ describe('subscribe with keys', () => {
     expect(onOwnKeys).not.toHaveBeenCalled()
   })
 
-  it('shortens a sparse array without visiting its holes', () => {
-    const state = proxy<{ count: number }[]>([])
-    state.length = 10_000_000
-    state[5] = { count: 0 }
-    const removed = state[5]
-    const onIndex = vi.fn()
-    const onAll = vi.fn()
-    subscribe(state, onIndex, { keys: ['5'] })
-    subscribe(state, onAll)
+  it.each([false, true])(
+    'shortens a sparse array without visiting its holes (ownKeys: %s)',
+    (ownKeys) => {
+      const state = proxy<{ count: number }[]>([])
+      state.length = 10_000_000
+      state[5] = { count: 0 }
+      const removed = state[5]
+      const onIndex = vi.fn()
+      const onAll = vi.fn()
+      subscribe(state, onIndex, { keys: ['5'], ownKeys })
+      subscribe(state, onAll)
 
-    const start = performance.now()
-    state.length = 0
-    // visiting every index would take seconds
-    expect(performance.now() - start).toBeLessThan(100)
-    expect(onIndex).toHaveBeenCalledTimes(1)
+      const start = performance.now()
+      state.length = 0
+      // visiting every index would take seconds
+      expect(performance.now() - start).toBeLessThan(100)
+      expect(onIndex).toHaveBeenCalledTimes(1)
 
-    removed.count = 1
-    expect(onAll).toHaveBeenCalledTimes(1)
+      removed.count = 1
+      expect(onAll).toHaveBeenCalledTimes(1)
+    },
+  )
+
+  it('hears a shorter length past a run of holes', () => {
+    const state = proxy<number[]>([0, 1])
+    state.length = 5000
+    const onOwnKeys = vi.fn()
+    subscribe(state, onOwnKeys, { ownKeys: true })
+
+    state.length = 1
+    expect(onOwnKeys).toHaveBeenCalledTimes(1)
+    expect(Object.keys(state)).toEqual(['0'])
   })
 
   it('calls back once per batch', () => {

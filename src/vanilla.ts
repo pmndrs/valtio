@@ -407,11 +407,19 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     }
     if (keyListeners.has(OWN_KEYS)) {
       // A shorter length removes indices from the end, so the last own one
-      // is removed if any is. Searching from the end stops at once on a
-      // dense array.
+      // is removed if any is. On a dense array it is a step or two from the
+      // end. After a run of holes, the own keys are read instead.
       for (let i = length; i-- > newLength; ) {
         if (hasOwn(baseObject, String(i))) {
           removableKeys.push(String(i))
+          break
+        }
+        if (length - i > 1000) {
+          Object.keys(baseObject).forEach((key) => {
+            if (+key >= newLength) {
+              removableKeys.push(key)
+            }
+          })
           break
         }
       }
