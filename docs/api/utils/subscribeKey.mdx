@@ -20,4 +20,4 @@ subscribeKey(state, 'count', (v) =>
 
 The callback receives the new value. It runs only when the value under the key changes, compared with `Object.is`, so a change nested under the value, such as `state.user.name = 'Ann'` for the key `user`, doesn't call it.
 
-Writes to other keys cost the subscription nothing. A key with a getter is the exception: the getter can read any key, so it is checked after every change in the proxy.
+Writes to other keys cost the subscription nothing. A key that has a getter when you subscribe is the exception: the getter can read any key, so it is checked after every change in the proxy.

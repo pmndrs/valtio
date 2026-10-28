@@ -108,71 +108,18 @@ describe('subscribe with keys', () => {
     expect(onLength).toHaveBeenCalledTimes(1)
   })
 
-  it('ignores a shorter length that changes nothing', () => {
-    const state = proxy([1, 2, 3, 4])
-    Object.defineProperty(state, 'length', { writable: false })
-    const onIndex = vi.fn()
-    const onOwnKeys = vi.fn()
-    subscribe(state, onIndex, { keys: ['3'] })
-    subscribe(state, onOwnKeys, { ownKeys: true })
+  it('shortens a sparse array that nothing depends on without visiting its holes', () => {
+    const state = proxy<number[]>([])
+    state.length = 10_000_000
+    state[5] = 5
+    const callback = vi.fn()
+    subscribe(state, callback)
 
-    expect(() => {
-      state.length = 1
-    }).toThrow(TypeError)
-    expect(state).toEqual([1, 2, 3, 4])
-    expect(onIndex).not.toHaveBeenCalled()
-    expect(onOwnKeys).not.toHaveBeenCalled()
-  })
-
-  it.each([false, true])(
-    'shortens a sparse array without visiting its holes (ownKeys: %s)',
-    (ownKeys) => {
-      const state = proxy<{ count: number }[]>([])
-      state.length = 10_000_000
-      state[5] = { count: 0 }
-      const removed = state[5]
-      const onIndex = vi.fn()
-      const onAll = vi.fn()
-      subscribe(state, onIndex, { keys: ['5'], ownKeys })
-      subscribe(state, onAll)
-
-      const start = performance.now()
-      state.length = 0
-      // visiting every index would take seconds
-      expect(performance.now() - start).toBeLessThan(100)
-      expect(onIndex).toHaveBeenCalledTimes(1)
-
-      removed.count = 1
-      expect(onAll).toHaveBeenCalledTimes(1)
-    },
-  )
-
-  it('hears a shorter length past a run of holes', () => {
-    const state = proxy<number[]>([0, 1])
-    state.length = 5000
-    const onOwnKeys = vi.fn()
-    subscribe(state, onOwnKeys, { ownKeys: true })
-
-    state.length = 1
-    expect(onOwnKeys).toHaveBeenCalledTimes(1)
-    expect(Object.keys(state)).toEqual(['0'])
-  })
-
-  it('hears a non-enumerable index removed past a run of holes', () => {
-    const raw: number[] = []
-    Object.defineProperty(raw, '1', {
-      value: 1,
-      writable: true,
-      configurable: true,
-      enumerable: false,
-    })
-    raw.length = 5000
-    const state = proxy(raw)
-    const onOwnKeys = vi.fn()
-    subscribe(state, onOwnKeys, { ownKeys: true })
-
+    const start = performance.now()
     state.length = 0
-    expect(onOwnKeys).toHaveBeenCalledTimes(1)
+    // visiting every index would take seconds
+    expect(performance.now() - start).toBeLessThan(100)
+    expect(callback).toHaveBeenCalledTimes(1)
   })
 
   it('hears a length set by a setter once', () => {

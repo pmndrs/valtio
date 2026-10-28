@@ -137,7 +137,7 @@ const createHandlerDefault = <T extends object>(
   addChildListener: (key: string | symbol, value: unknown) => void,
   removeChildListener: (key: string | symbol) => void,
   notifyUpdate: (keys: readonly (string | symbol)[]) => void,
-  findRemovableKeys: (newLength: number) => readonly (string | symbol)[],
+  findRemovedIndices: (newLength: number) => readonly string[],
 ): ProxyHandler<T> => ({
   deleteProperty(target: T, key: string | symbol) {
     const hadKey = hasOwn(target, key)
@@ -160,11 +160,11 @@ const createHandlerDefault = <T extends object>(
     }
     const hadKey = hasOwn(target, key)
     const length = Array.isArray(target) && target.length
-    // A shorter length removes indices without this trap, so the keys it
-    // can remove are listed before the write and checked after it.
-    const removableKeys =
+    // A shorter length removes indices without this trap, so they are
+    // listed before the write.
+    const removedIndices =
       key === 'length' && length !== false && value < length
-        ? findRemovableKeys(Number(value))
+        ? findRemovedIndices(Number(value))
         : []
     removeChildListener(key)
     if (isObject(value)) {
@@ -183,14 +183,11 @@ const createHandlerDefault = <T extends object>(
         keys.push('length')
       }
     }
-    const keyCount = keys.length
-    removableKeys.forEach((removableKey) => {
-      if (!hasOwn(target, removableKey)) {
-        removeChildListener(removableKey)
-        keys.push(removableKey)
-      }
+    removedIndices.forEach((index) => {
+      removeChildListener(index)
+      keys.push(index)
     })
-    if (keys.length > keyCount) {
+    if (removedIndices.length) {
       keys.push(OWN_KEYS)
     }
     notifyUpdate(keys)
@@ -390,46 +387,18 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
       ])
     }
   }
-  // Lists, before this array is shortened to newLength, the own keys it may
-  // remove, at least those with a child or a key listener. It reads those
-  // keys or the indices past newLength, whichever are fewer, so the holes of
-  // a sparse array cost nothing.
-  const findRemovableKeys = (newLength: number) => {
-    const length = (baseObject as unknown[]).length
-    const removableKeys: (string | symbol)[] = []
-    const add = (key: string | symbol) => {
-      if (hasOwn(baseObject, key)) {
-        removableKeys.push(key)
-      }
-    }
-    if (length - newLength > childProxyStates.size + keyListeners.size) {
-      childProxyStates.forEach((_, key) => add(key))
-      keyListeners.forEach((_, key) => add(key))
-    } else {
-      for (let i = newLength; i < length; i++) {
-        add(String(i))
-      }
-    }
-    if (keyListeners.has(OWN_KEYS)) {
-      // A shorter length removes indices from the end, so the last own one
-      // is removed if any is. On a dense array it is a step or two from the
-      // end. After a run of holes, the own keys are read instead.
-      for (let i = length; i-- > newLength; ) {
+  // Lists the own indices that shortening this array to newLength removes.
+  // Without children or key listeners, nothing needs them.
+  const findRemovedIndices = (newLength: number) => {
+    const indices: string[] = []
+    if (childProxyStates.size || keyListeners.size) {
+      for (let i = newLength; i < (baseObject as unknown[]).length; i++) {
         if (hasOwn(baseObject, String(i))) {
-          removableKeys.push(String(i))
-          break
-        }
-        if (length - i > 1000) {
-          Object.getOwnPropertyNames(baseObject).forEach((key) => {
-            if (+key >= newLength) {
-              removableKeys.push(key)
-            }
-          })
-          break
+          indices.push(String(i))
         }
       }
     }
-    return removableKeys
+    return indices
   }
   const removeChildListener = (key: string | symbol) => {
     const entry = childProxyStates.get(key)
@@ -479,7 +448,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     addChildListener,
     removeChildListener,
     notifyUpdate,
-    findRemovableKeys,
+    findRemovedIndices,
   )
   const proxyObject = newProxy(baseObject, handler)
   proxyCache.set(baseObject, proxyObject)
