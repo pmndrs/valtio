@@ -92,6 +92,10 @@ const createSnapshotDefault = <T extends object>(
   const snap: any = Array.isArray(target)
     ? []
     : Object.create(Object.getPrototypeOf(target))
+  if (Array.isArray(target)) {
+    // Holes at the end set no index, so the length is copied first.
+    snap.length = target.length
+  }
   markToTrack(snap, true) // mark to track
   snapCache.set(target, [version, snap])
   Reflect.ownKeys(target).forEach((key) => {
@@ -173,10 +177,11 @@ const createHandlerDefault = <T extends object>(
     const keys = [key]
     if (!hadKey && hasOwn(target, key)) {
       keys.push(OWN_KEYS)
-    }
-    // An index past the end lengthens an array without this trap, too.
-    if (length !== false && key !== 'length' && target.length !== length) {
-      keys.push('length')
+      // An index added past the end lengthens an array without this trap,
+      // too. A setter that sets the length goes through the trap itself.
+      if (length !== false && target.length !== length) {
+        keys.push('length')
+      }
     }
     const keyCount = keys.length
     removableKeys.forEach((removableKey) => {
@@ -415,7 +420,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
           break
         }
         if (length - i > 1000) {
-          Object.keys(baseObject).forEach((key) => {
+          Object.getOwnPropertyNames(baseObject).forEach((key) => {
             if (+key >= newLength) {
               removableKeys.push(key)
             }

@@ -158,6 +158,37 @@ describe('subscribe with keys', () => {
     expect(Object.keys(state)).toEqual(['0'])
   })
 
+  it('hears a non-enumerable index removed past a run of holes', () => {
+    const raw: number[] = []
+    Object.defineProperty(raw, '1', {
+      value: 1,
+      writable: true,
+      configurable: true,
+      enumerable: false,
+    })
+    raw.length = 5000
+    const state = proxy(raw)
+    const onOwnKeys = vi.fn()
+    subscribe(state, onOwnKeys, { ownKeys: true })
+
+    state.length = 0
+    expect(onOwnKeys).toHaveBeenCalledTimes(1)
+  })
+
+  it('hears a length set by a setter once', () => {
+    class List extends Array<number> {
+      set size(value: number) {
+        this.length = value
+      }
+    }
+    const state = proxy(new List(1, 2, 3))
+    const onLength = vi.fn()
+    subscribe(state, onLength, { keys: ['length'] })
+    ;(state as { size: number }).size = 1
+    expect(onLength).toHaveBeenCalledTimes(1)
+    expect(state.length).toBe(1)
+  })
+
   it('calls back once per batch', () => {
     const state = proxy({ a: 0, b: 0 })
     const callback = vi.fn()

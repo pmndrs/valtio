@@ -115,6 +115,19 @@ describe('devtools', () => {
     )
   })
 
+  it('names a longer length that only adds holes', async () => {
+    const obj = proxy({ items: [] as number[] })
+    devtools(obj, { enabled: true })
+
+    obj.items.length = 3
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:items.length' }),
+      expect.anything(),
+    )
+  })
+
   it('names a replaced object by the values under it that differ', async () => {
     const obj = proxy({ user: { name: 'Ann', age: 1 } })
     devtools(obj, { enabled: true })
