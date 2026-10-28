@@ -122,6 +122,16 @@ describe('subscribe with keys', () => {
     expect(callback).toHaveBeenCalledTimes(1)
   })
 
+  it('throws for an invalid length without looking for indices', () => {
+    const state = proxy([1, 2])
+    subscribe(state, () => {}, { keys: ['length'] })
+
+    expect(() => {
+      state.length = -Infinity
+    }).toThrow(RangeError)
+    expect(state).toEqual([1, 2])
+  })
+
   it('hears a length set by a setter once', () => {
     class List extends Array<number> {
       set size(value: number) {

@@ -161,9 +161,9 @@ const createHandlerDefault = <T extends object>(
     const hadKey = hasOwn(target, key)
     const length = Array.isArray(target) && target.length
     // A shorter length removes indices without this trap, so they are
-    // listed before the write.
+    // listed before the write. An invalid length throws in the write.
     const removedIndices =
-      key === 'length' && length !== false && value < length
+      key === 'length' && length !== false && value >= 0 && value < length
         ? findRemovedIndices(Number(value))
         : []
     removeChildListener(key)
