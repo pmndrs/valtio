@@ -79,6 +79,55 @@ describe('subscribe with keys', () => {
     expect(onAll).toHaveBeenCalledTimes(1)
   })
 
+  it('hears an index removed by pop once', () => {
+    const state = proxy([1, 2])
+    const onIndex = vi.fn()
+    const onOwnKeys = vi.fn()
+    subscribe(state, onIndex, { keys: ['1'] })
+    subscribe(state, onOwnKeys, { ownKeys: true })
+
+    // pop deletes the index, then sets the length
+    state.pop()
+    expect(onIndex).toHaveBeenCalledTimes(1)
+    expect(onOwnKeys).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores the holes past a shorter length', () => {
+    const state = proxy<number[]>([0])
+    state.length = 3
+    const onHole = vi.fn()
+    const onLength = vi.fn()
+    const onOwnKeys = vi.fn()
+    subscribe(state, onHole, { keys: ['2'] })
+    subscribe(state, onLength, { keys: ['length'] })
+    subscribe(state, onOwnKeys, { ownKeys: true })
+
+    state.length = 1
+    expect(onHole).not.toHaveBeenCalled()
+    expect(onOwnKeys).not.toHaveBeenCalled()
+    expect(onLength).toHaveBeenCalledTimes(1)
+  })
+
+  it('shortens a sparse array without visiting its holes', () => {
+    const state = proxy<{ count: number }[]>([])
+    state.length = 10_000_000
+    state[5] = { count: 0 }
+    const removed = state[5]
+    const onIndex = vi.fn()
+    const onAll = vi.fn()
+    subscribe(state, onIndex, { keys: ['5'] })
+    subscribe(state, onAll)
+
+    const start = performance.now()
+    state.length = 0
+    // visiting every index would take seconds
+    expect(performance.now() - start).toBeLessThan(100)
+    expect(onIndex).toHaveBeenCalledTimes(1)
+
+    removed.count = 1
+    expect(onAll).toHaveBeenCalledTimes(1)
+  })
+
   it('calls back once per batch', () => {
     const state = proxy({ a: 0, b: 0 })
     const callback = vi.fn()

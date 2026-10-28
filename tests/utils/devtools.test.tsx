@@ -128,6 +128,25 @@ describe('devtools', () => {
     )
   })
 
+  it('compares a shared object on each path to it', async () => {
+    const obj = proxy<{ a: { x: number }; b: { x: number } }>({
+      a: { x: 0 },
+      b: { x: 1 },
+    })
+    devtools(obj, { enabled: true })
+
+    batch(() => {
+      obj.a = { x: 0 }
+      obj.b = obj.a
+    })
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:b.x' }),
+      { a: { x: 0 }, b: { x: 0 } },
+    )
+  })
+
   it('sends nothing for writes reverted within a burst', async () => {
     const obj = proxy({ nested: { count: 0 } })
     devtools(obj, { enabled: true })
@@ -334,6 +353,27 @@ describe('devtools', () => {
 
     await vi.advanceTimersByTimeAsync(0)
     expect(extension.send).toBeCalledTimes(0)
+  })
+
+  it('sends the next change after jumping to an equal state', async () => {
+    const obj = proxy({ nested: { n: 0 } })
+    devtools(obj, { enabled: true })
+
+    extension.send.mockClear()
+    ;(extensionSubscriber as (message: any) => void)({
+      type: 'DISPATCH',
+      state: JSON.stringify({ nested: { n: 0 } }),
+      payload: { type: 'JUMP_TO_STATE' },
+    })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).not.toHaveBeenCalled()
+
+    obj.nested.n = 1
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:nested.n' }),
+      { nested: { n: 1 } },
+    )
   })
 
   describe('applying an incoming state', () => {
