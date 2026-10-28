@@ -37,6 +37,34 @@ subscribe(state.arr, () => console.log('state.arr has changed to', state.arr))
 state.arr.push('world')
 ```
 
+## Subscribe to keys
+
+Pass `keys` to run the callback only when one of those keys is set or deleted on the proxy itself, or `ownKeys: true` to run it when a key is added or removed:
+
+```js
+const state = proxy({ count: 0, text: 'hello', nested: { value: 1 } })
+
+subscribe(state, () => console.log('count or nested changed'), {
+  keys: ['count', 'nested'],
+})
+state.count++ // logs
+state.text = 'world' // doesn't log
+state.nested.value++ // doesn't log: the change is under nested, not to it
+state.nested = { value: 2 } // logs
+
+subscribe(state, () => console.log('a key was added or removed'), {
+  ownKeys: true,
+})
+state.extra = true // logs
+delete state.extra // logs
+```
+
+With options, the callback runs only for what they list, and both can be combined. Writes to other keys, or under the listed ones, cost such a subscription nothing.
+
+Keys are strings or symbols, so an array index is written as a string, such as `'0'`. An array's `length` is a key too: writing an index past the end changes it, and setting a shorter `length` deletes the indices past it.
+
+The callback is called with no arguments.
+
 ## Notifications are synchronous
 
 The callback runs synchronously after each change, before the assignment returns. Several changes notify several times, unless they are wrapped in [`batch`](./batch) or made inside a callback (see below):
@@ -70,16 +98,14 @@ If you prefer to be notified once per microtask, as in Valtio v2, coalesce insid
 
 ```js
 const subscribeCoalesced = (proxyObject, callback) => {
-  const ops = []
   let scheduled = false
   let active = true
-  const unsubscribe = subscribe(proxyObject, (newOps) => {
-    newOps.forEach((op) => ops.push(op))
+  const unsubscribe = subscribe(proxyObject, () => {
     if (!scheduled) {
       scheduled = true
       queueMicrotask(() => {
         scheduled = false
-        if (active) callback(ops.splice(0))
+        if (active) callback()
       })
     }
   })
@@ -89,9 +115,3 @@ const subscribeCoalesced = (proxyObject, callback) => {
   }
 }
 ```
-
-## Advanced: Listening to "Ops"
-
-The `subscribe` callback can also receive **Ops** (Operations), which are detailed records of exactly what changed (e.g., which property was set or deleted). This is useful for advanced scenarios like synchronization or undo/redo.
-
-Because tracking these operations has a small performance cost, they are disabled by default. For more details on how to enable and use them, check out [Subscribe Ops](./subscribe-ops).

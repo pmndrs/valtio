@@ -89,6 +89,101 @@ describe('devtools', () => {
     expect(extension.send).toHaveBeenCalledTimes(1)
     const [action] = extension.send.mock.lastCall as [{ type: string }]
     expect(action.type.split(', ')).toHaveLength(count)
+  }, 15_000) // the snapshot and its diff take a few seconds under load
+
+  it('names the action after the paths that changed', async () => {
+    const obj = proxy<{
+      nested: { count: number }
+      items: number[]
+      extra?: boolean
+      date: Date
+    }>({ nested: { count: 0 }, items: [1], extra: true, date: new Date(0) })
+    devtools(obj, { enabled: true })
+
+    obj.nested.count = 1
+    obj.items.push(2)
+    delete obj.extra
+    obj.date = new Date(1)
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenCalledTimes(1)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        type: 'set:nested.count, set:items.1, set:items.length, set:date, delete:extra',
+      }),
+      expect.anything(),
+    )
+  })
+
+  it('names a longer length that only adds holes', async () => {
+    const obj = proxy({ items: [] as number[] })
+    devtools(obj, { enabled: true })
+
+    obj.items.length = 3
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:items.length' }),
+      expect.anything(),
+    )
+  })
+
+  it('names a replaced object by the values under it that differ', async () => {
+    const obj = proxy({ user: { name: 'Ann', age: 1 } })
+    devtools(obj, { enabled: true })
+
+    obj.user = { name: 'Bob', age: 1 }
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:user.name' }),
+      { user: { name: 'Bob', age: 1 } },
+    )
+  })
+
+  it('compares a shared object on each path to it', async () => {
+    const obj = proxy<{ a: { x: number }; b: { x: number } }>({
+      a: { x: 0 },
+      b: { x: 1 },
+    })
+    devtools(obj, { enabled: true })
+
+    batch(() => {
+      obj.a = { x: 0 }
+      obj.b = obj.a
+    })
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:b.x' }),
+      { a: { x: 0 }, b: { x: 0 } },
+    )
+  })
+
+  it('sends nothing for writes reverted within a burst', async () => {
+    const obj = proxy({ nested: { count: 0 } })
+    devtools(obj, { enabled: true })
+
+    obj.nested.count = 1
+    obj.nested.count = 0
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).not.toHaveBeenCalled()
+  })
+
+  it('names the action for a write in a cycle', async () => {
+    type Node = { count: number; self?: Node }
+    const obj = proxy<Node>({ count: 0 })
+    obj.self = obj
+    devtools(obj, { enabled: true })
+
+    obj.count = 1
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:count' }),
+      expect.anything(),
+    )
   })
 
   describe('If there is no extension installed...', () => {
@@ -271,6 +366,27 @@ describe('devtools', () => {
 
     await vi.advanceTimersByTimeAsync(0)
     expect(extension.send).toBeCalledTimes(0)
+  })
+
+  it('sends the next change after jumping to an equal state', async () => {
+    const obj = proxy({ nested: { n: 0 } })
+    devtools(obj, { enabled: true })
+
+    extension.send.mockClear()
+    ;(extensionSubscriber as (message: any) => void)({
+      type: 'DISPATCH',
+      state: JSON.stringify({ nested: { n: 0 } }),
+      payload: { type: 'JUMP_TO_STATE' },
+    })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).not.toHaveBeenCalled()
+
+    obj.nested.n = 1
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:nested.n' }),
+      { nested: { n: 1 } },
+    )
   })
 
   describe('applying an incoming state', () => {

@@ -1,14 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, subscribe, unstable_enableOp } from 'valtio'
+import { describe, expect, it, vi } from 'vitest'
+import { proxy, snapshot, subscribe } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
-
-afterEach(() => {
-  unstable_enableOp(false)
-})
 
 describe('detachment dispatch', () => {
   it('deduplicates a subscriber reached by the mutation and a cycle', () => {
-    unstable_enableOp()
     type State = { child: { parent?: State; count: number } }
     const raw: State = { child: { count: 1 } }
     raw.child.parent = raw
@@ -16,8 +11,7 @@ describe('detachment dispatch', () => {
     const listener = vi.fn()
     const remove = subscribe(state, listener)
     state.child = { count: 2 }
-    expect(listener).toHaveBeenCalledTimes(1)
-    expect(listener.mock.calls[0]![0]).toHaveLength(1)
+    expect(listener).toHaveBeenCalledExactlyOnceWith()
     remove()
   })
 })

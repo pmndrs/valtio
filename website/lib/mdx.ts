@@ -257,7 +257,6 @@ export function getDocsNav(): NavigationTree {
       Advanced: [
         pages['ref'],
         pages['subscribe'],
-        pages['subscribe-ops'],
         pages['batch'],
         pages['snapshot'],
         pages['isProxyObject'],

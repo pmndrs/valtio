@@ -225,6 +225,14 @@ As a result, the devtools will not display any state change.
 
 Additionally, this issue involved not only updating devtools, but also triggering `re-render`.
 
+## Change state by assignment and `delete` on the proxy
+
+Valtio tracks assignment and `delete` on a proxy. Other ways of changing it aren't tracked, and can leave subscribers and snapshots behind.
+
+- `Object.defineProperty` on a proxy notifies no one. Define getters in the object you pass to `proxy()`: `subscribeKey` checks for a getter when you subscribe, so a property that becomes a getter later isn't followed.
+- Keep properties writable and configurable. If an array element isn't configurable, a shorter `length` stops before it, and Valtio no longer tracks that element.
+- Don't use a proxy as the prototype of another object. A write to that object goes through the proxy, which treats it as its own change.
+
 ## Issue with imports when using a library other than `react` (i.e. solidjs)
 
 Valtio does not have to work within react, however it was built with react in mind. This being the case, the main `valtio` module exports the react modules alongside the vanilla modules for convenience. This means if you are attempting to import from the main `valtio` module or the `valtio/utils` submodule into a non-react project, you may end up with build errors like this:

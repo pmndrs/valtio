@@ -92,6 +92,14 @@ describe('snapshot', () => {
     expect(snap.child.selected).toBe(1)
   })
 
+  it('should keep the length of an array that ends in holes', () => {
+    const state = proxy([1])
+    state.length = 3
+    const snap = snapshot(state)
+    expect(snap.length).toBe(3)
+    expect(Object.keys(snap)).toEqual(['0'])
+  })
+
   it('should reuse the snapshot while the state is unchanged', () => {
     const state = proxy({ count: 0 })
     expect(snapshot(state)).toBe(snapshot(state))

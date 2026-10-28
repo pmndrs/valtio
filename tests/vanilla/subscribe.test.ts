@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { batch, proxy, ref, subscribe, unstable_enableOp } from 'valtio'
+import { batch, proxy, ref, subscribe } from 'valtio'
 
 describe('subscribe', () => {
   const consoleWarn = console.warn
@@ -203,151 +203,65 @@ describe('subscribe', () => {
   })
 })
 
-describe('subscribe with op', () => {
-  const consoleWarn = console.warn
-
-  beforeEach(() => {
-    unstable_enableOp(true)
-    console.warn = vi.fn((message: string) => {
-      if (message === 'Please use proxy object') {
-        return
-      }
-      consoleWarn(message)
-    })
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    console.warn = consoleWarn
-    vi.useRealTimers()
-    unstable_enableOp(false)
-  })
-
-  it('should notify ops', async () => {
-    const obj = proxy<{ count1: number; count2?: number }>({
-      count1: 0,
-      count2: 0,
-    })
-    const handler = vi.fn()
-
-    subscribe(obj, handler)
-
-    batch(() => {
-      obj.count1 += 1
-      obj.count2 = 2
-    })
-
-    expect(handler).toBeCalledTimes(1)
-    expect(handler).lastCalledWith([
-      ['set', ['count1'], 1, 0],
-      ['set', ['count2'], 2, 0],
-    ])
-
-    delete obj.count2
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toBeCalledTimes(2)
-    expect(handler).lastCalledWith([['delete', ['count2'], 2]])
-  })
-
-  it('should notify nested ops', async () => {
-    const obj = proxy<{ nested: { count?: number } }>({
-      nested: { count: 0 },
-    })
-    const handler = vi.fn()
-
-    subscribe(obj, handler)
-
-    obj.nested.count = 1
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toBeCalledTimes(1)
-    expect(handler).lastCalledWith([['set', ['nested', 'count'], 1, 0]])
-
-    delete obj.nested.count
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toBeCalledTimes(2)
-    expect(handler).lastCalledWith([['delete', ['nested', 'count'], 1]])
-  })
-
-  it('should preserve queued child ops before replacing a parent with reordered keys', async () => {
+describe('subscribe across a replaced parent', () => {
+  it('should keep hearing a child moved into a parent with reordered keys', () => {
     const state = proxy({ node: { child: { count: 0 }, other: 0 } })
-    const previous = state.node
     const child = state.node.child
     const handler = vi.fn()
     const unsubscribe = subscribe(state, handler)
 
     state.node.child.count = 1
     state.node = { other: 0, child }
-    await vi.advanceTimersByTimeAsync(0)
 
     expect(state.node.child).toBe(child)
     expect(Object.keys(state.node)).toEqual(['other', 'child'])
-    expect(handler.mock.calls.flatMap(([ops]) => ops)).toEqual([
-      ['set', ['node', 'child', 'count'], 1, 0],
-      ['set', ['node'], { other: 0, child }, previous],
-    ])
+    expect(handler).toHaveBeenCalledTimes(2)
 
     handler.mockClear()
     state.node.child.count = 2
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toHaveBeenCalledExactlyOnceWith([
-      ['set', ['node', 'child', 'count'], 2, 1],
-    ])
+    expect(handler).toHaveBeenCalledExactlyOnceWith()
 
     unsubscribe()
     handler.mockClear()
     state.node.child.count = 3
-    await vi.advanceTimersByTimeAsync(0)
     expect(handler).not.toHaveBeenCalled()
   })
 
-  it('should preserve queued child ops before replacing a cyclic parent', async () => {
+  it('should hear the new child after replacing a cyclic parent', () => {
     type Node = { child?: { count: number; parent: Node } }
     const node: Node = {}
     node.child = { count: 0, parent: node }
     const state = proxy({ node })
-    const previous = state.node
     const child = state.node.child!
     const handler = vi.fn()
     const unsubscribe = subscribe(state, handler)
 
     child.count = 1
     state.node = { child: { count: 1, parent: {} } }
-    await vi.advanceTimersByTimeAsync(0)
 
     expect(state.node.child).not.toBe(child)
     expect(child.count).toBe(1)
-    expect(handler.mock.calls.flatMap(([ops]) => ops)).toEqual([
-      ['set', ['node', 'child', 'count'], 1, 0],
-      ['set', ['node'], { child: { count: 1, parent: {} } }, previous],
-    ])
+    expect(handler).toHaveBeenCalledTimes(2)
 
     handler.mockClear()
+    child.count = 2
+    expect(handler).not.toHaveBeenCalled()
     state.node.child!.count = 2
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toHaveBeenCalledExactlyOnceWith([
-      ['set', ['node', 'child', 'count'], 2, 1],
-    ])
+    expect(handler).toHaveBeenCalledExactlyOnceWith()
 
     unsubscribe()
     handler.mockClear()
     state.node.child!.count = 3
-    await vi.advanceTimersByTimeAsync(0)
     expect(handler).not.toHaveBeenCalled()
   })
 
-  it('should report replacement ops when assigned keys are reordered', () => {
+  it('should notify once when a child is replaced by one with reordered keys', () => {
     const state = proxy({ node: { toString: 1, value: 2 } })
     const handler = vi.fn()
 
-    const previous = state.node
     subscribe(state, handler)
     state.node = { value: 2, toString: 1 }
 
-    expect(handler.mock.calls.map(([ops]) => ops[0])).toEqual([
-      ['set', ['node'], { value: 2, toString: 1 }, previous],
-    ])
+    expect(handler).toHaveBeenCalledExactlyOnceWith()
   })
 })

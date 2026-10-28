@@ -23,7 +23,7 @@ batch(() => {
 
 - `batch(fn)` runs `fn` synchronously and returns its result.
 - Changes are visible immediately inside the batch, both on the proxy and in `snapshot()`.
-- Subscribers run once when the outermost `batch` returns, with the ops of all their changes in order. Nested `batch` calls join the outer one.
+- Subscribers run once when the outermost `batch` returns. Nested `batch` calls join the outer one.
 - Only the synchronous part of an `async` function is batched.
 - If subscribers throw, the errors are thrown together from `batch` as an `AggregateError`, after `fn` has completed and every subscriber has run. Without `batch`, they are rethrown in a microtask instead.
 - If `fn` throws, subscribers are still notified of the changes it made, and then the error is rethrown. If subscribers also throw, all errors are thrown together as an `AggregateError`, with the error from `fn` first.

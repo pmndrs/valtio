@@ -27,7 +27,6 @@ describe('entry points', () => {
       'ref',
       'snapshot',
       'subscribe',
-      'unstable_enableOp',
       'unstable_getInternalStates',
       'unstable_isRef',
       'unstable_replaceInternalFunction',
