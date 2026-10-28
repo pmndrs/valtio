@@ -178,12 +178,16 @@ const createHandlerDefault = <T extends object>(
     if (length !== false && key !== 'length' && target.length !== length) {
       keys.push('length')
     }
+    const keyCount = keys.length
     removableKeys.forEach((removableKey) => {
       if (!hasOwn(target, removableKey)) {
         removeChildListener(removableKey)
         keys.push(removableKey)
       }
     })
+    if (keys.length > keyCount) {
+      keys.push(OWN_KEYS)
+    }
     notifyUpdate(keys)
     return true
   },
@@ -384,8 +388,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   // Lists, before this array is shortened to newLength, the own keys it may
   // remove, at least those with a child or a key listener. It reads those
   // keys or the indices past newLength, whichever are fewer, so the holes of
-  // a sparse array cost nothing. OWN_KEYS is added if an own index past
-  // newLength exists and something listens for it.
+  // a sparse array cost nothing.
   const findRemovableKeys = (newLength: number) => {
     const length = (baseObject as unknown[]).length
     const removableKeys: (string | symbol)[] = []
@@ -403,10 +406,12 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
       }
     }
     if (keyListeners.has(OWN_KEYS)) {
-      // From the end, which stops at once on a dense array
+      // A shorter length removes indices from the end, so the last own one
+      // is removed if any is. Searching from the end stops at once on a
+      // dense array.
       for (let i = length; i-- > newLength; ) {
         if (hasOwn(baseObject, String(i))) {
-          removableKeys.push(OWN_KEYS)
+          removableKeys.push(String(i))
           break
         }
       }

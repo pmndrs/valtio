@@ -108,6 +108,22 @@ describe('subscribe with keys', () => {
     expect(onLength).toHaveBeenCalledTimes(1)
   })
 
+  it('ignores a shorter length that changes nothing', () => {
+    const state = proxy([1, 2, 3, 4])
+    Object.defineProperty(state, 'length', { writable: false })
+    const onIndex = vi.fn()
+    const onOwnKeys = vi.fn()
+    subscribe(state, onIndex, { keys: ['3'] })
+    subscribe(state, onOwnKeys, { ownKeys: true })
+
+    expect(() => {
+      state.length = 1
+    }).toThrow(TypeError)
+    expect(state).toEqual([1, 2, 3, 4])
+    expect(onIndex).not.toHaveBeenCalled()
+    expect(onOwnKeys).not.toHaveBeenCalled()
+  })
+
   it('shortens a sparse array without visiting its holes', () => {
     const state = proxy<{ count: number }[]>([])
     state.length = 10_000_000
