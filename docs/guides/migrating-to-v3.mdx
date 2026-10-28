@@ -143,8 +143,15 @@ To find out what changed, subscribe to each object you follow, and compare it wi
 let prev = snapshot(state.user)
 subscribe(state.user, () => {
   const next = snapshot(state.user)
-  new Set([...Object.keys(prev), ...Object.keys(next)]).forEach((key) => {
-    if (prev[key] !== next[key]) console.log('changed', key)
+  const keys = new Set([...Reflect.ownKeys(prev), ...Reflect.ownKeys(next)])
+  keys.forEach((key) => {
+    // a key added or removed with the value undefined is a change too
+    if (
+      Reflect.has(prev, key) !== Reflect.has(next, key) ||
+      !Object.is(prev[key], next[key])
+    ) {
+      console.log('changed', key)
+    }
   })
   prev = next
 })
