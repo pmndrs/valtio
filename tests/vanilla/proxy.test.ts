@@ -1,7 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { getVersion, proxy, ref, snapshot, subscribe } from 'valtio'
-
-const isProxy = (x: unknown) => getVersion(x) !== undefined
+import { batch, isProxyObject, proxy, ref, snapshot, subscribe } from 'valtio'
 
 describe('proxy creation', () => {
   it('should default to an empty object', () => {
@@ -47,7 +45,7 @@ describe('proxy creation', () => {
       const state = proxy({ count: 0 })
       const wrapped = wrap(state)
       const handler = vi.fn()
-      const unsubscribe = subscribe(state, handler, true)
+      const unsubscribe = subscribe(state, handler)
       const snap = snapshot(state)
 
       wrapped.count = 1
@@ -64,7 +62,7 @@ describe('proxy creation', () => {
     const state = proxy({ child: { count: 0 } })
     const wrapped = new Proxy(state, {})
     const handler = vi.fn()
-    const unsubscribe = subscribe(state, handler, true)
+    const unsubscribe = subscribe(state, handler)
     snapshot(state)
 
     wrapped.child = { count: 1 }
@@ -80,13 +78,13 @@ describe('proxy nested values', () => {
   // Preserve JavaScript replacement semantics, including own keys and aliases.
   it('should proxy nested objects present at creation', () => {
     const state = proxy({ nested: { count: 0 } })
-    expect(isProxy(state.nested)).toBe(true)
+    expect(isProxyObject(state.nested)).toBe(true)
   })
 
   it('should proxy objects assigned after creation', () => {
     const state = proxy<{ nested?: { count: number } }>({})
     state.nested = { count: 0 }
-    expect(isProxy(state.nested)).toBe(true)
+    expect(isProxyObject(state.nested)).toBe(true)
   })
 
   it('should replace an existing proxy with a raw object', () => {
@@ -835,11 +833,11 @@ describe('proxy nested values', () => {
     expect(state.root.a).toBe(state.root.b)
   })
 
-  it('should propagate nested mutations to the parent version', () => {
+  it('should give the parent a new snapshot on a nested mutation', () => {
     const state = proxy({ nested: { count: 0 } })
-    const before = getVersion(state)
+    const before = snapshot(state)
     state.nested.count += 1
-    expect(getVersion(state)).toBeGreaterThan(before as number)
+    expect(snapshot(state)).not.toBe(before)
   })
 })
 
@@ -862,13 +860,13 @@ describe('proxy boundaries', () => {
   for (const [name, create] of notProxied) {
     it(`should not proxy ${name}`, () => {
       const state = proxy({ value: create() })
-      expect(isProxy(state.value)).toBe(false)
+      expect(isProxyObject(state.value)).toBe(false)
     })
   }
 
   it('should proxy arrays', () => {
     const state = proxy({ value: [1, 2, 3] })
-    expect(isProxy(state.value)).toBe(true)
+    expect(isProxyObject(state.value)).toBe(true)
   })
 
   it('should proxy class instances and keep the prototype', () => {
@@ -883,7 +881,7 @@ describe('proxy boundaries', () => {
     }
     const state = proxy(new Counter())
 
-    expect(isProxy(state)).toBe(true)
+    expect(isProxyObject(state)).toBe(true)
     expect(state).toBeInstanceOf(Counter)
 
     state.inc()
@@ -897,7 +895,7 @@ describe('proxy boundaries', () => {
 
   it('should not proxy objects wrapped in ref', () => {
     const state = proxy({ value: ref({ count: 0 }) })
-    expect(isProxy(state.value)).toBe(false)
+    expect(isProxyObject(state.value)).toBe(false)
   })
 })
 
@@ -909,7 +907,7 @@ describe('proxy property descriptors', () => {
       enumerable: true,
     })
     const state = proxy(base) as { fixed: object }
-    expect(isProxy(state.fixed)).toBe(false)
+    expect(isProxyObject(state.fixed)).toBe(false)
   })
 
   it('should not proxy values returned from getters', () => {
@@ -918,7 +916,7 @@ describe('proxy property descriptors', () => {
         return { count: 0 }
       },
     })
-    expect(isProxy(state.computed)).toBe(false)
+    expect(isProxyObject(state.computed)).toBe(false)
   })
 
   it('should preserve accessors in assigned objects', () => {
@@ -946,7 +944,7 @@ describe('proxy property descriptors', () => {
     const handler = vi.fn()
     subscribe(state, handler)
 
-    expect(isProxy(state[key])).toBe(true)
+    expect(isProxyObject(state[key])).toBe(true)
     expect(key in snapshot(state)).toBe(true)
 
     state[key].count += 1
@@ -1005,16 +1003,13 @@ describe('proxy arrays', () => {
     const handler = vi.fn()
     subscribe(state, handler)
 
-    state.push(3)
-    await Promise.resolve()
+    batch(() => state.push(3))
     expect([...state]).toEqual([0, 1, 2, 3])
 
-    state.pop()
-    await Promise.resolve()
+    batch(() => state.pop())
     expect([...state]).toEqual([0, 1, 2])
 
-    state.splice(1, 1, 10, 11)
-    await Promise.resolve()
+    batch(() => state.splice(1, 1, 10, 11))
     expect([...state]).toEqual([0, 10, 11, 2])
 
     expect(handler).toBeCalledTimes(3)
@@ -1034,7 +1029,7 @@ describe('proxy arrays', () => {
   it('should proxy objects pushed into an array', () => {
     const state = proxy<{ count: number }[]>([])
     state.push({ count: 0 })
-    expect(isProxy(state[0])).toBe(true)
+    expect(isProxyObject(state[0])).toBe(true)
   })
 
   it('should support sort and reverse', () => {
@@ -1101,16 +1096,16 @@ describe('proxy deletion', () => {
     expect(handler).toBeCalledTimes(1)
   })
 
-  // Reflect.deleteProperty returns true for a key that was never present, so
-  // the delete trap notifies. Setting an unchanged value, by contrast, does not.
-  it('should notify even when deleting an absent property', async () => {
+  // Deleting a key that was never present changes nothing, so like setting
+  // an unchanged value, it notifies nobody.
+  it('should not notify when deleting an absent property', async () => {
     const state = proxy<{ count?: number }>({})
     const handler = vi.fn()
     subscribe(state, handler)
 
     delete state.count
     await Promise.resolve()
-    expect(handler).toBeCalledTimes(1)
+    expect(handler).not.toHaveBeenCalled()
   })
 
   it('should stop tracking a deleted nested proxy', async () => {
@@ -1131,24 +1126,59 @@ describe('proxy deletion', () => {
   })
 })
 
-describe('getVersion', () => {
-  it('should return undefined for a non-proxy', () => {
-    expect(getVersion({})).toBeUndefined()
-    expect(getVersion(1)).toBeUndefined()
-    expect(getVersion(null)).toBeUndefined()
+describe('isProxyObject', () => {
+  it('should be true for a proxy and its nested proxies', () => {
+    const state = proxy({ nested: { count: 0 }, list: [{ id: 1 }] })
+    expect(isProxyObject(state)).toBe(true)
+    expect(isProxyObject(state.nested)).toBe(true)
+    expect(isProxyObject(state.list[0])).toBe(true)
   })
 
-  it('should increase on mutation', () => {
+  it('should be false for non-proxies', () => {
+    expect(isProxyObject({})).toBe(false)
+    expect(isProxyObject([])).toBe(false)
+    expect(isProxyObject(1)).toBe(false)
+    expect(isProxyObject('a')).toBe(false)
+    expect(isProxyObject(null)).toBe(false)
+    expect(isProxyObject(undefined)).toBe(false)
+  })
+
+  it('should be false for snapshots', () => {
+    const state = proxy({ nested: { count: 0 } })
+    const snap = snapshot(state)
+    expect(isProxyObject(snap)).toBe(false)
+    expect(isProxyObject(snap.nested)).toBe(false)
+  })
+
+  it('should be false for a ref and true for a proxy marked with ref', () => {
+    const plain = ref({ count: 0 })
+    const child = ref(proxy({ count: 0 }))
+    const state = proxy({ plain, child })
+    expect(isProxyObject(state.plain)).toBe(false)
+    expect(isProxyObject(state.child)).toBe(true)
+  })
+
+  it('should not move the snapshot', () => {
+    const state = proxy({ nested: { count: 0 } })
+    const before = snapshot(state)
+    isProxyObject(state)
+    isProxyObject(state.nested)
+    expect(snapshot(state)).toBe(before)
+  })
+})
+
+describe('change detection with snapshot identity', () => {
+  it('should give a new snapshot on mutation', () => {
     const state = proxy({ count: 0 })
-    const before = getVersion(state) as number
+    const before = snapshot(state)
     state.count += 1
-    expect(getVersion(state)).toBeGreaterThan(before)
+    expect(snapshot(state)).not.toBe(before)
   })
 
-  it('should not change when a property is set to the same value', () => {
+  it('should keep the snapshot when a property is set to the same value', () => {
     const state = proxy({ count: 0 })
-    const before = getVersion(state)
+    const before = snapshot(state)
     state.count = 0
-    expect(getVersion(state)).toBe(before)
+    expect(snapshot(state)).toBe(before)
   })
 })

@@ -1,7 +1,7 @@
 import { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import { batch, proxy, subscribe, useSnapshot } from 'valtio'
 import { devtools } from 'valtio/utils'
 
 describe('devtools', () => {
@@ -40,10 +40,10 @@ describe('devtools', () => {
     devtools(obj, { enabled: true })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={() => ++obj.count}>button</button>
         </>
       )
@@ -56,6 +56,134 @@ describe('devtools', () => {
     )
 
     expect(extension.init).toHaveBeenLastCalledWith({ count: 0 })
+  })
+
+  it('sends one message for a burst of writes', async () => {
+    const obj = proxy({ count: 0, text: 'a' })
+    devtools(obj, { enabled: true })
+
+    obj.count = 1
+    obj.text = 'b'
+    expect(extension.send).not.toHaveBeenCalled()
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenCalledTimes(1)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:count, set:text' }),
+      { count: 1, text: 'b' },
+    )
+  })
+
+  it('sends one message for a batch larger than the argument limit', async () => {
+    const obj = proxy<Record<string, number>>({})
+    devtools(obj, { enabled: true })
+    const count = 200_000
+
+    batch(() => {
+      for (let i = 0; i < count; i++) {
+        obj['k' + i] = i
+      }
+    })
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenCalledTimes(1)
+    const [action] = extension.send.mock.lastCall as [{ type: string }]
+    expect(action.type.split(', ')).toHaveLength(count)
+  }, 15_000) // the snapshot and its diff take a few seconds under load
+
+  it('names the action after the paths that changed', async () => {
+    const obj = proxy<{
+      nested: { count: number }
+      items: number[]
+      extra?: boolean
+      date: Date
+    }>({ nested: { count: 0 }, items: [1], extra: true, date: new Date(0) })
+    devtools(obj, { enabled: true })
+
+    obj.nested.count = 1
+    obj.items.push(2)
+    delete obj.extra
+    obj.date = new Date(1)
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenCalledTimes(1)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        type: 'set:nested.count, set:items.1, set:items.length, set:date, delete:extra',
+      }),
+      expect.anything(),
+    )
+  })
+
+  it('names a longer length that only adds holes', async () => {
+    const obj = proxy({ items: [] as number[] })
+    devtools(obj, { enabled: true })
+
+    obj.items.length = 3
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:items.length' }),
+      expect.anything(),
+    )
+  })
+
+  it('names a replaced object by the values under it that differ', async () => {
+    const obj = proxy({ user: { name: 'Ann', age: 1 } })
+    devtools(obj, { enabled: true })
+
+    obj.user = { name: 'Bob', age: 1 }
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:user.name' }),
+      { user: { name: 'Bob', age: 1 } },
+    )
+  })
+
+  it('compares a shared object on each path to it', async () => {
+    const obj = proxy<{ a: { x: number }; b: { x: number } }>({
+      a: { x: 0 },
+      b: { x: 1 },
+    })
+    devtools(obj, { enabled: true })
+
+    batch(() => {
+      obj.a = { x: 0 }
+      obj.b = obj.a
+    })
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:b.x' }),
+      { a: { x: 0 }, b: { x: 0 } },
+    )
+  })
+
+  it('sends nothing for writes reverted within a burst', async () => {
+    const obj = proxy({ nested: { count: 0 } })
+    devtools(obj, { enabled: true })
+
+    obj.nested.count = 1
+    obj.nested.count = 0
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).not.toHaveBeenCalled()
+  })
+
+  it('names the action for a write in a cycle', async () => {
+    type Node = { count: number; self?: Node }
+    const obj = proxy<Node>({ count: 0 })
+    obj.self = obj
+    devtools(obj, { enabled: true })
+
+    obj.count = 1
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:count' }),
+      expect.anything(),
+    )
   })
 
   describe('If there is no extension installed...', () => {
@@ -74,10 +202,10 @@ describe('devtools', () => {
       const obj = proxy({ count: 0 })
       devtools(obj)
       const Counter = () => {
-        const snap = useSnapshot(obj)
+        const tracked = useSnapshot(obj)
         return (
           <>
-            <div>count: {snap.count}</div>
+            <div>count: {tracked.count}</div>
             <button onClick={() => ++obj.count}>button</button>
           </>
         )
@@ -95,10 +223,10 @@ describe('devtools', () => {
       const obj = proxy({ count: 0 })
       devtools(obj)
       const Counter = () => {
-        const snap = useSnapshot(obj)
+        const tracked = useSnapshot(obj)
         return (
           <>
-            <div>count: {snap.count}</div>
+            <div>count: {tracked.count}</div>
             <button onClick={() => ++obj.count}>button</button>
           </>
         )
@@ -115,10 +243,10 @@ describe('devtools', () => {
       const obj = proxy({ count: 0 })
       devtools(obj, { enabled: true })
       const Counter = () => {
-        const snap = useSnapshot(obj)
+        const tracked = useSnapshot(obj)
         return (
           <>
-            <div>count: {snap.count}</div>
+            <div>count: {tracked.count}</div>
             <button onClick={() => ++obj.count}>button</button>
           </>
         )
@@ -137,10 +265,10 @@ describe('devtools', () => {
       const obj = proxy({ count: 0 })
       devtools(obj, { enabled: true })
       const Counter = () => {
-        const snap = useSnapshot(obj)
+        const tracked = useSnapshot(obj)
         return (
           <>
-            <div>count: {snap.count}</div>
+            <div>count: {tracked.count}</div>
             <button onClick={() => ++obj.count}>button</button>
           </>
         )
@@ -159,10 +287,10 @@ describe('devtools', () => {
     devtools(obj, { enabled: true })
 
     const Counter = () => {
-      const snap = useSnapshot(obj)
+      const tracked = useSnapshot(obj)
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={() => ++obj.count}>button</button>
         </>
       )
@@ -240,16 +368,113 @@ describe('devtools', () => {
     expect(extension.send).toBeCalledTimes(0)
   })
 
+  it('sends the next change after jumping to an equal state', async () => {
+    const obj = proxy({ nested: { n: 0 } })
+    devtools(obj, { enabled: true })
+
+    extension.send.mockClear()
+    ;(extensionSubscriber as (message: any) => void)({
+      type: 'DISPATCH',
+      state: JSON.stringify({ nested: { n: 0 } }),
+      payload: { type: 'JUMP_TO_STATE' },
+    })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).not.toHaveBeenCalled()
+
+    obj.nested.n = 1
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:nested.n' }),
+      { nested: { n: 1 } },
+    )
+  })
+
+  describe('applying an incoming state', () => {
+    const setup = () => {
+      const obj = proxy({ a: 0, b: 0 })
+      devtools(obj, { enabled: true })
+      const seen: number[][] = []
+      subscribe(obj, () => {
+        seen.push([obj.a, obj.b])
+      })
+      return { obj, seen }
+    }
+
+    it('should notify once with the whole ACTION payload applied', () => {
+      const { seen } = setup()
+      ;(extensionSubscriber as (message: any) => void)({
+        type: 'ACTION',
+        payload: JSON.stringify({ a: 1, b: 1 }),
+      })
+      expect(seen).toEqual([[1, 1]])
+    })
+
+    it('should notify once with the whole jumped-to state applied', () => {
+      const { seen } = setup()
+      ;(extensionSubscriber as (message: any) => void)({
+        type: 'DISPATCH',
+        state: JSON.stringify({ a: 1, b: 1 }),
+        payload: { type: 'JUMP_TO_STATE' },
+      })
+      expect(seen).toEqual([[1, 1]])
+    })
+
+    it('should notify once with the last imported state applied', () => {
+      const { seen } = setup()
+      ;(extensionSubscriber as (message: any) => void)({
+        type: 'DISPATCH',
+        payload: {
+          type: 'IMPORT_STATE',
+          nextLiftedState: {
+            actionsById: ['1', '2'],
+            computedStates: [
+              { state: { a: 1, b: 1 } },
+              { state: { a: 2, b: 2 } },
+            ],
+          },
+        },
+      })
+      expect(seen).toEqual([[2, 2]])
+      expect(extension.init).toHaveBeenLastCalledWith({ a: 1, b: 1 })
+      expect(extension.send).toHaveBeenLastCalledWith('2', { a: 2, b: 2 })
+    })
+
+    it('should not report a subscriber error as an ACTION payload error', () => {
+      const { obj } = setup()
+      subscribe(obj, () => {
+        throw new Error('boom')
+      })
+      const consoleError = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {})
+      const queueMicrotaskSpy = vi
+        .spyOn(globalThis, 'queueMicrotask')
+        .mockImplementation(() => {})
+
+      try {
+        ;(extensionSubscriber as (message: any) => void)({
+          type: 'ACTION',
+          payload: JSON.stringify({ a: 1, b: 1 }),
+        })
+        expect(consoleError).not.toHaveBeenCalled()
+        expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1)
+      } finally {
+        queueMicrotaskSpy.mockRestore()
+        consoleError.mockRestore()
+      }
+    })
+  })
+
   describe('when it receives an message of type...', () => {
     it('updating state with ACTION', async () => {
       const obj = proxy({ count: 0 })
       devtools(obj, { enabled: true })
 
       const Counter = () => {
-        const snap = useSnapshot(obj)
+        const tracked = useSnapshot(obj)
         return (
           <>
-            <div>count: {snap.count}</div>
+            <div>count: {tracked.count}</div>
             <button onClick={() => ++obj.count}>button</button>
           </>
         )
@@ -289,10 +514,10 @@ describe('devtools', () => {
         devtools(obj, { enabled: true })
 
         const Counter = () => {
-          const snap = useSnapshot(obj)
+          const tracked = useSnapshot(obj)
           return (
             <>
-              <div>count: {snap.count}</div>
+              <div>count: {tracked.count}</div>
               <button onClick={() => ++obj.count}>button</button>
             </>
           )
@@ -333,10 +558,10 @@ describe('devtools', () => {
         devtools(obj, { enabled: true })
 
         const Counter = () => {
-          const snap = useSnapshot(obj)
+          const tracked = useSnapshot(obj)
           return (
             <>
-              <div>count: {snap.count}</div>
+              <div>count: {tracked.count}</div>
               <button onClick={() => ++obj.count}>button</button>
             </>
           )
@@ -383,10 +608,10 @@ describe('devtools', () => {
           devtools(obj, { enabled: true })
 
           const Counter = () => {
-            const snap = useSnapshot(obj)
+            const tracked = useSnapshot(obj)
             return (
               <>
-                <div>count: {snap.count}</div>
+                <div>count: {tracked.count}</div>
                 <button onClick={() => ++obj.count}>button</button>
               </>
             )

@@ -21,13 +21,14 @@ const exportsOf = (ns: object) =>
 describe('entry points', () => {
   it('should expose the core from valtio/vanilla', () => {
     expect(exportsOf(vanilla)).toEqual([
-      'getVersion',
+      'batch',
+      'isProxyObject',
       'proxy',
       'ref',
       'snapshot',
       'subscribe',
-      'unstable_enableOp',
       'unstable_getInternalStates',
+      'unstable_isRef',
       'unstable_replaceInternalFunction',
     ])
   })
@@ -47,12 +48,15 @@ describe('entry points', () => {
       'proxySet',
       'subscribeKey',
       'unstable_deepProxy',
-      'watch',
     ])
   })
 
   it('should expose useSnapshot from valtio/react and useProxy from valtio/react/utils', () => {
-    expect(exportsOf(react)).toEqual(['useSnapshot'])
+    expect(exportsOf(react)).toEqual([
+      'getUntracked',
+      'trackMemo',
+      'useSnapshot',
+    ])
     expect(exportsOf(reactUtils)).toEqual(['useProxy'])
   })
 
@@ -65,14 +69,15 @@ describe('entry points', () => {
     )
   })
 
-  it('should work end to end through valtio/vanilla alone', async () => {
+  it('should work end to end through valtio/vanilla alone', () => {
     const state = vanilla.proxy({ count: 0, nested: { text: 'a' } })
     const handler = vi.fn()
     vanilla.subscribe(state, handler)
 
-    state.count += 1
-    state.nested.text = 'b'
-    await Promise.resolve()
+    vanilla.batch(() => {
+      state.count += 1
+      state.nested.text = 'b'
+    })
 
     expect(handler).toBeCalledTimes(1)
     expect(vanilla.snapshot(state)).toEqual({ count: 1, nested: { text: 'b' } })

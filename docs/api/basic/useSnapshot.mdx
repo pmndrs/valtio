@@ -2,16 +2,20 @@
 title: 'useSnapshot'
 section: 'API'
 subSection: 'Basic'
-description: 'Create a local snapshot that catches changes.'
+description: 'Create a local tracked snapshot that catches changes.'
 ---
 
 # `useSnapshot`
 
-Create a local `snapshot` that catches changes.
+Create a local tracked snapshot that catches changes.
 
 Normally, Valtio's snapshots (created via <a href="/docs/api/advanced/snapshot">`snapshot()`</a>) are recreated on _any_ change to a proxy, or any of its child proxies.
 
 However `useSnapshot` wraps the Valtio snapshot in an access-tracking proxy. This is to make sure your component is render optimized, i.e. it will only re-render if keys that it (or its child components) specifically accessed has changed, and not on every single change to the proxy.
+
+We call this a tracked snapshot and name it `tracked` in examples. `state`
+refers to the mutable proxy, and `snap` refers to a vanilla snapshot returned
+by `snapshot(state)`.
 
 ## Usage
 
@@ -23,10 +27,10 @@ Mutations, and also any reads in callbacks that make mutations, need to be made 
 
 ```jsx
 function Counter() {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   return (
     <div>
-      {snap.count}
+      {tracked.count}
       <button
         onClick={() => {
           // also read from the state proxy in callbacks
@@ -57,10 +61,10 @@ const state = proxy({
 })
 
 function AuthorView() {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   return (
     <div>
-      {snap.books.map((book) => (
+      {tracked.books.map((book) => (
         <Book key={book.id} book={book} />
       ))}
     </div>
@@ -68,12 +72,12 @@ function AuthorView() {
 }
 
 function BookView({ book }) {
-  // book is a snapshot
+  // book is a tracked snapshot
   return <div>{book.title}</div>
 }
 ```
 
-If book 2's title is changed, a new `snap` is created and the `AuthorView` and `BookView` components will re-render.
+If book 2's title is changed, a new `tracked` is created and the `AuthorView` and `BookView` components will re-render.
 
 Note if `BookView` is `React.memo`d, the 1st `BookView` will not re-render, b/c the 1st `Book` snapshot will be the same instance, as only the 2nd `Book` was mutated (the root `Author` snapshot will also be updated since the list of `books` has changed).
 
@@ -83,10 +87,10 @@ The above approach works if `BookView` is read-only; if your child component nee
 
 ```jsx
 function AuthorView() {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   return (
     <div>
-      {snap.books.map((book, i) => (
+      {tracked.books.map((book, i) => (
         <Book key={book.id} book={state.books[i]} />
       ))}
     </div>
@@ -94,9 +98,9 @@ function AuthorView() {
 }
 
 function BookView({ book }) {
-  // book is the proxy, so we can re-snap it + mutate it
-  const snap = useSnapshot(book)
-  return <div onClick={() => book.updateTitle()}>{snap.title}</div>
+  // book is the proxy, so we can track it and mutate it
+  const tracked = useSnapshot(book)
+  return <div onClick={() => book.updateTitle()}>{tracked.title}</div>
 }
 ```
 
@@ -104,11 +108,11 @@ Or you can pass both the snapshot and proxy together, if you don't want to call 
 
 ```jsx
 function AuthorView() {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   return (
     <div>
-      {snap.books.map((book, i) => (
-        <Book key={book.id} bookProxy={state.books[i]} bookSnapshot={book} />
+      {tracked.books.map((book, i) => (
+        <Book key={book.id} bookProxy={state.books[i]} trackedBook={book} />
       ))}
     </div>
   )
@@ -124,8 +128,8 @@ a local snapshot.
 
 ```jsx
 function ProfileName() {
-  const snap = useSnapshot(state.profile)
-  return <div>{snap.name}</div>
+  const tracked = useSnapshot(state.profile)
+  return <div>{tracked.name}</div>
 }
 ```
 
@@ -169,9 +173,9 @@ that is subscribed to the old proxy won't receive new updates because it is stil
 In this case, we recommend one of the approaches below. In neither example do you need to worry about re-renders because it is render-optimized.
 
 ```jsx
-const snap = useSnapshot(state)
+const tracked = useSnapshot(state)
 
-return <div>{snap.profile.name}</div>
+return <div>{tracked.profile.name}</div>
 ```
 
 ```jsx

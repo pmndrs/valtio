@@ -33,12 +33,12 @@ describe('updating values inside arrays', () => {
     }
 
     const CounterList = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       listRenderFn()
       return (
         <>
-          <h1>{snap.title}</h1>
-          {snap.items.map((item) => (
+          <h1>{tracked.title}</h1>
+          {tracked.items.map((item) => (
             <Counter key={item.id} item={item} />
           ))}
         </>
@@ -64,18 +64,18 @@ describe('updating values inside arrays', () => {
     const itemRenderFn = vi.fn()
 
     const Counter = ({ item }: { item: { id: number; count: number } }) => {
-      const snap = useSnapshot(item)
-      itemRenderFn(snap.id)
-      return <div>{`item ${snap.id}: ${snap.count}`}</div>
+      const tracked = useSnapshot(item)
+      itemRenderFn(tracked.id)
+      return <div>{`item ${tracked.id}: ${tracked.count}`}</div>
     }
 
     const CounterList = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       listRenderFn()
       return (
         <>
-          <h1>{snap.title}</h1>
-          {Array.from({ length: snap.items.length }, (_, index) => (
+          <h1>{tracked.title}</h1>
+          {Array.from({ length: tracked.items.length }, (_, index) => (
             <Counter key={state.items[index]!.id} item={state.items[index]!} />
           ))}
         </>
@@ -100,9 +100,9 @@ describe('updating values inside arrays', () => {
     const listRenderFn = vi.fn()
 
     const CounterList = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       listRenderFn()
-      return <div>count: {snap.items.length}</div>
+      return <div>count: {tracked.items.length}</div>
     }
 
     render(<CounterList />)
@@ -131,10 +131,10 @@ describe('updating values inside arrays', () => {
       const state = createTodoState()
 
       const useTodos = () => {
-        const snap = useSnapshot(state)
-        return snap.filter === 'all'
-          ? snap.todos
-          : snap.todos.filter((todo) => todo.completed)
+        const tracked = useSnapshot(state)
+        return tracked.filter === 'all'
+          ? tracked.todos
+          : tracked.todos.filter((todo) => todo.completed)
       }
 
       const renderFn = vi.fn()
@@ -163,11 +163,11 @@ describe('updating values inside arrays', () => {
       const state = createTodoState()
 
       const TodoList = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
         const todos =
-          snap.filter === 'all'
-            ? snap.todos
-            : snap.todos.filter((todo) => todo.completed)
+          tracked.filter === 'all'
+            ? tracked.todos
+            : tracked.todos.filter((todo) => todo.completed)
         return (
           <>
             <div>{`ids: ${todos.map((todo) => todo.id).join(',')}`}</div>
@@ -189,20 +189,20 @@ describe('updating values inside arrays', () => {
     const state = createState()
 
     const Counter = ({ item }: { item: { id: number; count: number } }) => {
-      const snap = useSnapshot(item)
+      const tracked = useSnapshot(item)
       return (
         <>
-          <div>{`item ${snap.id}: ${snap.count}`}</div>
-          <button onClick={() => item.count++}>{`inc ${snap.id}`}</button>
+          <div>{`item ${tracked.id}: ${tracked.count}`}</div>
+          <button onClick={() => item.count++}>{`inc ${tracked.id}`}</button>
         </>
       )
     }
 
     const CounterList = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          {Array.from({ length: snap.items.length }, (_, index) => (
+          {Array.from({ length: tracked.items.length }, (_, index) => (
             <Counter key={state.items[index]!.id} item={state.items[index]!} />
           ))}
         </>

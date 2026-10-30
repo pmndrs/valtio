@@ -2,8 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   proxy,
   snapshot,
-  subscribe,
-  unstable_enableOp,
   unstable_getInternalStates,
   unstable_replaceInternalFunction,
 } from 'valtio'
@@ -34,13 +32,13 @@ afterEach(() => {
   while (restores.length) {
     restores.pop()!()
   }
-  unstable_enableOp(false)
 })
 
 describe('unstable_getInternalStates', () => {
   it('should expose the internal registries', () => {
     const states = unstable_getInternalStates()
     expect(Object.keys(states).sort()).toEqual([
+      'batchAsWrite',
       'proxyCache',
       'proxyStateMap',
       'refSet',
@@ -135,53 +133,5 @@ describe('unstable_replaceInternalFunction', () => {
 
     state.count += 1
     expect(state.count).toBe(1)
-  })
-})
-
-describe('unstable_enableOp', () => {
-  it('should not report ops by default', async () => {
-    const state = proxy({ count: 0 })
-    const handler = vi.fn()
-    subscribe(state, handler)
-
-    state.count += 1
-    await Promise.resolve()
-    expect(handler).lastCalledWith([])
-  })
-
-  it('should report ops when enabled', async () => {
-    unstable_enableOp(true)
-    const state = proxy({ count: 0 })
-    const handler = vi.fn()
-    subscribe(state, handler)
-
-    state.count += 1
-    await Promise.resolve()
-    expect(handler).lastCalledWith([['set', ['count'], 1, 0]])
-  })
-
-  it('should accept a custom op factory', async () => {
-    unstable_enableOp(
-      (type, prop, ...args) => [type, [prop], ...args, 'extra'] as any,
-    )
-    const state = proxy({ count: 0 })
-    const handler = vi.fn()
-    subscribe(state, handler)
-
-    state.count += 1
-    await Promise.resolve()
-    expect(handler).lastCalledWith([['set', ['count'], 1, 0, 'extra']])
-  })
-
-  it('should stop reporting ops when disabled again', async () => {
-    unstable_enableOp(true)
-    unstable_enableOp(false)
-    const state = proxy({ count: 0 })
-    const handler = vi.fn()
-    subscribe(state, handler)
-
-    state.count += 1
-    await Promise.resolve()
-    expect(handler).lastCalledWith([])
   })
 })

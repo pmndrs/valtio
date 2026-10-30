@@ -1,23 +1,17 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, subscribe, unstable_enableOp } from 'valtio'
+import { describe, expect, it, vi } from 'vitest'
+import { proxy, snapshot, subscribe } from 'valtio'
 import { subscribeKey } from 'valtio/utils'
-
-afterEach(() => {
-  unstable_enableOp(false)
-})
 
 describe('detachment dispatch', () => {
   it('deduplicates a subscriber reached by the mutation and a cycle', () => {
-    unstable_enableOp()
     type State = { child: { parent?: State; count: number } }
     const raw: State = { child: { count: 1 } }
     raw.child.parent = raw
     const state = proxy(raw)
     const listener = vi.fn()
-    const remove = subscribe(state, listener, true)
+    const remove = subscribe(state, listener)
     state.child = { count: 2 }
-    expect(listener).toHaveBeenCalledTimes(1)
-    expect(listener.mock.calls[0]![0]).toHaveLength(1)
+    expect(listener).toHaveBeenCalledExactlyOnceWith()
     remove()
   })
 })
@@ -51,14 +45,9 @@ describe('source-derived replacement fixtures', () => {
   it('notifies object-valued subscribeKey consumers on raw replacement', () => {
     const state = proxy({ plan: { exceeded: false } })
     let copied = false
-    const remove = subscribeKey(
-      state,
-      'plan',
-      (plan) => {
-        copied = plan.exceeded
-      },
-      true,
-    )
+    const remove = subscribeKey(state, 'plan', (plan) => {
+      copied = plan.exceeded
+    })
     state.plan = { exceeded: true }
     expect(copied).toBe(true)
     remove()

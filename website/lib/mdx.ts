@@ -250,18 +250,19 @@ export function getDocsNav(): NavigationTree {
       pages['component-state'],
       pages['computed-properties'],
       pages['migrating-to-v2'],
+      pages['migrating-to-v3'],
     ],
     API: {
       Basic: [pages['proxy'], pages['useSnapshot']],
       Advanced: [
         pages['ref'],
         pages['subscribe'],
-        pages['subscribe-ops'],
+        pages['batch'],
         pages['snapshot'],
+        pages['isProxyObject'],
       ],
       Utils: [
         pages['subscribeKey'],
-        pages['watch'],
         pages['devtools'],
         pages['derive'],
         pages['proxyWithHistory'],
@@ -269,7 +270,7 @@ export function getDocsNav(): NavigationTree {
         pages['proxyMap'],
         pages['unstable_deepProxy'],
       ],
-      Hacks: [pages['getVersion'], pages['internals']],
+      Hacks: [pages['internals']],
     },
     "How To's": [
       pages['how-to-avoid-rerenders-manually'],

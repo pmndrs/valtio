@@ -1,4 +1,9 @@
-import { snapshot, subscribe, unstable_enableOp } from '../../vanilla.ts'
+import {
+  isProxyObject,
+  snapshot,
+  subscribe,
+  unstable_getInternalStates,
+} from '../../vanilla.js'
 import type {} from '@redux-devtools/extension'
 
 // FIXME https://github.com/reduxjs/redux-devtools/issues/1097
@@ -10,6 +15,8 @@ type Message = {
 
 const DEVTOOLS = Symbol()
 
+const { batchAsWrite } = unstable_getInternalStates()
+
 type Config = Parameters<
   (Window extends { __REDUX_DEVTOOLS_EXTENSION__?: infer T }
     ? T
@@ -20,6 +27,87 @@ type Options = {
   enabled?: boolean
   name?: string
 } & Config
+
+// subscribe() is synchronous, so coalesce a burst of writes into one
+// callback to keep sending one devtools message per burst.
+const subscribeCoalesced = (
+  proxyObject: object,
+  callback: () => void,
+): (() => void) => {
+  let scheduled = false
+  let active = true
+  const unsubscribe = subscribe(proxyObject, () => {
+    if (!scheduled) {
+      scheduled = true
+      Promise.resolve().then(() => {
+        scheduled = false
+        if (active) {
+          callback()
+        }
+      })
+    }
+  })
+  return () => {
+    active = false
+    unsubscribe()
+  }
+}
+
+type Change = [type: 'set' | 'delete', path: (string | symbol)[]]
+
+// Lists the paths at which two snapshots of a proxy differ, reading the
+// proxy alongside the newer one. Unchanged subtrees are the same objects,
+// so they are skipped without being visited.
+const diffSnapshots = (
+  prev: any,
+  next: any,
+  live: any,
+  path: (string | symbol)[],
+  changes: Change[],
+  compared: WeakMap<object, WeakSet<object>>,
+) => {
+  if (Object.is(prev, next)) {
+    return
+  }
+  if (
+    !isProxyObject(live) ||
+    typeof prev !== 'object' ||
+    prev === null ||
+    Object.getPrototypeOf(prev) !== Object.getPrototypeOf(next)
+  ) {
+    changes.push(['set', path])
+    return
+  }
+  // A shared object can differ from what was there before on each path to
+  // it, so only a pair already compared, as in a cycle, is skipped.
+  let comparedPrevs = compared.get(next)
+  if (!comparedPrevs) {
+    compared.set(next, (comparedPrevs = new WeakSet()))
+  }
+  if (comparedPrevs.has(prev)) {
+    return
+  }
+  comparedPrevs.add(prev)
+  Reflect.ownKeys(next).forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(prev, key)) {
+      diffSnapshots(
+        prev[key],
+        next[key],
+        live[key],
+        [...path, key],
+        changes,
+        compared,
+      )
+    } else {
+      changes.push(['set', [...path, key]])
+    }
+  })
+  Reflect.ownKeys(prev).forEach((key) => {
+    if (!Object.prototype.hasOwnProperty.call(next, key)) {
+      changes.push(['delete', [...path, key]])
+    }
+  })
+}
 
 /**
  * Connects a proxy object to Redux DevTools Extension for state debugging
@@ -43,44 +131,51 @@ export function devtools<T extends object>(
   let extension: (typeof window)['__REDUX_DEVTOOLS_EXTENSION__'] | false
   try {
     extension =
-      (enabled ?? import.meta.env?.MODE !== 'production') &&
+      (enabled ?? process.env.NODE_ENV !== 'production') &&
       window.__REDUX_DEVTOOLS_EXTENSION__
   } catch {
     // ignored
   }
   if (!extension) {
-    if (import.meta.env?.MODE !== 'production' && enabled) {
+    if (process.env.NODE_ENV !== 'production' && enabled) {
       console.warn('[Warning] Please install/enable Redux devtools extension')
     }
     return
   }
 
-  unstable_enableOp()
   let isTimeTraveling = false
   const devtools = extension.connect({ name, ...rest })
-  const unsub1 = subscribe(proxyObject, (unstable_ops) => {
-    const action = unstable_ops
+  let prevSnap: unknown = snapshot(proxyObject)
+  const unsub1 = subscribeCoalesced(proxyObject, () => {
+    const nextSnap = snapshot(proxyObject)
+    const changes: Change[] = []
+    diffSnapshots(prevSnap, nextSnap, proxyObject, [], changes, new WeakMap())
+    prevSnap = nextSnap
+    const action = changes
       .filter(([_, path]) => path[0] !== DEVTOOLS)
       .map(([op, path]) => `${op}:${path.map(String).join('.')}`)
       .join(', ')
+
+    // Time travel can leave nothing to name, such as when it replaces an
+    // object with an equal one, so it is consumed before that check.
+    if (isTimeTraveling) {
+      isTimeTraveling = false
+      return
+    }
 
     if (!action) {
       return
     }
 
-    if (isTimeTraveling) {
-      isTimeTraveling = false
-    } else {
-      const snapWithoutDevtools = Object.assign({}, snapshot(proxyObject))
-      delete (snapWithoutDevtools as any)[DEVTOOLS]
-      devtools.send(
-        {
-          type: action,
-          updatedAt: new Date().toLocaleString(),
-        } as any,
-        snapWithoutDevtools,
-      )
-    }
+    const snapWithoutDevtools = Object.assign({}, nextSnap)
+    delete (snapWithoutDevtools as any)[DEVTOOLS]
+    devtools.send(
+      {
+        type: action,
+        updatedAt: new Date().toLocaleString(),
+      } as any,
+      snapWithoutDevtools,
+    )
   })
   const unsub2 = (
     devtools as unknown as {
@@ -92,7 +187,9 @@ export function devtools<T extends object>(
   ).subscribe((message) => {
     if (message.type === 'ACTION' && message.payload) {
       try {
-        Object.assign(proxyObject, JSON.parse(message.payload))
+        const state = JSON.parse(message.payload)
+        // batchAsWrite reports subscriber errors, so they don't reach the catch.
+        batchAsWrite(() => Object.assign(proxyObject, state))
       } catch (e) {
         console.error(
           'please dispatch a serializable value that JSON.parse() and proxy() support\n',
@@ -101,16 +198,19 @@ export function devtools<T extends object>(
       }
     }
     if (message.type === 'DISPATCH' && message.state) {
-      if (
-        message.payload?.type === 'JUMP_TO_ACTION' ||
-        message.payload?.type === 'JUMP_TO_STATE'
-      ) {
-        isTimeTraveling = true
+      // Subscribers see the state once it's fully applied.
+      batchAsWrite(() => {
+        if (
+          message.payload?.type === 'JUMP_TO_ACTION' ||
+          message.payload?.type === 'JUMP_TO_STATE'
+        ) {
+          isTimeTraveling = true
 
-        const state = JSON.parse(message.state)
-        Object.assign(proxyObject, state)
-      }
-      ;(proxyObject as any)[DEVTOOLS] = message
+          const state = JSON.parse(message.state)
+          Object.assign(proxyObject, state)
+        }
+        ;(proxyObject as any)[DEVTOOLS] = message
+      })
     } else if (
       message.type === 'DISPATCH' &&
       message.payload?.type === 'COMMIT'
@@ -126,16 +226,19 @@ export function devtools<T extends object>(
 
       isTimeTraveling = true
 
-      computedStates.forEach(({ state }: { state: any }, index: number) => {
-        const action = actions[index] || 'No action found'
+      // Subscribers see only the last state, once.
+      batchAsWrite(() => {
+        computedStates.forEach(({ state }: { state: any }, index: number) => {
+          const action = actions[index] || 'No action found'
 
-        Object.assign(proxyObject, state)
+          Object.assign(proxyObject, state)
 
-        if (index === 0) {
-          devtools.init(snapshot(proxyObject))
-        } else {
-          devtools.send(action, snapshot(proxyObject))
-        }
+          if (index === 0) {
+            devtools.init(snapshot(proxyObject))
+          } else {
+            devtools.send(action, snapshot(proxyObject))
+          }
+        })
       })
     }
   })
