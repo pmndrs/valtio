@@ -13,7 +13,7 @@ This guide explains how to update code and tooling affected by these changes.
 - TypeScript 5.5 or newer (v2 supports TypeScript 4.5 and newer).
 - Node.js 22.12 or newer (v2 supports Node.js 12.20 and newer). Node.js 26 is included in the v3 test matrix.
 - React 18 or newer. This was also the declared peer requirement in v2; v3 no longer tests React 16 or 17.
-- `WeakRef`. On React Native, this means the New Architecture, which is the default from React Native 0.76. `proxy()` throws without it.
+- `WeakRef`. On React Native, this means the New Architecture, which is the default from React Native 0.76. `proxy()` throws without it. The type declarations use `WeakRef` too, so TypeScript's `lib` needs ES2021 or newer, unless `skipLibCheck` is on.
 
 The published JavaScript now targets ES2020 instead of ES2018.
 Transpile Valtio in your build if you need to run it in environments without ES2020 support.
