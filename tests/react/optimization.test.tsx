@@ -1,7 +1,7 @@
 import { Suspense, startTransition, useLayoutEffect, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, useSnapshot } from 'valtio'
+import { proxy, snapshot, useSnapshot } from 'valtio'
 import { useCommitCount } from '../test-utils.js'
 
 describe('optimization', () => {
@@ -81,6 +81,55 @@ describe('optimization', () => {
     // the check doesn't subscribe the component to anything
     source.nested.other = 1
     await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(1)
+  })
+
+  it('should keep an identity-only read after a rejected assignment', async () => {
+    const source = proxy({ nested: { count: 0 } })
+    const destination = proxy<{ value?: object }>({})
+    let nested!: object
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(source)
+      nested = tracked.nested
+      renderFn(nested)
+      return null
+    }
+
+    render(<Component />)
+    expect(() => {
+      destination.value = nested
+    }).toThrow('Cannot assign a Valtio snapshot into a proxy.')
+
+    // the check doesn't record a read of `nested`
+    source.nested.count = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should not track a getter result assigned outside render', async () => {
+    const source = proxy({
+      items: [{ label: 'a' }],
+      get labels() {
+        return this.items.map((item) => ({ label: item.label }))
+      },
+    })
+    const destination = proxy<{ value?: object }>({})
+    let labels!: object
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(source)
+      labels = tracked.labels
+      renderFn(tracked.labels.length)
+      return null
+    }
+
+    render(<Component />)
+    destination.value = labels
+    snapshot(destination)
+    source.items[0]!.label = 'b'
+    await act(() => vi.advanceTimersByTimeAsync(0))
+
     expect(renderFn).toHaveBeenCalledTimes(1)
   })
 

@@ -1,4 +1,4 @@
-import { markToTrack } from './vanilla/proxyCompare.js'
+import { getUntracked, markToTrack } from './vanilla/proxyCompare.js'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -166,9 +166,13 @@ const createHandlerDefault = <T extends object>(
       key === 'length' && length !== false && value >= 0 && value < length
         ? findRemovedIndices(Number(value))
         : []
-    removeChildListener(key)
+    if (isObject(value)) {
+      value = getUntracked(value) || value
+    }
+    // proxy() can throw, so the current child stays linked until it passes.
     const nextValue =
       !proxyStateMap.has(value) && canProxy(value) ? proxy(value) : value
+    removeChildListener(key)
     addChildListener(key, nextValue)
     Reflect.set(target, key, nextValue, receiver)
     const keys = [key]

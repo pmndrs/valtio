@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
-import { proxy, ref, snapshot } from 'valtio'
+import { proxy, ref, snapshot, subscribe } from 'valtio'
 import type { Snapshot } from 'valtio'
 import { deepClone, proxyMap } from 'valtio/utils'
 
@@ -265,6 +265,20 @@ describe('snapshot brand', () => {
     expect(() => state.list.push(snap)).toThrow(message)
     expect(state.value).toBeUndefined()
     expect(state.list).toEqual([])
+  })
+
+  it('keeps the current child linked when an assignment throws', () => {
+    const state = proxy({ child: { count: 0 } })
+    const snap = snapshot(state)
+    const listener = vi.fn()
+    subscribe(state, listener)
+
+    expect(() => {
+      state.child = snap.child
+    }).toThrow(message)
+    state.child.count++
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(snapshot(state).child.count).toBe(1)
   })
 
   it('throws for a snapshot set in a proxyMap', () => {
