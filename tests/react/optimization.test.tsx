@@ -110,6 +110,32 @@ describe('optimization', () => {
     expect(renderFn).toHaveBeenCalledTimes(2)
   })
 
+  it('should unwrap a tracked class instance before the check', async () => {
+    class Item {
+      count = 0
+    }
+    const state = proxy({ item: new Item() })
+    const destination = proxy<{ value?: object }>({})
+    let item!: object
+    const renderFn = vi.fn()
+    const Component = () => {
+      item = useSnapshot(state).item
+      renderFn(item)
+      return null
+    }
+
+    render(<Component />)
+    expect(() => proxy(item)).toThrow(
+      'Cannot assign a Valtio snapshot into a proxy.',
+    )
+    destination.value = ref(item)
+    expect(destination.value).toBe(snapshot(state).item)
+
+    state.item.count = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
   it('should store a tracked snapshot wrapped with ref', () => {
     const source = proxy({ nested: { count: 0 } })
     const destination = proxy<{ value?: object }>({})

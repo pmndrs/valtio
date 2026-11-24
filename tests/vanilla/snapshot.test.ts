@@ -1,7 +1,7 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 import { proxy, ref, snapshot, subscribe } from 'valtio'
 import type { Snapshot } from 'valtio'
-import { deepClone, proxyMap } from 'valtio/utils'
+import { deepClone, proxyMap, proxySet } from 'valtio/utils'
 
 describe('snapshot', () => {
   it('should return correct snapshots without subscribe', async () => {
@@ -285,6 +285,16 @@ describe('snapshot brand', () => {
     const map = proxyMap<string, object>()
     const snap = snapshot(proxy({ count: 0 }))
     expect(() => map.set('a', snap)).toThrow(message)
+  })
+
+  it('looks up a snapshot in a proxySet without throwing', () => {
+    const item = proxy({ count: 0 })
+    const set = proxySet<object>([item])
+    const snap = snapshot(proxy({ count: 0 }))
+    expect(set.has(snap)).toBe(false)
+    expect(set.delete(snap)).toBe(false)
+    expect(set.has(item)).toBe(true)
+    expect(() => set.add(snap)).toThrow(message)
   })
 
   it('stores a snapshot wrapped with ref as is', () => {

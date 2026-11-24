@@ -15,7 +15,11 @@ type Message = {
 
 const DEVTOOLS = Symbol()
 
-const { batchAsWrite } = unstable_getInternalStates()
+const { batchAsWrite, snapshotBrand } = unstable_getInternalStates()
+
+// The snapshot brand is an own key of a snapshot, not of the state.
+const stateKeys = (x: object) =>
+  Reflect.ownKeys(x).filter((key) => key !== snapshotBrand)
 
 type Config = Parameters<
   (Window extends { __REDUX_DEVTOOLS_EXTENSION__?: infer T }
@@ -88,7 +92,7 @@ const diffSnapshots = (
     return
   }
   comparedPrevs.add(prev)
-  Reflect.ownKeys(next).forEach((key) => {
+  stateKeys(next).forEach((key) => {
     if (Object.prototype.hasOwnProperty.call(prev, key)) {
       diffSnapshots(
         prev[key],
@@ -102,7 +106,7 @@ const diffSnapshots = (
       changes.push(['set', [...path, key]])
     }
   })
-  Reflect.ownKeys(prev).forEach((key) => {
+  stateKeys(prev).forEach((key) => {
     if (!Object.prototype.hasOwnProperty.call(next, key)) {
       changes.push(['delete', [...path, key]])
     }

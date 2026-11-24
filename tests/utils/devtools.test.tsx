@@ -1,7 +1,7 @@
 import { StrictMode, Suspense } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { batch, proxy, subscribe, useSnapshot } from 'valtio'
+import { batch, proxy, ref, subscribe, useSnapshot } from 'valtio'
 import { devtools } from 'valtio/utils'
 
 describe('devtools', () => {
@@ -124,6 +124,20 @@ describe('devtools', () => {
     await vi.advanceTimersByTimeAsync(0)
     expect(extension.send).toHaveBeenLastCalledWith(
       expect.objectContaining({ type: 'set:items.length' }),
+      expect.anything(),
+    )
+  })
+
+  it('leaves the snapshot brand out of action names', async () => {
+    const obj = proxy<{ item: { count: number } }>({ item: ref({ count: 0 }) })
+    devtools(obj, { enabled: true })
+
+    obj.item = { count: 1 }
+
+    await vi.advanceTimersByTimeAsync(0)
+    expect(extension.send).toHaveBeenCalledTimes(1)
+    expect(extension.send).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'set:item.count' }),
       expect.anything(),
     )
   })

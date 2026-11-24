@@ -1,4 +1,4 @@
-import { getUntracked, markToTrack } from './vanilla/proxyCompare.js'
+import { getOriginalObject, markToTrack } from './vanilla/proxyCompare.js'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -167,7 +167,7 @@ const createHandlerDefault = <T extends object>(
         ? findRemovedIndices(Number(value))
         : []
     if (isObject(value)) {
-      value = getUntracked(value) || value
+      value = getOriginalObject(value)
     }
     // proxy() can throw, so the current child stays linked until it passes.
     const nextValue =
@@ -312,7 +312,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     throw new Error('object required')
   }
   // A value read from useSnapshot is unwrapped, so the tracker records nothing.
-  if (hasOwn(getUntracked(baseObject) || baseObject, snapshotBrand)) {
+  if (hasOwn(getOriginalObject(baseObject), snapshotBrand)) {
     throw new Error(
       'Cannot assign a Valtio snapshot into a proxy. Copy it with deepClone(), or wrap it with ref() to store it as is.',
     )
@@ -604,7 +604,7 @@ export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
 export function ref<T extends object>(obj: T) {
   refSet.add(obj)
   // The set trap unwraps a value read from useSnapshot, so mark that too.
-  refSet.add(getUntracked(obj) || obj)
+  refSet.add(getOriginalObject(obj))
   return obj as T & { $$valtioSnapshot: T }
 }
 

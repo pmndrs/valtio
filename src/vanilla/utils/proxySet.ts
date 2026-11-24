@@ -4,8 +4,10 @@ import {
   unstable_getInternalStates,
 } from '../../vanilla.js'
 
-const { snapCache, batchAsWrite } = unstable_getInternalStates()
+const { snapCache, batchAsWrite, proxyCache } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
+// A lookup finds the proxy that adding the object made, without making one.
+const findProxy = (x: any) => (typeof x === 'object' && proxyCache.get(x)) || x
 
 type RSetLike<T> = { has(value: T): boolean }
 
@@ -190,7 +192,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     },
     has(value: T) {
       const map = getMapForThis(this)
-      const v = maybeProxify(value)
+      const v = findProxy(value)
       this.epoch // touch property for tracking
       return map.has(v)
     },
@@ -212,7 +214,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const v = maybeProxify(value)
+      const v = findProxy(value)
       const index = indexMap.get(v)
       if (index === undefined) {
         return false
