@@ -103,7 +103,7 @@ This should be fine, because the expectation is that they execute very quickly (
 
 ## Snapshots can't go into state
 
-Assigning a snapshot, or a value read from `useSnapshot`, into a proxy throws, and so does `proxy(snapshot)`. Copy it with `deepClone` from `valtio/utils` to change it later, or wrap it with [`ref`](./ref) to store it as is.
+Assigning a snapshot, or a value read from `useSnapshot`, into a proxy throws, and so does `proxy(snapshot)`. Copy it with `deepClone` from `valtio/utils` to change it later, or wrap it with [`ref`](./ref) to store it as is. A snapshot of a `proxyMap` or `proxySet` is the exception: it isn't proxied, so it is stored as is, and its methods that change it throw.
 
 ```js
 import { deepClone } from 'valtio/utils'

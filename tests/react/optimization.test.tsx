@@ -1,7 +1,7 @@
 import { Suspense, startTransition, useLayoutEffect, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, useSnapshot } from 'valtio'
+import { proxy, ref, snapshot, useSnapshot } from 'valtio'
 import { useCommitCount } from '../test-utils.js'
 
 describe('optimization', () => {
@@ -84,7 +84,7 @@ describe('optimization', () => {
     expect(renderFn).toHaveBeenCalledTimes(1)
   })
 
-  it('should keep an identity-only read after a rejected assignment', async () => {
+  it('should keep an identity-only read after a rejected snapshot', async () => {
     const source = proxy({ nested: { count: 0 } })
     const destination = proxy<{ value?: object }>({})
     let nested!: object
@@ -100,11 +100,28 @@ describe('optimization', () => {
     expect(() => {
       destination.value = nested
     }).toThrow('Cannot assign a Valtio snapshot into a proxy.')
+    expect(() => proxy(nested)).toThrow(
+      'Cannot assign a Valtio snapshot into a proxy.',
+    )
 
     // the check doesn't record a read of `nested`
     source.nested.count = 1
     await act(() => vi.advanceTimersByTimeAsync(0))
     expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should store a tracked snapshot wrapped with ref', () => {
+    const source = proxy({ nested: { count: 0 } })
+    const destination = proxy<{ value?: object }>({})
+    let nested!: object
+    const Component = () => {
+      nested = useSnapshot(source).nested
+      return null
+    }
+
+    render(<Component />)
+    destination.value = ref(nested)
+    expect(destination.value).toBe(snapshot(source).nested)
   })
 
   it('should not track a getter result assigned outside render', async () => {

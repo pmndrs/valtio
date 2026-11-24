@@ -179,6 +179,7 @@ unsubscribe()
 
 A snapshot is read-only. In v2, assigning one into state stored it as it was, so later writes to it were dropped without an error.
 In v3, assigning a snapshot into state throws, and so does `proxy(snapshot)`. This includes nested snapshots, values read from `useSnapshot`, and values added with `push` or a `proxyMap`'s `set`.
+A snapshot of a `proxyMap` or `proxySet` isn't proxied, so it is stored as is, as in v2, and its methods that change it throw.
 
 ```
 Cannot assign a Valtio snapshot into a proxy. Copy it with deepClone(), or wrap it with ref() to store it as is.
