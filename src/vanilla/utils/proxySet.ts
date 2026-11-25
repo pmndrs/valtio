@@ -115,6 +115,13 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     throw new TypeError('Expected an iterable')
   }
 
+  // A snapshot's members are snapshots, which a proxySet can't hold, so a
+  // set operation on a snapshot builds plain sets.
+  const setFor = (
+    self: object,
+  ): (<V>(values?: Iterable<V> | null) => Set<V>) =>
+    isProxyObject(self) ? proxySet : (values) => new Set(values)
+
   function intersectionImpl<T, U>(
     this: InternalProxySet<T>,
     other: RSetLike<U>,
@@ -125,14 +132,15 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
     this.epoch // touch property for tracking
-    const otherSet = proxySet(asIterable(other))
-    const result = proxySet<T>()
+    const newSet = setFor(this)
+    const otherSet = newSet(asIterable(other))
+    const result = newSet<T>()
     for (const value of this.values()) {
       if (otherSet.has(value)) {
         result.add(value)
       }
     }
-    return proxySet(result)
+    return newSet(result)
   }
 
   function unionImpl<T, U>(
@@ -145,11 +153,12 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
     this.epoch // touch property for tracking
-    const otherSet = proxySet(asIterable(other))
-    const result = proxySet<unknown>()
+    const newSet = setFor(this)
+    const otherSet = newSet(asIterable(other))
+    const result = newSet<unknown>()
     for (const v of this.values()) result.add(v)
     for (const v of otherSet.values()) result.add(v)
-    return proxySet(result)
+    return newSet(result)
   }
 
   function differenceImpl<T, U>(
@@ -162,10 +171,11 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     other: RSetLike<unknown> | Set<T>,
   ): Set<T> {
     this.epoch // touch property for tracking
-    const otherSet = proxySet(asIterable(other))
-    const result = proxySet<T>()
+    const newSet = setFor(this)
+    const otherSet = newSet(asIterable(other))
+    const result = newSet<T>()
     for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
-    return proxySet(result)
+    return newSet(result)
   }
 
   function symmetricDifferenceImpl<T, U>(
@@ -181,12 +191,13 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
     this.epoch // touch property for tracking
-    const otherSet = proxySet(asIterable(other))
-    const result = proxySet<unknown>()
+    const newSet = setFor(this)
+    const otherSet = newSet(asIterable(other))
+    const result = newSet<unknown>()
     for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
     // (v as T) -> v is unknown from RSetLike<unknown>, but has() accepts T and safely handles type mismatches
     for (const v of otherSet.values()) if (!this.has(v as T)) result.add(v)
-    return proxySet(result)
+    return newSet(result)
   }
 
   const vObject: InternalProxySet<T> = {
