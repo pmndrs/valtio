@@ -977,9 +977,9 @@ describe('proxySet', () => {
     })
 
     // The TC39 set-methods proposal defines a set-like by `size`, `has()` and
-    // `keys()`. proxySet instead accepts Symbol.iterator and falls back to
-    // forEach, and never calls keys(). These tests pin the current divergence
-    // from a native Set rather than asserting the proposal's semantics.
+    // `keys()`. proxySet instead takes an iterable, and never calls keys().
+    // These tests pin the current divergence from a native Set rather than
+    // asserting the proposal's semantics.
     describe('set-like arguments', () => {
       it('should accept an iterable', () => {
         const set = proxySet([1, 2, 3])
@@ -1019,18 +1019,14 @@ describe('proxySet', () => {
         ]).toEqual([])
       })
 
-      it('should fall back to forEach for a non-iterable collection', () => {
+      it('should throw when the argument is not iterable', () => {
         const set = proxySet([1, 2, 3])
         const forEachOnly = {
           size: 2,
           has: (v: number) => [2, 3].includes(v),
           forEach: (cb: (v: number) => void) => [2, 3].forEach(cb),
         }
-        expect([...set.intersection(forEachOnly as any)]).toEqual([2, 3])
-      })
-
-      it('should throw when the argument is neither iterable nor forEach-able', () => {
-        const set = proxySet([1, 2, 3])
+        expect(() => set.intersection(forEachOnly as any)).toThrow(TypeError)
         expect(() =>
           set.intersection({ size: 0, has: () => false } as any),
         ).toThrow(TypeError)

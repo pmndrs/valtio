@@ -82,20 +82,13 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     }
   }
 
-  const isIterable = (o: unknown): o is Iterable<unknown> =>
-    typeof o === 'object' && o !== null && Symbol.iterator in (o as object)
-
-  const hasForEach = <U>(
-    o: RSetLike<U>,
-  ): o is RSetLike<U> & { forEach: (cb: (v: U) => void) => void } =>
-    typeof (o as { forEach?: unknown }).forEach === 'function'
-
   const asIterable = <U>(other: RSetLike<U> | Set<U>): Iterable<U> => {
-    if (isIterable(other)) return other as Iterable<U>
-    if (hasForEach(other)) {
-      const acc: U[] = []
-      other.forEach((v) => acc.push(v))
-      return acc
+    if (
+      typeof other === 'object' &&
+      other !== null &&
+      Symbol.iterator in other
+    ) {
+      return other as Iterable<U>
     }
     throw new TypeError('Expected an iterable')
   }
