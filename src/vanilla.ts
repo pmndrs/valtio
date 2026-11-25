@@ -203,6 +203,8 @@ const snapCache: WeakMap<object, [version: number, snap: unknown]> =
   new WeakMap()
 const versionHolder = [1] as [number]
 const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
+// Objects whose proxy failed to initialize, with the function to try again.
+const uninitialized: WeakMap<object, () => void> = new WeakMap()
 // Every snapshot object has this as a non-enumerable own key.
 const snapshotBrand: unique symbol = Symbol()
 // Children reach their parents only through WeakRef, so a proxy with
@@ -324,6 +326,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   }
   const found = proxyCache.get(baseObject) as T | undefined
   if (found) {
+    uninitialized.get(baseObject)?.()
     return found
   }
   let version = versionHolder[0]
@@ -468,23 +471,27 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     parentLinks,
   ]
   proxyStateMap.set(proxyObject, proxyState)
-  try {
-    Reflect.ownKeys(baseObject).forEach((key) => {
-      const desc = Object.getOwnPropertyDescriptor(
-        baseObject,
-        key,
-      ) as PropertyDescriptor
-      if ('value' in desc && desc.writable) {
-        proxyObject[key as keyof T] = baseObject[key as keyof T]
-      }
-    })
-  } catch (error) {
-    // A proxy that failed to initialize, as for a nested snapshot, isn't
-    // kept, so proxying the same object again throws again.
-    proxyCache.delete(baseObject)
-    throw error
+  const initialize = () => {
+    uninitialized.delete(baseObject)
+    try {
+      Reflect.ownKeys(baseObject).forEach((key) => {
+        const desc = Object.getOwnPropertyDescriptor(
+          baseObject,
+          key,
+        ) as PropertyDescriptor
+        if ('value' in desc && desc.writable) {
+          proxyObject[key as keyof T] = baseObject[key as keyof T]
+        }
+      })
+    } catch (error) {
+      // A proxy that failed to initialize, as for a nested snapshot, is
+      // initialized again the next time its object is proxied.
+      uninitialized.set(baseObject, initialize)
+      throw error
+    }
+    initializing = false
   }
-  initializing = false
+  initialize()
   return proxyObject
 }
 

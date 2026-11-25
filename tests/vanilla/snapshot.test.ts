@@ -279,6 +279,22 @@ describe('snapshot brand', () => {
     expect(state.value).toBeUndefined()
   })
 
+  it('gives a rejected object one proxy once it is fixed', () => {
+    type Value = { child: { parent?: Value }; bad: { count: number } }
+    const value: Value = { child: {}, bad: snapshot(proxy({ count: 0 })) }
+    value.child.parent = value
+    expect(() => proxy(value)).toThrow(message)
+
+    value.bad = { count: 0 }
+    const state = proxy(value)
+    expect(state.child.parent).toBe(state)
+    const listener = vi.fn()
+    subscribe(state, listener)
+    state.child.parent!.bad.count = 1
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(snapshot(state).bad.count).toBe(1)
+  })
+
   it('keeps the current child linked when an assignment throws', () => {
     const state = proxy({ child: { count: 0 } })
     const snap = snapshot(state)
