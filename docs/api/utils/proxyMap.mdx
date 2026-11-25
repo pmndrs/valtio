@@ -45,21 +45,37 @@ const state = proxy({
 })
 ```
 
-When using an object as a key, you can wrap it with `ref` so it's not proxied. This is useful if you want to preserve the key equality
+## Object keys
 
-```js
+A key is stored as it is: it isn't proxied, and a snapshot of the map has the same keys.
+
+An object key is found by the object, by its proxy, or by a snapshot of it. So a key read from `useSnapshot` finds its entry.
+
+```jsx
+import { proxy, useSnapshot } from 'valtio'
 import { proxyMap } from 'valtio/utils'
 
-// with ref
-const key = ref({})
-state.set(key, 'hello')
-state.get(key) //hello
+const state = proxy({
+  users: [{ name: 'Alice' }],
+  roles: proxyMap(),
+})
+state.roles.set(state.users[0], 'admin')
 
-// without ref
-const key = {}
-state.set(key, 'value')
-state.get(key) //undefined
+const Roles = () => {
+  const tracked = useSnapshot(state)
+  return (
+    <ul>
+      {tracked.users.map((user) => (
+        <li key={user.name}>
+          {user.name}: {tracked.roles.get(user)}
+        </li>
+      ))}
+    </ul>
+  )
+}
 ```
+
+A snapshot marked with `ref` is a key of its own. It doesn't match the state object that it was taken from.
 
 ## `isProxyMap`
 

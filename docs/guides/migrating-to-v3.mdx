@@ -201,6 +201,26 @@ state.selected = deepClone(tracked.items[0])
 state.history.push(ref(snapshot(state)))
 ```
 
+## `proxyMap` and `proxySet` match objects with their proxies and snapshots
+
+In v2, a `proxyMap` matched an object key only with the same object, and a `proxySet` matched an object member with the object or its proxy.
+In v3, both match an object with its proxy and with its snapshots. A snapshot marked with `ref` is still only itself.
+
+```js
+const tracked = useSnapshot(state)
+
+// v2: false, because tracked.items[0] is a snapshot
+// v3: true
+tracked.selected.has(tracked.items[0])
+```
+
+If a `proxyMap` used an object and its proxy as two different keys, they are one key in v3.
+
+A `proxyMap` or `proxySet` also notifies less often:
+
+- `set` with the value that the key already has, and `clear` on an empty collection, don't notify. In v2, they did.
+- A component that calls a method on a collection read from `useSnapshot` re-renders when what it read changes. For example, `has(key)` re-renders when the key is added or deleted, and `size` when the size changes. In v2, it re-rendered on every change to the collection.
+
 ## Naming in examples
 
 The docs now typically use `state` for `proxy(...)`, `snap` for `snapshot(state)`,

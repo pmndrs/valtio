@@ -39,6 +39,7 @@ describe('unstable_getInternalStates', () => {
     const states = unstable_getInternalStates()
     expect(Object.keys(states).sort()).toEqual([
       'batchAsWrite',
+      'getObjectId',
       'proxyCache',
       'proxyStateMap',
       'refSet',

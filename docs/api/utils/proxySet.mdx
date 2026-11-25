@@ -54,6 +54,38 @@ const state = proxy({
 })
 ```
 
+## Object members
+
+An object added to a `proxySet` is proxied, as it is when it's assigned into state. It is found by the object, by its proxy, or by a snapshot of it. So a member read from `useSnapshot` is found in the set.
+
+```jsx
+import { proxy, useSnapshot } from 'valtio'
+import { proxySet } from 'valtio/utils'
+
+const state = proxy({
+  items: [{ name: 'apple' }, { name: 'banana' }],
+  selected: proxySet(),
+})
+state.selected.add(state.items[0])
+
+const Items = () => {
+  const tracked = useSnapshot(state)
+  return (
+    <ul>
+      {tracked.items.map((item) => (
+        <li key={item.name}>
+          {item.name} {tracked.selected.has(item) ? '(selected)' : ''}
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
+A snapshot marked with `ref` is a member of its own. It doesn't match the state object that it was taken from.
+
+`union`, `intersection`, `difference` and `symmetricDifference` return a new `proxySet`. On a snapshot they return a plain `Set`, which holds the snapshot's own members.
+
 ## `isProxySet`
 
 If you want to check if an object is a proxyMap, you can use the `isProxySet` function.

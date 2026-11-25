@@ -94,7 +94,7 @@ const createSnapshotDefault = <T extends object>(
   markToTrack(snap, true) // mark to track
   // Configurable, so that createProxy doesn't copy the snapshot.
   Object.defineProperty(snap, snapshotBrand, {
-    value: true,
+    value: getObjectId(target),
     configurable: true,
   })
   snapCache.set(target, [version, snap])
@@ -205,8 +205,19 @@ const versionHolder = [1] as [number]
 const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
 // Objects whose proxy failed to initialize, with the function to try again.
 const uninitialized: WeakMap<object, () => void> = new WeakMap()
-// Every snapshot object has this as a non-enumerable own key.
+// Every snapshot object has this as a non-enumerable own key. Its value is
+// the id of the object that the snapshot was taken from.
 const snapshotBrand: unique symbol = Symbol()
+const objectIds: WeakMap<object, symbol> = new WeakMap()
+// Gives an object an id that its snapshots carry, so that a snapshot can be
+// matched with its state object without keeping a reference to it.
+const getObjectId = (obj: object): symbol => {
+  let id = objectIds.get(obj)
+  if (!id) {
+    objectIds.set(obj, (id = Symbol()))
+  }
+  return id
+}
 // Children reach their parents only through WeakRef, so a proxy with
 // listeners is held here until they are removed. Through its handler, it
 // keeps alive the visit function that the WeakRefs point to.
@@ -641,6 +652,7 @@ export function unstable_getInternalStates(): {
   proxyCache: typeof proxyCache
   batchAsWrite: typeof batchAsWrite
   snapshotBrand: typeof snapshotBrand
+  getObjectId: typeof getObjectId
 } {
   return {
     proxyStateMap,
@@ -650,6 +662,7 @@ export function unstable_getInternalStates(): {
     proxyCache,
     batchAsWrite,
     snapshotBrand,
+    getObjectId,
   }
 }
 
