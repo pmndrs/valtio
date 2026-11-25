@@ -1134,12 +1134,16 @@ describe('proxySet index in state', () => {
     }
     expect(seen).toEqual(['a', 'c', 'd'])
 
+    // clear() ends the iteration, also for a member added after it, which a
+    // native Set would visit
     seen.length = 0
     for (const value of set) {
       seen.push(value)
       set.clear()
+      set.add('e')
     }
     expect(seen).toEqual(['a'])
+    expect([...set]).toEqual(['e'])
   })
 
   it('should tell members of different types apart, as a Set does', () => {

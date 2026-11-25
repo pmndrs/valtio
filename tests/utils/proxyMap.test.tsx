@@ -1140,12 +1140,16 @@ describe('proxyMap index in state', () => {
     }
     expect(seen).toEqual(['a', 'c', 'd'])
 
+    // clear() ends the iteration, also for a key added after it, which a
+    // native Map would visit
     seen.length = 0
     for (const key of map.keys()) {
       seen.push(key)
       map.clear()
+      map.set('e', 5)
     }
     expect(seen).toEqual(['a'])
+    expect([...map.keys()]).toEqual(['e'])
   })
 
   it('should keep a keys() reader quiet when only values change', async () => {
