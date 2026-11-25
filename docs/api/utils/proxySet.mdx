@@ -90,6 +90,8 @@ A snapshot marked with `ref` is a member of its own. It doesn't match the state 
 
 `union`, `intersection`, `difference` and `symmetricDifference` return a new `proxySet`. On a snapshot they return a plain `Set`, which holds the snapshot's own members.
 
+`isSubsetOf` and `isDisjointFrom` ask the other collection with its `has`. A native `Set` finds only the same object, so pass a `proxySet` to match an object with its proxy and its snapshots.
+
 ## `isProxySet`
 
 If you want to check if an object is a proxyMap, you can use the `isProxySet` function.
