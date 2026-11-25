@@ -1336,4 +1336,31 @@ describe('proxySet index in state', () => {
     expect([...snap]).toEqual([Symbol.iterator])
     expect(set.size).toBe(0)
   })
+
+  it('should keep track of the first member across deletes', () => {
+    const set = proxySet(['a', 'b', 'c'])
+    const snap = snapshot(set)
+    set.delete('b')
+    expect(set.values().next().value).toBe('a')
+    set.delete('a')
+    expect(set.values().next().value).toBe('c')
+    set.delete('c')
+    expect(set.values().next().done).toBe(true)
+    set.add('d')
+    expect([...set]).toEqual(['d'])
+    // the snapshot has its own first member
+    expect(snap.values().next().value).toBe('a')
+    expect([...snap]).toEqual(['a', 'b', 'c'])
+  })
+
+  it('should take and delete the first member without listing the others', () => {
+    // listing all members for each take would time out
+    const set = proxySet(Array.from({ length: 20000 }, (_, i) => i))
+    let taken = 0
+    while (set.size) {
+      set.delete(set.values().next().value as number)
+      taken++
+    }
+    expect(taken).toBe(20000)
+  })
 })

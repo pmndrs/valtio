@@ -3,15 +3,17 @@ import {
   proxy,
   unstable_getInternalStates,
 } from '../../vanilla.js'
-import { keyId, slotsOf } from './collection.js'
+import { advanceFirst, keyId, slotsOf } from './collection.js'
 
 const { batchAsWrite } = unstable_getInternalStates()
 
 // The index of the set. It is part of the state, so a snapshot has its own:
-// the id of a member gives its slot in `data`, and `size` counts the members.
-// A slot is never used again, so `data.length` is the next.
+// the id of a member gives its slot in `data`, `size` counts the members, and
+// `first` is the first slot in use. A slot is never used again, so
+// `data.length` is the next.
 type Lookup = {
   size: number
+  first: number
   [id: string | symbol]: number
 }
 
@@ -66,7 +68,7 @@ export const isProxySet = (obj: object): boolean => {
 
 export function proxySet<T>(initialValues?: Iterable<T> | null) {
   const initialData: T[] = []
-  const initialLookup: Lookup = { size: 0 }
+  const initialLookup: Lookup = { size: 0, first: 0 }
 
   if (initialValues) {
     if (typeof initialValues[Symbol.iterator] !== 'function') {
@@ -222,6 +224,9 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
         delete this.data[slot]
         delete this.lookup[id]
         this.lookup.size--
+        if (slot === this.lookup.first) {
+          advanceFirst(this)
+        }
       })
       return true
     },
@@ -232,7 +237,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (this.lookup.size) {
         batchAsWrite(() => {
           this.data = []
-          this.lookup = { size: 0 }
+          this.lookup = { size: 0, first: 0 }
         })
       }
     },

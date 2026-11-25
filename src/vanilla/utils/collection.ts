@@ -34,14 +34,34 @@ export const keyId = (key: unknown): string | symbol => {
   return `${typeof key}:${key === 0 ? 0 : key}`
 }
 
+type Collection = { data: unknown[]; lookup: { first: number } }
+
+/**
+ * Moves `lookup.first` to the next slot in use, after the slot that it
+ * points at is deleted. It only moves forward, so each slot is passed once.
+ */
+export const advanceFirst = ({ data, lookup }: Collection): void => {
+  let first = lookup.first + 1
+  while (first < data.length && !(first in data)) {
+    first++
+  }
+  lookup.first = first
+}
+
 /**
  * Yields the slots of a collection's `data` that are in use, in insertion
  * order. As with a Map or a Set, an entry added during the iteration is
  * visited, and one deleted before its turn is skipped. Clearing ends the
  * iteration, also for entries added after it, which a Map would visit.
  */
-export function* slotsOf(collection: { data: unknown[] }): Generator<number> {
+export function* slotsOf(collection: Collection): Generator<number> {
   const data = collection.data
+  // The first slot in use is known, so reading only the first entry doesn't
+  // list the others.
+  const first = collection.lookup.first
+  if (first in data) {
+    yield first
+  }
   const end = data.length
   for (const index of Reflect.ownKeys(data)) {
     // the indices come first, in order, and then `length`
@@ -53,7 +73,7 @@ export function* slotsOf(collection: { data: unknown[] }): Generator<number> {
       return
     }
     const slot = Number(index)
-    if (slot in data) {
+    if (slot > first && slot in data) {
       yield slot
     }
   }

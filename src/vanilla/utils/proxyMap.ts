@@ -4,15 +4,17 @@ import {
   ref,
   unstable_getInternalStates,
 } from '../../vanilla.js'
-import { keyId, slotsOf } from './collection.js'
+import { advanceFirst, keyId, slotsOf } from './collection.js'
 
 const { batchAsWrite } = unstable_getInternalStates()
 
 // The index of the map. It is part of the state, so a snapshot has its own:
-// the id of a key gives its slot in `data`, a slot gives its key, and `size`
-// counts the keys. A slot is never used again, so `data.length` is the next.
+// the id of a key gives its slot in `data`, a slot gives its key, `size`
+// counts the keys, and `first` is the first slot in use. A slot is never used
+// again, so `data.length` is the next.
 type Lookup<K> = {
   size: number
+  first: number
   [slot: number]: { key: K }
   [id: string | symbol]: unknown
 }
@@ -61,7 +63,7 @@ export const isProxyMap = (obj: object): boolean => {
  */
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const initialData: Array<V> = []
-  const initialLookup: Lookup<K> = { size: 0 }
+  const initialLookup: Lookup<K> = { size: 0, first: 0 }
 
   if (entries) {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -129,6 +131,9 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
         delete this.lookup[id]
         delete this.lookup[slot]
         this.lookup.size--
+        if (slot === this.lookup.first) {
+          advanceFirst(this)
+        }
       })
       return true
     },
@@ -139,7 +144,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       if (this.lookup.size) {
         batchAsWrite(() => {
           this.data = []
-          this.lookup = { size: 0 }
+          this.lookup = { size: 0, first: 0 }
         })
       }
     },

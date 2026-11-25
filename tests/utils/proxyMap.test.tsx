@@ -1317,4 +1317,47 @@ describe('proxyMap index in state', () => {
     expect([...snap.keys()]).toEqual([Symbol.iterator])
     expect(map.size).toBe(0)
   })
+
+  it('should keep track of the first key across deletes', () => {
+    const map = proxyMap<string, number>([
+      ['a', 1],
+      ['b', 2],
+      ['c', 3],
+    ])
+    const snap = snapshot(map)
+    map.delete('b')
+    expect(map.keys().next().value).toBe('a')
+    map.delete('a')
+    expect(map.keys().next().value).toBe('c')
+    expect([...map.keys()]).toEqual(['c'])
+    map.delete('c')
+    expect(map.keys().next().done).toBe(true)
+    map.set('d', 4)
+    expect([...map.keys()]).toEqual(['d'])
+    // the snapshot has its own first key
+    expect(snap.keys().next().value).toBe('a')
+    expect([...snap.keys()]).toEqual(['a', 'b', 'c'])
+  })
+
+  it('should keep a reader of the first key quiet when another key is added', async () => {
+    const state = proxyMap<string, number>([['a', 1]])
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>first: {String(tracked.keys().next().value)}</div>
+    }
+
+    render(<Component />)
+    await act(async () => {
+      state.set('b', 2)
+    })
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      state.delete('a')
+    })
+    expect(screen.getByText('first: b')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
 })
