@@ -5,18 +5,17 @@ import {
 } from '../../vanilla.js'
 import { getOriginalObject } from '../proxyCompare.js'
 
-const { snapCache, batchAsWrite, proxyCache, refSet } =
-  unstable_getInternalStates()
+const { snapCache, batchAsWrite, proxyCache } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
-// A lookup finds what adding the value would store, without making a proxy:
-// it unwraps a value read from useSnapshot, keeps a ref, and otherwise takes
-// the proxy already made for the object.
-const findProxy = (x: any) => {
+// A lookup finds what adding the value stored, without making a proxy: the
+// value itself, unwrapped if it was read from useSnapshot, or else the proxy
+// already made for it.
+const findKey = (map: Map<unknown, number>, x: any) => {
   if (typeof x !== 'object' || x === null) {
     return x
   }
   const value = getOriginalObject(x)
-  return (!refSet.has(value) && proxyCache.get(value)) || value
+  return map.has(value) ? value : proxyCache.get(value) || value
 }
 
 type RSetLike<T> = { has(value: T): boolean }
@@ -202,7 +201,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     },
     has(value: T) {
       const map = getMapForThis(this)
-      const v = findProxy(value)
+      const v = findKey(map, value)
       this.epoch // touch property for tracking
       return map.has(v)
     },
@@ -224,7 +223,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
       if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const v = findProxy(value)
+      const v = findKey(indexMap, value)
       const index = indexMap.get(v)
       if (index === undefined) {
         return false

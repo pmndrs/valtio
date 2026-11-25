@@ -309,6 +309,16 @@ describe('snapshot brand', () => {
     expect(set.has(snap)).toBe(true)
     expect(set.delete(snap)).toBe(true)
 
+    // proxy() made for an object that adding stores as is
+    const date = new Date()
+    proxy(date)
+    set.add(date)
+    expect(set.has(date)).toBe(true)
+    const existing = proxy({ count: 0 })
+    proxy(existing)
+    set.add(existing)
+    expect(set.has(existing)).toBe(true)
+
     // a lookup makes no proxy, so adding still checks for the snapshot
     const holder = { child: snapshot(proxy({ count: 0 })) }
     expect(set.has(holder)).toBe(false)
