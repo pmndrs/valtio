@@ -175,6 +175,32 @@ unsubscribe()
 
 `useSnapshot` and `useProxy` unsubscribe when the component unmounts.
 
+## Snapshots can't go into state
+
+A snapshot is read-only. In v2, assigning one into state stored it as it was, so later writes to it were dropped without an error.
+In v3, assigning a snapshot into state throws, and so does `proxy(snapshot)`. This includes nested snapshots, values read from `useSnapshot`, and values added with `push` or a `proxyMap`'s `set`.
+A snapshot of a `proxyMap` or `proxySet` isn't proxied, so it is stored as is, as in v2, and its methods that change it throw.
+
+```
+Cannot assign a Valtio snapshot into a proxy. Copy it with deepClone(), or wrap it with ref() to store it as is.
+```
+
+Copy the snapshot with `deepClone` from `valtio/utils` to change it later, or mark it with [`ref`](../api/advanced/ref) to keep it as is, for example in a history list.
+
+```js
+const tracked = useSnapshot(state)
+
+// v2: stored read-only, so later writes to state.selected are dropped
+// v3: throws
+state.selected = tracked.items[0]
+
+// v3: copy it to change it later
+state.selected = deepClone(tracked.items[0])
+
+// v3: or keep it as is
+state.history.push(ref(snapshot(state)))
+```
+
 ## Naming in examples
 
 The docs now typically use `state` for `proxy(...)`, `snap` for `snapshot(state)`,

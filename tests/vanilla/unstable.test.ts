@@ -43,6 +43,7 @@ describe('unstable_getInternalStates', () => {
       'proxyStateMap',
       'refSet',
       'snapCache',
+      'snapshotBrand',
       'versionHolder',
     ])
   })

@@ -1,6 +1,7 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
-import { proxy, snapshot } from 'valtio'
+import { proxy, ref, snapshot, subscribe } from 'valtio'
 import type { Snapshot } from 'valtio'
+import { deepClone, proxyMap, proxySet } from 'valtio/utils'
 
 describe('snapshot', () => {
   it('should return correct snapshots without subscribe', async () => {
@@ -34,13 +35,6 @@ describe('snapshot', () => {
       value: 1,
       writable: false,
     })
-  })
-
-  it('should create a new proxy from a snapshot', async () => {
-    const state = proxy({ c: 0 })
-    const snap1 = snapshot(state)
-    const state2 = proxy(snap1)
-    expect(state2.c).toBe(0)
   })
 
   it('should not change snapshot with modifying the original proxy', async () => {
@@ -246,5 +240,137 @@ describe('snapshot', () => {
 
       expectTypeOf<A>().toEqualTypeOf<B>()
     })
+  })
+})
+
+describe('snapshot brand', () => {
+  const message =
+    'Cannot assign a Valtio snapshot into a proxy. Copy it with deepClone(), or wrap it with ref() to store it as is.'
+
+  it('throws for proxy(snapshot)', () => {
+    const snap = snapshot(proxy({ count: 0 }))
+    expect(() => proxy(snap)).toThrow(message)
+  })
+
+  it('throws for a snapshot assigned into state, directly or nested', () => {
+    const state = proxy<{ value?: object; list: object[] }>({ list: [] })
+    const snap = snapshot(proxy({ child: { count: 0 } }))
+
+    expect(() => {
+      state.value = snap
+    }).toThrow(message)
+    expect(() => {
+      state.value = { child: snap.child }
+    }).toThrow(message)
+    expect(() => state.list.push(snap)).toThrow(message)
+    expect(state.value).toBeUndefined()
+    expect(state.list).toEqual([])
+  })
+
+  it('throws again when a rejected object is used again', () => {
+    const value = { nested: { child: snapshot(proxy({ count: 0 })) } }
+    expect(() => proxy(value)).toThrow(message)
+    expect(() => proxy(value)).toThrow(message)
+
+    const state = proxy<{ value?: object }>({})
+    expect(() => {
+      state.value = value
+    }).toThrow(message)
+    expect(state.value).toBeUndefined()
+  })
+
+  it('gives a rejected object one proxy once it is fixed', () => {
+    type Value = { child: { parent?: Value }; bad: { count: number } }
+    const value: Value = { child: {}, bad: snapshot(proxy({ count: 0 })) }
+    value.child.parent = value
+    expect(() => proxy(value)).toThrow(message)
+
+    value.bad = { count: 0 }
+    const state = proxy(value)
+    expect(state.child.parent).toBe(state)
+    const listener = vi.fn()
+    subscribe(state, listener)
+    state.child.parent!.bad.count = 1
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(snapshot(state).bad.count).toBe(1)
+  })
+
+  it('keeps the current child linked when an assignment throws', () => {
+    const state = proxy({ child: { count: 0 } })
+    const snap = snapshot(state)
+    const listener = vi.fn()
+    subscribe(state, listener)
+
+    expect(() => {
+      state.child = snap.child
+    }).toThrow(message)
+    state.child.count++
+    expect(listener).toHaveBeenCalledTimes(1)
+    expect(snapshot(state).child.count).toBe(1)
+  })
+
+  it('throws for a snapshot set in a proxyMap', () => {
+    const map = proxyMap<string, object>()
+    const snap = snapshot(proxy({ count: 0 }))
+    expect(() => map.set('a', snap)).toThrow(message)
+  })
+
+  it('looks up a snapshot in a proxySet without throwing', () => {
+    const item = proxy({ count: 0 })
+    const set = proxySet<object>([item])
+    const snap = snapshot(proxy({ count: 0 }))
+    expect(set.has(snap)).toBe(false)
+    expect(set.delete(snap)).toBe(false)
+    expect(set.has(item)).toBe(true)
+    expect(() => set.add(snap)).toThrow(message)
+  })
+
+  it('looks up a proxySet member as adding it would', () => {
+    const item = { count: 0 }
+    proxy(item)
+    ref(item)
+    const set = proxySet<object>([item])
+    expect(set.has(item)).toBe(true)
+
+    const snap = snapshot(proxy({ count: 0 }))
+    set.add(ref(snap))
+    expect(set.has(snap)).toBe(true)
+    expect(set.delete(snap)).toBe(true)
+
+    // proxy() made for an object that adding stores as is
+    const date = new Date()
+    proxy(date)
+    set.add(date)
+    expect(set.has(date)).toBe(true)
+    const existing = proxy({ count: 0 })
+    proxy(existing)
+    set.add(existing)
+    expect(set.has(existing)).toBe(true)
+
+    // a lookup makes no proxy, so adding still checks for the snapshot
+    const holder = { child: snapshot(proxy({ count: 0 })) }
+    expect(set.has(holder)).toBe(false)
+    expect(() => set.add(holder)).toThrow(message)
+  })
+
+  it('stores a snapshot wrapped with ref as is', () => {
+    const state = proxy<{ history: object[] }>({ history: [] })
+    const snap = snapshot(proxy({ count: 0 }))
+    state.history.push(ref(snap))
+    expect(state.history[0]).toBe(snap)
+  })
+
+  it('makes a proxy from a deep clone of a snapshot', () => {
+    const snap = snapshot(proxy({ child: { count: 0 } }))
+    const state = proxy<{ child: { count: number } }>(deepClone(snap))
+    state.child.count = 1
+    expect(state.child.count).toBe(1)
+  })
+
+  it('leaves the brand out of Object.keys, spread and JSON', () => {
+    const snap = snapshot(proxy({ count: 0 }))
+    expect(Object.keys(snap)).toEqual(['count'])
+    expect(proxy({ ...snap }).count).toBe(0)
+    expect(proxy(JSON.parse(JSON.stringify(snap))).count).toBe(0)
   })
 })

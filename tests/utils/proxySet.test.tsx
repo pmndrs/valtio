@@ -377,6 +377,28 @@ describe('proxySet', () => {
       )
     })
 
+    it('should run set operations on a snapshot that holds objects', () => {
+      const state = proxySet([{ id: 1 }, { id: 2 }])
+      const snap = snapshot(state)
+      const [first, second] = [...snap]
+
+      const ids = (set: Set<unknown>) =>
+        [...set].map((value) => (value as { id: number }).id)
+      expect(ids(snap.union(new Set([{ id: 3 }])))).toEqual([1, 2, 3])
+      expect(ids(snap.difference(new Set([first])))).toEqual([2])
+      expect(ids(snap.intersection(new Set([first])))).toEqual([1])
+      expect(ids(snap.symmetricDifference(new Set([{ id: 3 }])))).toEqual([
+        1, 2, 3,
+      ])
+      // the members are the snapshot's own, in a plain set
+      expect([...snap.union(snapshot(proxySet()))]).toEqual([first, second])
+
+      // into a proxySet, a snapshot's members throw, as with add()
+      expect(() => state.union(snap)).toThrow(
+        'Cannot assign a Valtio snapshot into a proxy.',
+      )
+    })
+
     it('should work with deleting a key', async () => {
       const state = proxySet(['val1', 'val2'])
       const snap1 = snapshot(state)

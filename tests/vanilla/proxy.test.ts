@@ -789,7 +789,13 @@ describe('proxy nested values', () => {
     expect(state.node).not.toBe(node)
     const keys = ['b', 'a', 'c', second, first]
     expect(Reflect.ownKeys(state.node)).toEqual(keys)
-    expect(Reflect.ownKeys(snapshot(state).node)).toEqual(keys)
+    const snapNode = snapshot(state).node
+    // The snapshot brand is a non-enumerable own key.
+    expect(
+      Reflect.ownKeys(snapNode).filter((key) =>
+        Object.prototype.propertyIsEnumerable.call(snapNode, key),
+      ),
+    ).toEqual(keys)
   })
 
   it('should reorder undefined values', () => {

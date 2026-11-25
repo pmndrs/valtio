@@ -1,4 +1,4 @@
-import { getUntracked, markToTrack } from './vanilla/proxyCompare.js'
+import { getOriginalObject, markToTrack } from './vanilla/proxyCompare.js'
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -92,6 +92,11 @@ const createSnapshotDefault = <T extends object>(
     snap.length = target.length
   }
   markToTrack(snap, true) // mark to track
+  // Configurable, so that createProxy doesn't copy the snapshot.
+  Object.defineProperty(snap, snapshotBrand, {
+    value: true,
+    configurable: true,
+  })
   snapCache.set(target, [version, snap])
   Reflect.ownKeys(target).forEach((key) => {
     if (Object.getOwnPropertyDescriptor(snap, key)) {
@@ -161,12 +166,13 @@ const createHandlerDefault = <T extends object>(
       key === 'length' && length !== false && value >= 0 && value < length
         ? findRemovedIndices(Number(value))
         : []
-    removeChildListener(key)
     if (isObject(value)) {
-      value = getUntracked(value) || value
+      value = getOriginalObject(value)
     }
+    // proxy() can throw, so the current child stays linked until it passes.
     const nextValue =
       !proxyStateMap.has(value) && canProxy(value) ? proxy(value) : value
+    removeChildListener(key)
     addChildListener(key, nextValue)
     Reflect.set(target, key, nextValue, receiver)
     const keys = [key]
@@ -197,6 +203,10 @@ const snapCache: WeakMap<object, [version: number, snap: unknown]> =
   new WeakMap()
 const versionHolder = [1] as [number]
 const proxyCache: WeakMap<object, ProxyObject> = new WeakMap()
+// Objects whose proxy failed to initialize, with the function to try again.
+const uninitialized: WeakMap<object, () => void> = new WeakMap()
+// Every snapshot object has this as a non-enumerable own key.
+const snapshotBrand: unique symbol = Symbol()
 // Children reach their parents only through WeakRef, so a proxy with
 // listeners is held here until they are removed. Through its handler, it
 // keeps alive the visit function that the WeakRefs point to.
@@ -303,6 +313,12 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   if (!isObject(baseObject)) {
     throw new Error('object required')
   }
+  // A value read from useSnapshot is unwrapped, so the tracker records nothing.
+  if (hasOwn(getOriginalObject(baseObject), snapshotBrand)) {
+    throw new Error(
+      'Cannot assign a Valtio snapshot into a proxy. Copy it with deepClone(), or wrap it with ref() to store it as is.',
+    )
+  }
   if (typeof WeakRef === 'undefined') {
     throw new Error(
       'Valtio requires WeakRef. On React Native, use the New Architecture.',
@@ -310,6 +326,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   }
   const found = proxyCache.get(baseObject) as T | undefined
   if (found) {
+    uninitialized.get(baseObject)?.()
     return found
   }
   let version = versionHolder[0]
@@ -454,16 +471,27 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     parentLinks,
   ]
   proxyStateMap.set(proxyObject, proxyState)
-  Reflect.ownKeys(baseObject).forEach((key) => {
-    const desc = Object.getOwnPropertyDescriptor(
-      baseObject,
-      key,
-    ) as PropertyDescriptor
-    if ('value' in desc && desc.writable) {
-      proxyObject[key as keyof T] = baseObject[key as keyof T]
+  const initialize = () => {
+    uninitialized.delete(baseObject)
+    try {
+      Reflect.ownKeys(baseObject).forEach((key) => {
+        const desc = Object.getOwnPropertyDescriptor(
+          baseObject,
+          key,
+        ) as PropertyDescriptor
+        if ('value' in desc && desc.writable) {
+          proxyObject[key as keyof T] = baseObject[key as keyof T]
+        }
+      })
+    } catch (error) {
+      // A proxy that failed to initialize, as for a nested snapshot, is
+      // initialized again the next time its object is proxied.
+      uninitialized.set(baseObject, initialize)
+      throw error
     }
-  })
-  initializing = false
+    initializing = false
+  }
+  initialize()
   return proxyObject
 }
 
@@ -589,6 +617,8 @@ export function snapshot<T extends object>(proxyObject: T): Snapshot<T> {
  */
 export function ref<T extends object>(obj: T) {
   refSet.add(obj)
+  // The set trap unwraps a value read from useSnapshot, so mark that too.
+  refSet.add(getOriginalObject(obj))
   return obj as T & { $$valtioSnapshot: T }
 }
 
@@ -610,6 +640,7 @@ export function unstable_getInternalStates(): {
   versionHolder: typeof versionHolder
   proxyCache: typeof proxyCache
   batchAsWrite: typeof batchAsWrite
+  snapshotBrand: typeof snapshotBrand
 } {
   return {
     proxyStateMap,
@@ -618,6 +649,7 @@ export function unstable_getInternalStates(): {
     versionHolder,
     proxyCache,
     batchAsWrite,
+    snapshotBrand,
   }
 }
 

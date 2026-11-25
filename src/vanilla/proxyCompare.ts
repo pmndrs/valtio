@@ -182,7 +182,7 @@ const createProxyHandler = <T extends object>(
   return [handler, state] as const
 }
 
-const getOriginalObject = <T extends object>(obj: T) =>
+export const getOriginalObject = <T extends object>(obj: T): T =>
   // unwrap proxy
   (obj as { [GET_ORIGINAL_SYMBOL]?: typeof obj })[GET_ORIGINAL_SYMBOL] ||
   // otherwise

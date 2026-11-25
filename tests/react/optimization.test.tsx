@@ -1,7 +1,7 @@
 import { Suspense, startTransition, useLayoutEffect, useState } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, useSnapshot } from 'valtio'
+import { proxy, ref, snapshot, useSnapshot } from 'valtio'
 import { useCommitCount } from '../test-utils.js'
 
 describe('optimization', () => {
@@ -58,7 +58,7 @@ describe('optimization', () => {
     expect(renderFn).toBeCalledTimes(2)
   })
 
-  it('should not track snapshots assigned outside render', async () => {
+  it('should throw for a tracked snapshot assigned into state', async () => {
     const source = proxy({ nested: { count: 0, other: 0 } })
     const destination = proxy<{ value?: object }>({})
     let nested!: object
@@ -71,30 +71,106 @@ describe('optimization', () => {
     }
 
     render(<Component />)
-    destination.value = nested
-    snapshot(destination)
+    expect(() => {
+      destination.value = nested
+    }).toThrow('Cannot assign a Valtio snapshot into a proxy.')
+    expect(() => {
+      destination.value = { nested }
+    }).toThrow('Cannot assign a Valtio snapshot into a proxy.')
+
+    // the check doesn't subscribe the component to anything
     source.nested.other = 1
     await act(() => vi.advanceTimersByTimeAsync(0))
-
     expect(renderFn).toHaveBeenCalledTimes(1)
   })
 
-  it('should unwrap nested snapshots assigned outside render', async () => {
-    const source = proxy({ nested: { count: 0, other: 0 } })
-    const destination = proxy<{ value: { nested?: object } }>({ value: {} })
+  it('should keep an identity-only read after a rejected snapshot', async () => {
+    const source = proxy({ nested: { count: 0 } })
+    const destination = proxy<{ value?: object }>({})
     let nested!: object
     const renderFn = vi.fn()
     const Component = () => {
       const tracked = useSnapshot(source)
       nested = tracked.nested
-      renderFn(tracked.nested.count)
+      renderFn(nested)
       return null
     }
 
     render(<Component />)
-    destination.value = { nested }
+    expect(() => {
+      destination.value = nested
+    }).toThrow('Cannot assign a Valtio snapshot into a proxy.')
+    expect(() => proxy(nested)).toThrow(
+      'Cannot assign a Valtio snapshot into a proxy.',
+    )
+
+    // the check doesn't record a read of `nested`
+    source.nested.count = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should unwrap a tracked class instance before the check', async () => {
+    class Item {
+      count = 0
+    }
+    const state = proxy({ item: new Item() })
+    const destination = proxy<{ value?: object }>({})
+    let item!: object
+    const renderFn = vi.fn()
+    const Component = () => {
+      item = useSnapshot(state).item
+      renderFn(item)
+      return null
+    }
+
+    render(<Component />)
+    expect(() => proxy(item)).toThrow(
+      'Cannot assign a Valtio snapshot into a proxy.',
+    )
+    destination.value = ref(item)
+    expect(destination.value).toBe(snapshot(state).item)
+
+    state.item.count = 1
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should store a tracked snapshot wrapped with ref', () => {
+    const source = proxy({ nested: { count: 0 } })
+    const destination = proxy<{ value?: object }>({})
+    let nested!: object
+    const Component = () => {
+      nested = useSnapshot(source).nested
+      return null
+    }
+
+    render(<Component />)
+    destination.value = ref(nested)
+    expect(destination.value).toBe(snapshot(source).nested)
+  })
+
+  it('should not track a getter result assigned outside render', async () => {
+    const source = proxy({
+      items: [{ label: 'a' }],
+      get labels() {
+        return this.items.map((item) => ({ label: item.label }))
+      },
+    })
+    const destination = proxy<{ value?: object }>({})
+    let labels!: object
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(source)
+      labels = tracked.labels
+      renderFn(tracked.labels.length)
+      return null
+    }
+
+    render(<Component />)
+    destination.value = labels
     snapshot(destination)
-    source.nested.other = 1
+    source.items[0]!.label = 'b'
     await act(() => vi.advanceTimersByTimeAsync(0))
 
     expect(renderFn).toHaveBeenCalledTimes(1)

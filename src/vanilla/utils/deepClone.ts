@@ -1,4 +1,6 @@
-import { unstable_isRef } from '../../vanilla.js'
+import { unstable_getInternalStates, unstable_isRef } from '../../vanilla.js'
+
+const { snapshotBrand } = unstable_getInternalStates()
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
@@ -21,7 +23,10 @@ export function deepClone<T>(
     ? []
     : Object.create(Object.getPrototypeOf(obj))
   Reflect.ownKeys(obj).forEach((key) => {
-    baseObject[key as keyof T] = deepClone(obj[key as keyof T], isRef)
+    // A clone of a snapshot isn't a snapshot, so it can go into state.
+    if (key !== snapshotBrand) {
+      baseObject[key as keyof T] = deepClone(obj[key as keyof T], isRef)
+    }
   })
   return baseObject
 }

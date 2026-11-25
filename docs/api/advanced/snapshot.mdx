@@ -101,6 +101,16 @@ Note that the results of getters and methods are not cached, and are re-evaluate
 
 This should be fine, because the expectation is that they execute very quickly (faster than the overhead of caching them would be worth) and are also deterministic, so the return value is based only on the already-frozen snapshot state.
 
+## Snapshots can't go into state
+
+Assigning a snapshot, or a value read from `useSnapshot`, into a proxy throws, and so does `proxy(snapshot)`. Copy it with `deepClone` from `valtio/utils` to change it later, or wrap it with [`ref`](./ref) to store it as is. A snapshot of a `proxyMap` or `proxySet` is the exception: it isn't proxied, so it is stored as is, and its methods that change it throw.
+
+```js
+import { deepClone } from 'valtio/utils'
+
+state.draft = deepClone(snapshot(state).saved)
+```
+
 ## Vanilla JavaScript
 
 In VanillaJS, `snapshot` is not necessary to access proxied object values, inside or outside of subscribe. However, it is useful, for example, to keep a serializable list of un-proxied objects or check if objects have changed. It also resolves promises.
