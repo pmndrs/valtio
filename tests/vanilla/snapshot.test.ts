@@ -267,6 +267,18 @@ describe('snapshot brand', () => {
     expect(state.list).toEqual([])
   })
 
+  it('throws again when a rejected object is used again', () => {
+    const value = { nested: { child: snapshot(proxy({ count: 0 })) } }
+    expect(() => proxy(value)).toThrow(message)
+    expect(() => proxy(value)).toThrow(message)
+
+    const state = proxy<{ value?: object }>({})
+    expect(() => {
+      state.value = value
+    }).toThrow(message)
+    expect(state.value).toBeUndefined()
+  })
+
   it('keeps the current child linked when an assignment throws', () => {
     const state = proxy({ child: { count: 0 } })
     const snap = snapshot(state)

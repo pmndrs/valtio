@@ -468,15 +468,22 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
     parentLinks,
   ]
   proxyStateMap.set(proxyObject, proxyState)
-  Reflect.ownKeys(baseObject).forEach((key) => {
-    const desc = Object.getOwnPropertyDescriptor(
-      baseObject,
-      key,
-    ) as PropertyDescriptor
-    if ('value' in desc && desc.writable) {
-      proxyObject[key as keyof T] = baseObject[key as keyof T]
-    }
-  })
+  try {
+    Reflect.ownKeys(baseObject).forEach((key) => {
+      const desc = Object.getOwnPropertyDescriptor(
+        baseObject,
+        key,
+      ) as PropertyDescriptor
+      if ('value' in desc && desc.writable) {
+        proxyObject[key as keyof T] = baseObject[key as keyof T]
+      }
+    })
+  } catch (error) {
+    // A proxy that failed to initialize, as for a nested snapshot, isn't
+    // kept, so proxying the same object again throws again.
+    proxyCache.delete(baseObject)
+    throw error
+  }
   initializing = false
   return proxyObject
 }
