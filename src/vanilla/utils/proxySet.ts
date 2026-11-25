@@ -3,17 +3,20 @@ import {
   proxy,
   unstable_getInternalStates,
 } from '../../vanilla.js'
+import { getOriginalObject } from '../proxyCompare.js'
 
-const { snapCache, batchAsWrite } = unstable_getInternalStates()
+const { snapCache, batchAsWrite, proxyCache, refSet } =
+  unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
-// A lookup normalizes the value as adding it would. A snapshot that adding
-// would reject can't be a member.
+// A lookup finds what adding the value would store, without making a proxy:
+// it unwraps a value read from useSnapshot, keeps a ref, and otherwise takes
+// the proxy already made for the object.
 const findProxy = (x: any) => {
-  try {
-    return maybeProxify(x)
-  } catch {
+  if (typeof x !== 'object' || x === null) {
     return x
   }
+  const value = getOriginalObject(x)
+  return (!refSet.has(value) && proxyCache.get(value)) || value
 }
 
 type RSetLike<T> = { has(value: T): boolean }

@@ -301,13 +301,18 @@ describe('snapshot brand', () => {
     const item = { count: 0 }
     proxy(item)
     ref(item)
-    const set = proxySet([item])
+    const set = proxySet<object>([item])
     expect(set.has(item)).toBe(true)
 
     const snap = snapshot(proxy({ count: 0 }))
     set.add(ref(snap))
     expect(set.has(snap)).toBe(true)
     expect(set.delete(snap)).toBe(true)
+
+    // a lookup makes no proxy, so adding still checks for the snapshot
+    const holder = { child: snapshot(proxy({ count: 0 })) }
+    expect(set.has(holder)).toBe(false)
+    expect(() => set.add(holder)).toThrow(message)
   })
 
   it('stores a snapshot wrapped with ref as is', () => {
