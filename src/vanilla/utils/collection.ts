@@ -19,7 +19,7 @@ export const keyId = (key: unknown): string | symbol => {
   }
   if ((typeof key === 'object' && key !== null) || typeof key === 'function') {
     // A value read from useSnapshot is unwrapped first.
-    const obj = getOriginalObject(key) as { [snapshotBrand]?: symbol }
+    const obj = getOriginalObject(key) as Record<symbol, symbol>
     return !refSet.has(obj) &&
       Object.prototype.hasOwnProperty.call(obj, snapshotBrand)
       ? (obj[snapshotBrand] as symbol)
