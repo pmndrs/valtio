@@ -297,6 +297,19 @@ describe('snapshot brand', () => {
     expect(() => set.add(snap)).toThrow(message)
   })
 
+  it('looks up a proxySet member as adding it would', () => {
+    const item = { count: 0 }
+    proxy(item)
+    ref(item)
+    const set = proxySet([item])
+    expect(set.has(item)).toBe(true)
+
+    const snap = snapshot(proxy({ count: 0 }))
+    set.add(ref(snap))
+    expect(set.has(snap)).toBe(true)
+    expect(set.delete(snap)).toBe(true)
+  })
+
   it('stores a snapshot wrapped with ref as is', () => {
     const state = proxy<{ history: object[] }>({ history: [] })
     const snap = snapshot(proxy({ count: 0 }))

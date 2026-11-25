@@ -4,10 +4,17 @@ import {
   unstable_getInternalStates,
 } from '../../vanilla.js'
 
-const { snapCache, batchAsWrite, proxyCache } = unstable_getInternalStates()
+const { snapCache, batchAsWrite } = unstable_getInternalStates()
 const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
-// A lookup finds the proxy that adding the object made, without making one.
-const findProxy = (x: any) => (typeof x === 'object' && proxyCache.get(x)) || x
+// A lookup normalizes the value as adding it would. A snapshot that adding
+// would reject can't be a member.
+const findProxy = (x: any) => {
+  try {
+    return maybeProxify(x)
+  } catch {
+    return x
+  }
+}
 
 type RSetLike<T> = { has(value: T): boolean }
 
