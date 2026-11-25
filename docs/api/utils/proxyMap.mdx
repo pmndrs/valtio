@@ -75,7 +75,9 @@ const Roles = () => {
 }
 ```
 
-A snapshot marked with `ref` is a key of its own. It doesn't match the state object that it was taken from.
+A component that looks up an object read from `useSnapshot` re-renders when that object changes or is replaced.
+
+A snapshot marked with `ref` is a key of its own. It doesn't match the state object that it was taken from. Mark it before it is used as a key: marking it later makes it a different key, and the map no longer finds its entry.
 
 ## `isProxyMap`
 

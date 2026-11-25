@@ -82,6 +82,8 @@ const Items = () => {
 }
 ```
 
+A component that looks up an object read from `useSnapshot` re-renders when that object changes or is replaced.
+
 A snapshot marked with `ref` is a member of its own. It doesn't match the state object that it was taken from.
 
 `union`, `intersection`, `difference` and `symmetricDifference` return a new `proxySet`. On a snapshot they return a plain `Set`, which holds the snapshot's own members.

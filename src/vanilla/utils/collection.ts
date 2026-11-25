@@ -1,5 +1,5 @@
 import { unstable_getInternalStates } from '../../vanilla.js'
-import { getOriginalObject } from '../proxyCompare.js'
+import { getOriginalObject, trackMemo } from '../proxyCompare.js'
 
 const { proxyStateMap, refSet, snapshotBrand, getObjectId } =
   unstable_getInternalStates()
@@ -18,7 +18,9 @@ export const keyId = (key: unknown): string | symbol => {
     return key
   }
   if ((typeof key === 'object' && key !== null) || typeof key === 'function') {
-    // A value read from useSnapshot is unwrapped first.
+    // A value read from useSnapshot is unwrapped. It is first marked as used
+    // as a whole, so that its component re-renders when it is replaced.
+    trackMemo(key)
     const obj = getOriginalObject(key) as Record<symbol, symbol>
     return !refSet.has(obj) &&
       Object.prototype.hasOwnProperty.call(obj, snapshotBrand)
@@ -31,22 +33,29 @@ export const keyId = (key: unknown): string | symbol => {
 /**
  * Yields the slots of a collection's `data` that are in use, in insertion
  * order. As with a Map or a Set, an entry added during the iteration is
- * visited, one deleted before its turn is skipped, and clearing ends it.
+ * visited, and one deleted before its turn is skipped. Clearing ends the
+ * iteration, also for entries added after it, which a Map would visit.
  */
 export function* slotsOf(collection: { data: unknown[] }): Generator<number> {
   const data = collection.data
-  for (let next = 0; next < data.length; ) {
-    const end = data.length
-    for (const index of Object.keys(data)) {
-      // clear() replaces `data`
-      if (collection.data !== data) {
-        return
-      }
-      const slot = Number(index)
-      if (slot >= next && slot in data) {
-        yield slot
-      }
+  const end = data.length
+  for (const index of Object.keys(data)) {
+    // clear() replaces `data`
+    if (collection.data !== data) {
+      return
     }
-    next = end
+    const slot = Number(index)
+    if (slot in data) {
+      yield slot
+    }
+  }
+  // the entries added during the iteration
+  for (let slot = end; slot < data.length; slot++) {
+    if (collection.data !== data) {
+      return
+    }
+    if (slot in data) {
+      yield slot
+    }
   }
 }

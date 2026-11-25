@@ -1259,4 +1259,48 @@ describe('proxyMap index in state', () => {
     expect(screen.getByText('has a: false')).toBeInTheDocument()
     expect(renderFn).toHaveBeenCalledTimes(2)
   })
+
+  it('should re-render when a tracked key is replaced by an equal object', async () => {
+    const state = proxy({
+      item: { id: 1 },
+      roles: proxyMap<object, string>(),
+    })
+    state.roles.set(state.item, 'admin')
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      return (
+        <div>{`${tracked.item.id}:${tracked.roles.get(tracked.item)}`}</div>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('1:admin')).toBeInTheDocument()
+
+    // the new object has the same id, and it isn't a key
+    await act(async () => {
+      state.item = { id: 1 }
+    })
+    expect(screen.getByText('1:undefined')).toBeInTheDocument()
+  })
+
+  it('should re-render a component that only passes a key on when the key changes', async () => {
+    const state = proxy({
+      item: { count: 0 },
+      roles: proxyMap<object, string>(),
+    })
+    state.roles.set(state.item, 'admin')
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      // the item is only passed on, as to an effect or a memoized child
+      renderFn(tracked.item, tracked.roles.get(tracked.item))
+      return null
+    }
+
+    render(<Component />)
+    await act(async () => {
+      state.item.count = 1
+    })
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
 })

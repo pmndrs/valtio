@@ -1266,4 +1266,61 @@ describe('proxySet index in state', () => {
     expect(screen.getByText('has a: false')).toBeInTheDocument()
     expect(renderFn).toHaveBeenCalledTimes(2)
   })
+
+  it('should re-render when a tracked member is replaced by an equal object', async () => {
+    const state = proxy({
+      item: { id: 1 },
+      selected: proxySet<object>(),
+    })
+    state.selected.add(state.item)
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      return (
+        <div>{`${tracked.item.id}:${tracked.selected.has(tracked.item)}`}</div>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('1:true')).toBeInTheDocument()
+
+    // the new object has the same id, and it isn't a member
+    await act(async () => {
+      state.item = { id: 1 }
+    })
+    expect(screen.getByText('1:false')).toBeInTheDocument()
+  })
+
+  it('should re-render a component that only passes a member on when the member changes', async () => {
+    const state = proxy({
+      item: { count: 0 },
+      selected: proxySet<object>(),
+    })
+    state.selected.add(state.item)
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      // the item is only passed on, as to an effect or a memoized child
+      renderFn(tracked.item, tracked.selected.has(tracked.item))
+      return null
+    }
+
+    render(<Component />)
+    await act(async () => {
+      state.item.count = 1
+    })
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should iterate in linear time while members are added', () => {
+    // visiting each added member by listing all of them again would time out
+    const set = proxySet([0])
+    let visited = 0
+    for (const value of set) {
+      visited++
+      if (value < 20000) {
+        set.add(value + 1)
+      }
+    }
+    expect(visited).toBe(20001)
+  })
 })
