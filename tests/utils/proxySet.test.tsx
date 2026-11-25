@@ -1327,4 +1327,13 @@ describe('proxySet index in state', () => {
     }
     expect(visited).toBe(20001)
   })
+
+  it('should keep its own index in a snapshot with Symbol.iterator as a member', () => {
+    const set = proxySet<symbol>([Symbol.iterator])
+    const snap = snapshot(set)
+    set.delete(Symbol.iterator)
+    expect(snap.has(Symbol.iterator)).toBe(true)
+    expect([...snap]).toEqual([Symbol.iterator])
+    expect(set.size).toBe(0)
+  })
 })

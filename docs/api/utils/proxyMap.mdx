@@ -32,6 +32,8 @@ state.delete(1)
 state.size // ---> 0
 ```
 
+Starting an iteration lists all the entries. So its cost grows with the size of the map, also when only the first entry is read, as with `state.keys().next()`.
+
 ## Nesting
 
 It can be used inside a `proxy` as well.

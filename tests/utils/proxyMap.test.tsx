@@ -1307,4 +1307,14 @@ describe('proxyMap index in state', () => {
     })
     expect(renderFn).toHaveBeenCalledTimes(2)
   })
+
+  it('should keep its own index in a snapshot with Symbol.iterator as a key', () => {
+    const map = proxyMap<symbol, number>([[Symbol.iterator, 1]])
+    const snap = snapshot(map)
+    map.delete(Symbol.iterator)
+    expect(snap.has(Symbol.iterator)).toBe(true)
+    expect(snap.get(Symbol.iterator)).toBe(1)
+    expect([...snap.keys()]).toEqual([Symbol.iterator])
+    expect(map.size).toBe(0)
+  })
 })

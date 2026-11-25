@@ -4,6 +4,10 @@ import { getOriginalObject, trackMemo } from '../proxyCompare.js'
 const { proxyStateMap, refSet, snapshotBrand, getObjectId } =
   unstable_getInternalStates()
 
+// An object that has Symbol.iterator isn't proxied, so a lookup stores that
+// key under this symbol.
+const iteratorId = Symbol()
+
 /**
  * Gives a Map key or a Set member the property key that a collection's
  * lookup stores it under.
@@ -15,7 +19,7 @@ const { proxyStateMap, refSet, snapshotBrand, getObjectId } =
  */
 export const keyId = (key: unknown): string | symbol => {
   if (typeof key === 'symbol') {
-    return key
+    return key === Symbol.iterator ? iteratorId : key
   }
   if ((typeof key === 'object' && key !== null) || typeof key === 'function') {
     // A value read from useSnapshot is unwrapped. It is first marked as used
@@ -39,7 +43,11 @@ export const keyId = (key: unknown): string | symbol => {
 export function* slotsOf(collection: { data: unknown[] }): Generator<number> {
   const data = collection.data
   const end = data.length
-  for (const index of Object.keys(data)) {
+  for (const index of Reflect.ownKeys(data)) {
+    // the indices come first, in order, and then `length`
+    if (index === 'length') {
+      break
+    }
     // clear() replaces `data`
     if (collection.data !== data) {
       return
