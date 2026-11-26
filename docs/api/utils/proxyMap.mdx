@@ -32,7 +32,7 @@ state.delete(1)
 state.size // ---> 0
 ```
 
-Starting an iteration lists all the entries. So its cost grows with the size of the map, also when only the first entry is read, as with `state.keys().next()`.
+Reading the first entry of an iteration, as with `state.keys().next()`, is cheap. Going past it lists all the entries, so a loop that stops early costs about as much as a full one.
 
 ## Nesting
 

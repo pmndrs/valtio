@@ -41,7 +41,7 @@ state.delete(1)
 state.forEach((v) => console.log(v)) // --->  2,3,4
 ```
 
-Starting an iteration lists all the members. So its cost grows with the size of the set, also when only the first member is read, as with `state.values().next()`.
+Reading the first member of an iteration, as with `state.values().next()`, is cheap. Going past it lists all the members, so a loop that stops early costs about as much as a full one.
 
 ## Nesting
 
