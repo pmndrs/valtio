@@ -393,8 +393,13 @@ describe('proxySet', () => {
       // the members are the snapshot's own, in a plain set
       expect([...snap.union(snapshot(proxySet()))]).toEqual([first, second])
 
-      // into a proxySet, a snapshot's members throw, as with add()
-      expect(() => state.union(snap)).toThrow(
+      // on a proxy, a snapshot of a member counts as that member
+      expect([...state.union(snap)]).toEqual([...state])
+      expect([...state.intersection(snap)]).toEqual([...state])
+      expect([...state.difference(snap)]).toEqual([])
+      expect([...state.symmetricDifference(snap)]).toEqual([])
+      // a snapshot of another object can't go into a proxySet, as with add()
+      expect(() => state.union(snapshot(proxySet([{ id: 3 }])))).toThrow(
         'Cannot assign a Valtio snapshot into a proxy.',
       )
     })
@@ -1362,5 +1367,30 @@ describe('proxySet index in state', () => {
       taken++
     }
     expect(taken).toBe(20000)
+  })
+
+  it('should re-render when a tracked member that is a class instance is replaced', async () => {
+    class Item {
+      constructor(public id: number) {}
+    }
+    const state = proxy({
+      item: new Item(1),
+      selected: proxySet<Item>(),
+    })
+    state.selected.add(state.item)
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      return (
+        <div>{`${tracked.item.id}:${tracked.selected.has(tracked.item)}`}</div>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('1:true')).toBeInTheDocument()
+
+    await act(async () => {
+      state.item = new Item(1)
+    })
+    expect(screen.getByText('1:false')).toBeInTheDocument()
   })
 })

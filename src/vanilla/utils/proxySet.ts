@@ -95,22 +95,21 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     throw new TypeError('Expected an iterable')
   }
 
-  // A set operation on a proxy builds proxySets. A snapshot's members are
-  // snapshots, which a proxySet can't hold, so there it builds plain sets,
-  // with each value replaced by the snapshot's own member if it has one.
-  const setFor = (
-    self: InternalProxySet<any>,
-  ): (<V>(values?: Iterable<V>) => Set<V>) =>
-    isProxyObject(self)
-      ? proxySet
-      : (values) =>
-          new Set(
-            values &&
-              Array.from(values, (value) => {
-                const slot = self.lookup[keyId(value)]
-                return slot === undefined ? value : self.data[slot]
-              }),
-          )
+  // A set operation builds its sets with the receiver's own member in place
+  // of each value that matches one. On a proxy it builds proxySets. A
+  // snapshot's members are snapshots, which a proxySet can't hold, so there
+  // it builds plain sets.
+  const setFor =
+    (self: InternalProxySet<any>) =>
+    <V>(values?: Iterable<V>): Set<V> => {
+      const own =
+        values &&
+        Array.from(values, (value) => {
+          const slot = self.lookup[keyId(value)]
+          return slot === undefined ? value : self.data[slot]
+        })
+      return isProxyObject(self) ? proxySet(own) : new Set(own)
+    }
 
   function intersectionImpl<T, U>(
     this: InternalProxySet<T>,

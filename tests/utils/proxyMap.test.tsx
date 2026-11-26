@@ -1360,4 +1360,41 @@ describe('proxyMap index in state', () => {
     expect(screen.getByText('first: b')).toBeInTheDocument()
     expect(renderFn).toHaveBeenCalledTimes(2)
   })
+
+  it('should re-render when a tracked key that is not a plain object is replaced', async () => {
+    class Item {
+      constructor(public id: number) {}
+    }
+    const bare = () =>
+      Object.assign(Object.create(null), { id: 2 }) as { id: number }
+    const state = proxy({
+      item: new Item(1),
+      bare: bare(),
+      roles: proxyMap<object, string>(),
+    })
+    state.roles.set(state.item, 'admin')
+    state.roles.set(state.bare, 'guest')
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      return (
+        <div>
+          {`${tracked.item.id}:${tracked.roles.get(tracked.item)}`}{' '}
+          {`${tracked.bare.id}:${tracked.roles.get(tracked.bare)}`}
+        </div>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('1:admin 2:guest')).toBeInTheDocument()
+
+    await act(async () => {
+      state.item = new Item(1)
+    })
+    expect(screen.getByText('1:undefined 2:guest')).toBeInTheDocument()
+
+    await act(async () => {
+      state.bare = bare()
+    })
+    expect(screen.getByText('1:undefined 2:undefined')).toBeInTheDocument()
+  })
 })
