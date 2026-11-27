@@ -67,6 +67,9 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
   const merged = new Map<object, Set<object>>()
   // The objects of `data` that are copied, with their copy.
   const copies = new Map<object, object>()
+  // The writes are collected first, so that an error leaves the state as it
+  // was.
+  const writes: (() => void)[] = []
 
   // Copies data, so that an object of the caller never becomes state.
   const copy = (value: unknown): unknown => {
@@ -117,12 +120,16 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
     }
     if (Array.isArray(target) && Array.isArray(next)) {
       if (target.length > next.length) {
-        target.length = next.length
+        writes.push(() => {
+          target.length = next.length
+        })
       }
     } else {
       for (const [key, isValue] of keysOf(target)) {
         if (isValue && !hasOwn(next, key)) {
-          delete target[key]
+          writes.push(() => {
+            delete target[key]
+          })
         }
       }
     }
@@ -149,12 +156,16 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
       ) {
         merge(current as AnyObject, value)
       } else {
-        target[key] = copy(value)
+        const copied = copy(value)
+        writes.push(() => {
+          target[key] = copied
+        })
       }
     }
   }
 
   merge(proxyObject, data)
+  batchAsWrite(() => writes.forEach((write) => write()))
 }
 
 /**
@@ -183,5 +194,5 @@ export function applyChanges<T extends object>(
   if (!isProxyObject(proxyObject)) {
     throw new Error('applyChanges() requires a proxy as its first argument.')
   }
-  batchAsWrite(() => apply(proxyObject as AnyObject, unwrap(next) as AnyObject))
+  apply(proxyObject as AnyObject, unwrap(next) as AnyObject)
 }

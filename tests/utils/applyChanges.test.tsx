@@ -346,6 +346,23 @@ describe('applyChanges with a snapshot', () => {
     )
   })
 
+  it('should write nothing when it throws', () => {
+    const state = proxy({ count: 0, nested: { a: 1 }, set: proxySet([1]) })
+    const snap = snapshot(state)
+    state.count = 1
+    state.nested.a = 2
+    state.set.add(2)
+    const callback = vi.fn()
+    subscribe(state, callback)
+
+    expect(() => applyChanges(state, snap)).toThrow(
+      'applyChanges() cannot apply a snapshot of a proxyMap or proxySet.',
+    )
+    expect(state.count).toBe(1)
+    expect(state.nested.a).toBe(2)
+    expect(callback).not.toHaveBeenCalled()
+  })
+
   it('should restore a state that refers to itself', () => {
     type Node = { name: string; parent?: Node; children: Node[] }
     const state = proxy<Node>({ name: 'root', children: [] })
