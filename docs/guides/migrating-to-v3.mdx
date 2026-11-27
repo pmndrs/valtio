@@ -182,10 +182,10 @@ In v3, assigning a snapshot into state throws, and so does `proxy(snapshot)`. Th
 A snapshot of a `proxyMap` or `proxySet` isn't proxied, so it is stored as is, as in v2, and its methods that change it throw.
 
 ```
-Cannot assign a Valtio snapshot into a proxy. Copy it with deepClone(), or wrap it with ref() to store it as is.
+Cannot assign a Valtio snapshot into a proxy. Copy it with deepClone(), merge it with applyChanges(), or wrap it with ref() to store it as is.
 ```
 
-Copy the snapshot with `deepClone` from `valtio/utils` to change it later, or mark it with [`ref`](../api/advanced/ref) to keep it as is, for example in a history list.
+Copy the snapshot with `deepClone` from `valtio/utils` to change it later, merge it into the state with [`applyChanges`](../api/utils/applyChanges), or mark it with [`ref`](../api/advanced/ref) to keep it as is, for example in a history list.
 
 ```js
 const tracked = useSnapshot(state)
@@ -199,6 +199,9 @@ state.selected = deepClone(tracked.items[0])
 
 // v3: or keep it as is
 state.history.push(ref(snapshot(state)))
+
+// v3: or go back to it
+applyChanges(state, state.history[0])
 ```
 
 ## Changes in `proxyMap` and `proxySet`
@@ -221,7 +224,7 @@ If a `proxyMap` used an object and its proxy as two different keys, they are one
 - `set` with the value that the key already has, and `clear` on an empty collection, don't notify. In v2, they did.
 - A component that calls a method on a collection read from `useSnapshot` re-renders when what it read changes. For example, `has(key)` re-renders when the key is added or deleted, and `size` when the size changes. In v2, most methods re-rendered on every change to the collection.
 
-**`clear` ends an iteration.** An iteration that is running when `clear` is called ends there. In v2, as with a native `Map` or `Set`, it went on to visit entries added after the `clear`.
+**`clear` ends an iteration.** An iteration that is running when `clear` empties the collection ends there. In v2, as with a native `Map` or `Set`, it went on to visit entries added after the `clear`.
 
 **Set operations take an iterable.** `union`, `intersection`, `difference`, `symmetricDifference` and `isSupersetOf` of a `proxySet` took an object that has `forEach` but isn't iterable in v2. In v3, that throws a `TypeError`, so pass a `Set` of its values instead.
 

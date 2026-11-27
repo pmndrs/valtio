@@ -264,9 +264,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     [Symbol.iterator]() {
       return this.values()
     },
-    get [Symbol.toStringTag]() {
-      return 'Set'
-    },
+    [Symbol.toStringTag]: 'Set',
     intersection: intersectionImpl,
     union: unionImpl,
     difference: differenceImpl,
@@ -291,6 +289,8 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     data: { enumerable: false },
     lookup: { enumerable: false },
     toJSON: { enumerable: false },
+    // The tag tells what the collection is, so it can't be written.
+    [Symbol.toStringTag]: { writable: false },
   })
   Object.seal(proxiedObject)
 

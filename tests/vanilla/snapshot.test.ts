@@ -245,7 +245,7 @@ describe('snapshot', () => {
 
 describe('snapshot brand', () => {
   const message =
-    'Cannot assign a Valtio snapshot into a proxy. Copy it with deepClone(), or wrap it with ref() to store it as is.'
+    'Cannot assign a Valtio snapshot into a proxy. Copy it with deepClone(), merge it with applyChanges(), or wrap it with ref() to store it as is.'
 
   it('throws for proxy(snapshot)', () => {
     const snap = snapshot(proxy({ count: 0 }))

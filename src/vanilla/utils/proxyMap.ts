@@ -171,9 +171,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     [Symbol.iterator]() {
       return this.entries()
     },
-    get [Symbol.toStringTag]() {
-      return 'Map'
-    },
+    [Symbol.toStringTag]: 'Map',
     toJSON(): Map<K, V> {
       return new Map(this.entries())
     },
@@ -192,6 +190,8 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     lookup: { enumerable: false },
     data: { enumerable: false },
     toJSON: { enumerable: false },
+    // The tag tells what the collection is, so it can't be written.
+    [Symbol.toStringTag]: { writable: false },
   })
   Object.seal(proxiedObject)
 
