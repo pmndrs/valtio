@@ -253,10 +253,31 @@ describe('applyChanges', () => {
     const state = proxy({ count: 0 })
     expect(() =>
       applyChanges(snapshot(state) as { count: number }, { count: 1 }),
-    ).toThrow('applyChanges() requires a proxy as its first argument.')
+    ).toThrow('applyChanges() requires a proxy as its first argument')
     expect(() => applyChanges({ count: 0 }, { count: 1 })).toThrow(
-      'applyChanges() requires a proxy as its first argument.',
+      'applyChanges() requires a proxy as its first argument',
     )
+  })
+
+  it('should not take a collection as its first argument', () => {
+    const map = proxyMap([['a', 1]])
+    const set = proxySet([1])
+    const callback = vi.fn()
+    subscribe(map, callback)
+    subscribe(set, callback)
+
+    expect(() => applyChanges(map, new Map([['b', 2]]))).toThrow(
+      'it cannot be a proxyMap or proxySet.',
+    )
+    expect(() => applyChanges(map, snapshot(map))).toThrow(
+      'it cannot be a proxyMap or proxySet.',
+    )
+    expect(() => applyChanges(set, new Set([2]))).toThrow(
+      'it cannot be a proxyMap or proxySet.',
+    )
+    expect([...map]).toEqual([['a', 1]])
+    expect([...set]).toEqual([1])
+    expect(callback).not.toHaveBeenCalled()
   })
 
   it('should rethrow subscriber errors in a microtask, like an assignment', () => {

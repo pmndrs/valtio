@@ -229,8 +229,11 @@ export function applyChanges<T extends object>(
   proxyObject: T,
   next: T | Snapshot<T>,
 ): void {
-  if (!isProxyObject(proxyObject)) {
-    throw new Error('applyChanges() requires a proxy as its first argument.')
+  // A collection is written with its methods. It has no keys to merge.
+  if (!isProxyObject(proxyObject) || isCollection(proxyObject as AnyObject)) {
+    throw new Error(
+      'applyChanges() requires a proxy as its first argument, and it cannot be a proxyMap or proxySet.',
+    )
   }
   apply(proxyObject as AnyObject, unwrap(next) as AnyObject)
 }
