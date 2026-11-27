@@ -38,10 +38,13 @@ const reset = () => {
 }
 ```
 
-With `applyChanges` from `valtio/utils`, a reset keeps the nested proxies and writes only the values that changed. It copies the initial object, so no `deepClone` is needed for the reset:
+With `applyChanges` from `valtio/utils`, a reset keeps the nested proxies and writes only the values that changed. It copies the initial object, so no `deepClone` is needed for the reset. The state still starts from a clone:
 
 ```js
-import { applyChanges } from 'valtio/utils'
+import { proxy } from 'valtio'
+import { applyChanges, deepClone } from 'valtio/utils'
+
+const state = proxy(deepClone(initialObj))
 
 const reset = () => {
   applyChanges(state, initialObj)

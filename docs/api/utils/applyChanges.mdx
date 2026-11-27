@@ -25,7 +25,7 @@ Use it in place of an assignment when new data arrives for a part of the state, 
 An assignment such as `state.user = nextUser` replaces the object, so a subscription to the old `state.user` hears nothing more.
 `applyChanges` keeps the objects that are in the state and writes into them, so their subscriptions stay, and a subscription to a value that didn't change isn't notified.
 
-Keys that `next` doesn't have are deleted, and an array gets the length of the array in `next`. Getters and setters are neither written nor deleted, also those of a class. The exception is an array that gets shorter: its new length removes every index beyond it, also one that has a getter.
+Keys that `next` doesn't have, or doesn't enumerate, are deleted, and an array gets the length of the array in `next`. Getters and setters are neither written nor deleted, also those of a class. The exception is an array that gets shorter: its new length removes every index beyond it, also one that has a getter.
 
 ## What `next` can be
 

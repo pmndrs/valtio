@@ -112,6 +112,17 @@ describe('applyChanges', () => {
     expect(callback).toHaveBeenCalledTimes(1)
   })
 
+  it('should delete a key that next has but does not enumerate', () => {
+    const state = proxy<Record<string, number>>({ count: 1, other: 1 })
+    const next = Object.defineProperty({ other: 1 }, 'count', {
+      value: 2,
+      enumerable: false,
+    })
+
+    applyChanges(state, next)
+    expect(snapshot(state)).toEqual({ other: 1 })
+  })
+
   it('should ignore a key named __proto__', () => {
     const state = proxy<{ data?: { a: number }; flag?: boolean }>({})
 

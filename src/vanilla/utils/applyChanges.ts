@@ -161,8 +161,9 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
         target.length = next.length
       })
     }
+    // A key that next has but doesn't enumerate is missing, as for the writes.
     for (const [key, isValue] of keysOf(target)) {
-      if (isValue && !hasOwn(next, key)) {
+      if (isValue && !Reflect.getOwnPropertyDescriptor(next, key)?.enumerable) {
         writes.push(() => {
           delete target[key]
         })
