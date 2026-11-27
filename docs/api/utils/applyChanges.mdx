@@ -67,7 +67,7 @@ applyChanges(state, {
 
 ## Limits
 
-- A snapshot is merged only into the object that it was taken from. Where the state now holds another object under that key, a copy of the snapshot replaces it. Plain data is merged into whatever object is under the key. So if your state holds the same object in two places, keep an id in one of them instead: `applyChanges` doesn't restore that the two places are one object.
+- A snapshot is merged only into the object that it was taken from. Where the state now holds another object under that key, a copy of the snapshot replaces it. Plain data is merged into whatever object is under the key. So if your state holds the same object in two places, keep an id in one of them instead. `applyChanges` doesn't restore that the two places are one object, and plain data for the two places is written into the one object, so the last one wins.
 - A snapshot of a `proxyMap` or `proxySet` that has changed since the snapshot throws. Assign a new collection instead:
 
   ```js
@@ -79,3 +79,4 @@ applyChanges(state, {
   ```
 
 - The keys that stay keep their order, also when `next` has them in another order.
+- A key named `__proto__` in `next` is ignored, because writing it would set the prototype of an object in the state.

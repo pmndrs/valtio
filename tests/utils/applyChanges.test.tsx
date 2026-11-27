@@ -70,6 +70,47 @@ describe('applyChanges', () => {
     expect(snapshot(state.list)).toEqual([{ id: 1 }, { id: 20 }, { id: 30 }])
   })
 
+  it('should apply the holes and the length of an array', () => {
+    const state = proxy<{ list: unknown[]; other?: unknown[] }>({
+      list: [1, 2, 3],
+    })
+
+    applyChanges(state, { list: new Array(3) })
+    expect(state.list.length).toBe(3)
+    expect(Object.keys(state.list)).toEqual([])
+
+    applyChanges(state, { list: Object.assign(new Array(3), { 0: 1, 2: 3 }) })
+    expect(Object.keys(state.list)).toEqual(['0', '2'])
+
+    applyChanges(state, { list: new Array(5), other: new Array(4) })
+    expect(state.list.length).toBe(5)
+    expect(Object.keys(state.list)).toEqual([])
+    expect(state.other!.length).toBe(4)
+
+    // a snapshot keeps its holes
+    state.list = [1, 2, 3]
+    delete state.list[1]
+    const snap = snapshot(state)
+    state.list[1] = 9
+    applyChanges(state, snap)
+    expect(Object.keys(state.list)).toEqual(['0', '2'])
+  })
+
+  it('should ignore a key named __proto__', () => {
+    const state = proxy<{ data?: { a: number }; flag?: boolean }>({})
+
+    applyChanges(state, JSON.parse('{"__proto__":{"flag":true}}'))
+    expect(state.flag).toBe(undefined)
+    expect(Object.getPrototypeOf(state)).toBe(Object.prototype)
+
+    applyChanges(state, {
+      data: JSON.parse('{"__proto__":{"flag":true},"a":1}'),
+    })
+    expect(snapshot(state)).toEqual({ data: { a: 1 } })
+    expect((state.data as { flag?: boolean }).flag).toBe(undefined)
+    expect(Object.getPrototypeOf(state.data)).toBe(Object.prototype)
+  })
+
   it('should replace a value of another kind', () => {
     const state = proxy<{ value: unknown }>({ value: { a: 1 } })
 
@@ -298,6 +339,24 @@ describe('applyChanges with a snapshot', () => {
     // the accessor stays when the data has no such key
     applyChanges(state, { count: 3 } as typeof state)
     expect(state.double).toBe(6)
+  })
+
+  it('should not run a getter to find out what changed', () => {
+    const state = proxy({
+      count: 1,
+      get inverse() {
+        if (!this.count) {
+          throw new Error('Invalid count')
+        }
+        return 1 / this.count
+      },
+    })
+    const saved = snapshot(state)
+    state.count = 0
+
+    applyChanges(state, saved)
+    expect(state.count).toBe(1)
+    expect(state.inverse).toBe(1)
   })
 
   it('should keep the accessors of an object that it copies', () => {

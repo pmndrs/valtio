@@ -1,13 +1,12 @@
 import {
   isProxyObject,
-  snapshot,
   unstable_getInternalStates,
   unstable_isRef,
 } from '../../vanilla.js'
 import type { Snapshot } from '../../vanilla.js'
 import { getOriginalObject } from '../proxyCompare.js'
 
-const { batchAsWrite, getObjectId, proxyStateMap, snapshotBrand } =
+const { batchAsWrite, getObjectId, proxyStateMap, snapCache, snapshotBrand } =
   unstable_getInternalStates()
 
 type AnyObject = Record<string | symbol, unknown>
@@ -54,12 +53,23 @@ const assertNoCollection = (snap: AnyObject): void => {
 const isSnapshotOf = (snap: AnyObject, proxyObject: object): boolean =>
   snap[snapshotBrand] === getObjectId(proxyStateMap.get(proxyObject)![0])
 
+// Whether a snapshot is the one that a proxy has now, which means that
+// nothing changed under the proxy since. It makes no new snapshot.
+const isCurrentSnapshot = (snap: object, proxyObject: object): boolean => {
+  const [target, ensureVersion] = proxyStateMap.get(proxyObject)!
+  const cache = snapCache.get(target)
+  return !!cache && cache[1] === snap && cache[0] === ensureVersion()
+}
+
 // The own enumerable keys, which leaves out the brand of a snapshot and the
 // length of an array. A key with an accessor is listed with `false`.
+// `__proto__` is left out, because an assignment to it sets the prototype.
 const keysOf = (obj: object): [key: string | symbol, isValue: boolean][] =>
   Reflect.ownKeys(obj).flatMap((key) => {
     const desc = Reflect.getOwnPropertyDescriptor(obj, key)!
-    return desc.enumerable ? [[key, 'value' in desc]] : []
+    return desc.enumerable && key !== '__proto__'
+      ? [[key, 'value' in desc]]
+      : []
   })
 
 const apply = (proxyObject: AnyObject, data: AnyObject): void => {
@@ -82,7 +92,8 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
         assertNoCollection(value)
       }
       result = Array.isArray(value)
-        ? []
+        ? // the length keeps the holes at the end
+          new Array(value.length)
         : Object.create(Object.getPrototypeOf(value))
       copies.set(value, result!)
       for (const [key, isValue] of keysOf(value)) {
@@ -112,25 +123,28 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
     }
     targets.add(target)
     if (isSnapshot(next)) {
-      // A snapshot that the proxy still has means that nothing changed.
-      if (snapshot(target) === next) {
+      if (isCurrentSnapshot(next, target)) {
         return
       }
       assertNoCollection(next)
     }
-    if (Array.isArray(target) && Array.isArray(next)) {
-      if (target.length > next.length) {
+    // An array takes the length first, which drops the indices beyond it.
+    const length =
+      Array.isArray(target) && Array.isArray(next) ? next.length : Infinity
+    if (length !== Infinity && target.length !== length) {
+      writes.push(() => {
+        target.length = length
+      })
+    }
+    for (const [key, isValue] of keysOf(target)) {
+      if (
+        isValue &&
+        !hasOwn(next, key) &&
+        !(typeof key === 'string' && Number(key) >= length)
+      ) {
         writes.push(() => {
-          target.length = next.length
+          delete target[key]
         })
-      }
-    } else {
-      for (const [key, isValue] of keysOf(target)) {
-        if (isValue && !hasOwn(next, key)) {
-          writes.push(() => {
-            delete target[key]
-          })
-        }
       }
     }
     for (const [key, isValue] of keysOf(next)) {
