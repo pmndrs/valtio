@@ -128,20 +128,19 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
       }
       assertNoCollection(next)
     }
-    // An array takes the length first, which drops the indices beyond it.
-    const length =
-      Array.isArray(target) && Array.isArray(next) ? next.length : Infinity
-    if (length !== Infinity && target.length !== length) {
+    // An array takes the length first, which drops the indices beyond it in
+    // one write. Deleting them below then changes nothing.
+    if (
+      Array.isArray(target) &&
+      Array.isArray(next) &&
+      target.length !== next.length
+    ) {
       writes.push(() => {
-        target.length = length
+        target.length = next.length
       })
     }
     for (const [key, isValue] of keysOf(target)) {
-      if (
-        isValue &&
-        !hasOwn(next, key) &&
-        !(typeof key === 'string' && Number(key) >= length)
-      ) {
+      if (isValue && !hasOwn(next, key)) {
         writes.push(() => {
           delete target[key]
         })

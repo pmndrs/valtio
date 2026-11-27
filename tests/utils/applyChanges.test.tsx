@@ -96,6 +96,21 @@ describe('applyChanges', () => {
     expect(Object.keys(state.list)).toEqual(['0', '2'])
   })
 
+  it('should delete a key that only looks like an index', () => {
+    const state = proxy<Record<string, number>>({ Infinity: 1, '1.5': 2 })
+    applyChanges(state, {})
+    expect(Object.keys(state)).toEqual([])
+
+    const list: number[] = proxy(
+      Object.assign([1, 2, 3], { '7.5': 4, Infinity: 5, name: 6 }),
+    )
+    const callback = vi.fn()
+    subscribe(list, callback)
+    applyChanges(list, [1])
+    expect(Object.keys(list)).toEqual(['0'])
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
   it('should ignore a key named __proto__', () => {
     const state = proxy<{ data?: { a: number }; flag?: boolean }>({})
 
