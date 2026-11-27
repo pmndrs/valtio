@@ -1,3 +1,4 @@
+import { runInNewContext } from 'node:vm'
 import { act, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { batch, proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
@@ -278,6 +279,65 @@ describe('applyChanges', () => {
     expect([...map]).toEqual([['a', 1]])
     expect([...set]).toEqual([1])
     expect(callback).not.toHaveBeenCalled()
+  })
+
+  it('should not apply an array to an object, or an object to an array', () => {
+    const state = proxy<Record<string, unknown>>({ count: 1 })
+    const list = proxy<unknown[]>([1, 2])
+
+    expect(() => applyChanges(state, [10, 20] as never)).toThrow(
+      'applyChanges() cannot apply an array to an object, or an object to an array.',
+    )
+    expect(() => applyChanges(list, { count: 1 } as never)).toThrow(
+      'applyChanges() cannot apply an array to an object, or an object to an array.',
+    )
+    expect(snapshot(state)).toEqual({ count: 1 })
+    expect(snapshot(list)).toEqual([1, 2])
+  })
+
+  it('should take plain data from another realm', () => {
+    const state = proxy({ list: [0], user: { name: 'Ann' } })
+    const { list, user } = state
+    const next = runInNewContext('({ list: [1, 2], user: { name: "Bob" } })')
+
+    applyChanges(state, next)
+    expect(state.list).toBe(list)
+    expect(state.user).toBe(user)
+    expect(snapshot(state)).toEqual({ list: [1, 2], user: { name: 'Bob' } })
+
+    // where there is no proxy to merge into, it is copied
+    const other = proxy<{ list?: number[] }>({})
+    applyChanges(other, next)
+    other.list!.push(3)
+    expect(next.list).toHaveLength(2)
+  })
+
+  it('should not run a getter to find out what is a collection', () => {
+    const state = proxy({
+      count: 1,
+      get [Symbol.toStringTag](): string {
+        if (!this.count) {
+          throw new Error('getter')
+        }
+        return 'Counter'
+      },
+    })
+    const saved = snapshot(state)
+    state.count = 0
+
+    applyChanges(state, saved)
+    expect(state.count).toBe(1)
+
+    const other = proxy({
+      nested: {
+        count: 1,
+        get [Symbol.toStringTag](): string {
+          throw new Error('getter')
+        },
+      },
+    })
+    applyChanges(other, { nested: { count: 2 } } as typeof other)
+    expect(other.nested.count).toBe(2)
   })
 
   it('should rethrow subscriber errors in a microtask, like an assignment', () => {

@@ -264,9 +264,7 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     [Symbol.iterator]() {
       return this.values()
     },
-    get [Symbol.toStringTag]() {
-      return 'Set'
-    },
+    [Symbol.toStringTag]: 'Set',
     intersection: intersectionImpl,
     union: unionImpl,
     difference: differenceImpl,

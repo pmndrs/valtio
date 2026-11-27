@@ -171,9 +171,7 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
     [Symbol.iterator]() {
       return this.entries()
     },
-    get [Symbol.toStringTag]() {
-      return 'Map'
-    },
+    [Symbol.toStringTag]: 'Map',
     toJSON(): Map<K, V> {
       return new Map(this.entries())
     },

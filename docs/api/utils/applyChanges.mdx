@@ -69,6 +69,7 @@ applyChanges(state, {
 
 - A snapshot is merged only into the object that it was taken from. Where the state now holds another object under that key, a copy of the snapshot replaces it. Plain data is merged into whatever object is under the key. So if your state holds the same object in two places, keep an id in one of them instead. `applyChanges` doesn't restore that the two places are one object, and applying different data to the two places may not give the result that you asked for.
 - A `proxyMap` or `proxySet` can't be the first argument. Write to it with its methods.
+- An array can't be applied to a proxy of an object, nor an object to a proxy of an array. A nested value of the other kind replaces what is there, but the proxy itself can't be replaced, so this throws.
 - A snapshot of a `proxyMap` or `proxySet` that has changed since the snapshot throws, before anything is written. Assign a new collection instead:
 
   ```js

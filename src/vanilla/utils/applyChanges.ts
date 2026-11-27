@@ -26,24 +26,23 @@ const unwrap = (x: unknown): unknown => (isObject(x) ? getOriginalObject(x) : x)
 // Plain objects, arrays and snapshots are data, which is merged or copied.
 // Anything else is a value that an assignment stores as it is: a proxy, an
 // object marked with ref, a Date, a class instance and so on.
+// A plain object is told by a prototype that has none itself, which also
+// holds for an object from another realm, such as an iframe.
 const isData = (x: unknown): x is AnyObject => {
   if (!isObject(x) || isProxyObject(x) || unstable_isRef(x)) {
     return false
   }
   const proto = Object.getPrototypeOf(x)
   return (
-    isSnapshot(x) ||
-    proto === Object.prototype ||
-    proto === Array.prototype ||
-    !proto
+    isSnapshot(x) || Array.isArray(x) || !proto || !Object.getPrototypeOf(proto)
   )
 }
 
 // A proxyMap or a proxySet, or a snapshot of one. Its methods read its own
 // data, so it can be neither merged key by key nor copied into a collection
-// that works.
-const isCollection = (x: AnyObject): boolean => {
-  const tag = x[Symbol.toStringTag]
+// that works. The tag is read from the property, so that no getter runs.
+const isCollection = (x: object): boolean => {
+  const tag = Reflect.getOwnPropertyDescriptor(x, Symbol.toStringTag)?.value
   return tag === 'Map' || tag === 'Set'
 }
 
@@ -230,10 +229,18 @@ export function applyChanges<T extends object>(
   next: T | Snapshot<T>,
 ): void {
   // A collection is written with its methods. It has no keys to merge.
-  if (!isProxyObject(proxyObject) || isCollection(proxyObject as AnyObject)) {
+  if (!isProxyObject(proxyObject) || isCollection(proxyObject)) {
     throw new Error(
       'applyChanges() requires a proxy as its first argument, and it cannot be a proxyMap or proxySet.',
     )
   }
-  apply(proxyObject as AnyObject, unwrap(next) as AnyObject)
+  const data = unwrap(next) as AnyObject
+  // A nested value of the other kind is replaced, but the proxy itself can't
+  // be.
+  if (Array.isArray(proxyObject) !== Array.isArray(data)) {
+    throw new Error(
+      'applyChanges() cannot apply an array to an object, or an object to an array.',
+    )
+  }
+  apply(proxyObject as AnyObject, data)
 }
