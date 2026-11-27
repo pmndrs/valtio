@@ -31,7 +31,7 @@ Keys that `next` doesn't have are deleted, and an array gets the length of the a
 
 `next` can be plain data, a snapshot, or a value read from `useSnapshot`.
 
-`applyChanges` never makes an object of `next` a part of the state. It merges plain objects, arrays and snapshots into the proxies that are already there, and it copies them where there is none. So `next` can be frozen, and you can keep using it.
+`applyChanges` never makes an object of `next` a part of the state. It merges plain objects, arrays and snapshots into the proxies that are already there, and it copies them where there is none. So `next` can be frozen, and you can keep using it. A value in the state that is marked with [`ref`](../advanced/ref) is replaced, not merged into, also when it is a proxy.
 
 Any other value is assigned as it is, as with an assignment: a proxy, an object marked with [`ref`](../advanced/ref), a `Date`, a class instance.
 

@@ -183,6 +183,8 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
       }
       if (
         isProxyObject(current) &&
+        // A proxy marked with ref is a value of its own, as any ref is.
+        !unstable_isRef(current) &&
         // not a proxy that the target inherits
         hasOwn(target, key) &&
         isData(value) &&

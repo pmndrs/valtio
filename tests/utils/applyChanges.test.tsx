@@ -198,6 +198,20 @@ describe('applyChanges', () => {
     expect((state.items as Items).total()).toBe(3)
   })
 
+  it('should replace a proxy that is marked with ref', async () => {
+    const child = proxy({ count: 0 })
+    const state = proxy<{ child: { count: number } }>({ child: ref(child) })
+    const callback = vi.fn()
+    subscribe(state, callback)
+
+    applyChanges(state, { child: { count: 1 } })
+    await Promise.resolve()
+    expect(child.count).toBe(0)
+    expect(state.child).not.toBe(child)
+    expect(state.child.count).toBe(1)
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
   it('should replace a collection that gets plain data', () => {
     const state = proxy<{ count: number; value: unknown }>({
       count: 0,
