@@ -211,6 +211,21 @@ describe('applyChanges', () => {
     expect(state.user.initial).toBe('B')
   })
 
+  it('should not write into a proxy that the target inherits', () => {
+    const shared = proxy({ count: 0 })
+    const state = proxy(
+      Object.create({ nested: shared }) as { nested: { count: number } },
+    )
+    const callback = vi.fn()
+    subscribe(state, callback)
+
+    applyChanges(state, { nested: { count: 1 } })
+    expect(shared.count).toBe(0)
+    expect(Object.keys(state)).toEqual(['nested'])
+    expect(state.nested.count).toBe(1)
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
   it('should merge plain data into a class instance', () => {
     class User {
       name = 'Ann'
@@ -405,6 +420,28 @@ describe('applyChanges with a snapshot', () => {
     applyChanges(state, saved)
     expect(state.count).toBe(1)
     expect(state.inverse).toBe(1)
+  })
+
+  it('should copy a property that an accessor of its class shadows', () => {
+    class Item {
+      get count() {
+        return 0
+      }
+      constructor() {
+        Object.defineProperty(this, 'count', {
+          value: 1,
+          enumerable: true,
+          writable: true,
+          configurable: true,
+        })
+      }
+    }
+    const saved = snapshot(proxy(new Item()))
+    const state = proxy<{ item?: Item }>({})
+
+    applyChanges(state, { item: saved as Item })
+    expect(state.item!.count).toBe(1)
+    expect(state.item).toBeInstanceOf(Item)
   })
 
   it('should keep the accessors of an object that it copies', () => {

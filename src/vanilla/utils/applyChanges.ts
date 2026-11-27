@@ -114,16 +114,20 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
         : Object.create(Object.getPrototypeOf(value))
       copies.set(value, result!)
       for (const [key, isValue] of keysOf(value)) {
-        if (isValue) {
-          result![key] = copy(unwrap(value[key]))
-        } else {
-          // an accessor comes with its object
-          Object.defineProperty(
-            result,
-            key,
-            Reflect.getOwnPropertyDescriptor(value, key)!,
-          )
-        }
+        // A property is defined, because an assignment would run a setter
+        // of a class. An accessor comes with its object.
+        Object.defineProperty(
+          result,
+          key,
+          isValue
+            ? {
+                value: copy(unwrap(value[key])),
+                writable: true,
+                enumerable: true,
+                configurable: true,
+              }
+            : Reflect.getOwnPropertyDescriptor(value, key)!,
+        )
       }
     }
     return result
@@ -178,6 +182,8 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
       }
       if (
         isProxyObject(current) &&
+        // not a proxy that the target inherits
+        hasOwn(target, key) &&
         isData(value) &&
         Array.isArray(current) === Array.isArray(value) &&
         // A snapshot is merged only into the object that it was taken from,
