@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { batch, proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
-import { proxyMap, proxySet } from 'valtio/utils'
+import { isProxyMap, proxyMap, proxySet } from 'valtio/utils'
 
 const initialValues = [
   {
@@ -339,6 +339,14 @@ describe('proxyMap', () => {
 
     it('should be sealed', () => {
       expect(Object.isSealed(proxyMap())).toBe(true)
+    })
+
+    it('should keep its tag', () => {
+      const map = proxyMap()
+      expect(() => Reflect.set(map, Symbol.toStringTag, 'Other')).toThrow(
+        TypeError,
+      )
+      expect(isProxyMap(map)).toBe(true)
     })
 
     it('should list only enumerable properties', () => {
