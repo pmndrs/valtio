@@ -26,16 +26,18 @@ const unwrap = (x: unknown): unknown => (isObject(x) ? getOriginalObject(x) : x)
 // Plain objects, arrays and snapshots are data, which is merged or copied.
 // Anything else is a value that an assignment stores as it is: a proxy, an
 // object marked with ref, a Date, a class instance and so on.
-// A plain object is told by a prototype that has none itself, which also
-// holds for an object from another realm, such as an iframe.
+// The prototype of a plain object has none itself, and the one of a plain
+// array has one that has none. That also holds for data from another realm,
+// such as an iframe, and it leaves out a class that extends Array.
 const isData = (x: unknown): x is AnyObject => {
   if (!isObject(x) || isProxyObject(x) || unstable_isRef(x)) {
     return false
   }
-  const proto = Object.getPrototypeOf(x)
-  return (
-    isSnapshot(x) || Array.isArray(x) || !proto || !Object.getPrototypeOf(proto)
-  )
+  let proto = Object.getPrototypeOf(x)
+  if (proto && Array.isArray(x)) {
+    proto = Object.getPrototypeOf(proto)
+  }
+  return isSnapshot(x) || !proto || !Object.getPrototypeOf(proto)
 }
 
 // A proxyMap or a proxySet, or a snapshot of one. Its methods read its own

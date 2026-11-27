@@ -179,6 +179,25 @@ describe('applyChanges', () => {
     expect(item.count).toBe(1)
   })
 
+  it('should assign an instance of a class that extends Array as it is', () => {
+    class Items extends Array<number> {
+      total() {
+        return this.reduce((a, b) => a + b, 0)
+      }
+    }
+    const state = proxy<{ items?: Items | number[] }>({})
+
+    applyChanges(state, { items: new Items(1, 2, 3) })
+    expect(state.items).toBeInstanceOf(Items)
+    expect((state.items as Items).total()).toBe(6)
+
+    // plain data is merged into it
+    const { items } = state
+    applyChanges(state, { items: [1, 2] })
+    expect(state.items).toBe(items)
+    expect((state.items as Items).total()).toBe(3)
+  })
+
   it('should replace a collection that gets plain data', () => {
     const state = proxy<{ count: number; value: unknown }>({
       count: 0,
