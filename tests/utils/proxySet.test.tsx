@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { batch, proxy, snapshot, subscribe, useSnapshot } from 'valtio'
+import { batch, proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
 import { proxySet } from 'valtio/utils'
 
 // used to initialize proxySet during tests
@@ -340,7 +340,7 @@ describe('proxySet', () => {
     })
 
     it('should list only enumerable properties', () => {
-      const notEnumerableProps = ['data', 'size', 'toJSON']
+      const notEnumerableProps = ['data', 'lookup', 'size', 'toJSON']
       expect(
         Object.keys(proxySet()).some((k) => notEnumerableProps.includes(k)),
       ).toBe(false)
@@ -393,8 +393,13 @@ describe('proxySet', () => {
       // the members are the snapshot's own, in a plain set
       expect([...snap.union(snapshot(proxySet()))]).toEqual([first, second])
 
-      // into a proxySet, a snapshot's members throw, as with add()
-      expect(() => state.union(snap)).toThrow(
+      // on a proxy, a snapshot of a member counts as that member
+      expect([...state.union(snap)]).toEqual([...state])
+      expect([...state.intersection(snap)]).toEqual([...state])
+      expect([...state.difference(snap)]).toEqual([])
+      expect([...state.symmetricDifference(snap)]).toEqual([])
+      // a snapshot of another object can't go into a proxySet, as with add()
+      expect(() => state.union(snapshot(proxySet([{ id: 3 }])))).toThrow(
         'Cannot assign a Valtio snapshot into a proxy.',
       )
     })
@@ -977,9 +982,9 @@ describe('proxySet', () => {
     })
 
     // The TC39 set-methods proposal defines a set-like by `size`, `has()` and
-    // `keys()`. proxySet instead accepts Symbol.iterator and falls back to
-    // forEach, and never calls keys(). These tests pin the current divergence
-    // from a native Set rather than asserting the proposal's semantics.
+    // `keys()`. proxySet instead takes an iterable, and never calls keys().
+    // These tests pin the current divergence from a native Set rather than
+    // asserting the proposal's semantics.
     describe('set-like arguments', () => {
       it('should accept an iterable', () => {
         const set = proxySet([1, 2, 3])
@@ -1019,18 +1024,14 @@ describe('proxySet', () => {
         ]).toEqual([])
       })
 
-      it('should fall back to forEach for a non-iterable collection', () => {
+      it('should throw when the argument is not iterable', () => {
         const set = proxySet([1, 2, 3])
         const forEachOnly = {
           size: 2,
           has: (v: number) => [2, 3].includes(v),
           forEach: (cb: (v: number) => void) => [2, 3].forEach(cb),
         }
-        expect([...set.intersection(forEachOnly as any)]).toEqual([2, 3])
-      })
-
-      it('should throw when the argument is neither iterable nor forEach-able', () => {
-        const set = proxySet([1, 2, 3])
+        expect(() => set.intersection(forEachOnly as any)).toThrow(TypeError)
         expect(() =>
           set.intersection({ size: 0, has: () => false } as any),
         ).toThrow(TypeError)
@@ -1071,8 +1072,12 @@ describe('proxySet notifications', () => {
 
     set.add(1)
     set.delete(2)
-
     expect(handler).not.toHaveBeenCalled()
+
+    set.clear()
+    expect(handler).toHaveBeenCalledTimes(1)
+    set.clear()
+    expect(handler).toHaveBeenCalledTimes(1)
   })
 
   it('should rethrow subscriber errors in a microtask, like an assignment', () => {
@@ -1095,5 +1100,297 @@ describe('proxySet notifications', () => {
     }
     expect(set.size).toBe(0)
     expect(() => batch(() => set.add(3))).toThrow(AggregateError)
+  })
+})
+
+describe('proxySet index in state', () => {
+  it('should read a snapshot through a wrapper after later writes', () => {
+    const set = proxySet<string>(['first'])
+    const snap = snapshot(set)
+    set.delete('first')
+    set.add('second')
+
+    const wrapped = new Proxy(snap, {})
+    expect(wrapped.has('first')).toBe(true)
+    expect(wrapped.has('second')).toBe(false)
+    expect(wrapped.size).toBe(1)
+    expect([...wrapped]).toEqual(['first'])
+  })
+
+  it('should keep insertion order across a delete and a re-add', () => {
+    const set = proxySet(['a', 'b', 'c'])
+    const before = snapshot(set)
+    set.delete('a')
+    set.add('a')
+
+    expect([...set]).toEqual(['b', 'c', 'a'])
+    expect([...before]).toEqual(['a', 'b', 'c'])
+  })
+
+  it('should iterate like a Set while it is changed', () => {
+    const set = proxySet(['a', 'b', 'c'])
+    const seen: string[] = []
+    for (const value of set) {
+      seen.push(value)
+      if (value === 'a') {
+        set.delete('b')
+        set.add('d')
+      }
+    }
+    expect(seen).toEqual(['a', 'c', 'd'])
+
+    // clear() ends the iteration, also for a member added after it, which a
+    // native Set would visit
+    seen.length = 0
+    for (const value of set) {
+      seen.push(value)
+      set.clear()
+      set.add('e')
+    }
+    expect(seen).toEqual(['a'])
+    expect([...set]).toEqual(['e'])
+  })
+
+  it('should tell members of different types apart, as a Set does', () => {
+    const sym = Symbol()
+    const values = [1, '1', 1n, true, 'true', null, 'null', undefined, sym, NaN]
+    const set = proxySet<unknown>([...values, NaN, 0, -0])
+    expect([...set]).toEqual([...values, 0])
+    values.forEach((value) => expect(set.has(value)).toBe(true))
+  })
+
+  it('should find an object member by the object, its proxy or its snapshot', () => {
+    const item = { id: 1 }
+    const state = proxy({ item, set: proxySet<object>() })
+    state.set.add(item)
+    state.set.add(state.item)
+    expect(state.set.size).toBe(1)
+
+    const snap = snapshot(state)
+    const [member] = [...snap.set]
+    expect(member).toBe(snap.item)
+    expect(snap.set.has(member!)).toBe(true)
+    expect(snap.set.has(item)).toBe(true)
+    expect(snap.set.has(state.item)).toBe(true)
+    expect(state.set.has(snap.item)).toBe(true)
+
+    // adding a snapshot of a member adds nothing
+    state.set.add(snap.item)
+    expect(state.set.size).toBe(1)
+    expect(state.set.delete(snap.item)).toBe(true)
+    expect(state.set.size).toBe(0)
+    expect(snap.set.size).toBe(1)
+  })
+
+  it('should treat a member marked with ref as only itself', () => {
+    const state = proxy({ count: 0 })
+    const first = snapshot(state)
+    state.count++
+    const second = snapshot(state)
+    const set = proxySet<object>([ref(first), ref(second)])
+
+    expect([...set]).toEqual([first, second])
+    expect(set.has(state)).toBe(false)
+    expect(set.delete(first)).toBe(true)
+    expect([...set]).toEqual([second])
+  })
+
+  it('should leave the set unchanged when an add throws', () => {
+    const set = proxySet<object>()
+    const snap = snapshot(proxy({ count: 0 }))
+    const handler = vi.fn()
+    subscribe(set, handler)
+
+    expect(() => set.add(snap)).toThrow(
+      'Cannot assign a Valtio snapshot into a proxy.',
+    )
+    expect(set.size).toBe(0)
+    expect([...set]).toEqual([])
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('should run set operations on a snapshot by member, for any form of it', () => {
+    const one = { id: 1 }
+    const state = proxySet([one, { id: 2 }])
+    const snap = snapshot(state)
+    const [first, second] = [...snap]
+
+    expect([...snap.symmetricDifference(new Set([first]))]).toEqual([second])
+    expect([...snap.difference(new Set([one]))]).toEqual([second])
+    expect([...snap.intersection(new Set([...state]))]).toEqual([first, second])
+    expect([...snap.union(new Set([one]))]).toEqual([first, second])
+    expect(snap.isSupersetOf(new Set([first]))).toBe(true)
+    expect(snap.isSubsetOf(state)).toBe(true)
+    expect(snap.isDisjointFrom(proxySet([one]))).toBe(false)
+  })
+
+  it('should find a tracked member in a tracked set', async () => {
+    const state = proxy({
+      items: [{ id: 1 }, { id: 2 }],
+      selected: proxySet<object>(),
+    })
+    state.selected.add(state.items[0]!)
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return (
+        <div>
+          {tracked.items
+            .map((item) => `${item.id}:${tracked.selected.has(item)}`)
+            .join(' ')}
+        </div>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('1:true 2:false')).toBeInTheDocument()
+
+    await act(async () => {
+      state.selected.add(state.items[1]!)
+    })
+    expect(screen.getByText('1:true 2:true')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should keep a has() reader quiet when other members change', async () => {
+    const state = proxySet<string>(['a'])
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>has a: {String(tracked.has('a'))}</div>
+    }
+
+    render(<Component />)
+    await act(async () => {
+      state.add('b')
+      state.delete('b')
+    })
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      state.delete('a')
+    })
+    expect(screen.getByText('has a: false')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should re-render when a tracked member is replaced by an equal object', async () => {
+    const state = proxy({
+      item: { id: 1 },
+      selected: proxySet<object>(),
+    })
+    state.selected.add(state.item)
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      return (
+        <div>{`${tracked.item.id}:${tracked.selected.has(tracked.item)}`}</div>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('1:true')).toBeInTheDocument()
+
+    // the new object has the same id, and it isn't a member
+    await act(async () => {
+      state.item = { id: 1 }
+    })
+    expect(screen.getByText('1:false')).toBeInTheDocument()
+  })
+
+  it('should re-render a component that only passes a member on when the member changes', async () => {
+    const state = proxy({
+      item: { count: 0 },
+      selected: proxySet<object>(),
+    })
+    state.selected.add(state.item)
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      // the item is only passed on, as to an effect or a memoized child
+      renderFn(tracked.item, tracked.selected.has(tracked.item))
+      return null
+    }
+
+    render(<Component />)
+    await act(async () => {
+      state.item.count = 1
+    })
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should iterate in linear time while members are added', () => {
+    // visiting each added member by listing all of them again would time out
+    const set = proxySet([0])
+    let visited = 0
+    for (const value of set) {
+      visited++
+      if (value < 20000) {
+        set.add(value + 1)
+      }
+    }
+    expect(visited).toBe(20001)
+  })
+
+  it('should keep its own index in a snapshot with Symbol.iterator as a member', () => {
+    const set = proxySet<symbol>([Symbol.iterator])
+    const snap = snapshot(set)
+    set.delete(Symbol.iterator)
+    expect(snap.has(Symbol.iterator)).toBe(true)
+    expect([...snap]).toEqual([Symbol.iterator])
+    expect(set.size).toBe(0)
+  })
+
+  it('should keep track of the first member across deletes', () => {
+    const set = proxySet(['a', 'b', 'c'])
+    const snap = snapshot(set)
+    set.delete('b')
+    expect(set.values().next().value).toBe('a')
+    set.delete('a')
+    expect(set.values().next().value).toBe('c')
+    set.delete('c')
+    expect(set.values().next().done).toBe(true)
+    set.add('d')
+    expect([...set]).toEqual(['d'])
+    // the snapshot has its own first member
+    expect(snap.values().next().value).toBe('a')
+    expect([...snap]).toEqual(['a', 'b', 'c'])
+  })
+
+  it('should take and delete the first member without listing the others', () => {
+    // listing all members for each take would time out
+    const set = proxySet(Array.from({ length: 20000 }, (_, i) => i))
+    let taken = 0
+    while (set.size) {
+      set.delete(set.values().next().value as number)
+      taken++
+    }
+    expect(taken).toBe(20000)
+  })
+
+  it('should re-render when a tracked member that is a class instance is replaced', async () => {
+    class Item {
+      constructor(public id: number) {}
+    }
+    const state = proxy({
+      item: new Item(1),
+      selected: proxySet<Item>(),
+    })
+    state.selected.add(state.item)
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      return (
+        <div>{`${tracked.item.id}:${tracked.selected.has(tracked.item)}`}</div>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('1:true')).toBeInTheDocument()
+
+    await act(async () => {
+      state.item = new Item(1)
+    })
+    expect(screen.getByText('1:false')).toBeInTheDocument()
   })
 })

@@ -300,6 +300,13 @@ export const trackMemo = (obj: unknown): boolean => {
 }
 
 /**
+ * Marks a tracked proxy as used as a whole, as trackMemo does. It also marks
+ * a proxy for an object that isn't a plain object, such as a class instance,
+ * which trackMemo leaves out.
+ */
+export const trackAsWhole = (obj: object): boolean => TRACK_MEMO_SYMBOL in obj
+
+/**
  * Returns the object wrapped by a tracked proxy, or null.
  */
 export const getUntracked = <T>(obj: T): T | null => {

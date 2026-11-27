@@ -41,6 +41,8 @@ state.delete(1)
 state.forEach((v) => console.log(v)) // --->  2,3,4
 ```
 
+Reading the first member of an iteration, as with `state.values().next()`, is cheap. Going past it lists all the members, so a loop that stops early costs about as much as a full one.
+
 ## Nesting
 
 It can be used inside a `proxy` as well.
@@ -53,6 +55,42 @@ const state = proxy({
   set: proxySet(),
 })
 ```
+
+## Object members
+
+An object added to a `proxySet` is proxied, as it is when it's assigned into state. It is found by the object, by its proxy, or by a snapshot of it. So a member read from `useSnapshot` is found in the set.
+
+```jsx
+import { proxy, useSnapshot } from 'valtio'
+import { proxySet } from 'valtio/utils'
+
+const state = proxy({
+  items: [{ name: 'apple' }, { name: 'banana' }],
+  selected: proxySet(),
+})
+state.selected.add(state.items[0])
+
+const Items = () => {
+  const tracked = useSnapshot(state)
+  return (
+    <ul>
+      {tracked.items.map((item) => (
+        <li key={item.name}>
+          {item.name} {tracked.selected.has(item) ? '(selected)' : ''}
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
+A component that looks up an object read from `useSnapshot` re-renders when that object changes or is replaced.
+
+A snapshot marked with `ref` is a member of its own. It doesn't match the state object that it was taken from.
+
+`union`, `intersection`, `difference` and `symmetricDifference` return a new `proxySet`. On a snapshot they return a plain `Set`, which holds the snapshot's own members.
+
+`isSubsetOf` and `isDisjointFrom` ask the other collection with its `has`. A native `Set` finds only the same object, so pass a `proxySet` to match an object with its proxy and its snapshots.
 
 ## `isProxySet`
 
