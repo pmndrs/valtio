@@ -25,10 +25,10 @@ describe('component state', () => {
 
   const MyCounter = ({ label }: { label: string }) => {
     const state = useContext(MyContext) as CounterState
-    const snap = useSnapshot(state)
+    const tracked = useSnapshot(state)
     return (
       <>
-        <div>{`${label}: ${snap.count}`}</div>
+        <div>{`${label}: ${tracked.count}`}</div>
         <button onClick={() => ++state.count}>{`${label} button`}</button>
       </>
     )
@@ -76,11 +76,11 @@ describe('component state', () => {
 
     const Probe = () => {
       const state = useContext(MyContext) as CounterState
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       seen.push(state)
       return (
         <>
-          <div>count: {snap.count}</div>
+          <div>count: {tracked.count}</div>
           <button onClick={() => ++state.count}>button</button>
         </>
       )

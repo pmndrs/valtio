@@ -35,13 +35,17 @@ const state = proxy({ count: 0 })
 state.count = 0 // has no effect
 ```
 
-Multiple changes in the same event loop tick will be batched together. Subscribers will be notified of a single version change.
+Subscribers are notified synchronously, once per change. Wrap several changes in [`batch`](../advanced/batch) to notify subscribers once.
 
 ```js
+import { batch, proxy } from 'valtio'
+
 const state = proxy({ count: 0, text: 'hello' })
 // subscribers will be notified once after both mutations
-state.count = 1
-state.text = 'world'
+batch(() => {
+  state.count = 1
+  state.text = 'world'
+})
 ```
 
 ## Nested proxies

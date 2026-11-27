@@ -41,13 +41,13 @@ export const actions = {
 }
 
 export function useTodos() {
-  const snapShot = useSnapshot(store)
+  const tracked = useSnapshot(store)
 
-  switch (snapShot.filter) {
+  switch (tracked.filter) {
     case 'all':
-      return snapShot.todos
+      return tracked.todos
     case 'completed':
-      return snapShot.todos.filter((todo) => todo.completed)
+      return tracked.todos.filter((todo) => todo.completed)
     default:
       throw Error('Error: un supported filter')
   }

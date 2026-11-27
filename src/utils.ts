@@ -1,2 +1,12 @@
-export * from './vanilla/utils.ts'
-export * from './react/utils.ts'
+export {
+  applyChanges,
+  deepClone,
+  devtools,
+  isProxyMap,
+  isProxySet,
+  proxyMap,
+  proxySet,
+  subscribeKey,
+  unstable_deepProxy,
+} from './vanilla/utils.js'
+export { useProxy } from './react/utils.js'

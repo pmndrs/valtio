@@ -17,18 +17,18 @@ const exampleCode = (dur: number, count: number) => `
 
   incCount();
 
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
 
   return (
     <div>
-      <h3>{snap.dur}</h3>
+      <h3>{tracked.dur}</h3>
       <button
-        disabled={snap.dur <= 1}
+        disabled={tracked.dur <= 1}
         onClick={decDur}>
         -
       </button>
       <button
-        disabled={snap.dur >= 10}
+        disabled={tracked.dur >= 10}
         onClick={incDur}>
         +
       </button>
@@ -37,23 +37,23 @@ const exampleCode = (dur: number, count: number) => `
 `
 
 export const CodeExample = () => {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   return (
     <div className="code-container">
       <div className="code-container-inner">
         <div className="duration-changer">
-          <h3 className="text-xl font-bold">{snap.dur}</h3>
+          <h3 className="text-xl font-bold">{tracked.dur}</h3>
           <div className="button-container">
             <button
               className="counter"
-              disabled={snap.dur <= 1}
+              disabled={tracked.dur <= 1}
               onClick={decDuration}
             >
               -
             </button>
             <button
               className="counter"
-              disabled={snap.dur >= 10}
+              disabled={tracked.dur >= 10}
               onClick={incDuration}
             >
               +
@@ -62,7 +62,7 @@ export const CodeExample = () => {
         </div>
         <Highlight
           {...defaultProps}
-          code={exampleCode(snap.dur, snap.count)}
+          code={exampleCode(tracked.dur, tracked.count)}
           language="jsx"
           theme={undefined}
         >

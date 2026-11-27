@@ -1,0 +1,725 @@
+import { runInNewContext } from 'node:vm'
+import { act, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { batch, proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
+import { applyChanges, proxyMap, proxySet, subscribeKey } from 'valtio/utils'
+
+describe('applyChanges', () => {
+  it('should write only what differs', () => {
+    const state = proxy({ user: { name: 'Ann', age: 30 }, count: 0 })
+    const onName = vi.fn()
+    const onAge = vi.fn()
+    const onCount = vi.fn()
+    subscribeKey(state.user, 'name', onName)
+    subscribeKey(state.user, 'age', onAge)
+    subscribeKey(state, 'count', onCount)
+    const user = state.user
+
+    applyChanges(state, { user: { name: 'Ann', age: 31 }, count: 0 })
+    expect(state.user).toBe(user)
+    expect(snapshot(state)).toEqual({
+      user: { name: 'Ann', age: 31 },
+      count: 0,
+    })
+    expect(onName).not.toHaveBeenCalled()
+    expect(onAge).toHaveBeenCalledTimes(1)
+    expect(onCount).not.toHaveBeenCalled()
+  })
+
+  it('should not notify when nothing differs', () => {
+    const state = proxy({ list: [{ id: 1 }], nested: { a: 1 } })
+    const callback = vi.fn()
+    subscribe(state, callback)
+    const snap = snapshot(state)
+
+    applyChanges(state, { list: [{ id: 1 }], nested: { a: 1 } })
+    expect(callback).not.toHaveBeenCalled()
+    expect(snapshot(state)).toBe(snap)
+  })
+
+  it('should notify once for several changes', () => {
+    const state = proxy({ a: 1, b: 1, nested: { c: 1 } })
+    const callback = vi.fn()
+    subscribe(state, callback)
+
+    applyChanges(state, { a: 2, b: 2, nested: { c: 2 } })
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
+  it('should add and delete keys, also symbols', () => {
+    const key = Symbol()
+    const state = proxy<Record<string | symbol, unknown>>({ a: 1, b: 2 })
+
+    applyChanges(state, { b: 2, c: 3, [key]: 4 })
+    expect(Reflect.ownKeys(state)).toEqual(['b', 'c', key])
+    expect(state[key]).toBe(4)
+
+    applyChanges(state, { b: 2 })
+    expect(Reflect.ownKeys(state)).toEqual(['b'])
+  })
+
+  it('should merge arrays by index and follow their length', () => {
+    const state = proxy({ list: [{ id: 1 }, { id: 2 }, { id: 3 }] })
+    const [first, second] = state.list
+
+    applyChanges(state, { list: [{ id: 1 }, { id: 20 }] })
+    expect(snapshot(state.list)).toEqual([{ id: 1 }, { id: 20 }])
+    expect(state.list[0]).toBe(first)
+    expect(state.list[1]).toBe(second)
+
+    applyChanges(state, { list: [{ id: 1 }, { id: 20 }, { id: 30 }] })
+    expect(snapshot(state.list)).toEqual([{ id: 1 }, { id: 20 }, { id: 30 }])
+  })
+
+  it('should apply the holes and the length of an array', () => {
+    const state = proxy<{ list: unknown[]; other?: unknown[] }>({
+      list: [1, 2, 3],
+    })
+
+    applyChanges(state, { list: new Array(3) })
+    expect(state.list.length).toBe(3)
+    expect(Object.keys(state.list)).toEqual([])
+
+    applyChanges(state, { list: Object.assign(new Array(3), { 0: 1, 2: 3 }) })
+    expect(Object.keys(state.list)).toEqual(['0', '2'])
+
+    applyChanges(state, { list: new Array(5), other: new Array(4) })
+    expect(state.list.length).toBe(5)
+    expect(Object.keys(state.list)).toEqual([])
+    expect(state.other!.length).toBe(4)
+
+    // a snapshot keeps its holes
+    state.list = [1, 2, 3]
+    delete state.list[1]
+    const snap = snapshot(state)
+    state.list[1] = 9
+    applyChanges(state, snap)
+    expect(Object.keys(state.list)).toEqual(['0', '2'])
+  })
+
+  it('should delete a key that only looks like an index', () => {
+    const state = proxy<Record<string, number>>({ Infinity: 1, '1.5': 2 })
+    applyChanges(state, {})
+    expect(Object.keys(state)).toEqual([])
+
+    const list: number[] = proxy(
+      Object.assign([1, 2, 3], { '7.5': 4, Infinity: 5, name: 6 }),
+    )
+    const callback = vi.fn()
+    subscribe(list, callback)
+    applyChanges(list, [1])
+    expect(Object.keys(list)).toEqual(['0'])
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
+  it('should delete a key that next has but does not enumerate', () => {
+    const state = proxy<Record<string, number>>({ count: 1, other: 1 })
+    const next = Object.defineProperty({ other: 1 }, 'count', {
+      value: 2,
+      enumerable: false,
+    })
+
+    applyChanges(state, next)
+    expect(snapshot(state)).toEqual({ other: 1 })
+  })
+
+  it('should ignore a key named __proto__', () => {
+    const state = proxy<{ data?: { a: number }; flag?: boolean }>({})
+
+    applyChanges(state, JSON.parse('{"__proto__":{"flag":true}}'))
+    expect(state.flag).toBe(undefined)
+    expect(Object.getPrototypeOf(state)).toBe(Object.prototype)
+
+    applyChanges(state, {
+      data: JSON.parse('{"__proto__":{"flag":true},"a":1}'),
+    })
+    expect(snapshot(state)).toEqual({ data: { a: 1 } })
+    expect((state.data as { flag?: boolean }).flag).toBe(undefined)
+    expect(Object.getPrototypeOf(state.data)).toBe(Object.prototype)
+  })
+
+  it('should replace a value of another kind', () => {
+    const state = proxy<{ value: unknown }>({ value: { a: 1 } })
+
+    applyChanges(state, { value: [1] })
+    expect(snapshot(state)).toEqual({ value: [1] })
+    applyChanges(state, { value: 'text' })
+    expect(state.value).toBe('text')
+    applyChanges(state, { value: { b: 2 } })
+    expect(snapshot(state)).toEqual({ value: { b: 2 } })
+  })
+
+  it('should never make an object of the caller state', () => {
+    const next = Object.freeze({
+      nested: Object.freeze({ count: 1 }),
+      list: Object.freeze([Object.freeze({ id: 1 })]),
+    })
+    const state = proxy<{
+      nested?: { count: number }
+      list?: readonly { id: number }[]
+    }>({})
+
+    applyChanges(state, next)
+    state.nested!.count++
+    ;(state.list as { id: number }[]).push({ id: 2 })
+    expect(snapshot(state)).toEqual({
+      nested: { count: 2 },
+      list: [{ id: 1 }, { id: 2 }],
+    })
+    expect(next).toEqual({ nested: { count: 1 }, list: [{ id: 1 }] })
+  })
+
+  it('should assign other values as they are', () => {
+    class Item {
+      count = 0
+    }
+    const date = new Date(0)
+    const marked = ref({ a: 1 })
+    const item = new Item()
+    const other = proxy({ b: 1 })
+    const map = proxyMap([['key', 1]])
+    const state = proxy<Record<string, unknown>>({})
+
+    applyChanges(state, { date, marked, item, other, map })
+    expect(state.date).toBe(date)
+    expect(state.marked).toBe(marked)
+    expect(state.other).toBe(other)
+    expect(state.map).toBe(map)
+    // a class instance becomes state, as with an assignment
+    ;(state.item as Item).count++
+    expect(item.count).toBe(1)
+  })
+
+  it('should assign an instance of a class that extends Array as it is', () => {
+    class Items extends Array<number> {
+      total() {
+        return this.reduce((a, b) => a + b, 0)
+      }
+    }
+    const state = proxy<{ items?: Items | number[] }>({})
+
+    applyChanges(state, { items: new Items(1, 2, 3) })
+    expect(state.items).toBeInstanceOf(Items)
+    expect((state.items as Items).total()).toBe(6)
+
+    // plain data is merged into it
+    const { items } = state
+    applyChanges(state, { items: [1, 2] })
+    expect(state.items).toBe(items)
+    expect((state.items as Items).total()).toBe(3)
+  })
+
+  it('should replace a proxy that is marked with ref', async () => {
+    const child = proxy({ count: 0 })
+    const state = proxy<{ child: { count: number } }>({ child: ref(child) })
+    const callback = vi.fn()
+    subscribe(state, callback)
+
+    applyChanges(state, { child: { count: 1 } })
+    await Promise.resolve()
+    expect(child.count).toBe(0)
+    expect(state.child).not.toBe(child)
+    expect(state.child.count).toBe(1)
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
+  it('should replace a collection that gets plain data', () => {
+    const state = proxy<{ count: number; value: unknown }>({
+      count: 0,
+      value: proxyMap([['a', 1]]),
+    })
+
+    applyChanges(state, { count: 1, value: { name: 'Ann' } })
+    expect(snapshot(state)).toEqual({ count: 1, value: { name: 'Ann' } })
+  })
+
+  it('should not write an accessor of a class', () => {
+    class User {
+      name = 'Ann'
+      get displayName() {
+        return this.name
+      }
+      set displayName(value: string) {
+        this.name = value
+      }
+      get initial() {
+        return this.name[0]
+      }
+    }
+    const state = proxy({ user: new User() })
+
+    applyChanges(state, {
+      user: { name: 'Bob', displayName: 'Charlie', initial: 'X' },
+    } as unknown as typeof state)
+    expect(state.user.name).toBe('Bob')
+    expect(state.user.displayName).toBe('Bob')
+    expect(state.user.initial).toBe('B')
+  })
+
+  it('should not write into a proxy that the target inherits', () => {
+    const shared = proxy({ count: 0 })
+    const state = proxy(
+      Object.create({ nested: shared }) as { nested: { count: number } },
+    )
+    const callback = vi.fn()
+    subscribe(state, callback)
+
+    applyChanges(state, { nested: { count: 1 } })
+    expect(shared.count).toBe(0)
+    expect(Object.keys(state)).toEqual(['nested'])
+    expect(state.nested.count).toBe(1)
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
+  it('should merge plain data into a class instance', () => {
+    class User {
+      name = 'Ann'
+      age = 30
+      greet() {
+        return `Hi, ${this.name}`
+      }
+    }
+    const state = proxy({ user: new User() })
+    const { user } = state
+
+    applyChanges(state, { user: { name: 'Bob', age: 30 } } as typeof state)
+    expect(state.user).toBe(user)
+    expect(state.user.greet()).toBe('Hi, Bob')
+  })
+
+  it('should create a key that is undefined', () => {
+    const state = proxy<{ a?: undefined; b?: number }>({ b: 1 })
+
+    applyChanges(state, { a: undefined })
+    expect(Object.keys(state)).toEqual(['a'])
+  })
+
+  it('should require a proxy', () => {
+    const state = proxy({ count: 0 })
+    expect(() =>
+      applyChanges(snapshot(state) as { count: number }, { count: 1 }),
+    ).toThrow('applyChanges() requires a proxy as its first argument')
+    expect(() => applyChanges({ count: 0 }, { count: 1 })).toThrow(
+      'applyChanges() requires a proxy as its first argument',
+    )
+  })
+
+  it('should not take a collection as its first argument', () => {
+    const map = proxyMap([['a', 1]])
+    const set = proxySet([1])
+    const callback = vi.fn()
+    subscribe(map, callback)
+    subscribe(set, callback)
+
+    expect(() => applyChanges(map, new Map([['b', 2]]))).toThrow(
+      'it cannot be a proxyMap or proxySet.',
+    )
+    expect(() => applyChanges(map, snapshot(map))).toThrow(
+      'it cannot be a proxyMap or proxySet.',
+    )
+    expect(() => applyChanges(set, new Set([2]))).toThrow(
+      'it cannot be a proxyMap or proxySet.',
+    )
+    expect([...map]).toEqual([['a', 1]])
+    expect([...set]).toEqual([1])
+    expect(callback).not.toHaveBeenCalled()
+  })
+
+  it('should not apply an array to an object, or an object to an array', () => {
+    const state = proxy<Record<string, unknown>>({ count: 1 })
+    const list = proxy<unknown[]>([1, 2])
+
+    expect(() => applyChanges(state, [10, 20] as never)).toThrow(
+      'applyChanges() cannot apply an array to an object, or an object to an array.',
+    )
+    expect(() => applyChanges(list, { count: 1 } as never)).toThrow(
+      'applyChanges() cannot apply an array to an object, or an object to an array.',
+    )
+    expect(snapshot(state)).toEqual({ count: 1 })
+    expect(snapshot(list)).toEqual([1, 2])
+  })
+
+  it('should take plain data from another realm', () => {
+    const state = proxy({ list: [0], user: { name: 'Ann' } })
+    const { list, user } = state
+    const next = runInNewContext('({ list: [1, 2], user: { name: "Bob" } })')
+
+    applyChanges(state, next)
+    expect(state.list).toBe(list)
+    expect(state.user).toBe(user)
+    expect(snapshot(state)).toEqual({ list: [1, 2], user: { name: 'Bob' } })
+
+    // where there is no proxy to merge into, it is copied
+    const other = proxy<{ list?: number[] }>({})
+    applyChanges(other, next)
+    other.list!.push(3)
+    expect(next.list).toHaveLength(2)
+  })
+
+  it('should not run a getter to find out what is a collection', () => {
+    const state = proxy({
+      count: 1,
+      get [Symbol.toStringTag](): string {
+        if (!this.count) {
+          throw new Error('getter')
+        }
+        return 'Counter'
+      },
+    })
+    const saved = snapshot(state)
+    state.count = 0
+
+    applyChanges(state, saved)
+    expect(state.count).toBe(1)
+
+    const other = proxy({
+      nested: {
+        count: 1,
+        get [Symbol.toStringTag](): string {
+          throw new Error('getter')
+        },
+      },
+    })
+    applyChanges(other, { nested: { count: 2 } } as typeof other)
+    expect(other.nested.count).toBe(2)
+  })
+
+  it('should rethrow subscriber errors in a microtask, like an assignment', () => {
+    const state = proxy({ a: 0, b: 0 })
+    subscribe(state, () => {
+      throw new Error('boom')
+    })
+    const queueMicrotaskSpy = vi
+      .spyOn(globalThis, 'queueMicrotask')
+      .mockImplementation(() => {})
+
+    try {
+      applyChanges(state, { a: 1, b: 1 })
+      expect(queueMicrotaskSpy).toHaveBeenCalledTimes(1)
+    } finally {
+      queueMicrotaskSpy.mockRestore()
+    }
+    expect(snapshot(state)).toEqual({ a: 1, b: 1 })
+    expect(() => batch(() => applyChanges(state, { a: 2, b: 2 }))).toThrow(
+      AggregateError,
+    )
+  })
+})
+
+describe('applyChanges with a snapshot', () => {
+  it('should restore an earlier snapshot and keep the proxies', () => {
+    const state = proxy({
+      user: { name: 'Ann', tags: ['a'] },
+      todos: [{ title: 'one', done: false }],
+    })
+    const { user } = state
+    const todo = state.todos[0]
+    const snap = snapshot(state)
+
+    state.user.name = 'Bob'
+    state.user.tags.push('b')
+    state.todos[0]!.done = true
+    state.todos.push({ title: 'two', done: false })
+    const callback = vi.fn()
+    subscribe(state, callback)
+
+    applyChanges(state, snap)
+    expect(snapshot(state)).toEqual(snap)
+    expect(state.user).toBe(user)
+    expect(state.todos[0]).toBe(todo)
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
+  it('should leave a subtree that has not changed since the snapshot', () => {
+    const state = proxy({ unchanged: { a: 1 }, changed: { b: 1 } })
+    const snap = snapshot(state)
+    state.changed.b = 2
+    const onUnchanged = vi.fn()
+    subscribe(state.unchanged, onUnchanged)
+
+    applyChanges(state, snap)
+    expect(snapshot(state)).toEqual(snap)
+    expect(snapshot(state).unchanged).toBe(snap.unchanged)
+    expect(onUnchanged).not.toHaveBeenCalled()
+  })
+
+  it('should apply the snapshot of one object to another', () => {
+    const state = proxy({
+      a: { name: 'a', nested: { count: 1 } },
+      b: { name: 'b', nested: { count: 2 } },
+    })
+    const { b } = state
+
+    applyChanges(state.b, snapshot(state.a))
+    expect(state.b).toBe(b)
+    expect(snapshot(state.b)).toEqual({ name: 'a', nested: { count: 1 } })
+    // the two objects stay apart
+    state.b.nested.count = 3
+    expect(state.a.nested.count).toBe(1)
+  })
+
+  it('should leave the state as it is for its own snapshot', () => {
+    const state = proxy({ nested: { count: 0 }, list: [1, 2] })
+    const snap = snapshot(state)
+    const callback = vi.fn()
+    subscribe(state, callback)
+
+    applyChanges(state, snap)
+    expect(callback).not.toHaveBeenCalled()
+    expect(snapshot(state)).toBe(snap)
+  })
+
+  it('should take data that mixes new objects with snapshots', () => {
+    const state = proxy({
+      template: { tags: ['x'] },
+      todos: [{ title: 'one', tags: ['a'] }],
+    })
+    const snap = snapshot(state)
+    const first = state.todos[0]
+
+    applyChanges(state, {
+      ...snap,
+      todos: [...snap.todos, { title: 'two', tags: snap.template.tags }],
+    })
+    expect(state.todos[0]).toBe(first)
+    expect(snapshot(state.todos)).toEqual([
+      { title: 'one', tags: ['a'] },
+      { title: 'two', tags: ['x'] },
+    ])
+    // the new todo has its own copy of the tags
+    state.todos[1]!.tags.push('y')
+    expect(state.template.tags).toEqual(['x'])
+  })
+
+  it('should copy a snapshot where the proxy holds another object', () => {
+    const state = proxy({
+      items: [{ name: 'a' }, { name: 'b' }],
+      selected: null as { name: string } | null,
+    })
+    state.selected = state.items[0]!
+    const snap = snapshot(state)
+
+    // the same key now holds the other item
+    state.selected = state.items[1]!
+    applyChanges(state, snap)
+    expect(snapshot(state)).toEqual(snap)
+    // the other item is not written
+    expect(state.items[1]!.name).toBe('b')
+    expect(state.selected).not.toBe(state.items[1])
+  })
+
+  it('should not write accessors', () => {
+    const state = proxy({
+      count: 1,
+      get double() {
+        return this.count * 2
+      },
+    })
+    const snap = snapshot(state)
+    state.count = 2
+
+    applyChanges(state, snap)
+    expect(state.count).toBe(1)
+    expect(state.double).toBe(2)
+    state.count = 5
+    expect(state.double).toBe(10)
+
+    // the accessor stays when the data has no such key
+    applyChanges(state, { count: 3 } as typeof state)
+    expect(state.double).toBe(6)
+  })
+
+  it('should not run a getter to find out what changed', () => {
+    const state = proxy({
+      count: 1,
+      get inverse() {
+        if (!this.count) {
+          throw new Error('Invalid count')
+        }
+        return 1 / this.count
+      },
+    })
+    const saved = snapshot(state)
+    state.count = 0
+
+    applyChanges(state, saved)
+    expect(state.count).toBe(1)
+    expect(state.inverse).toBe(1)
+  })
+
+  it('should copy a property that an accessor of its class shadows', () => {
+    class Item {
+      get count() {
+        return 0
+      }
+      constructor() {
+        Object.defineProperty(this, 'count', {
+          value: 1,
+          enumerable: true,
+          writable: true,
+          configurable: true,
+        })
+      }
+    }
+    const saved = snapshot(proxy(new Item()))
+    const state = proxy<{ item?: Item }>({})
+
+    applyChanges(state, { item: saved as Item })
+    expect(state.item!.count).toBe(1)
+    expect(state.item).toBeInstanceOf(Item)
+  })
+
+  it('should keep the accessors of an object that it copies', () => {
+    const state = proxy<{
+      nested?: { count: number; readonly double: number }
+    }>({})
+
+    applyChanges(state, {
+      nested: {
+        count: 1,
+        get double() {
+          return this.count * 2
+        },
+      },
+    })
+    state.nested!.count = 4
+    expect(state.nested!.double).toBe(8)
+  })
+
+  it('should throw for a snapshot of a collection that has changed', () => {
+    const state = proxy({
+      map: proxyMap([['a', 1]]),
+      set: proxySet([1]),
+      count: 0,
+    })
+    const snap = snapshot(state)
+
+    // an unchanged collection is skipped
+    state.count = 1
+    applyChanges(state, snap)
+    expect(state.count).toBe(0)
+
+    state.map.set('b', 2)
+    expect(() => applyChanges(state, snap)).toThrow(
+      'applyChanges() cannot apply a snapshot of a proxyMap or proxySet.',
+    )
+    state.map.delete('b')
+    state.set.add(2)
+    expect(() => applyChanges(state, snap)).toThrow(
+      'applyChanges() cannot apply a snapshot of a proxyMap or proxySet.',
+    )
+    expect(() =>
+      applyChanges(proxy<{ map?: unknown }>({}), { map: snap.map }),
+    ).toThrow(
+      'applyChanges() cannot apply a snapshot of a proxyMap or proxySet.',
+    )
+  })
+
+  it('should restore a state that is iterable', () => {
+    const state = proxy({
+      count: 0,
+      *[Symbol.iterator]() {
+        yield this.count
+      },
+    })
+    const saved = snapshot(state)
+    state.count = 1
+
+    applyChanges(state, saved as typeof state)
+    expect([...state]).toEqual([0])
+  })
+
+  it('should write nothing when it throws for a collection', () => {
+    const state = proxy({ count: 0, nested: { a: 1 }, set: proxySet([1]) })
+    const snap = snapshot(state)
+    state.count = 1
+    state.nested.a = 2
+    state.set.add(2)
+    const callback = vi.fn()
+    subscribe(state, callback)
+
+    expect(() => applyChanges(state, snap)).toThrow(
+      'applyChanges() cannot apply a snapshot of a proxyMap or proxySet.',
+    )
+    expect(state.count).toBe(1)
+    expect(state.nested.a).toBe(2)
+    expect(callback).not.toHaveBeenCalled()
+  })
+
+  it('should restore a state that refers to itself', () => {
+    type Node = { name: string; parent?: Node; children: Node[] }
+    const state = proxy<Node>({ name: 'root', children: [] })
+    state.children.push({ name: 'child', parent: state, children: [] })
+    const snap = snapshot(state)
+
+    state.name = 'changed'
+    state.children[0]!.name = 'changed too'
+    applyChanges(state, snap)
+    expect(state.name).toBe('root')
+    expect(state.children[0]!.name).toBe('child')
+    expect(state.children[0]!.parent).toBe(state)
+  })
+
+  it('should copy data that refers to itself', () => {
+    type Node = { name: string; self?: Node }
+    const next: Node = { name: 'a' }
+    next.self = next
+    const state = proxy<{ node?: Node }>({})
+
+    applyChanges(state, { node: next })
+    expect(state.node!.name).toBe('a')
+    expect(state.node!.self).toBe(state.node)
+  })
+})
+
+describe('applyChanges with useSnapshot', () => {
+  it('should keep a reader of an equal value quiet', async () => {
+    const state = proxy({ nested: { count: 0, text: 'a' } })
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>count: {tracked.nested.count}</div>
+    }
+
+    render(<Component />)
+    await act(async () => {
+      applyChanges(state.nested, { count: 0, text: 'b' })
+    })
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      applyChanges(state.nested, { count: 1, text: 'b' })
+    })
+    expect(screen.getByText('count: 1')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should apply a value read from useSnapshot', async () => {
+    const state = proxy({ form: { name: 'Ann', address: { city: 'Oslo' } } })
+    let saved: unknown
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      saved ||= tracked.form
+      return <div>name: {tracked.form.name}</div>
+    }
+
+    render(<Component />)
+    const { address } = state.form
+    await act(async () => {
+      state.form.name = 'Bob'
+      state.form.address.city = 'Rome'
+    })
+    expect(screen.getByText('name: Bob')).toBeInTheDocument()
+
+    await act(async () => {
+      applyChanges(state.form, saved as typeof state.form)
+    })
+    expect(screen.getByText('name: Ann')).toBeInTheDocument()
+    expect(snapshot(state.form)).toEqual({
+      name: 'Ann',
+      address: { city: 'Oslo' },
+    })
+    expect(state.form.address).toBe(address)
+  })
+})

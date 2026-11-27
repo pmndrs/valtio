@@ -49,17 +49,15 @@ export const actions = {
 }
 
 export function useTodos() {
-  const snapshot = useSnapshot(store)
+  const tracked = useSnapshot(store)
 
-  switch (snapshot.filter) {
+  switch (tracked.filter) {
     case 'all':
-      return Array.from(snapshot.todos.values())
+      return Array.from(tracked.todos.values())
     case 'done':
-      return Array.from(snapshot.todos.values()).filter(
-        (todo) => todo.completed,
-      )
+      return Array.from(tracked.todos.values()).filter((todo) => todo.completed)
     case 'todo':
-      return Array.from(snapshot.todos.values()).filter(
+      return Array.from(tracked.todos.values()).filter(
         (todo) => !todo.completed,
       )
     default:
@@ -68,13 +66,13 @@ export function useTodos() {
 }
 
 export function useTodosCount() {
-  const snapshot = useSnapshot(store)
+  const tracked = useSnapshot(store)
   const count = {
     active: 0,
     completed: 0,
   }
 
-  snapshot.todos.forEach(({ completed }) => {
+  tracked.todos.forEach(({ completed }) => {
     if (completed) {
       count.completed++
     } else {

@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { getVersion, proxy, ref, snapshot, subscribe } from 'valtio'
+import {
+  isProxyObject,
+  proxy,
+  ref,
+  snapshot,
+  subscribe,
+  unstable_isRef,
+} from 'valtio'
 
 describe('ref', () => {
   it('should return the same object it was given', () => {
@@ -11,7 +18,7 @@ describe('ref', () => {
     const inner = ref({ count: 0 })
     const state = proxy({ inner })
     expect(state.inner).toBe(inner)
-    expect(getVersion(state.inner)).toBeUndefined()
+    expect(isProxyObject(state.inner)).toBe(false)
   })
 
   it('should keep the same object identity in snapshots', () => {
@@ -62,6 +69,26 @@ describe('ref', () => {
     const items = ref([{ count: 0 }])
     const state = proxy({ items })
     expect(state.items).toBe(items)
-    expect(getVersion(state.items[0])).toBeUndefined()
+    expect(isProxyObject(state.items[0])).toBe(false)
+  })
+})
+
+describe('unstable_isRef', () => {
+  it('should be true for an object marked with ref', () => {
+    const inner = ref({ count: 0 })
+    const child = ref(proxy({ count: 0 }))
+    expect(unstable_isRef(inner)).toBe(true)
+    expect(unstable_isRef(child)).toBe(true)
+    expect(isProxyObject(child)).toBe(true)
+  })
+
+  it('should be false for anything else', () => {
+    const state = proxy({ nested: { count: 0 } })
+    expect(unstable_isRef(state)).toBe(false)
+    expect(unstable_isRef(state.nested)).toBe(false)
+    expect(unstable_isRef(snapshot(state))).toBe(false)
+    expect(unstable_isRef({})).toBe(false)
+    expect(unstable_isRef(1)).toBe(false)
+    expect(unstable_isRef(null)).toBe(false)
   })
 })

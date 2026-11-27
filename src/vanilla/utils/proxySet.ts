@@ -1,16 +1,28 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
+import {
+  isProxyObject,
+  proxy,
+  unstable_getInternalStates,
+} from '../../vanilla.js'
+import { advanceFirst, keyId, slotsOf } from './collection.js'
 
-const { proxyStateMap, snapCache } = unstable_getInternalStates()
-const maybeProxify = (x: any) => (typeof x === 'object' ? proxy({ x }).x : x)
-const isProxy = (x: any) => proxyStateMap.has(x)
+const { batchAsWrite } = unstable_getInternalStates()
+
+// The index of the set. It is part of the state, so a snapshot has its own:
+// the id of a member gives its slot in `data`, `size` counts the members, and
+// `first` is the first slot in use. A slot is never used again, so
+// `data.length` is the next.
+type Lookup = {
+  size: number
+  first: number
+  [id: string | symbol]: number
+}
 
 type RSetLike<T> = { has(value: T): boolean }
 
 type InternalProxySet<T> = Set<T> & {
   data: T[]
+  lookup: Lookup
   toJSON: () => object
-  index: number
-  epoch: number
   intersection<U>(other: RSetLike<U>): Set<T & U>
   intersection(other: Set<T>): Set<T>
   union<U>(other: RSetLike<U>): Set<T | U>
@@ -31,7 +43,7 @@ export const isProxySet = (obj: object): boolean => {
   return (
     Symbol.toStringTag in obj &&
     obj[Symbol.toStringTag] === 'Set' &&
-    proxyStateMap.has(obj)
+    isProxyObject(obj)
   )
 }
 
@@ -56,50 +68,48 @@ export const isProxySet = (obj: object): boolean => {
 
 export function proxySet<T>(initialValues?: Iterable<T> | null) {
   const initialData: T[] = []
-  const indexMap = new Map<T, number>()
-  let initialIndex = 0
-
-  const snapMapCache = new WeakMap<object, Map<T, number>>()
-  const registerSnapMap = () => {
-    const cache = snapCache.get(vObject)
-    const latestSnap = cache?.[1]
-    if (latestSnap && !snapMapCache.has(latestSnap)) {
-      const clonedMap = new Map(indexMap)
-      snapMapCache.set(latestSnap, clonedMap)
-    }
-  }
-  const getMapForThis = (x: any) => snapMapCache.get(x) || indexMap
+  const initialLookup: Lookup = { size: 0, first: 0 }
 
   if (initialValues) {
     if (typeof initialValues[Symbol.iterator] !== 'function') {
       throw new TypeError('not iterable')
     }
     for (const value of initialValues) {
-      if (!indexMap.has(value)) {
-        const v = maybeProxify(value)
-        indexMap.set(v, initialIndex)
-        initialData[initialIndex++] = v
+      const id = keyId(value)
+      if (initialLookup[id] === undefined) {
+        initialLookup[id] = initialData.length
+        initialLookup.size++
+        initialData.push(value)
       }
     }
   }
 
-  const isIterable = (o: unknown): o is Iterable<unknown> =>
-    typeof o === 'object' && o !== null && Symbol.iterator in (o as object)
-
-  const hasForEach = <U>(
-    o: RSetLike<U>,
-  ): o is RSetLike<U> & { forEach: (cb: (v: U) => void) => void } =>
-    typeof (o as { forEach?: unknown }).forEach === 'function'
-
   const asIterable = <U>(other: RSetLike<U> | Set<U>): Iterable<U> => {
-    if (isIterable(other)) return other as Iterable<U>
-    if (hasForEach(other)) {
-      const acc: U[] = []
-      other.forEach((v) => acc.push(v))
-      return acc
+    if (
+      typeof other === 'object' &&
+      other !== null &&
+      Symbol.iterator in other
+    ) {
+      return other as Iterable<U>
     }
     throw new TypeError('Expected an iterable')
   }
+
+  // A set operation builds its sets with the receiver's own member in place
+  // of each value that matches one. On a proxy it builds proxySets. A
+  // snapshot's members are snapshots, which a proxySet can't hold, so there
+  // it builds plain sets.
+  const setFor =
+    (self: InternalProxySet<any>) =>
+    <V>(values?: Iterable<V>): Set<V> => {
+      const own =
+        values &&
+        Array.from(values, (value) => {
+          const slot = self.lookup[keyId(value)]
+          return slot === undefined ? value : self.data[slot]
+        })
+      return isProxyObject(self) ? proxySet(own) : new Set(own)
+    }
 
   function intersectionImpl<T, U>(
     this: InternalProxySet<T>,
@@ -110,15 +120,15 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch // touch property for tracking
-    const otherSet = proxySet(asIterable(other))
-    const result = proxySet<T>()
+    const newSet = setFor(this)
+    const otherSet = newSet(asIterable(other))
+    const result = newSet<T>()
     for (const value of this.values()) {
       if (otherSet.has(value)) {
         result.add(value)
       }
     }
-    return proxySet(result)
+    return result
   }
 
   function unionImpl<T, U>(
@@ -130,12 +140,12 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch // touch property for tracking
-    const otherSet = proxySet(asIterable(other))
-    const result = proxySet<unknown>()
+    const newSet = setFor(this)
+    const otherSet = newSet(asIterable(other))
+    const result = newSet<unknown>()
     for (const v of this.values()) result.add(v)
     for (const v of otherSet.values()) result.add(v)
-    return proxySet(result)
+    return result
   }
 
   function differenceImpl<T, U>(
@@ -147,11 +157,11 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<T> {
-    this.epoch // touch property for tracking
-    const otherSet = proxySet(asIterable(other))
-    const result = proxySet<T>()
+    const newSet = setFor(this)
+    const otherSet = newSet(asIterable(other))
+    const result = newSet<T>()
     for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
-    return proxySet(result)
+    return result
   }
 
   function symmetricDifferenceImpl<T, U>(
@@ -166,89 +176,85 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     this: InternalProxySet<T>,
     other: RSetLike<unknown> | Set<T>,
   ): Set<unknown> {
-    this.epoch // touch property for tracking
-    const otherSet = proxySet(asIterable(other))
-    const result = proxySet<unknown>()
+    const newSet = setFor(this)
+    const otherSet = newSet(asIterable(other))
+    const result = newSet<unknown>()
     for (const v of this.values()) if (!otherSet.has(v)) result.add(v)
     // (v as T) -> v is unknown from RSetLike<unknown>, but has() accepts T and safely handles type mismatches
     for (const v of otherSet.values()) if (!this.has(v as T)) result.add(v)
-    return proxySet(result)
+    return result
   }
 
   const vObject: InternalProxySet<T> = {
     data: initialData,
-    index: initialIndex,
-    epoch: 0,
+    lookup: initialLookup,
     get size() {
-      if (!isProxy(this)) {
-        registerSnapMap()
-      }
-      return indexMap.size
+      return this.lookup.size
     },
     has(value: T) {
-      const map = getMapForThis(this)
-      const v = maybeProxify(value)
-      this.epoch // touch property for tracking
-      return map.has(v)
+      return this.lookup[keyId(value)] !== undefined
     },
     add(value: T) {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const v = maybeProxify(value)
-      if (!indexMap.has(v)) {
-        indexMap.set(v, this.index)
-        this.data[this.index++] = v
-        this.epoch++
+      const id = keyId(value)
+      if (this.lookup[id] === undefined) {
+        batchAsWrite(() => {
+          const slot = this.data.length
+          // The value is set first, because a snapshot makes it throw.
+          this.data[slot] = value
+          this.lookup[id] = slot
+          this.lookup.size++
+        })
       }
       return this
     },
     delete(value: T) {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const v = maybeProxify(value)
-      const index = indexMap.get(v)
-      if (index === undefined) {
+      const id = keyId(value)
+      const slot = this.lookup[id]
+      if (slot === undefined) {
         return false
       }
-      delete this.data[index]
-      indexMap.delete(v)
-      this.epoch++
+      batchAsWrite(() => {
+        delete this.data[slot]
+        delete this.lookup[id]
+        this.lookup.size--
+        if (slot === this.lookup.first) {
+          advanceFirst(this)
+        }
+      })
       return true
     },
     clear() {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      this.data.length = 0 // empty array
-      this.index = 0
-      this.epoch++
-      indexMap.clear()
-    },
-    forEach(cb: (value: T, valueAgain: T, set: Set<T>) => void) {
-      this.epoch // touch property for tracking
-      const map = getMapForThis(this)
-      map.forEach((index) => {
-        cb(this.data[index]!, this.data[index]!, this)
-      })
-    },
-    *values(): SetIterator<T> {
-      this.epoch // touch property for tracking
-      const map = getMapForThis(this)
-      for (const index of map.values()) {
-        yield this.data[index]!
+      if (this.lookup.size) {
+        batchAsWrite(() => {
+          this.data = []
+          this.lookup = { size: 0, first: 0 }
+        })
       }
     },
-    keys(): SetIterator<T> {
-      this.epoch // touch property for tracking
+    forEach(cb: (value: T, valueAgain: T, set: Set<T>) => void) {
+      for (const value of this.values()) {
+        cb(value, value, this)
+      }
+    },
+    *values(): ReturnType<Set<T>['values']> {
+      for (const slot of slotsOf(this)) {
+        yield this.data[slot]!
+      }
+    },
+    keys(): ReturnType<Set<T>['keys']> {
       return this.values()
     },
-    *entries(): SetIterator<[T, T]> {
-      this.epoch // touch property for tracking
-      const map = getMapForThis(this)
-      for (const index of map.values()) {
-        const value = this.data[index]!
+    *entries(): ReturnType<Set<T>['entries']> {
+      for (const value of this.values()) {
         yield [value, value]
       }
     },
@@ -258,26 +264,20 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
     [Symbol.iterator]() {
       return this.values()
     },
-    get [Symbol.toStringTag]() {
-      return 'Set'
-    },
+    [Symbol.toStringTag]: 'Set',
     intersection: intersectionImpl,
     union: unionImpl,
     difference: differenceImpl,
     symmetricDifference: symmetricDifferenceImpl,
     isSubsetOf(other: RSetLike<T>) {
-      this.epoch // touch property for tracking
       for (const v of this.values()) if (!other.has(v)) return false
       return true
     },
     isSupersetOf(other: RSetLike<T>) {
-      this.epoch // touch property for tracking
-      const it = asIterable(other)
-      for (const v of it) if (!this.has(v)) return false
+      for (const v of asIterable(other)) if (!this.has(v)) return false
       return true
     },
     isDisjointFrom(other: RSetLike<T>) {
-      this.epoch // touch property for tracking
       for (const v of this.values()) if (other.has(v)) return false
       return true
     },
@@ -287,9 +287,10 @@ export function proxySet<T>(initialValues?: Iterable<T> | null) {
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
     data: { enumerable: false },
-    index: { enumerable: false },
-    epoch: { enumerable: false },
+    lookup: { enumerable: false },
     toJSON: { enumerable: false },
+    // The tag tells what the collection is, so it can't be written.
+    [Symbol.toStringTag]: { writable: false },
   })
   Object.seal(proxiedObject)
 

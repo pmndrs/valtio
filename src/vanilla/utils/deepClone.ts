@@ -1,24 +1,21 @@
-import { unstable_getInternalStates } from '../../vanilla.ts'
+import { unstable_getInternalStates, unstable_isRef } from '../../vanilla.js'
+
+const { snapshotBrand } = unstable_getInternalStates()
 
 const isObject = (x: unknown): x is object =>
   typeof x === 'object' && x !== null
 
-let defaultRefSet: WeakSet<object> | undefined
-const getDefaultRefSet = (): WeakSet<object> => {
-  if (!defaultRefSet) {
-    defaultRefSet = unstable_getInternalStates().refSet
-  }
-  return defaultRefSet
-}
-
 /**
  * Creates a deep clone of an object, maintaining proxy behavior for Maps and Sets
+ *
+ * Objects for which `isRef` returns true are kept by reference. By default,
+ * those are the objects marked with `ref`.
  */
 export function deepClone<T>(
   obj: T,
-  getRefSet: () => WeakSet<object> = getDefaultRefSet,
+  isRef: (x: object) => boolean = unstable_isRef,
 ): T {
-  if (!isObject(obj) || getRefSet().has(obj)) {
+  if (!isObject(obj) || isRef(obj)) {
     return obj
   }
 
@@ -26,7 +23,10 @@ export function deepClone<T>(
     ? []
     : Object.create(Object.getPrototypeOf(obj))
   Reflect.ownKeys(obj).forEach((key) => {
-    baseObject[key as keyof T] = deepClone(obj[key as keyof T], getRefSet)
+    // A clone of a snapshot isn't a snapshot, so it can go into state.
+    if (key !== snapshotBrand) {
+      baseObject[key as keyof T] = deepClone(obj[key as keyof T], isRef)
+    }
   })
   return baseObject
 }

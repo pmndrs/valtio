@@ -1,8 +1,8 @@
 import { StrictMode } from 'react'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, snapshot, subscribe, useSnapshot } from 'valtio'
-import { proxyMap, proxySet } from 'valtio/utils'
+import { batch, proxy, ref, snapshot, subscribe, useSnapshot } from 'valtio'
+import { isProxyMap, proxyMap, proxySet } from 'valtio/utils'
 
 const initialValues = [
   {
@@ -204,11 +204,11 @@ describe('proxyMap', () => {
         const state = proxyMap(value as any)
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           return (
             <>
-              <div>size: {snap.size}</div>
+              <div>size: {tracked.size}</div>
               <button onClick={() => state.clear()}>button</button>
             </>
           )
@@ -238,11 +238,11 @@ describe('proxyMap', () => {
         })
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           return (
             <>
-              <div>size: {snap.map.size}</div>
+              <div>size: {tracked.map.size}</div>
               <button onClick={() => state.map.set(value, value)}>
                 button
               </button>
@@ -287,11 +287,11 @@ describe('proxyMap', () => {
         const firstKey = firstValue && firstValue[0]
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           return (
             <>
-              <div>size: {snap.map.size}</div>
+              <div>size: {tracked.map.size}</div>
               <button onClick={() => state.map.delete(firstKey)}>button</button>
             </>
           )
@@ -341,8 +341,16 @@ describe('proxyMap', () => {
       expect(Object.isSealed(proxyMap())).toBe(true)
     })
 
+    it('should keep its tag', () => {
+      const map = proxyMap()
+      expect(() => Reflect.set(map, Symbol.toStringTag, 'Other')).toThrow(
+        TypeError,
+      )
+      expect(isProxyMap(map)).toBe(true)
+    })
+
     it('should list only enumerable properties', () => {
-      const notEnumerableProps = ['data', 'size', 'toJSON']
+      const notEnumerableProps = ['data', 'lookup', 'size', 'toJSON']
       expect(
         Object.keys(proxyMap()).some((k) => notEnumerableProps.includes(k)),
       ).toBe(false)
@@ -381,10 +389,11 @@ describe('proxyMap', () => {
       const handler = vi.fn()
       subscribe(state, handler)
 
-      state.todos.forEach((todo) => {
-        todo.completed = true
+      batch(() => {
+        state.todos.forEach((todo) => {
+          todo.completed = true
+        })
       })
-      await vi.advanceTimersByTimeAsync(0)
 
       expect(handler).toBeCalledTimes(1)
       expect(Array.from(state.todos.values())).toEqual([
@@ -401,10 +410,10 @@ describe('proxyMap', () => {
       })
 
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
         return (
           <div>
-            {Array.from(snap.todos.values())
+            {Array.from(tracked.todos.values())
               .map((todo) => `${todo.name}:${todo.completed}`)
               .join(',')}
           </div>
@@ -516,11 +525,11 @@ describe('proxyMap', () => {
     it('should update ui when calling has before and after setting and deleting a key', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has key: {`${snap.has('key')}`}</p>
+            <p>has key: {`${tracked.has('key')}`}</p>
             <button onClick={() => state.set('key', 'value')}>set key</button>
             <button onClick={() => state.delete('key')}>delete key</button>
           </>
@@ -547,12 +556,12 @@ describe('proxyMap', () => {
     it('should update ui when calling has before and after settiing and deleting multiple keys', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has key: {`${snap.has('key')}`}</p>
-            <p>has key2: {`${snap.has('key2')}`}</p>
+            <p>has key: {`${tracked.has('key')}`}</p>
+            <p>has key2: {`${tracked.has('key2')}`}</p>
             <button
               onClick={() => {
                 state.set('key', 'value')
@@ -596,11 +605,11 @@ describe('proxyMap', () => {
     it('should update ui when calling get with absent key that has been added later', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>value: {`${snap.get('key')}`}</p>
+            <p>value: {`${tracked.get('key')}`}</p>
             <button
               onClick={() => {
                 state.set('key', 'value')
@@ -628,12 +637,12 @@ describe('proxyMap', () => {
     it('should update ui when calling has before and after settiing multile keys and deleting a single one (first item)', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has key: {`${snap.has('key')}`}</p>
-            <p>has key2: {`${snap.has('key2')}`}</p>
+            <p>has key: {`${tracked.has('key')}`}</p>
+            <p>has key2: {`${tracked.has('key2')}`}</p>
             <button
               onClick={() => {
                 state.set('key', 'value')
@@ -676,14 +685,14 @@ describe('proxyMap', () => {
     it('should update ui when calling has/get before and after settiing multile keys and deleting a single one multiple times', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has key1: {`${snap.has('key')}`}</p>
-            <p>value1: {`${snap.get('key')}`}</p>
-            <p>has key2: {`${snap.has('key2')}`}</p>
-            <p>value2: {`${snap.get('key2')}`}</p>
+            <p>has key1: {`${tracked.has('key')}`}</p>
+            <p>value1: {`${tracked.get('key')}`}</p>
+            <p>has key2: {`${tracked.has('key2')}`}</p>
+            <p>value2: {`${tracked.get('key2')}`}</p>
 
             <button
               onClick={() => {
@@ -747,8 +756,8 @@ describe('proxyMap', () => {
     it('should update ui when calling only one get with absent key added later', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
-        expect(snap).toBeDefined()
+        const tracked = useSnapshot(state)
+        expect(tracked).toBeDefined()
 
         return (
           <>
@@ -771,11 +780,11 @@ describe('proxyMap', () => {
       }
 
       const SeparateComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>value: {`${snap.get('key')}`}</p>
+            <p>value: {`${tracked.get('key')}`}</p>
           </>
         )
       }
@@ -801,14 +810,14 @@ describe('proxyMap', () => {
     it('should update ui when clearing the map', async () => {
       const state = proxyMap()
       const TestComponent = () => {
-        const snap = useSnapshot(state)
+        const tracked = useSnapshot(state)
 
         return (
           <>
-            <p>has key: {`${snap.has('key')}`}</p>
-            <p>has key2: {`${snap.has('key2')}`}</p>
-            <p>value1: {`${snap.get('key')}`}</p>
-            <p>value2: {`${snap.get('key2')}`}</p>
+            <p>has key: {`${tracked.has('key')}`}</p>
+            <p>has key2: {`${tracked.has('key2')}`}</p>
+            <p>value1: {`${tracked.get('key')}`}</p>
+            <p>value2: {`${tracked.get('key2')}`}</p>
             <button
               onClick={() => {
                 state.set('key', 'value')
@@ -866,7 +875,7 @@ describe('proxyMap', () => {
         }
         const state = proxyMap<number, MapItem>()
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           const addItem = (id: number) => {
             const item: MapItem = {
@@ -877,16 +886,16 @@ describe('proxyMap', () => {
           }
 
           const methods = {
-            entries: Array.from(snap.entries()).map(([id, item]) => (
+            entries: Array.from(tracked.entries()).map(([id, item]) => (
               <li key={id}>{`item.name: ${item.name}; item.id: ${item.id}`}</li>
             )),
-            values: Array.from(snap.values()).map((item) => (
+            values: Array.from(tracked.values()).map((item) => (
               <li
                 key={item.id}
               >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
             )),
-            keys: Array.from(snap.keys()).map((id) => {
-              const item = snap.get(id)!
+            keys: Array.from(tracked.keys()).map((id) => {
+              const item = tracked.get(id)!
               return (
                 <li
                   key={id}
@@ -937,7 +946,7 @@ describe('proxyMap', () => {
         const state = proxyMap<number, MapItem>()
 
         const TestComponent = () => {
-          const snap = useSnapshot(state)
+          const tracked = useSnapshot(state)
 
           const addItem = (id: number) => {
             const item: MapItem = {
@@ -975,19 +984,19 @@ describe('proxyMap', () => {
               </button>
               <ul>
                 {iteratorMethod === 'entries'
-                  ? Array.from(snap[iteratorMethod]()).map(([id, item]) => (
+                  ? Array.from(tracked[iteratorMethod]()).map(([id, item]) => (
                       <li
                         key={id}
                       >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
                     ))
                   : iteratorMethod === 'values'
-                    ? Array.from(snap[iteratorMethod]()).map((item) => (
+                    ? Array.from(tracked[iteratorMethod]()).map((item) => (
                         <li
                           key={item.id}
                         >{`item.name: ${item.name}; item.id: ${item.id}`}</li>
                       ))
-                    : Array.from(snap[iteratorMethod]()).map((id) => {
-                        const item = snap.get(id)!
+                    : Array.from(tracked[iteratorMethod]()).map((id) => {
+                        const item = tracked.get(id)!
                         return (
                           <li
                             key={id}
@@ -1024,5 +1033,376 @@ describe('proxyMap', () => {
         ).toBeInTheDocument()
       })
     })
+  })
+})
+
+describe('proxyMap notifications', () => {
+  it('should notify once per writing call, after the index and data match', () => {
+    const map = proxyMap<string, number>([['a', 1]])
+    const seen: unknown[] = []
+    subscribe(map, () => {
+      seen.push([map.size, map.get('b')])
+    })
+
+    map.set('b', 2)
+    expect(seen).toEqual([[2, 2]])
+
+    map.delete('b')
+    expect(seen).toEqual([
+      [2, 2],
+      [1, undefined],
+    ])
+
+    map.clear()
+    expect(seen).toEqual([
+      [2, 2],
+      [1, undefined],
+      [0, undefined],
+    ])
+  })
+
+  it('should not notify a call that writes nothing', () => {
+    const map = proxyMap<string, number>([['a', 1]])
+    const handler = vi.fn()
+    subscribe(map, handler)
+
+    map.delete('missing')
+    map.set('a', 1)
+    expect(handler).not.toHaveBeenCalled()
+
+    map.clear()
+    expect(handler).toHaveBeenCalledTimes(1)
+    map.clear()
+    expect(handler).toHaveBeenCalledTimes(1)
+  })
+
+  it('should rethrow subscriber errors in a microtask, like an assignment', () => {
+    const map = proxyMap<string, number>()
+    subscribe(map, () => {
+      throw new Error('boom')
+    })
+    const queueMicrotaskSpy = vi
+      .spyOn(globalThis, 'queueMicrotask')
+      .mockImplementation(() => {})
+
+    try {
+      map.set('a', 1)
+      map.set('b', 2)
+      map.delete('a')
+      map.clear()
+      expect(queueMicrotaskSpy).toHaveBeenCalledTimes(4)
+    } finally {
+      queueMicrotaskSpy.mockRestore()
+    }
+    expect(map.size).toBe(0)
+    expect(() => batch(() => map.set('c', 3))).toThrow(AggregateError)
+  })
+})
+
+describe('proxyMap index in state', () => {
+  it('should read a snapshot through a wrapper after later writes', () => {
+    const map = proxyMap<string, number>([['first', 1]])
+    const snap = snapshot(map)
+    map.delete('first')
+    map.set('second', 2)
+
+    const wrapped = new Proxy(snap, {})
+    expect(wrapped.get('first')).toBe(1)
+    expect(wrapped.has('second')).toBe(false)
+    expect(wrapped.size).toBe(1)
+    expect([...wrapped]).toEqual([['first', 1]])
+  })
+
+  it('should keep insertion order across a delete and a re-add', () => {
+    const map = proxyMap<string, number>([
+      ['a', 1],
+      ['b', 2],
+      ['c', 3],
+    ])
+    const before = snapshot(map)
+    map.delete('a')
+    map.set('a', 4)
+    map.set('b', 5)
+
+    expect([...map]).toEqual([
+      ['b', 5],
+      ['c', 3],
+      ['a', 4],
+    ])
+    expect([...before.keys()]).toEqual(['a', 'b', 'c'])
+  })
+
+  it('should iterate like a Map while it is changed', () => {
+    const map = proxyMap<string, number>([
+      ['a', 1],
+      ['b', 2],
+      ['c', 3],
+    ])
+    const seen: string[] = []
+    for (const [key] of map) {
+      seen.push(key)
+      if (key === 'a') {
+        map.delete('b')
+        map.set('d', 4)
+      }
+    }
+    expect(seen).toEqual(['a', 'c', 'd'])
+
+    // clear() ends the iteration, also for a key added after it, which a
+    // native Map would visit
+    seen.length = 0
+    for (const key of map.keys()) {
+      seen.push(key)
+      map.clear()
+      map.set('e', 5)
+    }
+    expect(seen).toEqual(['a'])
+    expect([...map.keys()]).toEqual(['e'])
+  })
+
+  it('should keep a keys() reader quiet when only values change', async () => {
+    const state = proxyMap<string, number>([['a', 1]])
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>keys: {[...tracked.keys()].join(',')}</div>
+    }
+
+    render(<Component />)
+    await act(async () => {
+      state.set('a', 2)
+    })
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      state.set('b', 1)
+    })
+    expect(screen.getByText('keys: a,b')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should tell keys of different types apart, as a Map does', () => {
+    const sym = Symbol()
+    const keys = [1, '1', 1n, true, 'true', null, 'null', undefined, sym]
+    const map = proxyMap<unknown, number>(keys.map((key, i) => [key, i]))
+    expect(map.size).toBe(keys.length)
+    keys.forEach((key, i) => expect(map.get(key)).toBe(i))
+    expect([...map.keys()]).toEqual(keys)
+
+    map.set(NaN, 1)
+    map.set(-0, 2)
+    expect(map.get(NaN)).toBe(1)
+    expect(map.get(0)).toBe(2)
+  })
+
+  it('should find an object key by the object, its proxy or its snapshot', () => {
+    const key = { id: 1 }
+    const state = proxy({ key, map: proxyMap<object, string>() })
+    state.map.set(key, 'value')
+
+    expect(state.map.get(key)).toBe('value')
+    expect(state.map.get(state.key)).toBe('value')
+    expect(state.map.get(snapshot(state).key)).toBe('value')
+    expect(state.map.size).toBe(1)
+    // the key isn't proxied
+    expect([...state.map.keys()]).toEqual([key])
+
+    const snap = snapshot(state)
+    expect(snap.map.get(snap.key)).toBe('value')
+    expect(snap.map.has(state.key)).toBe(true)
+
+    state.map.set(snap.key, 'changed')
+    expect(state.map.size).toBe(1)
+    expect(state.map.delete(snap.key)).toBe(true)
+    expect(snap.map.get(key)).toBe('value')
+  })
+
+  it('should treat a key marked with ref as only itself', () => {
+    const state = proxy({ count: 0 })
+    const first = snapshot(state)
+    state.count++
+    const second = snapshot(state)
+    const map = proxyMap<object, number>([
+      [ref(first), 1],
+      [ref(second), 2],
+    ])
+
+    expect(map.size).toBe(2)
+    expect(map.get(first)).toBe(1)
+    expect(map.get(second)).toBe(2)
+    expect(map.has(state)).toBe(false)
+  })
+
+  it('should leave the map unchanged when a set throws', () => {
+    const map = proxyMap<string, object>()
+    const snap = snapshot(proxy({ count: 0 }))
+    const handler = vi.fn()
+    subscribe(map, handler)
+
+    expect(() => map.set('a', snap)).toThrow(
+      'Cannot assign a Valtio snapshot into a proxy.',
+    )
+    expect(map.has('a')).toBe(false)
+    expect(map.size).toBe(0)
+    expect([...map]).toEqual([])
+    expect(handler).not.toHaveBeenCalled()
+  })
+
+  it('should keep a has() reader quiet when only values or other keys change', async () => {
+    const state = proxyMap<string, number>([['a', 1]])
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>has a: {String(tracked.has('a'))}</div>
+    }
+
+    render(<Component />)
+    await act(async () => {
+      state.set('a', 2)
+      state.set('b', 1)
+    })
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      state.delete('a')
+    })
+    expect(screen.getByText('has a: false')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should re-render when a tracked key is replaced by an equal object', async () => {
+    const state = proxy({
+      item: { id: 1 },
+      roles: proxyMap<object, string>(),
+    })
+    state.roles.set(state.item, 'admin')
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      return (
+        <div>{`${tracked.item.id}:${tracked.roles.get(tracked.item)}`}</div>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('1:admin')).toBeInTheDocument()
+
+    // the new object has the same id, and it isn't a key
+    await act(async () => {
+      state.item = { id: 1 }
+    })
+    expect(screen.getByText('1:undefined')).toBeInTheDocument()
+  })
+
+  it('should re-render a component that only passes a key on when the key changes', async () => {
+    const state = proxy({
+      item: { count: 0 },
+      roles: proxyMap<object, string>(),
+    })
+    state.roles.set(state.item, 'admin')
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      // the item is only passed on, as to an effect or a memoized child
+      renderFn(tracked.item, tracked.roles.get(tracked.item))
+      return null
+    }
+
+    render(<Component />)
+    await act(async () => {
+      state.item.count = 1
+    })
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should keep its own index in a snapshot with Symbol.iterator as a key', () => {
+    const map = proxyMap<symbol, number>([[Symbol.iterator, 1]])
+    const snap = snapshot(map)
+    map.delete(Symbol.iterator)
+    expect(snap.has(Symbol.iterator)).toBe(true)
+    expect(snap.get(Symbol.iterator)).toBe(1)
+    expect([...snap.keys()]).toEqual([Symbol.iterator])
+    expect(map.size).toBe(0)
+  })
+
+  it('should keep track of the first key across deletes', () => {
+    const map = proxyMap<string, number>([
+      ['a', 1],
+      ['b', 2],
+      ['c', 3],
+    ])
+    const snap = snapshot(map)
+    map.delete('b')
+    expect(map.keys().next().value).toBe('a')
+    map.delete('a')
+    expect(map.keys().next().value).toBe('c')
+    expect([...map.keys()]).toEqual(['c'])
+    map.delete('c')
+    expect(map.keys().next().done).toBe(true)
+    map.set('d', 4)
+    expect([...map.keys()]).toEqual(['d'])
+    // the snapshot has its own first key
+    expect(snap.keys().next().value).toBe('a')
+    expect([...snap.keys()]).toEqual(['a', 'b', 'c'])
+  })
+
+  it('should keep a reader of the first key quiet when another key is added', async () => {
+    const state = proxyMap<string, number>([['a', 1]])
+    const renderFn = vi.fn()
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      renderFn()
+      return <div>first: {String(tracked.keys().next().value)}</div>
+    }
+
+    render(<Component />)
+    await act(async () => {
+      state.set('b', 2)
+    })
+    expect(renderFn).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      state.delete('a')
+    })
+    expect(screen.getByText('first: b')).toBeInTheDocument()
+    expect(renderFn).toHaveBeenCalledTimes(2)
+  })
+
+  it('should re-render when a tracked key that is not a plain object is replaced', async () => {
+    class Item {
+      constructor(public id: number) {}
+    }
+    const bare = () =>
+      Object.assign(Object.create(null), { id: 2 }) as { id: number }
+    const state = proxy({
+      item: new Item(1),
+      bare: bare(),
+      roles: proxyMap<object, string>(),
+    })
+    state.roles.set(state.item, 'admin')
+    state.roles.set(state.bare, 'guest')
+    const Component = () => {
+      const tracked = useSnapshot(state)
+      return (
+        <div>
+          {`${tracked.item.id}:${tracked.roles.get(tracked.item)}`}{' '}
+          {`${tracked.bare.id}:${tracked.roles.get(tracked.bare)}`}
+        </div>
+      )
+    }
+
+    render(<Component />)
+    expect(screen.getByText('1:admin 2:guest')).toBeInTheDocument()
+
+    await act(async () => {
+      state.item = new Item(1)
+    })
+    expect(screen.getByText('1:undefined 2:guest')).toBeInTheDocument()
+
+    await act(async () => {
+      state.bare = bare()
+    })
+    expect(screen.getByText('1:undefined 2:undefined')).toBeInTheDocument()
   })
 })

@@ -1,12 +1,27 @@
-import { proxy, unstable_getInternalStates } from '../../vanilla.ts'
+import {
+  isProxyObject,
+  proxy,
+  ref,
+  unstable_getInternalStates,
+} from '../../vanilla.js'
+import { advanceFirst, keyId, slotsOf } from './collection.js'
 
-const { proxyStateMap, snapCache } = unstable_getInternalStates()
-const isProxy = (x: any) => proxyStateMap.has(x)
+const { batchAsWrite } = unstable_getInternalStates()
+
+// The index of the map. It is part of the state, so a snapshot has its own:
+// the id of a key gives its slot in `data`, a slot gives its key, `size`
+// counts the keys, and `first` is the first slot in use. A slot is never used
+// again, so `data.length` is the next.
+type Lookup<K> = {
+  size: number
+  first: number
+  [slot: number]: { key: K }
+  [id: string | symbol]: unknown
+}
 
 type InternalProxyObject<K, V> = Map<K, V> & {
   data: Array<V>
-  index: number
-  epoch: number
+  lookup: Lookup<K>
   toJSON: () => Map<K, V>
 }
 
@@ -17,7 +32,7 @@ export const isProxyMap = (obj: object): boolean => {
   return (
     Symbol.toStringTag in obj &&
     obj[Symbol.toStringTag] === 'Map' &&
-    proxyStateMap.has(obj)
+    isProxyObject(obj)
   )
 }
 
@@ -39,34 +54,16 @@ export const isProxyMap = (obj: object): boolean => {
  *   map: proxyMap()
  * })
  *
- * When using an object as a key, you can wrap it with `ref` so it's not proxied
- * this is useful if you want to preserve the key equality
- *
- * import { ref } from 'valtio'
- *
- * const key = ref({})
- * state.set(key, "value")
- * state.get(key) //value
+ * A key isn't proxied. An object key is found by the object, by its proxy or
+ * by a snapshot of it.
  *
  * const key = {}
  * state.set(key, "value")
- * state.get(key) //undefined
+ * state.get(key) //value
  */
 export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const initialData: Array<V> = []
-  let initialIndex = 0
-  const indexMap = new Map<K, number>()
-
-  const snapMapCache = new WeakMap<object, Map<K, number>>()
-  const registerSnapMap = () => {
-    const cache = snapCache.get(vObject)
-    const latestSnap = cache?.[1]
-    if (latestSnap && !snapMapCache.has(latestSnap)) {
-      const clonedMap = new Map(indexMap)
-      snapMapCache.set(latestSnap, clonedMap)
-    }
-  }
-  const getMapForThis = (x: any) => snapMapCache.get(x) || indexMap
+  const initialLookup: Lookup<K> = { size: 0, first: 0 }
 
   if (entries) {
     if (typeof entries[Symbol.iterator] !== 'function') {
@@ -75,110 +72,110 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
       )
     }
     for (const [key, value] of entries) {
-      indexMap.set(key, initialIndex)
-      initialData[initialIndex++] = value
+      const id = keyId(key)
+      let slot = initialLookup[id] as number | undefined
+      if (slot === undefined) {
+        slot = initialData.length
+        initialLookup[id] = slot
+        initialLookup[slot] = ref({ key })
+        initialLookup.size++
+      }
+      initialData[slot] = value
     }
   }
 
   const vObject: InternalProxyObject<K, V> = {
     data: initialData,
-    index: initialIndex,
-    epoch: 0,
+    lookup: initialLookup,
     get size() {
-      if (!isProxy(this)) {
-        registerSnapMap()
-      }
-      const map = getMapForThis(this)
-      return map.size
+      return this.lookup.size
     },
     get(key: K) {
-      const map = getMapForThis(this)
-      const index = map.get(key)
-      if (index === undefined) {
-        this.epoch // touch property for tracking
-        return undefined
-      }
-      return this.data[index]
+      const slot = this.lookup[keyId(key)] as number | undefined
+      return slot === undefined ? undefined : this.data[slot]
     },
     has(key: K) {
-      const map = getMapForThis(this)
-      this.epoch // touch property for tracking
-      return map.has(key)
+      return this.lookup[keyId(key)] !== undefined
     },
     set(key: K, value: V) {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const index = indexMap.get(key)
-      if (index === undefined) {
-        indexMap.set(key, this.index)
-        this.data[this.index++] = value
+      const id = keyId(key)
+      const slot = this.lookup[id] as number | undefined
+      if (slot === undefined) {
+        batchAsWrite(() => {
+          const newSlot = this.data.length
+          // The value is set first, because a snapshot makes it throw.
+          this.data[newSlot] = value
+          this.lookup[id] = newSlot
+          this.lookup[newSlot] = ref({ key })
+          this.lookup.size++
+        })
       } else {
-        this.data[index] = value
+        this.data[slot] = value
       }
-      this.epoch++
       return this
     },
     delete(key: K) {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      const index = indexMap.get(key)
-      if (index === undefined) {
+      const id = keyId(key)
+      const slot = this.lookup[id] as number | undefined
+      if (slot === undefined) {
         return false
       }
-      delete this.data[index]
-      indexMap.delete(key)
-      this.epoch++
+      batchAsWrite(() => {
+        delete this.data[slot]
+        delete this.lookup[id]
+        delete this.lookup[slot]
+        this.lookup.size--
+        if (slot === this.lookup.first) {
+          advanceFirst(this)
+        }
+      })
       return true
     },
     clear() {
-      if (!isProxy(this)) {
+      if (!isProxyObject(this)) {
         throw new Error('Cannot perform mutations on a snapshot')
       }
-      this.data.length = 0 // empty array
-      this.index = 0
-      this.epoch++
-      indexMap.clear()
+      if (this.lookup.size) {
+        batchAsWrite(() => {
+          this.data = []
+          this.lookup = { size: 0, first: 0 }
+        })
+      }
     },
     forEach(cb: (value: V, key: K, map: Map<K, V>) => void) {
-      this.epoch // touch property for tracking
-      const map = getMapForThis(this)
-      map.forEach((index, key) => {
-        cb(this.data[index]!, key, this)
-      })
-    },
-    *entries(): MapIterator<[K, V]> {
-      this.epoch // touch property for tracking
-      const map = getMapForThis(this)
-      for (const [key, index] of map) {
-        yield [key, this.data[index]!]
+      for (const [key, value] of this.entries()) {
+        cb(value, key, this)
       }
     },
-    *keys(): MapIterator<K> {
-      this.epoch // touch property for tracking
-      const map = getMapForThis(this)
-      for (const key of map.keys()) {
-        yield key
+    *entries(): ReturnType<Map<K, V>['entries']> {
+      for (const slot of slotsOf(this)) {
+        yield [this.lookup[slot]!.key, this.data[slot]!]
       }
     },
-    *values(): MapIterator<V> {
-      this.epoch // touch property for tracking
-      const map = getMapForThis(this)
-      for (const index of map.values()) {
-        yield this.data[index]!
+    *keys(): ReturnType<Map<K, V>['keys']> {
+      for (const slot of slotsOf(this)) {
+        yield this.lookup[slot]!.key
+      }
+    },
+    *values(): ReturnType<Map<K, V>['values']> {
+      for (const slot of slotsOf(this)) {
+        yield this.data[slot]!
       }
     },
     [Symbol.iterator]() {
       return this.entries()
     },
-    get [Symbol.toStringTag]() {
-      return 'Map'
-    },
+    [Symbol.toStringTag]: 'Map',
     toJSON(): Map<K, V> {
       return new Map(this.entries())
     },
-    // [ONLY-TS-5.9.3] [ONLY-TS-5.8.3] [ONLY-TS-5.7.3] [ONLY-TS-5.6.3] @ts-expect-error ignore
+    // [ONLY-TS-5.9.3] [ONLY-TS-5.8.3] [ONLY-TS-5.7.3] [ONLY-TS-5.6.3] [ONLY-TS-5.5.4] @ts-expect-error ignore
     getOrInsert() {
       throw new Error('not implemented')
     },
@@ -190,10 +187,11 @@ export function proxyMap<K, V>(entries?: Iterable<[K, V]> | undefined | null) {
   const proxiedObject = proxy(vObject)
   Object.defineProperties(proxiedObject, {
     size: { enumerable: false },
-    index: { enumerable: false },
-    epoch: { enumerable: false },
+    lookup: { enumerable: false },
     data: { enumerable: false },
     toJSON: { enumerable: false },
+    // The tag tells what the collection is, so it can't be written.
+    [Symbol.toStringTag]: { writable: false },
   })
   Object.seal(proxiedObject)
 

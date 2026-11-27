@@ -160,10 +160,10 @@ describe('computed properties: in React', () => {
     })
 
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       return (
         <>
-          <div>doubled: {snap.doubled}</div>
+          <div>doubled: {tracked.doubled}</div>
           <button onClick={() => ++state.count}>button</button>
         </>
       )
@@ -188,9 +188,9 @@ describe('computed properties: in React', () => {
 
     const renderFn = vi.fn()
     const Component = () => {
-      const snap = useSnapshot(state)
+      const tracked = useSnapshot(state)
       renderFn()
-      return <div>doubled: {snap.doubled}</div>
+      return <div>doubled: {tracked.doubled}</div>
     }
 
     render(<Component />)

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { proxy, ref, subscribe, unstable_enableOp } from 'valtio'
+import { batch, proxy, ref, subscribe } from 'valtio'
 
 describe('subscribe', () => {
   const consoleWarn = console.warn
@@ -109,16 +109,17 @@ describe('subscribe', () => {
     expect(obj.count).toBe(0)
   })
 
-  it('should batch updates', async () => {
+  it('should batch updates with batch()', () => {
     const obj = proxy({ count1: 0, count2: 0 })
     const handler = vi.fn()
 
     subscribe(obj, handler)
 
-    obj.count1 += 1
-    obj.count2 += 1
+    batch(() => {
+      obj.count1 += 1
+      obj.count2 += 1
+    })
 
-    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(1)
   })
 
@@ -146,16 +147,16 @@ describe('subscribe', () => {
     expect(handler).toBeCalledTimes(0)
   })
 
-  it('should warn when subscribing to a non-proxy object', () => {
+  it('[DEV-ONLY] should warn when subscribing to a non-proxy object', () => {
     expect(() => subscribe({} as any, vi.fn())).toThrow()
     expect(console.warn).toHaveBeenCalledWith('Please use proxy object')
   })
 
-  it('should notify synchronously with the sync option', async () => {
+  it('should notify synchronously', () => {
     const obj = proxy({ count: 0 })
     const handler = vi.fn()
 
-    subscribe(obj, handler, true)
+    subscribe(obj, handler)
 
     obj.count += 1
     expect(handler).toBeCalledTimes(1)
@@ -164,182 +165,103 @@ describe('subscribe', () => {
     expect(handler).toBeCalledTimes(2)
   })
 
-  it('should not batch updates with the sync option', async () => {
+  it('should call the callback without a receiver', () => {
+    const obj = proxy({ count: 0 })
+    const receivers: unknown[] = []
+
+    subscribe(obj, function (this: unknown) {
+      receivers.push(this)
+    })
+
+    obj.count += 1
+    expect(receivers).toEqual([undefined])
+  })
+
+  it('should notify once per write without batch()', () => {
     const obj = proxy({ count1: 0, count2: 0 })
     const handler = vi.fn()
 
-    subscribe(obj, handler, true)
+    subscribe(obj, handler)
 
     obj.count1 += 1
     obj.count2 += 1
 
-    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(2)
   })
 
-  it('should not call a subscription unsubscribed before the microtask runs', async () => {
+  it('should not call a subscription unsubscribed inside a batch', () => {
     const obj = proxy({ count: 0 })
     const handler = vi.fn()
 
     const unsubscribe = subscribe(obj, handler)
-    obj.count += 1
-    unsubscribe()
+    batch(() => {
+      obj.count += 1
+      unsubscribe()
+    })
 
-    await vi.advanceTimersByTimeAsync(0)
     expect(handler).toBeCalledTimes(0)
   })
 })
 
-describe('subscribe with op', () => {
-  const consoleWarn = console.warn
-
-  beforeEach(() => {
-    unstable_enableOp(true)
-    console.warn = vi.fn((message: string) => {
-      if (message === 'Please use proxy object') {
-        return
-      }
-      consoleWarn(message)
-    })
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    console.warn = consoleWarn
-    vi.useRealTimers()
-    unstable_enableOp(false)
-  })
-
-  it('should notify ops', async () => {
-    const obj = proxy<{ count1: number; count2?: number }>({
-      count1: 0,
-      count2: 0,
-    })
+describe('subscribe across a replaced parent', () => {
+  it('should keep hearing a child moved into a parent with reordered keys', () => {
+    const state = proxy({ node: { child: { count: 0 }, other: 0 } })
+    const child = state.node.child
     const handler = vi.fn()
+    const unsubscribe = subscribe(state, handler)
 
-    subscribe(obj, handler)
+    state.node.child.count = 1
+    state.node = { other: 0, child }
 
-    obj.count1 += 1
-    obj.count2 = 2
+    expect(state.node.child).toBe(child)
+    expect(Object.keys(state.node)).toEqual(['other', 'child'])
+    expect(handler).toHaveBeenCalledTimes(2)
 
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toBeCalledTimes(1)
-    expect(handler).lastCalledWith([
-      ['set', ['count1'], 1, 0],
-      ['set', ['count2'], 2, 0],
-    ])
+    handler.mockClear()
+    state.node.child.count = 2
+    expect(handler).toHaveBeenCalledExactlyOnceWith()
 
-    delete obj.count2
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toBeCalledTimes(2)
-    expect(handler).lastCalledWith([['delete', ['count2'], 2]])
+    unsubscribe()
+    handler.mockClear()
+    state.node.child.count = 3
+    expect(handler).not.toHaveBeenCalled()
   })
 
-  it('should notify nested ops', async () => {
-    const obj = proxy<{ nested: { count?: number } }>({
-      nested: { count: 0 },
-    })
+  it('should hear the new child after replacing a cyclic parent', () => {
+    type Node = { child?: { count: number; parent: Node } }
+    const node: Node = {}
+    node.child = { count: 0, parent: node }
+    const state = proxy({ node })
+    const child = state.node.child!
     const handler = vi.fn()
+    const unsubscribe = subscribe(state, handler)
 
-    subscribe(obj, handler)
+    child.count = 1
+    state.node = { child: { count: 1, parent: {} } }
 
-    obj.nested.count = 1
+    expect(state.node.child).not.toBe(child)
+    expect(child.count).toBe(1)
+    expect(handler).toHaveBeenCalledTimes(2)
 
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toBeCalledTimes(1)
-    expect(handler).lastCalledWith([['set', ['nested', 'count'], 1, 0]])
+    handler.mockClear()
+    child.count = 2
+    expect(handler).not.toHaveBeenCalled()
+    state.node.child!.count = 2
+    expect(handler).toHaveBeenCalledExactlyOnceWith()
 
-    delete obj.nested.count
-
-    await vi.advanceTimersByTimeAsync(0)
-    expect(handler).toBeCalledTimes(2)
-    expect(handler).lastCalledWith([['delete', ['nested', 'count'], 1]])
+    unsubscribe()
+    handler.mockClear()
+    state.node.child!.count = 3
+    expect(handler).not.toHaveBeenCalled()
   })
 
-  it.each([false, true])(
-    'should preserve queued child ops before replacing a parent with reordered keys (sync: %s)',
-    async (sync) => {
-      const state = proxy({ node: { child: { count: 0 }, other: 0 } })
-      const previous = state.node
-      const child = state.node.child
-      const handler = vi.fn()
-      const unsubscribe = subscribe(state, handler, sync)
-
-      state.node.child.count = 1
-      state.node = { other: 0, child }
-      await vi.advanceTimersByTimeAsync(0)
-
-      expect(state.node.child).toBe(child)
-      expect(Object.keys(state.node)).toEqual(['other', 'child'])
-      expect(handler.mock.calls.flatMap(([ops]) => ops)).toEqual([
-        ['set', ['node', 'child', 'count'], 1, 0],
-        ['set', ['node'], { other: 0, child }, previous],
-      ])
-
-      handler.mockClear()
-      state.node.child.count = 2
-      await vi.advanceTimersByTimeAsync(0)
-      expect(handler).toHaveBeenCalledExactlyOnceWith([
-        ['set', ['node', 'child', 'count'], 2, 1],
-      ])
-
-      unsubscribe()
-      handler.mockClear()
-      state.node.child.count = 3
-      await vi.advanceTimersByTimeAsync(0)
-      expect(handler).not.toHaveBeenCalled()
-    },
-  )
-
-  it.each([false, true])(
-    'should preserve queued child ops before replacing a cyclic parent (sync: %s)',
-    async (sync) => {
-      type Node = { child?: { count: number; parent: Node } }
-      const node: Node = {}
-      node.child = { count: 0, parent: node }
-      const state = proxy({ node })
-      const previous = state.node
-      const child = state.node.child!
-      const handler = vi.fn()
-      const unsubscribe = subscribe(state, handler, sync)
-
-      child.count = 1
-      state.node = { child: { count: 1, parent: {} } }
-      await vi.advanceTimersByTimeAsync(0)
-
-      expect(state.node.child).not.toBe(child)
-      expect(child.count).toBe(1)
-      expect(handler.mock.calls.flatMap(([ops]) => ops)).toEqual([
-        ['set', ['node', 'child', 'count'], 1, 0],
-        ['set', ['node'], { child: { count: 1, parent: {} } }, previous],
-      ])
-
-      handler.mockClear()
-      state.node.child!.count = 2
-      await vi.advanceTimersByTimeAsync(0)
-      expect(handler).toHaveBeenCalledExactlyOnceWith([
-        ['set', ['node', 'child', 'count'], 2, 1],
-      ])
-
-      unsubscribe()
-      handler.mockClear()
-      state.node.child!.count = 3
-      await vi.advanceTimersByTimeAsync(0)
-      expect(handler).not.toHaveBeenCalled()
-    },
-  )
-
-  it('should report replacement ops when assigned keys are reordered', () => {
+  it('should notify once when a child is replaced by one with reordered keys', () => {
     const state = proxy({ node: { toString: 1, value: 2 } })
     const handler = vi.fn()
 
-    const previous = state.node
-    subscribe(state, handler, true)
+    subscribe(state, handler)
     state.node = { value: 2, toString: 1 }
 
-    expect(handler.mock.calls.map(([ops]) => ops[0])).toEqual([
-      ['set', ['node'], { value: 2, toString: 1 }, previous],
-    ])
+    expect(handler).toHaveBeenCalledExactlyOnceWith()
   })
 })

@@ -37,8 +37,8 @@ import { proxy, useSnapshot } from 'valtio'
 const state = proxy({ data: fetch(...).then((res) => res.json()) })
 
 const Component = () => {
-  const snap = useSnapshot(state)
-  return <>{JSON.stringify(snap.data)}</>
+  const tracked = useSnapshot(state)
+  return <>{JSON.stringify(tracked.data)}</>
 }
 ```
 
@@ -50,10 +50,10 @@ import { proxy, useSnapshot } from 'valtio'
 const state = proxy({ data: fetch(...).then((res) => res.json()) })
 
 const Component = () => {
-  const snap = useSnapshot(state)
-  return <>{JSON.stringify(use(snap.data))}</>
+  const tracked = useSnapshot(state)
+  return <>{JSON.stringify(use(tracked.data))}</>
   // If `data` is not an object, you can directly embed it in JSX.
-  // return <>{snap.data}</>
+  // return <>{tracked.data}</>
 }
 ```
 

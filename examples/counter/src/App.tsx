@@ -15,15 +15,15 @@ state.nested = { ticks: 0 }
 setInterval(() => state.nested && state.nested.ticks++, 200)
 
 const Figure = () => {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   // This component *only* renders when state.number changes ...
-  return <div className="figure">{snap.number}</div>
+  return <div className="figure">{tracked.number}</div>
 }
 
 const Ticks = () => {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   // This component *only* renders when state.nested.ticks changes ...
-  return <div className="ticks">{snap?.nested?.ticks} —</div>
+  return <div className="ticks">{tracked?.nested?.ticks} —</div>
 }
 
 const Controls = () => {
@@ -66,15 +66,15 @@ state.nested = { ticks: 0 }
 setInterval(() => state.nested.ticks++, 200)
 
 const Figure = () => {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   // This component *only* renders when state.number changes ...
-  return <div className="figure">{snap.number}</div>
+  return <div className="figure">{tracked.number}</div>
 }
 
 const Ticks = () => {
-  const snap = useSnapshot(state)
+  const tracked = useSnapshot(state)
   // This component *only* renders when state.nested.ticks changes ...
-  return <div className="ticks">{snap.nested.ticks} —</div>
+  return <div className="ticks">{tracked.nested.ticks} —</div>
 }
 
 const Controls = () => {

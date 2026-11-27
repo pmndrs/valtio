@@ -71,3 +71,17 @@ subscribe(child, () => {
 ```
 
 Use `ref(existingProxy)` deliberately, because it affects how that proxy identity participates in later proxy composition.
+
+## Checking for a `ref`
+
+`unstable_isRef` checks whether an object is marked with `ref`:
+
+```js
+import { proxy, ref, unstable_isRef as isRef } from 'valtio'
+
+isRef(ref({})) // true
+isRef(proxy({})) // false
+isRef({}) // false
+```
+
+To check for a proxy instead, use [`isProxyObject`](./isProxyObject).
