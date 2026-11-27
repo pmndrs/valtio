@@ -39,14 +39,31 @@ const isData = (x: unknown): x is AnyObject => {
   )
 }
 
-// The methods of a collection read its own data, so its snapshot can be
-// neither merged key by key nor copied into a collection that works.
+// A proxyMap or a proxySet, or a snapshot of one. Its methods read its own
+// data, so it can be neither merged key by key nor copied into a collection
+// that works.
+const isCollection = (x: AnyObject): boolean => {
+  const tag = x[Symbol.toStringTag]
+  return tag === 'Map' || tag === 'Set'
+}
+
 const assertNoCollection = (snap: AnyObject): void => {
-  if (!Array.isArray(snap) && Symbol.iterator in snap) {
+  if (isCollection(snap)) {
     throw new Error(
       'applyChanges() cannot apply a snapshot of a proxyMap or proxySet. Assign a new collection that is created from its entries.',
     )
   }
+}
+
+// Whether a key has an accessor, its own or one of a class.
+const hasAccessor = (obj: object | null, key: string | symbol): boolean => {
+  for (; obj; obj = Object.getPrototypeOf(obj)) {
+    const desc = Reflect.getOwnPropertyDescriptor(obj, key)
+    if (desc) {
+      return !('value' in desc)
+    }
+  }
+  return false
 }
 
 // Whether a snapshot was taken from the object of a proxy.
@@ -147,8 +164,7 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
       }
     }
     for (const [key, isValue] of keysOf(next)) {
-      const desc = Reflect.getOwnPropertyDescriptor(target, key)
-      if (!isValue || (desc && !('value' in desc))) {
+      if (!isValue || hasAccessor(target, key)) {
         // Accessors are never written. The proxy has its own.
         continue
       }
@@ -164,8 +180,11 @@ const apply = (proxyObject: AnyObject, data: AnyObject): void => {
         isProxyObject(current) &&
         isData(value) &&
         Array.isArray(current) === Array.isArray(value) &&
-        // A snapshot is merged only into the object that it was taken from.
-        (!isSnapshot(value) || isSnapshotOf(value, current as object))
+        // A snapshot is merged only into the object that it was taken from,
+        // and other data isn't merged into a collection.
+        (isSnapshot(value)
+          ? isSnapshotOf(value, current as object)
+          : !isCollection(current as AnyObject))
       ) {
         merge(current as AnyObject, value)
       } else {

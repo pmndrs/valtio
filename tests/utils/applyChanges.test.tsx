@@ -178,6 +178,39 @@ describe('applyChanges', () => {
     expect(item.count).toBe(1)
   })
 
+  it('should replace a collection that gets plain data', () => {
+    const state = proxy<{ count: number; value: unknown }>({
+      count: 0,
+      value: proxyMap([['a', 1]]),
+    })
+
+    applyChanges(state, { count: 1, value: { name: 'Ann' } })
+    expect(snapshot(state)).toEqual({ count: 1, value: { name: 'Ann' } })
+  })
+
+  it('should not write an accessor of a class', () => {
+    class User {
+      name = 'Ann'
+      get displayName() {
+        return this.name
+      }
+      set displayName(value: string) {
+        this.name = value
+      }
+      get initial() {
+        return this.name[0]
+      }
+    }
+    const state = proxy({ user: new User() })
+
+    applyChanges(state, {
+      user: { name: 'Bob', displayName: 'Charlie', initial: 'X' },
+    } as unknown as typeof state)
+    expect(state.user.name).toBe('Bob')
+    expect(state.user.displayName).toBe('Bob')
+    expect(state.user.initial).toBe('B')
+  })
+
   it('should merge plain data into a class instance', () => {
     class User {
       name = 'Ann'
@@ -420,7 +453,21 @@ describe('applyChanges with a snapshot', () => {
     )
   })
 
-  it('should write nothing when it throws', () => {
+  it('should restore a state that is iterable', () => {
+    const state = proxy({
+      count: 0,
+      *[Symbol.iterator]() {
+        yield this.count
+      },
+    })
+    const saved = snapshot(state)
+    state.count = 1
+
+    applyChanges(state, saved as typeof state)
+    expect([...state]).toEqual([0])
+  })
+
+  it('should write nothing when it throws for a collection', () => {
     const state = proxy({ count: 0, nested: { a: 1 }, set: proxySet([1]) })
     const snap = snapshot(state)
     state.count = 1
