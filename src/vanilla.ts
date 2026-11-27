@@ -327,7 +327,7 @@ export function proxy<T extends object>(baseObject: T = {} as T): T {
   // A value read from useSnapshot is unwrapped, so the tracker records nothing.
   if (hasOwn(getOriginalObject(baseObject), snapshotBrand)) {
     throw new Error(
-      'Cannot assign a Valtio snapshot into a proxy. Copy it with deepClone(), or wrap it with ref() to store it as is.',
+      'Cannot assign a Valtio snapshot into a proxy. Copy it with deepClone(), merge it with applyChanges(), or wrap it with ref() to store it as is.',
     )
   }
   if (typeof WeakRef === 'undefined') {

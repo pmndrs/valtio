@@ -1,0 +1,81 @@
+---
+title: 'applyChanges'
+section: 'API'
+subSection: 'Utils'
+description: ''
+---
+
+# `applyChanges`
+
+## Write only what differs
+
+`applyChanges(proxyObject, next)` makes the data of a proxy equal to `next`. It writes only the values that differ, and it notifies once.
+
+```js
+import { proxy } from 'valtio'
+import { applyChanges } from 'valtio/utils'
+
+const state = proxy({ user: { name: 'Ann', age: 30 } })
+
+// writes only state.user.age
+applyChanges(state, { user: { name: 'Ann', age: 31 } })
+```
+
+Use it in place of an assignment when new data arrives for a part of the state, for example from a server.
+An assignment such as `state.user = nextUser` replaces the object, so a subscription to the old `state.user` hears nothing more.
+`applyChanges` keeps the objects that are in the state and writes into them, so their subscriptions stay, and a subscription to a value that didn't change isn't notified.
+
+Keys that `next` doesn't have are deleted, and an array gets the length of the array in `next`. Getters are neither written nor deleted.
+
+## What `next` can be
+
+`next` can be plain data, a snapshot, or a value read from `useSnapshot`.
+
+`applyChanges` never makes an object of `next` a part of the state. It merges plain objects, arrays and snapshots into the proxies that are already there, and it copies them where there is none. So `next` can be frozen, and you can keep using it.
+
+Any other value is assigned as it is, as with an assignment: a proxy, an object marked with [`ref`](../advanced/ref), a `Date`, a class instance.
+
+## Go back to a snapshot
+
+A snapshot can't be assigned into state, but it can be applied.
+
+```js
+import { proxy, snapshot } from 'valtio'
+import { applyChanges } from 'valtio/utils'
+
+const state = proxy({ todos: [{ title: 'Write docs', done: false }] })
+const saved = snapshot(state)
+
+state.todos[0].done = true
+state.todos.push({ title: 'Ship it', done: false })
+
+applyChanges(state, saved)
+// state.todos is [{ title: 'Write docs', done: false }] again
+```
+
+A part of the state that hasn't changed since the snapshot is skipped without reading it.
+
+You can also apply data that mixes new objects with snapshots, such as the result of an immutable update.
+
+```js
+const snap = snapshot(state)
+applyChanges(state, {
+  ...snap,
+  todos: [...snap.todos, { title: 'New', done: false }],
+})
+```
+
+## Limits
+
+- A snapshot is merged only into the object that it was taken from. Where the state now holds another object under that key, a copy of the snapshot replaces it. Plain data is merged into whatever object is under the key. So if your state holds the same object in two places, keep an id in one of them instead: `applyChanges` doesn't restore that the two places are one object.
+- A snapshot of a `proxyMap` or `proxySet` that has changed since the snapshot throws. Assign a new collection instead:
+
+  ```js
+  import { deepClone, proxyMap } from 'valtio/utils'
+
+  state.map = proxyMap(
+    [...saved.map].map(([key, value]) => [key, deepClone(value)]),
+  )
+  ```
+
+- The keys that stay keep their order, also when `next` has them in another order.

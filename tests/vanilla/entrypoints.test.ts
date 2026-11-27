@@ -40,6 +40,7 @@ describe('entry points', () => {
 
   it('should expose the utils from valtio/vanilla/utils', () => {
     expect(exportsOf(vanillaUtils)).toEqual([
+      'applyChanges',
       'deepClone',
       'devtools',
       'isProxyMap',

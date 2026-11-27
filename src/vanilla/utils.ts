@@ -1,6 +1,7 @@
 export { subscribeKey } from './utils/subscribeKey.js'
 export { devtools } from './utils/devtools.js'
 export { deepClone } from './utils/deepClone.js'
+export { applyChanges } from './utils/applyChanges.js'
 export { unstable_deepProxy } from './utils/deepProxy.js'
 export { proxySet, isProxySet } from './utils/proxySet.js'
 export { proxyMap, isProxyMap } from './utils/proxyMap.js'
